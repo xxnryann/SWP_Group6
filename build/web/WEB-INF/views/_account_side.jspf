@@ -1,0 +1,12 @@
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<aside>
+  <div class="member-card">
+    <div class="tier">Thành viên CineStar</div>
+    <h3><c:out value="${sessionScope.authUser.fullName}"/></h3>
+    <div class="meta"><c:out value="${sessionScope.authUser.email}"/></div>
+  </div>
+  <nav class="side-nav">
+    <a href="${pageContext.request.contextPath}/account/profile" class="${activeNav == 'profile' ? 'active' : ''}">Thông tin cá nhân</a>
+    <a href="${pageContext.request.contextPath}/account/password" class="${activeNav == 'password' ? 'active' : ''}">Đổi mật khẩu</a>
+  </nav>
+</aside>
