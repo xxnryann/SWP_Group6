@@ -59,3 +59,6 @@ CREATE TABLE dbo.PointTransactions (
 );
 CREATE INDEX IX_PointTx_User ON dbo.PointTransactions(UserId, CreatedAt DESC);
 GO
+
+-- First admin: register a normal account on the site, verify the OTP, then run:
+--   UPDATE dbo.Users SET Role = 'ADMIN' WHERE Email = N'your-email@example.com';
