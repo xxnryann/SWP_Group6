@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class UserDAO {
 
     private static final String COLS = "UserId, FullName, Email, Phone, PasswordHash, DateOfBirth, Gender, "
-            + "Role, Status, OtpHash, OtpExpiry, OtpAttempts";
+            + "Role, Status, OtpHash, OtpExpiry, OtpAttempts, MyPoint";
 
     private User map(ResultSet rs) throws SQLException {
         User u = new User();
@@ -33,6 +33,7 @@ public class UserDAO {
         Timestamp t = rs.getTimestamp("OtpExpiry");
         u.setOtpExpiry(t == null ? null : t.toLocalDateTime());
         u.setOtpAttempts(rs.getInt("OtpAttempts"));
+        u.setMyPoint(rs.getInt("MyPoint"));
         return u;
     }
 
