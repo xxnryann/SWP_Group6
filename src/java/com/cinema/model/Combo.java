@@ -1,5 +1,6 @@
 package com.cinema.model;
 
+import com.cinema.util.Moneys;
 import java.math.BigDecimal;
 
 /**
@@ -25,6 +26,9 @@ public class Combo {
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
+
+    /** Giá dạng hiển thị: "79.000". */
+    public String getPriceLabel() { return Moneys.vnd(price); }
 
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
