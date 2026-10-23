@@ -17,7 +17,8 @@ import java.util.List;
 public class UserDAO {
 
     private static final String COLS = "UserId, FullName, Email, Phone, PasswordHash, DateOfBirth, Gender, "
-            + "Role, Status, OtpHash, OtpExpiry, OtpAttempts, MyPoint";
+            + "Role, Status, OtpHash, OtpExpiry, OtpAttempts, "
+            + "(SELECT COALESCE(SUM(points), 0) FROM MyPointTransaction WHERE customer_id = Users.UserId) AS MyPoint";
 
     private User map(ResultSet rs) throws SQLException {
         User u = new User();
