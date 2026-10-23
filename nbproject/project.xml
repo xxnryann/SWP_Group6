@@ -7,6 +7,9 @@
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <web-module-libraries>
                 <library dirs="200">
+                    <file>${file.reference.jakarta.servlet-api-6.0.0.jar}</file>
+                </library>
+                <library dirs="200">
                     <file>${file.reference.angus-activation-2.0.2.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
