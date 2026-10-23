@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${ctx}/assets/css/cinema.css">
+  <c:if test="${movieModule}">
+    <link rel="stylesheet" href="${ctx}/assets/css/movie.css">
+  </c:if>
 </head>
 <body data-user="<c:out value='${sessionScope.authUser.fullName}'/>">
 
@@ -62,8 +65,9 @@
       </select>
     </label>
     <nav class="main-nav" aria-label="Điều hướng chính">
-      <a href="#">Lịch Chiếu</a>
-      <a href="#">Phim</a>
+      <%-- Movie module navigation additions; keep the existing News link below intact. --%>
+      <a href="${ctx}/showtimes">Lịch Chiếu</a>
+      <a href="${ctx}/movies">Phim</a>
       <a href="#">Cụm Rạp</a>
       <a href="#">Giá Vé</a>
       <a href="#">Khuyến Mãi</a>
@@ -100,7 +104,8 @@
       <option>CineStar Đà Lạt</option>
     </select>
   </label>
-  <a href="#">Lịch Chiếu</a><a href="#">Phim</a><a href="#">Cụm Rạp</a>
+  <%-- Movie module navigation additions; the existing News link remains unchanged. --%>
+  <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a><a href="#">Cụm Rạp</a>
   <a href="#">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="#">Tin Tức</a><a href="#">Khác</a>
   <c:choose>
     <c:when test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:when>
