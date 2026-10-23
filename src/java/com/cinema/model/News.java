@@ -1,6 +1,7 @@
 package com.cinema.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Tin tức — STT 12 (quản lý), STT 16 (khách xem).
@@ -45,6 +46,12 @@ public class News {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     public boolean isPublished() { return "Published".equalsIgnoreCase(status); }
+
+    /** Ngày đăng dạng hiển thị: 21/10/2026 14:30. */
+    public String getCreatedAtLabel() {
+        return createdAt == null ? ""
+                : createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    }
 
     /** Nhãn tiếng Việt cho JSP. */
     public String getStatusLabel() {
