@@ -54,23 +54,14 @@
       </svg>
       <span>Cine<b>Star</b> Cinemas</span>
     </a>
-    <label class="cinema-pick desktop">Rạp của bạn
-      <select class="cinema-select" aria-label="Chọn rạp">
-        <option>CineStar Quốc Thanh</option>
-        <option>CineStar Hai Bà Trưng</option>
-        <option>CineStar Sinh Viên</option>
-        <option>CineStar Huế</option>
-        <option>CineStar Đà Lạt</option>
-      </select>
-    </label>
     <nav class="main-nav" aria-label="Điều hướng chính">
       <%-- Movie module navigation additions; keep the existing News link below intact. --%>
       <a href="${ctx}/showtimes">Lịch Chiếu</a>
       <a href="${ctx}/movies">Phim</a>
-      <a href="#">Cụm Rạp</a>
       <a href="#">Giá Vé</a>
       <a href="#">Khuyến Mãi</a>
-      <a href="#">Tin Tức</a>
+      <a href="${ctx}/news">Tin Tức</a>
+
       <div class="dropdown">
         <button type="button" aria-haspopup="true" aria-expanded="false">Khác ▾</button>
         <div class="dropdown-menu">
@@ -94,17 +85,8 @@
     <strong>Menu</strong>
     <button class="drawer-close" type="button" id="drawerClose" aria-label="Đóng">&times;</button>
   </div>
-  <label class="cinema-pick">Rạp của bạn
-    <select class="cinema-select" aria-label="Chọn rạp" style="max-width:none;width:100%">
-      <option>CineStar Quốc Thanh</option>
-      <option>CineStar Hai Bà Trưng</option>
-      <option>CineStar Sinh Viên</option>
-      <option>CineStar Huế</option>
-      <option>CineStar Đà Lạt</option>
-    </select>
-  </label>
   <%-- Movie module navigation additions; the existing News link remains unchanged. --%>
-  <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a><a href="#">Cụm Rạp</a>
+  <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a>
   <a href="#">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="#">Tin Tức</a><a href="#">Khác</a>
   <c:choose>
     <c:when test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:when>

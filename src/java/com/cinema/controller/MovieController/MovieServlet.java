@@ -43,17 +43,15 @@ public class MovieServlet extends BaseServlet {
 
     private void showMovies(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        String keyword = request.getParameter("q");
         String status = request.getParameter("status");
         if (!"Upcoming".equals(status) && !"NowShowing".equals(status) && !"Stopped".equals(status)) status = null;
         Integer genreId = parsePositiveInt(request.getParameter("genre"));
         int requestedPage = parsePositiveInt(request.getParameter("page")) == null
                 ? 1 : parsePositiveInt(request.getParameter("page"));
-        MovieDAO.MoviePage result = movieDAO.search(keyword, genreId, status, requestedPage, PAGE_SIZE);
+        MovieDAO.MoviePage result = movieDAO.filter(genreId, status, requestedPage, PAGE_SIZE);
         request.setAttribute("moviePage", result);
         request.setAttribute("movies", result.movies());
         request.setAttribute("genres", genreDAO.findAll());
-        request.setAttribute("keyword", keyword);
         request.setAttribute("selectedGenre", genreId);
         request.setAttribute("selectedStatus", status);
         request.setAttribute("pageTitle", "Phim");

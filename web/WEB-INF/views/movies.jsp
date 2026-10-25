@@ -1,7 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Phim"/>
-<c:set var="escapedKeyword"><c:out value="${keyword}"/></c:set>
 <%@ include file="_header.jspf" %>
 
 <main class="container page">
@@ -9,18 +8,14 @@
     <div>
       <p class="eyebrow">CINESTAR CINEMAS</p>
       <h1>Danh sách phim</h1>
-      <p class="sub">Tìm kiếm phim, thể loại và trạng thái phát hành.</p>
+      <p class="sub">Lọc phim theo thể loại và trạng thái phát hành.</p>
     </div>
-    <c:if test="${isManager}">
+    <c:if test="${canManageMovies}">
       <a class="btn btn-primary" href="${ctx}/manage/movies">Quản lý phim</a>
     </c:if>
   </section>
 
   <form class="movie-filters panel" action="${ctx}/movies" method="get">
-    <div class="field">
-      <label for="movie-keyword">Từ khóa</label>
-      <input id="movie-keyword" type="search" name="q" value="${escapedKeyword}" maxlength="200" placeholder="Tên phim hoặc tên gốc">
-    </div>
     <div class="field">
       <label for="movie-genre">Thể loại</label>
       <select id="movie-genre" name="genre">
@@ -77,7 +72,7 @@
             </c:choose></span>
           </div>
         </a>
-        <c:if test="${isManager}">
+        <c:if test="${canManageMovies}">
           <a class="movie-card-edit" href="${escapedEditUrl}">Sửa phim</a>
         </c:if>
       </article>
@@ -91,7 +86,6 @@
     <nav class="movie-pagination" aria-label="Phân trang phim">
       <c:forEach var="pageNumber" begin="1" end="${moviePage.totalPages}">
         <c:url var="pageUrl" value="/movies">
-          <c:param name="q" value="${keyword}"/>
           <c:param name="genre" value="${selectedGenre}"/>
           <c:param name="status" value="${selectedStatus}"/>
           <c:param name="page" value="${pageNumber}"/>

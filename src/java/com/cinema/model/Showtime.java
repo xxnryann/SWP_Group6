@@ -1,7 +1,7 @@
 package com.cinema.model;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class Showtime {
@@ -12,7 +12,6 @@ public class Showtime {
     private int movieDurationMinutes;
     private String roomName;
     private LocalDateTime startsAt;
-    private BigDecimal ticketPrice;
     private String status = "Scheduled";
 
     public int getShowtimeId() {
@@ -63,14 +62,6 @@ public class Showtime {
         this.startsAt = startsAt;
     }
 
-    public BigDecimal getTicketPrice() {
-        return ticketPrice;
-    }
-
-    public void setTicketPrice(BigDecimal ticketPrice) {
-        this.ticketPrice = ticketPrice;
-    }
-
     public String getStatus() {
         return status;
     }
@@ -87,6 +78,21 @@ public class Showtime {
         return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
+    public String getScheduleDateDisplay() {
+        return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    public String getScheduleTimeDisplay() {
+        return startsAt == null ? "" : getStartTimeOnly() + " – " + getEndTimeOnly();
+    }
+
+    public String getManagementStatus() {
+        if ("Cancelled".equals(status)) return "Cancelled";
+        if ("Maintenance".equals(status)) return "Maintenance";
+        return startsAt != null && startsAt.toLocalDate().equals(LocalDate.now())
+                ? "Scheduled" : "Pending";
+    }
+
     public String getEndDisplay() {
         return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes).format(DISPLAY_FORMAT);
     }
@@ -98,5 +104,13 @@ public class Showtime {
 
     public String getInputDateTime() {
         return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+    }
+
+    public String getInputDate() {
+        return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    public String getInputTime() {
+        return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 }
