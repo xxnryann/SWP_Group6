@@ -78,6 +78,7 @@
           <a href="#">Tuyển dụng</a>
           <a href="#">Liên hệ</a>
           <c:if test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:if>
+          <c:if test="${sessionScope.authUser.role == 'ADMIN'}"><a href="${ctx}/admin/rooms">Quản lý phòng chiếu</a></c:if>
         </div>
       </div>
       <a class="btn btn-cta" href="#" data-toast="Tính năng đặt vé sắp ra mắt!">MUA VÉ NHANH</a>
