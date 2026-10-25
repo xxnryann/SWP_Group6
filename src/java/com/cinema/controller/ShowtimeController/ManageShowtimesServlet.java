@@ -12,10 +12,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 @WebServlet("/manage/showtimes")
 public class ManageShowtimesServlet extends BaseServlet {
@@ -38,6 +40,10 @@ public class ManageShowtimesServlet extends BaseServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        if ("available-times".equals(request.getParameter("action"))) {
+            writeAvailableTimes(request, response);
+            return;
+        }
         try {
             String idValue = request.getParameter("id");
             if (idValue != null || "new".equals(request.getParameter("action"))) {
@@ -48,6 +54,10 @@ public class ManageShowtimesServlet extends BaseServlet {
                 }
                 request.setAttribute("showtime", showtime);
                 request.setAttribute("movies", movieDAO.findAllForShowtime());
+                request.setAttribute("rooms", showtimeDAO.findActiveRoomNames());
+                request.setAttribute("defaultDate", showtime.getStartsAt() == null
+                        ? LocalDate.now() : showtime.getStartsAt().toLocalDate());
+                request.setAttribute("todayDate", LocalDate.now());
                 request.setAttribute("pageTitle", idValue == null ? "Thêm suất chiếu" : "Sửa suất chiếu");
                 forward(request, response, "showtime-form");
                 return;
@@ -102,31 +112,49 @@ public class ManageShowtimesServlet extends BaseServlet {
         showtime.setMovieId(ShowtimeUtil.parseId(request.getParameter("movieId")));
         showtime.setRoomName(ShowtimeUtil.requiredText(request.getParameter("roomName"),
                 "Tên phòng không được để trống.", 50));
-        String startsAt = request.getParameter("startsAt");
-        if (startsAt == null || startsAt.isBlank()) {
+        String showDate = request.getParameter("showDate");
+        String showTime = request.getParameter("showTime");
+        if (showDate == null || showDate.isBlank() || showTime == null || showTime.isBlank()) {
             throw new IllegalArgumentException("Vui lòng chọn ngày và giờ chiếu.");
         }
-        LocalDateTime start = LocalDateTime.parse(startsAt);
+        LocalDateTime start = LocalDate.parse(showDate).atTime(LocalTime.parse(showTime));
         if (!start.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Giờ chiếu phải ở trong tương lai.");
         }
         showtime.setStartsAt(start);
-        String price = request.getParameter("ticketPrice");
-        try {
-            BigDecimal ticketPrice = new BigDecimal(price);
-            if (ticketPrice.signum() < 0 || ticketPrice.scale() > 2 || ticketPrice.precision() > 10) {
-                throw new IllegalArgumentException("Giá vé phải từ 0 trở lên và tối đa 2 chữ số thập phân.");
-            }
-            showtime.setTicketPrice(ticketPrice);
-        } catch (NumberFormatException | NullPointerException e) {
-            throw new IllegalArgumentException("Giá vé không hợp lệ.");
-        }
-        String status = request.getParameter("status");
-        if (!"Scheduled".equals(status) && !"Cancelled".equals(status)) {
-            throw new IllegalArgumentException("Trạng thái suất chiếu không hợp lệ.");
-        }
-        showtime.setStatus(status);
+        showtime.setStatus("Scheduled");
         return showtime;
+    }
+
+    private void writeAvailableTimes(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        try {
+            LocalDate date = LocalDate.parse(ShowtimeUtil.requiredText(
+                    request.getParameter("date"), "Ngày chiếu không hợp lệ.", 10));
+            int movieId = ShowtimeUtil.parseId(request.getParameter("movieId"));
+            String roomName = ShowtimeUtil.requiredText(request.getParameter("roomName"),
+                    "Vui lòng chọn phòng chiếu.", 50);
+            String excludedId = request.getParameter("id");
+            int excludedShowtimeId = excludedId == null || excludedId.isBlank()
+                    ? 0 : ShowtimeUtil.parseId(excludedId);
+            List<LocalTime> availableTimes = showtimeDAO.findAvailableStartTimes(
+                    date, roomName, movieId, excludedShowtimeId);
+            StringBuilder json = new StringBuilder("[");
+            for (int i = 0; i < availableTimes.size(); i++) {
+                if (i > 0) {
+                    json.append(',');
+                }
+                json.append('"').append(availableTimes.get(i)).append('"');
+            }
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(json.append(']').toString());
+        } catch (IllegalArgumentException | DateTimeParseException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Thông tin ngày, phim hoặc phòng không hợp lệ.");
+        } catch (SQLException e) {
+            getServletContext().log("Unable to find available showtime slots.", e);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Không thể kiểm tra giờ chiếu còn trống.");
+        }
     }
 
     private boolean isManager(HttpServletRequest request) {

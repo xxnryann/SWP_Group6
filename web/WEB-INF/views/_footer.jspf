@@ -6,10 +6,6 @@
         <p>Hệ thống rạp chiếu phim hiện đại với âm thanh Dolby Atmos và hình ảnh sắc nét, mang đến trải nghiệm điện ảnh trọn vẹn cho mọi khán giả.</p>
       </div>
       <div>
-        <h4>Cụm rạp</h4>
-        <ul><li><a href="#">Quốc Thanh</a></li><li><a href="#">Hai Bà Trưng</a></li><li><a href="#">Sinh Viên</a></li><li><a href="#">Huế</a></li><li><a href="#">Đà Lạt</a></li></ul>
-      </div>
-      <div>
         <h4>Dịch vụ</h4>
         <ul><li><a href="#">Mua vé online</a></li><li><a href="#">Thẻ quà tặng</a></li><li><a href="#">Thuê rạp</a></li><li><a href="#">Bắp nước combo</a></li></ul>
       </div>
@@ -85,17 +81,6 @@
   $('#menuBtn').addEventListener('click', function () { drawer(true); });
   $('#drawerClose').addEventListener('click', function () { drawer(false); });
   $('#drawerBackdrop').addEventListener('click', function () { drawer(false); });
-
-  /* Rạp của bạn: đồng bộ với localStorage.selectedCinema */
-  var saved = store(function () { return localStorage.getItem('selectedCinema'); });
-  $$('.cinema-select').forEach(function (s) {
-    if (saved) s.value = saved;
-    s.addEventListener('change', function () {
-      store(function () { localStorage.setItem('selectedCinema', s.value); });
-      $$('.cinema-select').forEach(function (o) { o.value = s.value; });
-      showToast('Đã chọn rạp: ' + s.value);
-    });
-  });
 
   /* Tài khoản hiện tại -> localStorage.currentUser (nguồn thật vẫn là session phía server) */
   var user = document.body.dataset.user;
