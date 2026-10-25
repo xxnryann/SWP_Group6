@@ -40,6 +40,7 @@ public abstract class BaseServlet extends HttpServlet {
         c.setEmail(u.getEmail());
         c.setRole(u.getRole());
         c.setStatus(u.getStatus());
+        c.setMyPoint(u.getMyPoint());
         return c;
     }
 

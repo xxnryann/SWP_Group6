@@ -17,6 +17,7 @@ public class User {
     private String otpHash;
     private LocalDateTime otpExpiry;
     private int otpAttempts;
+    private int myPoint;
 
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
@@ -42,4 +43,6 @@ public class User {
     public void setOtpExpiry(LocalDateTime otpExpiry) { this.otpExpiry = otpExpiry; }
     public int getOtpAttempts() { return otpAttempts; }
     public void setOtpAttempts(int otpAttempts) { this.otpAttempts = otpAttempts; }
+    public int getMyPoint() { return myPoint; }
+    public void setMyPoint(int myPoint) { this.myPoint = myPoint; }
 }

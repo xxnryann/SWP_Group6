@@ -11,11 +11,14 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
 
     private static final String COLS = "UserId, FullName, Email, Phone, PasswordHash, DateOfBirth, Gender, "
-            + "Role, Status, OtpHash, OtpExpiry, OtpAttempts";
+            + "Role, Status, OtpHash, OtpExpiry, OtpAttempts, "
+            + "(SELECT COALESCE(SUM(points), 0) FROM MyPointTransaction WHERE customer_id = Users.UserId) AS MyPoint";
 
     private User map(ResultSet rs) throws SQLException {
         User u = new User();
@@ -33,6 +36,7 @@ public class UserDAO {
         Timestamp t = rs.getTimestamp("OtpExpiry");
         u.setOtpExpiry(t == null ? null : t.toLocalDateTime());
         u.setOtpAttempts(rs.getInt("OtpAttempts"));
+        u.setMyPoint(rs.getInt("MyPoint"));
         return u;
     }
 
@@ -124,6 +128,49 @@ public class UserDAO {
 
     public void updatePassword(int userId, String hash) throws SQLException {
         update("UPDATE Users SET PasswordHash = ? WHERE UserId = ?", hash, userId);
+    }
+
+    /** Admin listing; keyword matches name/email/phone, blank role/status = no filter. */
+    public List<User> search(String keyword, String role, String status) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT " + COLS + " FROM Users WHERE 1=1");
+        List<Object> args = new ArrayList<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (FullName LIKE ? OR Email LIKE ? OR Phone LIKE ?)");
+            String like = "%" + keyword.replace("[", "[[]").replace("%", "[%]").replace("_", "[_]") + "%";
+            args.add(like);
+            args.add(like);
+            args.add(like);
+        }
+        if (role != null && !role.isEmpty()) {
+            sql.append(" AND Role = ?");
+            args.add(role);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND Status = ?");
+            args.add(status);
+        }
+        sql.append(" ORDER BY CreatedAt DESC");
+        List<User> list = new ArrayList<>();
+        try (Connection c = DBContext.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            for (int i = 0; i < args.size(); i++) {
+                ps.setObject(i + 1, args.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    public void updateRole(int userId, String role) throws SQLException {
+        update("UPDATE Users SET Role = ? WHERE UserId = ?", role, userId);
+    }
+
+    /** Block / unblock only; PENDING (unverified) accounts are left untouched. */
+    public void updateStatus(int userId, String status) throws SQLException {
+        update("UPDATE Users SET Status = ? WHERE UserId = ? AND Status <> 'PENDING'", status, userId);
     }
 
     private void update(String sql, Object... args) throws SQLException {
