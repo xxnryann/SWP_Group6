@@ -229,8 +229,8 @@ public class ManageMovieServlet extends BaseServlet {
         movie.setStatus(calculatedStatus);
         String validationMessage = MovieValidator.validate(movie, id == 0);
         if (validationMessage != null) throw new IllegalArgumentException(validationMessage);
-        Part posterPart = reschedule ? null : request.getPart("posterFile");
-        Part trailerPart = reschedule ? null : request.getPart("trailerFile");
+        Part posterPart = reschedule ? null : optionalPart(request, "posterFile");
+        Part trailerPart = reschedule ? null : optionalPart(request, "trailerFile");
         String posterPath = MediaUploadUtil.store(posterPart, MediaUploadUtil.MediaType.POSTER);
         request.setAttribute("newPoster", posterPath);
         String trailerPath = MediaUploadUtil.store(trailerPart, MediaUploadUtil.MediaType.TRAILER);
@@ -388,6 +388,19 @@ public class ManageMovieServlet extends BaseServlet {
         if (first == null || first.isBlank()) return second == null ? "" : second;
         if (second == null || second.isBlank()) return first;
         return first + " " + second;
+    }
+
+    /** Returns null when the request is not a multipart upload (no file part submitted). */
+    private Part optionalPart(HttpServletRequest request, String name) {
+        String contentType = request.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("multipart/")) {
+            return null;
+        }
+        try {
+            return request.getPart(name);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private boolean isUploadSizeException(Throwable error) {

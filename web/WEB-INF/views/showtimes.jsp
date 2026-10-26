@@ -80,14 +80,15 @@
               <c:if test="${not empty schedule.movie.genres}"><p class="showtime-genres"><c:out value="${schedule.movie.genres}"/></p></c:if>
               <div class="showtime-slots" aria-label="Các giờ chiếu">
                 <c:forEach var="showtime" items="${schedule.showtimes}">
-                  <button class="showtime-slot" type="button" data-showtime-info
-                          data-movie="<c:out value='${schedule.movie.title}'/>"
-                          data-start="<c:out value='${showtime.startTimeOnly}'/>"
-                          data-end="<c:out value='${showtime.endTimeOnly}'/>"
-                          data-room="<c:out value='${showtime.roomName}'/>">
+                  <a class="showtime-slot" href="${ctx}/booking/seats?showtimeId=${showtime.showtimeId}"
+                     data-showtime-info
+                     data-movie="<c:out value='${schedule.movie.title}'/>"
+                     data-start="<c:out value='${showtime.startTimeOnly}'/>"
+                     data-end="<c:out value='${showtime.endTimeOnly}'/>"
+                     data-room="<c:out value='${showtime.roomName}'/>">
                     <c:out value="${showtime.startTimeOnly}"/>–<c:out value="${showtime.endTimeOnly}"/>
                     <span><c:out value="${showtime.roomName}"/></span>
-                  </button>
+                  </a>
                 </c:forEach>
               </div>
             </div>

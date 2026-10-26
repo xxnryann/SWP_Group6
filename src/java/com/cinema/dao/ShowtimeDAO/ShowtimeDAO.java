@@ -112,89 +112,91 @@ public class ShowtimeDAO {
         if (date.isBefore(LocalDate.now())) {
             return List.of();
         }
-        int duration;
-        String movieSql = "SELECT duration_minutes, release_date, end_date, status "
-                + "FROM dbo.Movie WHERE movie_id = ?";
-        String movieStatus;
-        try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement(movieSql)) {
-            statement.setInt(1, movieId);
-            try (ResultSet result = statement.executeQuery()) {
-                if (!result.next()) {
-                    throw new SQLException("Phim được chọn không tồn tại.");
-                }
-                movieStatus = result.getString("status");
-                LocalDate releaseDate = result.getDate("release_date").toLocalDate();
-                java.sql.Date endDate = result.getDate("end_date");
-                if (!"Stopped".equals(movieStatus)
-                        && (date.isBefore(releaseDate)
-                                || (endDate != null && date.isAfter(endDate.toLocalDate())))) {
-                    return List.of();
-                }
-                duration = result.getInt("duration_minutes");
-            }
-        }
-        if (duration <= 0 || duration > 150) {
-            return List.of();
-        }
 
-        String activeRoomSql = "SELECT COUNT(*) FROM dbo.Room WHERE room_name = ? AND status = 'Active'";
-        try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement(activeRoomSql)) {
-            statement.setString(1, roomName);
-            try (ResultSet result = statement.executeQuery()) {
-                result.next();
-                if (result.getInt(1) == 0) {
-                    throw new SQLException("Vui lòng chọn một phòng chiếu đang hoạt động.");
+        // Gom 4 truy vấn (phim + phòng + lịch chiếu cùng ngày) vào MỘT connection
+        // để giảm 4 round-trip xuống 1. Không mở transaction vì chỉ đọc.
+        try (Connection connection = DBContext.getConnection()) {
+            int duration;
+            String movieStatus;
+            String movieSql = "SELECT duration_minutes, release_date, end_date, status "
+                    + "FROM dbo.Movie WHERE movie_id = ?";
+            try (PreparedStatement statement = connection.prepareStatement(movieSql)) {
+                statement.setInt(1, movieId);
+                try (ResultSet result = statement.executeQuery()) {
+                    if (!result.next()) {
+                        throw new SQLException("Phim được chọn không tồn tại.");
+                    }
+                    movieStatus = result.getString("status");
+                    LocalDate releaseDate = result.getDate("release_date").toLocalDate();
+                    java.sql.Date endDate = result.getDate("end_date");
+                    if (!"Stopped".equals(movieStatus)
+                            && (date.isBefore(releaseDate)
+                                    || (endDate != null && date.isAfter(endDate.toLocalDate())))) {
+                        return List.of();
+                    }
+                    duration = result.getInt("duration_minutes");
                 }
             }
-        }
+            if (duration <= 0 || duration > 150) {
+                return List.of();
+            }
 
-        List<LocalDateTime> existingStarts = new ArrayList<>();
-        List<Integer> existingDurations = new ArrayList<>();
-        String existingSql = "SELECT s.starts_at, m.duration_minutes "
-                + "FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id "
-                + "WHERE s.room_name = ? AND s.status = 'Scheduled' "
-                + "AND CAST(s.starts_at AS DATE) = ? "
-                + "AND s.showtime_id <> ?";
-        try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement(existingSql)) {
-            statement.setString(1, roomName);
-            statement.setDate(2, java.sql.Date.valueOf(date));
-            statement.setInt(3, excludedShowtimeId);
-            try (ResultSet result = statement.executeQuery()) {
-                while (result.next()) {
-                    existingStarts.add(result.getTimestamp("starts_at").toLocalDateTime());
-                    existingDurations.add(result.getInt("duration_minutes"));
+            String activeRoomSql = "SELECT COUNT(*) FROM dbo.Room WHERE room_name = ? AND status = 'Active'";
+            try (PreparedStatement statement = connection.prepareStatement(activeRoomSql)) {
+                statement.setString(1, roomName);
+                try (ResultSet result = statement.executeQuery()) {
+                    result.next();
+                    if (result.getInt(1) == 0) {
+                        throw new SQLException("Vui lòng chọn một phòng chiếu đang hoạt động.");
+                    }
                 }
             }
-        }
 
-        LocalDateTime now = LocalDateTime.now();
-        List<LocalTime> available = new ArrayList<>();
-        for (int slotIndex = 0; slotIndex < FIXED_STARTS.size(); slotIndex++) {
-            LocalTime candidate = FIXED_STARTS.get(slotIndex);
-            LocalDateTime start = date.atTime(candidate);
-            LocalDateTime end = start.plusMinutes(duration);
-            if (end.isAfter(date.atTime(FIXED_ENDS.get(slotIndex)))
-                    || (date.equals(now.toLocalDate()) && !start.isAfter(now))) {
-                continue;
-            }
-            boolean roomAvailable = true;
-            for (int i = 0; i < existingStarts.size(); i++) {
-                LocalDateTime existingStart = existingStarts.get(i);
-                LocalDateTime existingEnd = existingStart.plusMinutes(existingDurations.get(i));
-                if (start.isBefore(existingEnd.plusMinutes(ROOM_TURNOVER_MINUTES))
-                        && end.plusMinutes(ROOM_TURNOVER_MINUTES).isAfter(existingStart)) {
-                    roomAvailable = false;
-                    break;
+            List<LocalDateTime> existingStarts = new ArrayList<>();
+            List<Integer> existingDurations = new ArrayList<>();
+            String existingSql = "SELECT s.starts_at, m.duration_minutes "
+                    + "FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id "
+                    + "WHERE s.room_name = ? AND s.status = 'Scheduled' "
+                    + "AND CAST(s.starts_at AS DATE) = ? "
+                    + "AND s.showtime_id <> ?";
+            try (PreparedStatement statement = connection.prepareStatement(existingSql)) {
+                statement.setString(1, roomName);
+                statement.setDate(2, java.sql.Date.valueOf(date));
+                statement.setInt(3, excludedShowtimeId);
+                try (ResultSet result = statement.executeQuery()) {
+                    while (result.next()) {
+                        existingStarts.add(result.getTimestamp("starts_at").toLocalDateTime());
+                        existingDurations.add(result.getInt("duration_minutes"));
+                    }
                 }
             }
-            if (roomAvailable) {
-                available.add(candidate);
+
+            LocalDateTime now = LocalDateTime.now();
+            List<LocalTime> available = new ArrayList<>();
+            for (int slotIndex = 0; slotIndex < FIXED_STARTS.size(); slotIndex++) {
+                LocalTime candidate = FIXED_STARTS.get(slotIndex);
+                LocalDateTime start = date.atTime(candidate);
+                LocalDateTime end = start.plusMinutes(duration);
+                if (end.isAfter(date.atTime(FIXED_ENDS.get(slotIndex)))
+                        || (date.equals(now.toLocalDate()) && !start.isAfter(now))) {
+                    continue;
+                }
+                boolean roomAvailable = true;
+                for (int i = 0; i < existingStarts.size(); i++) {
+                    LocalDateTime existingStart = existingStarts.get(i);
+                    LocalDateTime existingEnd = existingStart.plusMinutes(existingDurations.get(i));
+                    if (start.isBefore(existingEnd.plusMinutes(ROOM_TURNOVER_MINUTES))
+                            && end.plusMinutes(ROOM_TURNOVER_MINUTES).isAfter(existingStart)) {
+                        roomAvailable = false;
+                        break;
+                    }
+                }
+                if (roomAvailable) {
+                    available.add(candidate);
+                }
             }
+            return available;
         }
-        return available;
     }
 
     public void save(Showtime showtime) throws SQLException {
@@ -247,6 +249,17 @@ public class ShowtimeDAO {
     }
 
     public void delete(int id) throws SQLException {
+        String bookingSql = "SELECT COUNT(*) FROM dbo.Booking WHERE showtime_id = ?";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(bookingSql)) {
+            statement.setInt(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next() && result.getInt(1) > 0) {
+                    throw new SQLException("Suất chiếu đã có đơn đặt vé nên không thể xóa. "
+                            + "Hãy ngừng chiếu phim hoặc chuyển suất chiếu sang trạng thái kết thúc.");
+                }
+            }
+        }
         String sql = "DELETE FROM dbo.Showtime WHERE showtime_id = ?";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {

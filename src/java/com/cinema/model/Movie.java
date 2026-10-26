@@ -3,7 +3,6 @@ package com.cinema.model;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Movie {

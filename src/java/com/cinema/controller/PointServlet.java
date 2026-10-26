@@ -28,7 +28,7 @@ public class PointServlet extends BaseServlet {
             }
             req.getSession().setAttribute(SESSION_USER, sessionCopy(fresh)); // keep sidebar balance current
             req.setAttribute("points", fresh.getMyPoint());
-            req.setAttribute("history", ticketDao.findPointHistory(id));
+            req.setAttribute("history", ticketDao.findPointHistory(fresh.getEmail()));
             forward(req, resp, "points");
         } catch (SQLException e) {
             throw new ServletException(e);

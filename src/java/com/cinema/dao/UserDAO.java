@@ -18,7 +18,12 @@ public class UserDAO {
 
     private static final String COLS = "UserId, FullName, Email, Phone, PasswordHash, DateOfBirth, Gender, "
             + "Role, Status, OtpHash, OtpExpiry, OtpAttempts, "
-            + "(SELECT COALESCE(SUM(points), 0) FROM MyPointTransaction WHERE customer_id = Users.UserId) AS MyPoint";
+            // MyPoint nằm ở hệ thống nghiệp vụ (Customer.my_point_balance) và được
+            // định danh bằng Account.account_id — KHÔNG phải Users.UserId.
+            // Vì vậy phải resolve qua email thay vì giả định hai id bằng nhau.
+            + "(SELECT COALESCE(c.my_point_balance, 0) FROM Customer c "
+            + " JOIN Account a ON a.account_id = c.customer_id "
+            + " WHERE a.email = Users.Email) AS MyPoint";
 
     private User map(ResultSet rs) throws SQLException {
         User u = new User();
@@ -63,10 +68,6 @@ public class UserDAO {
     /** Login identifier: email or phone. */
     public User findByIdentifier(String identifier) throws SQLException {
         return findOne("Email = ? OR Phone = ?", identifier, identifier);
-    }
-
-    public boolean emailExists(String email, int excludeId) throws SQLException {
-        return exists("Email = ? AND UserId <> ?", email, excludeId);
     }
 
     public boolean phoneExists(String phone, int excludeId) throws SQLException {
