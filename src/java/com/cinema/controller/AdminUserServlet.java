@@ -25,8 +25,10 @@ public class AdminUserServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
         String q = Validator.trim(req.getParameter("q"));
-        String role = ROLES.contains(req.getParameter("role")) ? req.getParameter("role") : "";
-        String status = STATUSES.contains(req.getParameter("status")) ? req.getParameter("status") : "";
+        String roleParam = req.getParameter("role");
+        String statusParam = req.getParameter("status");
+        String role = roleParam != null && ROLES.contains(roleParam) ? roleParam : "";
+        String status = statusParam != null && STATUSES.contains(statusParam) ? statusParam : "";
         try {
             req.setAttribute("users", dao.search(q, role, status));
             req.setAttribute("q", q);

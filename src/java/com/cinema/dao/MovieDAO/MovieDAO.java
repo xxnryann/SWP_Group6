@@ -14,11 +14,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MovieDAO {
+    /**
+     * Trang kết quả phim + thông tin phân trang.
+     *
+     * <p>EL của JSP chỉ nhận accessor theo quy ước JavaBean
+     * ({@code getX()}/{@code isX()}), <b>không</b> nhận accessor kiểu record
+     * ({@code x()}). Vì vậy các getter dưới đây là bắt buộc để
+     * {@code ${moviePage.totalPages}} hoạt động trong JSP.</p>
+     */
     public record MoviePage(List<Movie> movies, int page, int totalPages, int totalItems) {
-        public List<Movie> getMovies() {
-            return movies;
-        }
-
         public int getPage() {
             return page;
         }

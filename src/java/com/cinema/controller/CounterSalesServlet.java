@@ -2,7 +2,6 @@ package com.cinema.controller;
 
 import com.cinema.dao.CounterSaleDAO;
 import com.cinema.model.BookingSummary;
-import com.cinema.model.Combo;
 import com.cinema.model.SeatCell;
 import com.cinema.model.ShowtimeInfo;
 import com.cinema.model.User;

@@ -67,11 +67,6 @@ public final class RoomRules {
             this.seatTypeId = seatTypeId;
             this.couple = couple;
         }
-
-        /** Số ghế còn lại của cặp trong cùng hàng; null nếu không phải ghế đôi. */
-        public Integer partnerNumber() {
-            return couple ? (seatNumber % 2 == 1 ? seatNumber + 1 : seatNumber - 1) : null;
-        }
     }
 
     /** Nhãn hàng: 0 → A, 1 → B, ... */

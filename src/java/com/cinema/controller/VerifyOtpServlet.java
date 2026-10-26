@@ -1,5 +1,6 @@
 package com.cinema.controller;
 
+import com.cinema.dao.AccountDAO;
 import com.cinema.dao.UserDAO;
 import com.cinema.model.User;
 import com.cinema.util.AppConfig;
@@ -22,6 +23,7 @@ public class VerifyOtpServlet extends BaseServlet {
 
     private static final int RESEND_COOLDOWN_SECONDS = 60;
     private final UserDAO dao = new UserDAO();
+    private final AccountDAO accountDAO = new AccountDAO();
 
     private String pendingEmail(HttpServletRequest req) {
         var s = req.getSession(false);
@@ -104,8 +106,27 @@ public class VerifyOtpServlet extends BaseServlet {
             return;
         }
         dao.activate(u.getUserId());
+        ensureBusinessAccount(u);
         req.getSession().removeAttribute("pendingEmail");
         flash(req, "success", "Xác thực thành công. Hãy đăng nhập.");
         resp.sendRedirect(req.getContextPath() + "/login");
+    }
+
+    /**
+     * Cấp phát {@code Account} + {@code Customer} trong hệ thống nghiệp vụ cho
+     * khách vừa xác thực.
+     *
+     * <p>Luồng đặt vé (Booking/Ticket/MyPoint) dùng {@code Account.account_id}
+     * chứ không phải {@code Users.UserId}, nên khách phải có bản ghi
+     * {@code Account} tương ứng thì mới đặt vé được. Lỗi ở đây không được
+     * làm hỏng luồng đăng nhập — chỉ ghi log để xử lý sau.</p>
+     */
+    private void ensureBusinessAccount(User u) {
+        try {
+            accountDAO.ensureCustomerAccount(u.getEmail(), u.getFullName(),
+                    u.getPhone(), u.getPasswordHash());
+        } catch (RuntimeException e) {
+            getServletContext().log("Không tạo được Account/Customer cho " + u.getEmail(), e);
+        }
     }
 }
