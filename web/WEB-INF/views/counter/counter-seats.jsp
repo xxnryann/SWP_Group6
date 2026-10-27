@@ -18,6 +18,8 @@
              background:#fff; border:1px solid var(--slate-200); border-radius:16px; box-shadow:var(--shadow);
              padding:28px 16px 24px; overflow-x:auto; }
   .seat-row { display:flex; gap:6px; align-items:center; }
+  .uip-aisle { flex: 0 0 30px; align-self: stretch;
+               background: linear-gradient(90deg, transparent calc(50% - 1px), var(--slate-200) calc(50% - 1px), var(--slate-200) calc(50% + 1px), transparent calc(50% + 1px)); }
   .row-label { width:24px; font-weight:800; text-align:center; color:var(--slate-500); font-size:13px; }
   .seat { width:42px; height:38px; border-radius:10px 10px 4px 4px; border:2px solid var(--slate-300);
           cursor:pointer; font: 700 11.5px var(--font); background:#fff; color:var(--slate-700);
@@ -83,6 +85,7 @@
                       data-id="${s.seatId}" data-pair="${s.pairSeatId}"
                       ${s.available ? '' : 'disabled="disabled"'}
                       onclick="toggleSeat(this)">${s.seatNumber}</button>
+              <c:if test="${s.seatNumber == 5}"><span class="uip-aisle"></span></c:if>
             </c:forEach>
           </div>
         </c:forEach>
