@@ -61,6 +61,8 @@ Users/Account cho tai khoan moi. Chua xac nhan script tren SQL Server thuc te.
 USE [master]
 GO
 /****** Object:  Database [CinemaDB]    Script Date: 21/10/2026 4:16:22 CH ******/
+-- On another machine, update the MDF/LDF paths to that SQL Server data directory.
+-- Alternatively, create an empty CinemaDB first, skip CREATE DATABASE, and run the remaining script.
 CREATE DATABASE [CinemaDB]
  CONTAINMENT = NONE
  ON  PRIMARY 

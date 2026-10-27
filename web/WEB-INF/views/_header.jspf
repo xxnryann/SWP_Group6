@@ -70,7 +70,7 @@
       <a href="#">Cụm Rạp</a>
       <a href="#">Giá Vé</a>
       <a href="#">Khuyến Mãi</a>
-      <a href="#">Tin Tức</a>
+      <a href="${ctx}/news">Tin Tức</a>
       <div class="dropdown">
         <button type="button" aria-haspopup="true" aria-expanded="false">Khác ▾</button>
         <div class="dropdown-menu">
@@ -105,7 +105,7 @@
   </label>
   <%-- Movie module navigation additions; the existing News link remains unchanged. --%>
   <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a><a href="#">Cụm Rạp</a>
-  <a href="#">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="#">Tin Tức</a><a href="#">Khác</a>
+  <a href="#">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="${ctx}/news">Tin Tức</a><a href="#">Khác</a>
   <c:choose>
     <c:when test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:when>
     <c:otherwise><a href="${ctx}/login">Đăng nhập</a><a href="${ctx}/register">Đăng ký</a></c:otherwise>
