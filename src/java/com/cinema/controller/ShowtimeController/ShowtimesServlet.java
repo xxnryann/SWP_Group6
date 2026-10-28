@@ -31,7 +31,7 @@ public class ShowtimesServlet extends BaseServlet {
             LocalDate selectedDate = dateValue == null || dateValue.isBlank()
                     ? LocalDate.now() : LocalDate.parse(dateValue);
             request.setAttribute("selectedDate", selectedDate);
-            request.setAttribute("showtimes", showtimeDAO.findForDate(selectedDate));
+            request.setAttribute("showtimeGroups", showtimeDAO.findForDate(selectedDate));
             request.setAttribute("previousDate", selectedDate.minusDays(1));
             request.setAttribute("nextDate", selectedDate.plusDays(1));
             request.setAttribute("pageTitle", "Lịch chiếu");

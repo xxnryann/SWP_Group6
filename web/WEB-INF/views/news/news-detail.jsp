@@ -19,7 +19,7 @@
         <h1><c:out value="${news.title}"/></h1>
         <p class="uip-meta"><span>✍ Tác giả: <strong><c:out value="${news.authorName}"/></strong></span><span>·</span><span>🕒 ${news.createdAtLabel}</span></p>
         <c:if test="${not empty news.thumbnailUrl}">
-          <img class="uip-hero-img" src="<c:out value='${news.thumbnailUrl}'/>" alt="<c:out value='${news.title}'/>">
+          <img class="uip-hero-img" src="${news.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${news.thumbnailUrl}'/>" alt="<c:out value='${news.title}'/>">
         </c:if>
         <div class="uip-content"><c:out value="${news.content}"/></div>
       </article>
@@ -28,3 +28,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

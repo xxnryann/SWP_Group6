@@ -54,7 +54,7 @@
         <article class="uip-feat">
           <div class="uip-img">
             <c:choose>
-              <c:when test="${not empty n.thumbnailUrl}"><img src="<c:out value='${n.thumbnailUrl}'/>" alt="<c:out value='${n.title}'/>"></c:when>
+              <c:when test="${not empty n.thumbnailUrl}"><img src="${n.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${n.thumbnailUrl}'/>" alt="<c:out value='${n.title}'/>"></c:when>
               <c:otherwise>🎬</c:otherwise>
             </c:choose>
           </div>
@@ -73,7 +73,7 @@
           <article class="uip-ncard">
             <div class="uip-img">
               <c:choose>
-                <c:when test="${not empty n.thumbnailUrl}"><img src="<c:out value='${n.thumbnailUrl}'/>" alt="<c:out value='${n.title}'/>"></c:when>
+                <c:when test="${not empty n.thumbnailUrl}"><img src="${n.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${n.thumbnailUrl}'/>" alt="<c:out value='${n.title}'/>"></c:when>
                 <c:otherwise>🎬</c:otherwise>
               </c:choose>
             </div>
@@ -90,3 +90,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

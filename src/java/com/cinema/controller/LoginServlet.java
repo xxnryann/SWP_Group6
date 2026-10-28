@@ -2,6 +2,7 @@ package com.cinema.controller;
 
 import com.cinema.dao.UserDAO;
 import com.cinema.model.User;
+import com.cinema.util.RoleDashboard;
 import com.cinema.util.SecurityUtil;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
@@ -29,8 +30,9 @@ public class LoginServlet extends BaseServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (currentUser(req) != null) {
-            resp.sendRedirect(req.getContextPath() + "/home");
+        User current = currentUser(req);
+        if (current != null) {
+            resp.sendRedirect(req.getContextPath() + RoleDashboard.pathFor(current.getRole()));
             return;
         }
         forward(req, resp, "login");
@@ -83,8 +85,10 @@ public class LoginServlet extends BaseServlet {
             session.setAttribute(SESSION_USER, sessionCopy(u));
             String next = (String) session.getAttribute("afterLogin");
             session.removeAttribute("afterLogin");
-            if (next == null || !next.startsWith("/account/")) {
-                next = "/home";
+            // Deep-link hợp lệ (vd /account/tickets) vẫn được tôn trọng;
+            // còn lại điều hướng tới dashboard của đúng vai trò.
+            if (!RoleDashboard.isAllowedForRole(u.getRole(), next)) {
+                next = RoleDashboard.pathFor(u.getRole());
             }
             resp.sendRedirect(req.getContextPath() + next);
         } catch (SQLException e) {

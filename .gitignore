@@ -1,4 +1,29 @@
+# ---- Build output (biên dịch javac + copy web sang Tomcat) ----
 /web/WEB-INF/classes/
-src/java/app.properties
-.idea/
+/build/
+/dist/
+
+# ---- Media upload runtime (app tạo file lúc chạy) ----
+/media/
+
+# ---- IDE: cấu hình riêng của máy ----
+# .idea/ giữ lại cấu hình chung project (iml, compiler, misc...)
+# nhưng datasource cache là private nên không đồng bộ lên máy khác.
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/dataSources.xml
+.idea/data_sources_history.xml
+.idea/workspace.xml
+.idea/shelf/
+.idea/mavenHomeManager.xml
 nbproject/private/
+.smarttomcat/
+
+# ---- OS / editor ----
+Thumbs.db
+.DS_Store
+*.swp
+*~
+
+# ---- WAR / JAR sinh ra ----
+*.war

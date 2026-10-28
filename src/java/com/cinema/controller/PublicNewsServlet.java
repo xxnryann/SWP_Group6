@@ -25,7 +25,7 @@ public class PublicNewsServlet extends BaseServlet {
         try {
             String idStr = req.getParameter("id");
             if (idStr != null && !idStr.isEmpty()) {
-                News n = dao.findById(Integer.parseInt(idStr));
+                News n = dao.findById(safeId(idStr));
                 if (n == null || !n.isPublished()) {
                     resp.sendError(HttpServletResponse.SC_NOT_FOUND);
                     return;

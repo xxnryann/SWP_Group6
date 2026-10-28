@@ -3,7 +3,6 @@ package com.cinema.model;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Movie {
@@ -27,8 +26,6 @@ public class Movie {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private int createdBy;
-    private String createdByName;
     private String genres;
     private String genreIds;
 
@@ -68,10 +65,6 @@ public class Movie {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    public int getCreatedBy() { return createdBy; }
-    public void setCreatedBy(int createdBy) { this.createdBy = createdBy; }
-    public String getCreatedByName() { return createdByName; }
-    public void setCreatedByName(String createdByName) { this.createdByName = createdByName; }
     public String getGenres() { return genres; }
     public void setGenres(String genres) { this.genres = genres; }
     public String getGenreIds() { return genreIds; }
@@ -129,6 +122,7 @@ public class Movie {
     }
 
     private static boolean isHttpUrl(String value) {
+        if (value == null || value.isBlank()) return false;
         try {
             URI uri = URI.create(value);
             return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))

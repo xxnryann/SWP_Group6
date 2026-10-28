@@ -49,8 +49,6 @@
           <dt>Ngày kết thúc</dt><dd><c:out value="${movie.endDate}"/></dd>
           <dt>Phân loại tuổi</dt><dd><c:out value="${movie.ageRating}"/></dd>
           <dt>Trạng thái</dt><dd><c:out value="${movie.status}"/></dd>
-          <dt>Mã người tạo</dt><dd><c:out value="${movie.createdBy}"/></dd>
-          <dt>Tạo bởi</dt><dd><c:out value="${movie.createdByName}"/></dd>
           <dt>Ngày tạo</dt><dd><c:out value="${movie.createdAt}"/></dd>
           <dt>Cập nhật</dt><dd><c:out value="${movie.updatedAt}"/></dd>
           <dt>URL trailer</dt><dd><c:out value="${movie.trailerUrl}"/></dd>
@@ -86,11 +84,63 @@
         <c:otherwise><p>Chưa có trailer</p></c:otherwise>
       </c:choose>
     </section>
+    <section class="movie-reviews">
+      <h2>Đánh giá từ khán giả
+        <c:if test="${reviewStats.review_count > 0}">
+          <span class="review-avg">★ <c:out value="${reviewStats.avg_rating}"/>/5 · <c:out value="${reviewStats.review_count}"/> lượt</span>
+        </c:if>
+      </h2>
+
+      <c:if test="${canReview}">
+        <form method="post" action="${ctx}/movies/review" class="review-form">
+          <input type="hidden" name="_csrf" value="${csrf}">
+          <input type="hidden" name="movieId" value="${movie.movieId}">
+          <div class="field">
+            <label for="rating">SỐ SAO</label>
+            <select id="rating" name="rating" required>
+              <option value="">-- Chọn --</option>
+              <option value="5">5 — Rất hay</option><option value="4">4 — Hay</option>
+              <option value="3">3 — Bình thường</option><option value="2">2 — Tệ</option><option value="1">1 — Rất tệ</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="comment">NHẬN XÉT (TUỲ CHỌN)</label>
+            <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Chia sẻ cảm nhận của bạn về bộ phim..."></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit">Gửi đánh giá</button>
+        </form>
+      </c:if>
+      <c:if test="${hasReviewed}"><p class="alert alert-info">Bạn đã đánh giá phim này.</p></c:if>
+      <c:if test="${not canReview and not hasReviewed and sessionScope.authUser.role == 'CUSTOMER'}">
+        <p class="review-note">Bạn có thể đánh giá sau khi xem phim (vé đã được soát tại rạp).</p>
+      </c:if>
+
+      <c:choose>
+        <c:when test="${empty reviews}"><p class="review-note">Chưa có đánh giá nào.</p></c:when>
+        <c:otherwise>
+          <ul class="review-list">
+            <c:forEach var="r" items="${reviews}">
+              <li>
+                <div class="review-head">
+                  <strong><c:out value="${r.reviewer_name}"/></strong>
+                  <span class="review-stars"><c:forEach begin="1" end="${r.rating}">★</c:forEach><c:forEach begin="${r.rating + 1}" end="5">☆</c:forEach></span>
+                  <span class="review-date"><c:out value="${r.created_at}"/></span>
+                </div>
+                <c:if test="${not empty r.comment}"><p><c:out value="${r.comment}"/></p></c:if>
+              </li>
+            </c:forEach>
+          </ul>
+        </c:otherwise>
+      </c:choose>
+    </section>
     <div class="movie-detail-actions">
       <a class="btn btn-outline" href="${ctx}/movies">Quay lại danh sách</a>
-      <c:if test="${isManager}"><a class="btn btn-primary" href="${escapedEditUrl}">Sửa phim</a></c:if>
+      <c:if test="${canManageMovies}"><a class="btn btn-primary" href="${escapedEditUrl}">Sửa phim</a></c:if>
     </div>
   </article>
 </main>
 
 <%@ include file="_footer.jspf" %>
+
+
+

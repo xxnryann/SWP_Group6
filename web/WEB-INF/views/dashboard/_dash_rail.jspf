@@ -1,0 +1,53 @@
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Menu dọc theo vai trò (được include từ _header.jspf khi railModule = true). --%>
+<c:set var="railRole" value="${sessionScope.authUser.role}"/>
+<aside class="dash-rail" id="dashRail">
+  <a class="rail-brand" href="${ctx}/home"><b>Cine</b>Star</a>
+  <div class="rail-member">
+    <h3><c:out value="${sessionScope.authUser.fullName}"/></h3>
+    <div class="meta"><c:out value="${sessionScope.authUser.email}"/></div>
+    <span class="dash-role-badge"><c:out value="${railRole}"/></span>
+  </div>
+  <nav class="rail-nav">
+    <c:choose>
+      <c:when test="${railRole == 'ADMIN'}">
+        <a href="${ctx}/dashboard/admin">Tổng quan</a>
+        <a href="${ctx}/admin/users">Người dùng</a>
+        <a href="${ctx}/admin/rooms">Phòng chiếu</a>
+      </c:when>
+      <c:when test="${railRole == 'MANAGER'}">
+        <a href="${ctx}/dashboard/manager">Tổng quan</a>
+        <a href="${ctx}/manage/movies">Quản lý phim</a>
+        <a href="${ctx}/manage/showtimes">Lịch chiếu</a>
+        <a href="${ctx}/manager/news">Quản lý tin tức</a>
+        <a href="${ctx}/manager/vouchers">Voucher</a>
+        <a href="${ctx}/manager/prices">Giá vé</a>
+        <a href="${ctx}/manager/mypoint">Cấu hình MyPoint</a>
+      </c:when>
+      <c:when test="${railRole == 'STAFF'}">
+        <a href="${ctx}/dashboard/staff">Tổng quan</a>
+        <a href="${ctx}/staff/counter">Bán vé tại quầy</a>
+        <a href="${ctx}/staff/combo">Quản lý combo</a>
+        <a href="${ctx}/staff/checkin">Soát vé</a>
+        <a href="${ctx}/staff/seat-change">Đổi ghế</a>
+        <a href="${ctx}/staff/emails">Hộp thư đi</a>
+      </c:when>
+      <c:otherwise>
+        <a href="${ctx}/dashboard/customer">Tổng quan</a>
+        <a href="${ctx}/showtimes">Lịch chiếu</a>
+        <a href="${ctx}/movies">Danh sách phim</a>
+        <a href="${ctx}/account/tickets">Lịch sử vé</a>
+        <a href="${ctx}/account/points">Điểm MyPoint</a>
+        <a href="${ctx}/account/profile">Thông tin cá nhân</a>
+        <a href="${ctx}/account/password">Đổi mật khẩu</a>
+        <a href="${ctx}/news">Tin tức</a>
+      </c:otherwise>
+    </c:choose>
+  </nav>
+  <div class="rail-foot">
+    <form method="post" action="${ctx}/logout">
+      <input type="hidden" name="_csrf" value="${csrf}">
+      <button class="btn-link" type="submit">Đăng xuất</button>
+    </form>
+  </div>
+</aside>

@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Lịch chiếu"/>
 <%@ include file="_header.jspf" %>
 
@@ -19,42 +18,57 @@
   <form class="panel showtime-filters" method="get" action="${ctx}/showtimes">
     <div class="field">
       <label for="showtime-date">Ngày chiếu</label>
-      <input id="showtime-date" name="date" type="date" value="<c:out value='${selectedDate}'/>" required>
+      <input id="showtime-date" type="date" name="date" value="<c:out value='${selectedDate}'/>">
     </div>
-    <button class="btn btn-primary" type="submit">Xem lịch</button>
+    <button class="btn btn-cta" type="submit">Xem lịch</button>
   </form>
 
-  <nav class="showtime-day-nav" aria-label="Chọn ngày">
-    <c:url var="previousUrl" value="/showtimes"><c:param name="date" value="${previousDate}"/></c:url>
-    <c:url var="nextUrl" value="/showtimes"><c:param name="date" value="${nextDate}"/></c:url>
-    <a class="btn btn-outline" href="<c:out value='${previousUrl}'/>">Ngày trước</a>
-    <strong><c:out value="${selectedDate}"/></strong>
-    <a class="btn btn-outline" href="<c:out value='${nextUrl}'/>">Ngày sau</a>
-  </nav>
-
   <c:choose>
-    <c:when test="${empty showtimes}">
-      <div class="panel movie-empty">
-        <h2>Chưa có suất chiếu</h2>
-        <p>Không tìm thấy lịch chiếu cho ngày đã chọn.</p>
+    <c:when test="${empty showtimeGroups}">
+      <div class="movie-list-empty">
+        <p>Không có suất chiếu nào cho ngày này.</p>
       </div>
     </c:when>
     <c:otherwise>
-      <div class="showtime-list">
-        <c:forEach var="showtime" items="${showtimes}">
-          <article class="panel showtime-card">
-            <div class="showtime-time">
-              <strong><c:out value="${showtime.startTimeOnly}"/></strong>
-              <span>Kết thúc khoảng <c:out value="${showtime.endTimeOnly}"/></span>
+      <div class="movie-list">
+        <c:forEach var="group" items="${showtimeGroups}">
+          <article class="movie-card">
+            <div class="movie-card-poster">
+              <c:choose>
+                <c:when test="${not empty group.movie.posterDisplayUrl}">
+                  <img src="${group.movie.uploadedPoster ? ctx : ''}${group.movie.posterDisplayUrl}" alt="Poster phim ${group.movie.title}" loading="lazy">
+                </c:when>
+                <c:otherwise>
+                  <div class="poster-placeholder">Chưa có poster</div>
+                </c:otherwise>
+              </c:choose>
             </div>
-            <div class="showtime-info">
-              <h2><c:out value="${showtime.movieTitle}"/></h2>
-              <p>Phòng <c:out value="${showtime.roomName}"/></p>
-              <p><c:out value="${showtime.movieDurationMinutes}"/> phút</p>
-            </div>
-            <div class="showtime-price">
-              <strong><fmt:formatNumber value="${showtime.ticketPrice}" type="number" maxFractionDigits="0"/> đ</strong>
-              <span>Giá vé từ</span>
+            <div class="movie-card-content">
+              <h3><c:out value="${group.movie.title}"/></h3>
+              <p class="meta">
+                <c:if test="${not empty group.movie.genres}"><c:out value="${group.movie.genres}"/> · </c:if>
+                <c:out value="${group.movie.durationMinutes}"/> phút
+              </p>
+              <p class="rating">
+                <strong><c:out value="${group.movie.ageRating}"/></strong>
+              </p>
+              <div class="showtimes-list">
+                <c:forEach var="showtime" items="${group.showtimes}">
+                  <c:choose>
+                    <c:when test="${empty sessionScope.authUser or sessionScope.authUser.role == 'CUSTOMER'}">
+                      <c:url var="bookingUrl" value="/booking/seats">
+                        <c:param name="showtimeId" value="${showtime.showtimeId}"/>
+                      </c:url>
+                      <a class="showtime-btn" href="${bookingUrl}" data-start="<c:out value='${showtime.startTimeOnly}'/>">
+                        <c:out value="${showtime.startTimeOnly}"/>
+                      </a>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="showtime-btn"><c:out value="${showtime.startTimeOnly}"/></span>
+                    </c:otherwise>
+                  </c:choose>
+                </c:forEach>
+              </div>
             </div>
           </article>
         </c:forEach>

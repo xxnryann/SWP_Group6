@@ -41,6 +41,83 @@ h1 { font-size: 36px; } h2 { font-size: 24px; } h3 { font-size: 18px; }
 .lang-switch button { background: none; border: 0; color: var(--slate-300); padding: 2px 9px; font: 600 12px var(--font); cursor: pointer; }
 .lang-switch button.active { background: var(--brand); color: #fff; }
 
+/* ---------- trang nội bộ theo vai trò ----------
+   Các trang admin/manager/staff/customer dùng sidebar riêng nên bỏ thanh nav
+   công khai (logo + Lịch Chiếu · Phim · Giá Vé · Khác · MUA VÉ NHANH).
+   Thanh topbar được thu gọn lại chỉ còn logo + thông tin tài khoản. */
+.topbar-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: #fff !important; }
+.topbar-brand b { color: var(--accent); }
+.topbar-brand svg { flex: none; }
+body.role-page .topbar { position: sticky; top: 0; z-index: 60; }
+body.role-page .topbar-left > span,
+body.role-page .topbar-left > a:not(.topbar-brand) { display: none; }
+body.role-page .dash-side { top: 58px; }
+body.role-page .page { padding-top: 28px; }
+
+/* ---------- RAIL: menu dọc cố định bên trái ----------
+   Khi đã đăng nhập, menu dọc hiện ở MỌI trang (render 1 lần trong _header.jspf)
+   nên điều hướng sang trang khác vẫn giữ nguyên menu, không bị mất.
+   Rail là fixed: nội dung trang được đẩy sang phải bằng padding-left. */
+body.has-rail { padding-left: 260px; }
+/* margin-left âm + padding-left bù: nền header vẫn trải hết bề ngang,
+   còn nội dung bên trong thẳng hàng với phần nội dung chính của trang. */
+body.has-rail .site-header,
+body.has-rail .topbar,
+body.has-rail .breadcrumb { margin-left: -260px; padding-left: 260px; }
+
+.dash-rail {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 260px; z-index: 70;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, var(--navy), #111c33);
+  color: var(--slate-300); overflow-y: auto;
+}
+.dash-rail .rail-brand {
+  display: flex; align-items: center; gap: 9px; padding: 18px 20px;
+  color: #fff; font-weight: 800; font-size: 18px; letter-spacing: -.01em;
+}
+.dash-rail .rail-brand:hover { color: #fff; }
+.dash-rail .rail-brand b { color: var(--accent); }
+.dash-rail .rail-brand svg { flex: none; }
+
+.dash-rail .rail-member { padding: 4px 20px 18px; border-bottom: 1px solid rgba(148,163,184,.22); }
+.dash-rail .rail-member h3 { color: #fff; font-size: 15px; margin: 8px 0 2px; }
+.dash-rail .rail-member .meta { color: var(--slate-400); font-size: 12px; word-break: break-all; }
+.dash-rail .dash-role-badge { background: rgba(255,255,255,.14); color: #fff; }
+
+.dash-rail .rail-nav { flex: 1; padding: 12px 12px 20px; display: flex; flex-direction: column; gap: 2px; }
+.dash-rail .rail-nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 9px;
+  color: var(--slate-300); font-size: 14px; font-weight: 600;
+}
+.dash-rail .rail-nav a svg { width: 17px; height: 17px; flex: none; }
+.dash-rail .rail-nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+.dash-rail .rail-nav a.active { background: var(--brand); color: #fff; }
+.dash-rail .dash-side-group {
+  margin: 14px 10px 5px; font-size: 10.5px; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--slate-500);
+}
+
+.dash-rail .rail-foot { padding: 14px 20px 20px; border-top: 1px solid rgba(148,163,184,.22); }
+.dash-rail .rail-foot form { display: inline; }
+.dash-rail .rail-foot .btn-link { color: var(--slate-300); font: 600 13px var(--font); background: none; border: 0; cursor: pointer; padding: 0; }
+.dash-rail .rail-foot .btn-link:hover { color: #fff; }
+.dash-rail .rail-home {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  color: var(--slate-300); font-size: 13px; font-weight: 600;
+}
+.dash-rail .rail-home svg { width: 16px; height: 16px; flex: none; }
+.dash-rail .rail-home:hover { color: #fff; }
+
+/* Nút mở/đóng rail (chỉ hiện trên màn hình hẹp). */
+.rail-toggle {
+  display: none; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(148,163,184,.3);
+  color: #fff; cursor: pointer; padding: 0;
+}
+.rail-toggle:hover { background: rgba(255,255,255,.18); }
+
 /* ---------- sticky header ---------- */
 .site-header { background: #fff; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 0 var(--slate-200); }
 .site-header .container { display: flex; align-items: center; gap: 22px; min-height: 68px; }
@@ -48,11 +125,6 @@ h1 { font-size: 36px; } h2 { font-size: 24px; } h3 { font-size: 18px; }
 .logo:hover { color: var(--navy); }
 .logo svg { flex: none; }
 .logo b { color: var(--brand); font-weight: 800; }
-.cinema-pick { display: flex; flex-direction: column; font-size: 11px; color: var(--slate-500); }
-.cinema-pick select {
-  border: 1px solid var(--slate-300); border-radius: 8px; padding: 5px 8px; font: 600 13px var(--font);
-  color: var(--navy); background: #fff; max-width: 190px; cursor: pointer;
-}
 .main-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .main-nav > a, .dropdown > button {
   padding: 8px 12px; border-radius: 8px; color: var(--slate-700); font: 600 14px var(--font);
@@ -169,6 +241,8 @@ main { flex: 1; }
 .otp-input { text-align: center; letter-spacing: .6em; font-size: 24px !important; font-weight: 700; }
 
 .account-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+/* Đã đăng nhập: menu dọc đã nằm ở rail fixed bên trái -> bỏ cột sidebar cũ. */
+body.has-rail .account-grid { grid-template-columns: 1fr; }
 .member-card { background: linear-gradient(135deg, var(--brand), var(--navy)); color: #fff; border-radius: 14px; padding: 24px; }
 .member-card .tier { color: var(--accent); letter-spacing: .12em; font-size: 12px; text-transform: uppercase; font-weight: 700; }
 .member-card h3 { color: #fff; margin: 8px 0 2px; }
@@ -217,7 +291,7 @@ table.data td { padding: 12px 14px; border-top: 1px solid var(--slate-100); }
 
 /* ---------- footer ---------- */
 .site-footer { background: var(--navy); color: var(--slate-400); font-size: 14px; margin-top: auto; }
-.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 32px; padding: 48px 0 32px; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; padding: 48px 0 32px; }
 .site-footer h4 { color: #fff; font-size: 14px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
 .site-footer ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .site-footer a { color: var(--slate-400); }
@@ -228,7 +302,7 @@ table.data td { padding: 12px 14px; border-top: 1px solid var(--slate-100); }
 .footer-note .warn { color: var(--accent); }
 
 @media (max-width: 960px) {
-  .main-nav, .cinema-pick.desktop { display: none; }
+  .main-nav { display: none; }
   .menu-btn { display: block; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .feature-grid { grid-template-columns: 1fr; }
@@ -241,5 +315,20 @@ table.data td { padding: 12px 14px; border-top: 1px solid var(--slate-100); }
   .topbar-left span.hide-sm, .topbar-right .hide-sm { display: none; }
   .hero-home h1 { font-size: 32px; }
   .card, .panel { padding: 22px; }
+  /* Rail dọc thu gọn thành thanh trượt trên màn hình hẹp. */
+  body.has-rail { padding-left: 0; }
+  body.has-rail .site-header,
+  body.has-rail .topbar,
+  body.has-rail .breadcrumb { margin-left: 0; padding-left: 20px; }
+  .rail-toggle { display: inline-flex; }
+  .dash-rail {
+    width: 250px; transform: translateX(-100%);
+    transition: transform .22s ease; box-shadow: 0 0 40px rgba(15,23,42,.4);
+  }
+  body.rail-open .dash-rail { transform: translateX(0); }
+  body.rail-open::after {
+    content: ''; position: fixed; inset: 0; z-index: 65;
+    background: rgba(15,23,42,.5);
+  }
 }
 @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }

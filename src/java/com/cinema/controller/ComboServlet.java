@@ -56,7 +56,7 @@ public class ComboServlet extends BaseServlet {
                     forward(req, resp, "combo/combo-form");
                     break;
                 case "edit": {
-                    Combo c = dao.findById(Integer.parseInt(req.getParameter("id")));
+                    Combo c = dao.findById(safeId(req.getParameter("id")));
                     if (c == null) { resp.sendError(404); return; }
                     req.setAttribute("combo", c);
                     req.setAttribute("pageTitle", "Sửa combo");
@@ -87,7 +87,7 @@ public class ComboServlet extends BaseServlet {
         String action = req.getParameter("action");
         try {
             if ("delete".equals(action)) {
-                dao.delete(Integer.parseInt(req.getParameter("id")));
+                dao.delete(safeId(req.getParameter("id")));
                 flash(req, "success", "Đã xóa combo.");
                 resp.sendRedirect(req.getContextPath() + "/staff/combo");
                 return;
@@ -136,7 +136,7 @@ public class ComboServlet extends BaseServlet {
                 dao.insert(c);
                 flash(req, "success", "Đã thêm combo mới.");
             } else {
-                c.setComboId(Integer.parseInt(idStr));
+                c.setComboId(safeId(idStr));
                 dao.update(c);
                 flash(req, "success", "Đã cập nhật combo.");
             }

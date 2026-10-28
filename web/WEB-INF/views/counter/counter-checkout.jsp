@@ -93,7 +93,7 @@
                 <form method="post" action="${ctx}/staff/counter" class="uip-inline-form">
                   <input type="hidden" name="_csrf" value="${csrf}">
                   <input type="hidden" name="action" value="attachCustomer">
-                  <input type="search" name="q" placeholder="Email hoặc SĐT">
+                  <input type="search" name="q" placeholder="Email hoặc SĐT khách hàng đã đăng ký...">
                   <button class="btn btn-outline" type="submit">Gắn khách hàng</button>
                 </form>
               </c:otherwise>
@@ -118,7 +118,8 @@
                    MyPoint <strong>${summary.pointsDiscountLabel} VNĐ</strong> (${summary.pointsUsed} điểm).</p>
               </c:when>
               <c:otherwise>
-                <p><em>Khách vãng lai không dùng voucher/MyPoint. Gắn khách hàng ở mục 2 để áp dụng.</em></p>
+                <p><em>Khách vãng lai không dùng được voucher/MyPoint (quy định trong sp_ApplyVoucher).
+                   Gắn khách hàng đã đăng ký ở mục 2 để áp dụng.</em></p>
               </c:otherwise>
             </c:choose>
           </div>
@@ -167,3 +168,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

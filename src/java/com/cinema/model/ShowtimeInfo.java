@@ -13,6 +13,7 @@ public class ShowtimeInfo {
     private String roomName;
     private String slotName;
     private LocalDateTime startTime;
+    private int durationMinutes;
     private int availableSeats; // số ghế còn trống (màu GREEN trong vw_SeatMap)
 
     public int getShowtimeId() { return showtimeId; }
@@ -30,6 +31,9 @@ public class ShowtimeInfo {
     public LocalDateTime getStartTime() { return startTime; }
     public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
+    public int getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
+
     public int getAvailableSeats() { return availableSeats; }
     public void setAvailableSeats(int availableSeats) { this.availableSeats = availableSeats; }
 
@@ -42,6 +46,18 @@ public class ShowtimeInfo {
     public String getStartHourLabel() {
         if (startTime == null) return "";
         return startTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    /** Giờ kết thúc dự kiến = giờ bắt đầu + thời lượng phim. */
+    public String getEndHourLabel() {
+        if (startTime == null) return "";
+        return startTime.plusMinutes(durationMinutes).format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    /** Khoảng giờ chiếu "19:00 – 21:15". */
+    public String getTimeRangeLabel() {
+        if (startTime == null) return "";
+        return getStartHourLabel() + " – " + getEndHourLabel();
     }
 
     /** Ngày chiếu dạng "21/10/2026". */

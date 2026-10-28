@@ -6,7 +6,6 @@
 <%@ include file="_header.jspf" %>
 <main class="page"><div class="container">
   <div class="account-grid">
-    <%@ include file="_account_side.jspf" %>
     <form class="panel" method="post" action="${pageContext.request.contextPath}/account/password" novalidate>
       <h2>Đổi mật khẩu</h2>
       <p class="sub">Dùng mật khẩu mạnh và không trùng với dịch vụ khác.</p>
@@ -44,3 +43,6 @@
   </div>
 </div></main>
 <%@ include file="_footer.jspf" %>
+
+
+

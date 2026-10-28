@@ -11,6 +11,13 @@
   .uip-tickets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 4px 0 18px; }
   .uip-ticket { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 14px;
                 background: var(--slate-100); border: 1.5px dashed var(--slate-400); border-radius: 8px; padding: 5px 12px; }
+  .uip-qr-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin: 6px 0 18px; }
+  .uip-qr { text-align: center; padding: 12px; border: 1.5px dashed var(--slate-300);
+            border-radius: 12px; background: #fff; }
+  .uip-qr img { width: 130px; height: 130px; display: block; }
+  .uip-qr .uip-qr-code { font-family: ui-monospace, Consolas, monospace; font-weight: 800;
+                        font-size: 12.5px; margin-top: 6px; word-break: break-all; }
+  .uip-qr .uip-qr-label { font-size: 11.5px; color: var(--slate-500); margin-top: 2px; }
   .uip-line { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0;
               border-top: 1px solid var(--slate-100); font-size: 14.5px; }
   .uip-line .uip-neg { color: var(--success); font-weight: 700; }
@@ -35,6 +42,26 @@
           </c:forEach>
         </div>
 
+        <%-- Mã QR từng vé: khách dùng để soát vé tại quầy (UC39) --%>
+        <c:if test="${not empty summary.ticketIds}">
+          <p style="text-align:center;margin:14px 0 0;color:var(--slate-500);font-size:13.5px">
+            QUÉT MÃ ĐỂ VÀO RẠP
+          </p>
+          <div class="uip-qr-grid">
+            <c:forEach var="tid" items="${summary.ticketIds}" varStatus="loop">
+              <div class="uip-qr">
+                <img src="${ctx}/staff/tickets/qr?ticketId=${tid}" alt="Mã QR vé ${loop.index + 1}">
+                <div class="uip-qr-code">
+                  <c:forEach var="code" items="${summary.ticketCodes}" varStatus="cLoop">
+                    <c:if test="${cLoop.index == loop.index}"><c:out value="${code}"/></c:if>
+                  </c:forEach>
+                </div>
+                <div class="uip-qr-label">Vé ${loop.index + 1}</div>
+              </div>
+            </c:forEach>
+          </div>
+        </c:if>
+
         <c:forEach var="cl" items="${summary.comboLines}">
           <div class="uip-line"><span>🍿 <c:out value="${cl.comboName}"/> × ${cl.quantity}</span><span>${cl.lineTotalLabel} VNĐ</span></div>
         </c:forEach>
@@ -58,3 +85,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

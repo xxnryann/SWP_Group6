@@ -11,6 +11,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
         <p class="sub">Combo ở trạng thái “Đang bán” sẽ xuất hiện ở màn hình bán vé tại quầy và đặt vé online.</p>
@@ -59,7 +61,12 @@
           </div>
         </form>
       </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

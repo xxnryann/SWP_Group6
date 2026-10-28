@@ -26,6 +26,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="uip-head">
         <div>
           <h1>Quản lý tin tức</h1>
@@ -56,7 +58,7 @@
               <tr>
                 <td>
                   <c:choose>
-                    <c:when test="${not empty n.thumbnailUrl}"><img class="uip-thumb" src="<c:out value='${n.thumbnailUrl}'/>" alt=""></c:when>
+                    <c:when test="${not empty n.thumbnailUrl}"><img class="uip-thumb" src="${n.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${n.thumbnailUrl}'/>" alt=""></c:when>
                     <c:otherwise><span class="uip-thumb-ph">🎬</span></c:otherwise>
                   </c:choose>
                 </td>
@@ -89,7 +91,12 @@
           </tbody>
         </table>
       </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

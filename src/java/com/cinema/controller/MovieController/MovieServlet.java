@@ -4,6 +4,8 @@ import com.cinema.controller.BaseServlet;
 import com.cinema.dao.MovieDAO.GenreDAO;
 import com.cinema.dao.MovieDAO.MovieDAO;
 import com.cinema.model.Movie;
+import com.cinema.model.User;
+import com.cinema.util.MovieUtil.MovieAccess;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,9 +15,11 @@ import java.sql.SQLException;
 
 @WebServlet(urlPatterns = {"/movies", "/movies/detail"})
 public class MovieServlet extends BaseServlet {
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 50;
     private final MovieDAO movieDAO;
     private final GenreDAO genreDAO;
+    private final com.cinema.dao.ReviewDAO reviewDAO = new com.cinema.dao.ReviewDAO();
+    private final com.cinema.dao.AccountDAO accountDAO = new com.cinema.dao.AccountDAO();
 
     public MovieServlet() {
         this(new MovieDAO(), new GenreDAO());
@@ -43,20 +47,21 @@ public class MovieServlet extends BaseServlet {
 
     private void showMovies(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        String keyword = request.getParameter("q");
+        // Mọi người dùng xem được toàn bộ danh sách phim và lọc theo trạng thái.
+        boolean canFilterByStatus = true;
         String status = request.getParameter("status");
         if (!"Upcoming".equals(status) && !"NowShowing".equals(status) && !"Stopped".equals(status)) status = null;
         Integer genreId = parsePositiveInt(request.getParameter("genre"));
         int requestedPage = parsePositiveInt(request.getParameter("page")) == null
                 ? 1 : parsePositiveInt(request.getParameter("page"));
-        MovieDAO.MoviePage result = movieDAO.search(keyword, genreId, status, requestedPage, PAGE_SIZE);
+        MovieDAO.MoviePage result = movieDAO.filter(genreId, status, requestedPage, PAGE_SIZE);
         request.setAttribute("moviePage", result);
         request.setAttribute("movies", result.movies());
         request.setAttribute("genres", genreDAO.findAll());
-        request.setAttribute("keyword", keyword);
         request.setAttribute("selectedGenre", genreId);
         request.setAttribute("selectedStatus", status);
         request.setAttribute("pageTitle", "Phim");
+        request.setAttribute("showStatusFilter", canFilterByStatus);
         forward(request, response, "movies");
     }
 
@@ -72,9 +77,34 @@ public class MovieServlet extends BaseServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
+        loadReviews(request, movie.getMovieId());
         request.setAttribute("movie", movie);
         request.setAttribute("pageTitle", movie.getTitle());
         forward(request, response, "movie-detail");
+    }
+
+    /** Nạp đánh giá của phim và trạng thái được phép đánh giá của khách đang đăng nhập. */
+    private void loadReviews(HttpServletRequest request, int movieId) {
+        try {
+            request.setAttribute("reviews", reviewDAO.findByMovie(movieId));
+            request.setAttribute("reviewStats", reviewDAO.stats(movieId));
+            User user = currentUser(request);
+            if (user != null && "CUSTOMER".equals(user.getRole())) {
+                int customerId = accountDAO.findAccountIdByEmail(user.getEmail());
+                if (customerId > 0) {
+                    boolean reviewed = reviewDAO.hasReviewed(customerId, movieId);
+                    request.setAttribute("hasReviewed", reviewed);
+                    request.setAttribute("canReview", !reviewed && reviewDAO.hasWatched(customerId, movieId));
+                }
+            }
+        } catch (SQLException e) {
+            getServletContext().log("Cannot load reviews for movie " + movieId, e);
+        }
+    }
+
+    private boolean canManageMovies(HttpServletRequest request) {
+        User user = currentUser(request);
+        return user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole());
     }
 
     private Integer parsePositiveInt(String value) {

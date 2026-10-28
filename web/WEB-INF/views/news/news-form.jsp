@@ -13,6 +13,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
         <p class="sub">Bài ở trạng thái “Xuất bản ngay” sẽ xuất hiện ngay trên trang Tin tức công khai.</p>
@@ -24,7 +26,7 @@
           <div class="field">
             <label for="f-title">Tiêu đề (tối đa 200 ký tự)</label>
             <input id="f-title" type="text" name="title" maxlength="200" required
-                   placeholder="VD: Khai trương cụm rạp mới tại Quận 7"
+                   placeholder="VD: Khai trương rạp CineStar"
                    value="<c:out value='${news.title}'/>">
           </div>
 
@@ -40,7 +42,7 @@
                    placeholder="https://... (để trống sẽ dùng ảnh mặc định)"
                    value="<c:out value='${news.thumbnailUrl}'/>">
             <c:if test="${not empty news.thumbnailUrl}">
-              <div class="uip-preview"><img src="<c:out value='${news.thumbnailUrl}'/>" alt="Ảnh thumbnail hiện tại"></div>
+              <div class="uip-preview"><img src="${news.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${news.thumbnailUrl}'/>" alt="Ảnh thumbnail hiện tại"></div>
             </c:if>
           </div>
 
@@ -59,7 +61,12 @@
           </div>
         </form>
       </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

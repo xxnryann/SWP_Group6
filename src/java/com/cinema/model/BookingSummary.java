@@ -21,6 +21,7 @@ public class BookingSummary {
     private int pointsUsed;
     private String customerName; // null = khách vãng lai (mua tại quầy, không tài khoản)
     private final List<String> ticketCodes = new ArrayList<>();
+    private final List<Integer> ticketIds = new ArrayList<>();
     private final List<ComboLine> comboLines = new ArrayList<>();
 
     public static class ComboLine {
@@ -88,6 +89,10 @@ public class BookingSummary {
     public boolean isHasCustomer() { return hasCustomer(); }
 
     public List<String> getTicketCodes() { return ticketCodes; }
+
+    /** Id của từng vé (để dựng URL ảnh QR). Song song với {@link #getTicketCodes()}. */
+    public List<Integer> getTicketIds() { return ticketIds; }
+
     public List<ComboLine> getComboLines() { return comboLines; }
 
     /* ---------- hiển thị tiền (79.000) ---------- */

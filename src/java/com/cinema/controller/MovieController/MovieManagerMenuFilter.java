@@ -21,11 +21,38 @@ public class MovieManagerMenuFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession(false);
         User user = session == null ? null : (User) session.getAttribute(BaseServlet.SESSION_USER);
-        httpRequest.setAttribute("isManager", user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole()));
+        boolean canManageMovies = user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole());
+        httpRequest.setAttribute("isManager", canManageMovies);
+        httpRequest.setAttribute("canManageMovies", canManageMovies);
         String path = httpRequest.getServletPath();
+        // Trang chủ được ánh xạ cho cả "/home" và chuỗi rỗng (url "/").
+        // Với chuỗi rỗng, getServletPath() trả về "" nên phải kiểm tra riêng.
+        boolean isHome = path.isEmpty() || path.startsWith("/home");
         httpRequest.setAttribute("movieModule", path.startsWith("/movies")
                 || path.startsWith("/showtimes") || path.startsWith("/manage/movies")
-                || path.startsWith("/manage/showtimes"));
+                || path.startsWith("/manage/showtimes") || isHome);
+        // Dashboard theo vai trò: nạp CSS dashboard + gắn cờ cho các trang quản trị.
+        boolean isDashboard = path.startsWith("/dashboard/admin")
+                || path.startsWith("/dashboard/manager")
+                || path.startsWith("/dashboard/staff")
+                || path.startsWith("/dashboard/customer");
+        httpRequest.setAttribute("dashboardModule", isDashboard);
+        // Khu vực nội bộ theo vai trò (quản trị / quản lý / quầy / khách hàng):
+        // các trang này dùng sidebar riêng nên không hiện thanh nav công khai.
+        // Trang chủ ("/" hoặc "/home") và các trang công khai vẫn giữ nguyên.
+        boolean isRolePage = path.startsWith("/admin")
+                || path.startsWith("/manager")
+                || path.startsWith("/manage")
+                || path.startsWith("/staff")
+                || path.startsWith("/customer")
+                || path.startsWith("/account");
+        httpRequest.setAttribute("roleModule", isRolePage);
+        // Đã đăng nhập thì menu dọc (rail) hiện ở mọi trang nội bộ, kể cả khi
+        // điều hướng sang trang khác -> không mất menu khi đổi trang.
+        // Trang chủ ("/" hoặc "/home") giữ nguyên layout công khai như yêu cầu.
+        boolean signedIn = user != null;
+        httpRequest.setAttribute("signedIn", signedIn);
+        httpRequest.setAttribute("railModule", signedIn && !isHome);
         chain.doFilter(request, response);
     }
 }

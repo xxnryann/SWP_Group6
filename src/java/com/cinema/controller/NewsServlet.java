@@ -44,6 +44,15 @@ public class NewsServlet extends BaseServlet {
         return true;
     }
 
+    /** Thumbnail trống, http(s), hoặc đường dẫn nội bộ /assets/..., /media/... (chặn javascript:, data:, //host). */
+    private static boolean validThumbnail(String url) {
+        if (url == null || url.isEmpty()) return true;
+        if (url.length() > 500 || url.chars().anyMatch(ch -> ch <= ' ')) return false;
+        String lower = url.toLowerCase();
+        return lower.startsWith("http://") || lower.startsWith("https://")
+                || url.startsWith("/assets/") || url.startsWith("/media/");
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -57,7 +66,7 @@ public class NewsServlet extends BaseServlet {
                     forward(req, resp, "news/news-form");
                     break;
                 case "edit": {
-                    News n = dao.findById(Integer.parseInt(req.getParameter("id")));
+                    News n = dao.findById(safeId(req.getParameter("id")));
                     if (n == null) { resp.sendError(404); return; }
                     req.setAttribute("news", n);
                     req.setAttribute("pageTitle", "Sửa tin tức");
@@ -65,7 +74,7 @@ public class NewsServlet extends BaseServlet {
                     break;
                 }
                 case "view": {
-                    News n = dao.findById(Integer.parseInt(req.getParameter("id")));
+                    News n = dao.findById(safeId(req.getParameter("id")));
                     if (n == null) { resp.sendError(404); return; }
                     req.setAttribute("news", n);
                     req.setAttribute("pageTitle", n.getTitle());
@@ -99,7 +108,7 @@ public class NewsServlet extends BaseServlet {
         String action = req.getParameter("action");
         try {
             if ("delete".equals(action)) {
-                dao.delete(Integer.parseInt(req.getParameter("id")));
+                dao.delete(safeId(req.getParameter("id")));
                 flash(req, "success", "Đã xóa tin tức.");
                 resp.sendRedirect(req.getContextPath() + "/manager/news");
                 return;
@@ -111,12 +120,16 @@ public class NewsServlet extends BaseServlet {
             String thumbnailUrl = Validator.trim(req.getParameter("thumbnailUrl"));
             String status = Validator.trim(req.getParameter("status"));
 
-            if (title.isEmpty() || content.isEmpty() || !STATUSES.contains(status)) {
+            boolean badFields = title.isEmpty() || content.isEmpty() || !STATUSES.contains(status);
+            boolean badThumb = !validThumbnail(thumbnailUrl);
+            if (badFields || badThumb) {
                 News n = new News();
                 n.setTitle(title); n.setContent(content);
                 n.setThumbnailUrl(thumbnailUrl); n.setStatus(status);
                 req.setAttribute("news", n);
-                req.setAttribute("error", "Tiêu đề, nội dung và trạng thái hợp lệ là bắt buộc.");
+                req.setAttribute("error", badFields
+                        ? "Tiêu đề, nội dung và trạng thái hợp lệ là bắt buộc."
+                        : "Link ảnh thumbnail phải là địa chỉ http(s) hoặc đường dẫn nội bộ bắt đầu bằng /assets/ hoặc /media/.");
                 req.setAttribute("pageTitle", idStr.isEmpty() ? "Đăng tin mới" : "Sửa tin tức");
                 forward(req, resp, "news/news-form");
                 return;
@@ -143,7 +156,7 @@ public class NewsServlet extends BaseServlet {
                 dao.insert(n);
                 flash(req, "success", "Đã đăng tin tức mới.");
             } else {
-                n.setNewsId(Integer.parseInt(idStr));
+                n.setNewsId(safeId(idStr));
                 dao.update(n);
                 flash(req, "success", "Đã cập nhật tin tức.");
             }

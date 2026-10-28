@@ -34,6 +34,18 @@ public class SeatCell {
     /** Chỉ ghế GREEN mới được chọn. */
     public boolean isAvailable() { return "GREEN".equals(color); }
 
+    /** Nhãn tiếng Việt của màu trạng thái ghế (dùng cho tooltip/chú thích). */
+    public String getStatusLabel() {
+        if (color == null) return "Không rõ";
+        switch (color) {
+            case "GREEN": return "Trống";
+            case "YELLOW": return "Đang giữ";
+            case "RED": return "Đã bán";
+            case "GREY": return "Bảo trì";
+            default: return color;
+        }
+    }
+
     /** Ghế đôi luôn phải chọn cả cặp (sp_HoldSeats kiểm tra ở DB). */
     public boolean isCouple() { return pairSeatId != null; }
 

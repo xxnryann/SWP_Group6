@@ -12,6 +12,10 @@ public final class MovieValidator {
     }
 
     public static String validate(Movie movie) {
+        return validate(movie, false);
+    }
+
+    public static String validate(Movie movie, boolean newMovie) {
         if (movie.getTitle() == null || movie.getTitle().isBlank()) return "Tên phim không được để trống.";
         if (movie.getTitle().length() > 200) return "Tên phim tối đa 200 ký tự.";
         if (lengthExceeded(movie.getOriginalTitle(), 200)) return "Tên gốc tối đa 200 ký tự.";
@@ -19,11 +23,16 @@ public final class MovieValidator {
         if (lengthExceeded(movie.getMainCast(), 500)) return "Danh sách diễn viên tối đa 500 ký tự.";
         if (lengthExceeded(movie.getSpokenLanguage(), 50)) return "Ngôn ngữ tối đa 50 ký tự.";
         if (lengthExceeded(movie.getCountry(), 50)) return "Quốc gia tối đa 50 ký tự.";
-        if (movie.getDurationMinutes() <= 0) return "Thời lượng phim phải lớn hơn 0.";
+        if (movie.getDurationMinutes() <= 0 || movie.getDurationMinutes() > 150) {
+            return "Thời lượng phim phải từ 1 đến 150 phút (tối đa 2 giờ 30 phút).";
+        }
         if (movie.getAgeRating() == null || !AGE_RATINGS.contains(movie.getAgeRating())) {
             return "Phân loại tuổi phải là P, K, T13, T16 hoặc T18.";
         }
         if (movie.getReleaseDate() == null) return "Ngày khởi chiếu không được để trống.";
+        if (newMovie && movie.getReleaseDate().isBefore(LocalDate.now())) {
+            return "Ngày khởi chiếu của phim mới không được ở quá khứ.";
+        }
         if (movie.getEndDate() != null && movie.getEndDate().isBefore(movie.getReleaseDate())) {
             return "Ngày kết thúc không được trước ngày khởi chiếu.";
         }

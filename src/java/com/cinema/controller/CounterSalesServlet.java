@@ -2,7 +2,6 @@ package com.cinema.controller;
 
 import com.cinema.dao.CounterSaleDAO;
 import com.cinema.model.BookingSummary;
-import com.cinema.model.Combo;
 import com.cinema.model.SeatCell;
 import com.cinema.model.ShowtimeInfo;
 import com.cinema.model.User;
@@ -236,6 +235,10 @@ public class CounterSalesServlet extends BaseServlet {
                 case "cancelBooking": doCancelBooking(req, resp); break;
                 default: resp.sendRedirect(req.getContextPath() + "/staff/counter");
             }
+        } catch (SQLException e) {
+            getServletContext().log("Counter sale action failed: " + action, e);
+            flash(req, "error", "Không thể thực hiện thao tác: " + e.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/staff/counter");
         } catch (Exception e) {
             throw new ServletException(e);
         }
@@ -290,15 +293,23 @@ public class CounterSalesServlet extends BaseServlet {
                 dao.holdSeats(bookingId, seatIds);
                 break;
             } catch (SQLException e) {
-                if (!retried) {
-                    // Booking trong session có thể đã hết hạn → tạo mới, thử lại 1 lần
+                // Chỉ tạo đơn mới và thử lại khi phiên cũ đã hết hạn / không còn (50010, 50011).
+                // Lỗi thật (ghế vừa bị giữ, ghế đôi tách cặp...) thì huỷ đơn vừa tạo để không để lại đơn rác.
+                boolean sessionGone = e.getErrorCode() == 50010 || e.getErrorCode() == 50011;
+                if (!retried && sessionGone) {
                     bookingId = dao.createCounterBooking(null, staffAccountId, showtimeId);
                     session.setAttribute(SESSION_BOOKING, bookingId);
                     session.setAttribute(SESSION_SHOWTIME, showtimeId);
                     retried = true;
                     continue;
                 }
-                // Lỗi thật: ghế vừa bị người khác giữ, ghế đôi tách cặp, hết hạn phiên...
+                try {
+                    dao.cancelPendingBooking(bookingId);
+                } catch (SQLException ignore) {
+                    // don rac se tu het han
+                }
+                session.removeAttribute(SESSION_BOOKING);
+                session.removeAttribute(SESSION_SHOWTIME);
                 req.setAttribute("error", e.getMessage());
                 showSeats(req, resp);
                 return;

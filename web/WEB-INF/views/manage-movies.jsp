@@ -4,7 +4,9 @@
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="_header.jspf" %>
 
-<main class="container page">
+<main class="page"><div class="container">
+  <div class="dash-layout">
+    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
@@ -50,6 +52,7 @@
                 <button class="btn btn-danger btn-small" type="submit">Xóa</button>
               </form>
               <c:if test="${movie.status != 'Stopped'}">
+                <a class="btn btn-danger btn-small" href="${ctx}/manage/movies?action=cancel-preview&id=${escapedMovieId}">Hủy &amp; hoàn tiền</a>
                 <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Ngừng chiếu phim này và hủy các suất tương lai chưa bán?');">
                   <input type="hidden" name="_csrf" value="${escapedCsrf}">
                   <input type="hidden" name="action" value="stop">
@@ -73,6 +76,10 @@
       </c:forEach>
     </nav>
   </c:if>
-</main>
+    </div>
+  </div>
+</div></main>
 
 <%@ include file="_footer.jspf" %>
+
+
