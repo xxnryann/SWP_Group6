@@ -1,22 +1,22 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Điểm MyPoint"/>
-<c:set var="parentTitle" value="Tài khoản"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Äiá»ƒm MyPoint"/>
+<c:set var="parentTitle" value="TÃ i khoáº£n"/>
 <c:set var="parentUrl" value="${pageContext.request.contextPath}/account/profile"/>
 <c:set var="activeNav" value="points"/>
 <%@ include file="_header.jspf" %>
 <main class="page"><div class="container">
   <div class="account-grid">
     <section class="panel">
-      <h2>Điểm MyPoint</h2>
-      <p class="sub">Số điểm hiện có: <strong><c:out value="${points}"/></strong></p>
+      <h2>Äiá»ƒm MyPoint</h2>
+      <p class="sub">Sá»‘ Ä‘iá»ƒm hiá»‡n cÃ³: <strong><c:out value="${points}"/></strong></p>
       <c:choose>
         <c:when test="${empty history}">
-          <p class="sub">Chưa có giao dịch điểm nào.</p>
+          <p class="sub">ChÆ°a cÃ³ giao dá»‹ch Ä‘iá»ƒm nÃ o.</p>
         </c:when>
         <c:otherwise>
           <div class="table-wrap">
             <table class="data">
-              <thead><tr><th>Thời gian</th><th>Nội dung</th><th>Điểm</th></tr></thead>
+              <thead><tr><th>Thá»i gian</th><th>Ná»™i dung</th><th>Äiá»ƒm</th></tr></thead>
               <tbody>
               <c:forEach var="p" items="${history}">
                 <tr>
@@ -34,3 +34,6 @@
   </div>
 </div></main>
 <%@ include file="_footer.jspf" %>
+
+
+

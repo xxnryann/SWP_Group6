@@ -7,9 +7,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Máy lập lịch tự động cho lịch chiếu hàng ngày.
@@ -17,6 +14,17 @@ import java.util.stream.Collectors;
  * phim xoay vòng và lệch nhau giữa các phòng.
  */
 public final class ShowtimePlanner {
+    
+    /** Đại diện cho một mốc giờ đã bị chiếm của một phòng. */
+    public static class OccupiedSlot {
+        public final String roomName;
+        public final LocalDateTime startTime;
+        
+        public OccupiedSlot(String roomName, LocalDateTime startTime) {
+            this.roomName = roomName;
+            this.startTime = startTime;
+        }
+    }
     
     private ShowtimePlanner() {}
     
@@ -27,7 +35,7 @@ public final class ShowtimePlanner {
      * @param openTime giờ mở cửa
      * @param rooms danh sách tên phòng  
      * @param movies danh sách phim cần xếp
-     * @param occupiedSlots các suất chiếu đã được đặt trước (phòng -> tập hợp slot_id)
+     * @param occupiedSlots các suất chiếu đã được đặt trước
      * @return danh sách suất chiếu được lập lịch tự động
      */
     public static List<Showtime> plan(
@@ -35,7 +43,7 @@ public final class ShowtimePlanner {
             LocalTime openTime,
             List<String> rooms,
             List<Movie> movies,
-            Map<String, Set<Integer>> occupiedSlots) {
+            List<OccupiedSlot> occupiedSlots) {
         
         List<Showtime> result = new ArrayList<>();
         
@@ -47,7 +55,7 @@ public final class ShowtimePlanner {
         LocalTime closeTime = ShowtimeRules.CLOSE_TIME;
         
         // Khởi tạo trạng thái của từng phòng: thời điểm kết thúc suất cuối cùng
-        Map<String, LocalDateTime> roomEndTime = new java.util.HashMap<>();
+        java.util.Map<String, LocalDateTime> roomEndTime = new java.util.HashMap<>();
         for (String room : rooms) {
             roomEndTime.put(room, LocalDateTime.of(date, openTime));
         }

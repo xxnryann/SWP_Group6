@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Bán vé tại quầy — Hóa đơn"/>
+﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="BÃ¡n vÃ© táº¡i quáº§y â€” HÃ³a Ä‘Æ¡n"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-receipt { max-width: 640px; margin: 0 auto; padding: 36px 38px; }
@@ -30,58 +30,61 @@
   <section class="page">
     <div class="container">
       <div class="card uip-receipt">
-        <div class="uip-ok">✓</div>
-        <h1>Thanh toán thành công</h1>
-        <p class="uip-sub">Mã đơn <span class="uip-code"><c:out value="${summary.bookingCode}"/></span> ·
-           Khách hàng: <c:out value="${summary.hasCustomer ? summary.customerName : 'Khách vãng lai'}"/></p>
+        <div class="uip-ok">âœ“</div>
+        <h1>Thanh toÃ¡n thÃ nh cÃ´ng</h1>
+        <p class="uip-sub">MÃ£ Ä‘Æ¡n <span class="uip-code"><c:out value="${summary.bookingCode}"/></span> Â·
+           KhÃ¡ch hÃ ng: <c:out value="${summary.hasCustomer ? summary.customerName : 'KhÃ¡ch vÃ£ng lai'}"/></p>
 
-        <p style="text-align:center;margin:0;color:var(--slate-500);font-size:13.5px">MÃ VÉ (DÙNG CHECK-IN)</p>
+        <p style="text-align:center;margin:0;color:var(--slate-500);font-size:13.5px">MÃƒ VÃ‰ (DÃ™NG CHECK-IN)</p>
         <div class="uip-tickets">
           <c:forEach var="code" items="${summary.ticketCodes}">
-            <span class="uip-ticket">🎟 <c:out value="${code}"/></span>
+            <span class="uip-ticket">ðŸŽŸ <c:out value="${code}"/></span>
           </c:forEach>
         </div>
 
-        <%-- Mã QR từng vé: khách dùng để soát vé tại quầy (UC39) --%>
+        <%-- MÃ£ QR tá»«ng vÃ©: khÃ¡ch dÃ¹ng Ä‘á»ƒ soÃ¡t vÃ© táº¡i quáº§y (UC39) --%>
         <c:if test="${not empty summary.ticketIds}">
           <p style="text-align:center;margin:14px 0 0;color:var(--slate-500);font-size:13.5px">
-            QUÉT MÃ ĐỂ VÀO RẠP
+            QUÃ‰T MÃƒ Äá»‚ VÃ€O Ráº P
           </p>
           <div class="uip-qr-grid">
             <c:forEach var="tid" items="${summary.ticketIds}" varStatus="loop">
               <div class="uip-qr">
-                <img src="${ctx}/staff/tickets/qr?ticketId=${tid}" alt="Mã QR vé ${loop.index + 1}">
+                <img src="${ctx}/staff/tickets/qr?ticketId=${tid}" alt="MÃ£ QR vÃ© ${loop.index + 1}">
                 <div class="uip-qr-code">
                   <c:forEach var="code" items="${summary.ticketCodes}" varStatus="cLoop">
                     <c:if test="${cLoop.index == loop.index}"><c:out value="${code}"/></c:if>
                   </c:forEach>
                 </div>
-                <div class="uip-qr-label">Vé ${loop.index + 1}</div>
+                <div class="uip-qr-label">VÃ© ${loop.index + 1}</div>
               </div>
             </c:forEach>
           </div>
         </c:if>
 
         <c:forEach var="cl" items="${summary.comboLines}">
-          <div class="uip-line"><span>🍿 <c:out value="${cl.comboName}"/> × ${cl.quantity}</span><span>${cl.lineTotalLabel} VNĐ</span></div>
+          <div class="uip-line"><span>ðŸ¿ <c:out value="${cl.comboName}"/> Ã— ${cl.quantity}</span><span>${cl.lineTotalLabel} VNÄ</span></div>
         </c:forEach>
-        <div class="uip-line"><span>Tiền vé</span><span>${summary.ticketTotalLabel} VNĐ</span></div>
-        <div class="uip-line"><span>Tiền combo</span><span>${summary.comboTotalLabel} VNĐ</span></div>
+        <div class="uip-line"><span>Tiá»n vÃ©</span><span>${summary.ticketTotalLabel} VNÄ</span></div>
+        <div class="uip-line"><span>Tiá»n combo</span><span>${summary.comboTotalLabel} VNÄ</span></div>
         <c:if test="${summary.voucherDiscount > 0}">
-          <div class="uip-line"><span>Giảm voucher</span><span class="uip-neg">− ${summary.voucherDiscountLabel} VNĐ</span></div>
+          <div class="uip-line"><span>Giáº£m voucher</span><span class="uip-neg">âˆ’ ${summary.voucherDiscountLabel} VNÄ</span></div>
         </c:if>
         <c:if test="${summary.pointsDiscount > 0}">
-          <div class="uip-line"><span>Giảm MyPoint (${summary.pointsUsed} điểm)</span><span class="uip-neg">− ${summary.pointsDiscountLabel} VNĐ</span></div>
+          <div class="uip-line"><span>Giáº£m MyPoint (${summary.pointsUsed} Ä‘iá»ƒm)</span><span class="uip-neg">âˆ’ ${summary.pointsDiscountLabel} VNÄ</span></div>
         </c:if>
-        <div class="uip-total"><span><strong>Tổng thu</strong></span><span class="uip-amt">${summary.totalAmountLabel} VNĐ</span></div>
+        <div class="uip-total"><span><strong>Tá»•ng thu</strong></span><span class="uip-amt">${summary.totalAmountLabel} VNÄ</span></div>
         <c:if test="${not empty cashReceived}">
-          <div class="uip-line"><span>Tiền khách đưa</span><span>${cashReceived} VNĐ</span></div>
-          <div class="uip-line"><span><strong>Tiền thối lại</strong></span><span><strong>${change} VNĐ</strong></span></div>
+          <div class="uip-line"><span>Tiá»n khÃ¡ch Ä‘Æ°a</span><span>${cashReceived} VNÄ</span></div>
+          <div class="uip-line"><span><strong>Tiá»n thá»‘i láº¡i</strong></span><span><strong>${change} VNÄ</strong></span></div>
         </c:if>
 
-        <div class="uip-center"><a class="btn btn-cta" href="${ctx}/staff/counter">🎟 Bán vé mới</a></div>
+        <div class="uip-center"><a class="btn btn-cta" href="${ctx}/staff/counter">ðŸŽŸ BÃ¡n vÃ© má»›i</a></div>
       </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

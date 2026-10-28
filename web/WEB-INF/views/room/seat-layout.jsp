@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Layout ghế · ${room.roomName}"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Layout gháº¿ Â· ${room.roomName}"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .rm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -66,45 +66,45 @@
       <div class="rm-head">
         <div>
           <h1><c:out value="${room.roomName}"/> <span class="chip"><c:out value="${room.roomType}"/></span></h1>
-          <p><c:out value="${room.cinemaName}"/> · Thiết lập layout ghế, loại ghế và bảo trì ghế.</p>
+          <p><c:out value="${room.cinemaName}"/> Â· Thiáº¿t láº­p layout gháº¿, loáº¡i gháº¿ vÃ  báº£o trÃ¬ gháº¿.</p>
         </div>
         <div>
-          <a class="btn btn-soft" href="${ctx}/admin/rooms?action=edit&id=${room.roomId}">Sửa thông tin phòng</a>
-          <a class="btn btn-outline" href="${ctx}/admin/rooms">← Danh sách phòng</a>
+          <a class="btn btn-soft" href="${ctx}/admin/rooms?action=edit&id=${room.roomId}">Sá»­a thÃ´ng tin phÃ²ng</a>
+          <a class="btn btn-outline" href="${ctx}/admin/rooms">â† Danh sÃ¡ch phÃ²ng</a>
         </div>
       </div>
 
       <div class="rm-stats">
-        <div class="rm-stat"><b>${room.capacity}</b>Sức chứa</div>
-        <div class="rm-stat"><b>${seatTotal}</b>Số ghế hiện có</div>
-        <div class="rm-stat"><b>${room.maintenanceCount}</b>Đang bảo trì</div>
-        <div class="rm-stat"><b>${room.upcomingShowtimes}</b>Suất chiếu sắp tới</div>
+        <div class="rm-stat"><b>${room.capacity}</b>Sá»©c chá»©a</div>
+        <div class="rm-stat"><b>${seatTotal}</b>Sá»‘ gháº¿ hiá»‡n cÃ³</div>
+        <div class="rm-stat"><b>${room.maintenanceCount}</b>Äang báº£o trÃ¬</div>
+        <div class="rm-stat"><b>${room.upcomingShowtimes}</b>Suáº¥t chiáº¿u sáº¯p tá»›i</div>
       </div>
 
-      <%-- ================= Sơ đồ ghế + bảo trì ================= --%>
+      <%-- ================= SÆ¡ Ä‘á»“ gháº¿ + báº£o trÃ¬ ================= --%>
       <div class="rm-panel">
-        <h2>Sơ đồ ghế &amp; bảo trì</h2>
-        <p class="sub">Chọn ghế rồi bấm “Bảo trì” để chặn đặt vé, hoặc “Mở lại” khi bảo trì xong. Ghế đôi luôn được xử lý cả cặp.</p>
+        <h2>SÆ¡ Ä‘á»“ gháº¿ &amp; báº£o trÃ¬</h2>
+        <p class="sub">Chá»n gháº¿ rá»“i báº¥m â€œBáº£o trÃ¬â€ Ä‘á»ƒ cháº·n Ä‘áº·t vÃ©, hoáº·c â€œMá»Ÿ láº¡iâ€ khi báº£o trÃ¬ xong. Gháº¿ Ä‘Ã´i luÃ´n Ä‘Æ°á»£c xá»­ lÃ½ cáº£ cáº·p.</p>
         <c:choose>
           <c:when test="${seatTotal == 0}">
-            <div class="rm-empty">Phòng chưa có layout ghế. Hãy thiết lập layout ở phần bên dưới.</div>
+            <div class="rm-empty">PhÃ²ng chÆ°a cÃ³ layout gháº¿. HÃ£y thiáº¿t láº­p layout á»Ÿ pháº§n bÃªn dÆ°á»›i.</div>
           </c:when>
           <c:otherwise>
             <div class="legend">
-              <span><i class="l-std"></i>Ghế thường</span>
-              <span><i class="l-vip"></i>Ghế VIP</span>
-              <span><i class="l-cpl"></i>Ghế đôi (cặp)</span>
-              <span><i class="l-mnt"></i>Đang bảo trì</span>
-              <span><i class="l-sel"></i>Đã chọn</span>
+              <span><i class="l-std"></i>Gháº¿ thÆ°á»ng</span>
+              <span><i class="l-vip"></i>Gháº¿ VIP</span>
+              <span><i class="l-cpl"></i>Gháº¿ Ä‘Ã´i (cáº·p)</span>
+              <span><i class="l-mnt"></i>Äang báº£o trÃ¬</span>
+              <span><i class="l-sel"></i>ÄÃ£ chá»n</span>
             </div>
             <div class="seatmap">
-              <div class="screen">MÀN HÌNH</div>
+              <div class="screen">MÃ€N HÃŒNH</div>
               <c:forEach var="row" items="${seatRows}">
                 <div class="seat-row">
                   <div class="row-label"><c:out value="${row.key}"/></div>
                   <c:forEach var="s" items="${row.value}">
                     <label class="seat t-${s.seatTypeName}${s.couple ? (s.seatNumber % 2 == 1 ? ' couple-left' : ' couple-right') : ''}${s.maintenance ? ' maint' : ''}"
-                           title="${s.label} · ${s.seatTypeName}${s.maintenance ? ' · đang bảo trì' : ''}">
+                           title="${s.label} Â· ${s.seatTypeName}${s.maintenance ? ' Â· Ä‘ang báº£o trÃ¬' : ''}">
                       <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm"
                              <c:if test="${s.pairSeatId != null}">data-pair="${s.pairSeatId}"</c:if>>
                       <span>${s.label}</span>
@@ -116,12 +116,12 @@
                       <input type="hidden" name="action" value="rowType">
                       <input type="hidden" name="roomId" value="${room.roomId}">
                       <input type="hidden" name="row" value="<c:out value='${row.key}'/>">
-                      <select name="typeId" aria-label="Loại ghế hàng ${row.key}">
+                      <select name="typeId" aria-label="Loáº¡i gháº¿ hÃ ng ${row.key}">
                         <c:forEach var="t" items="${seatTypes}">
                           <option value="${t.seatTypeId}" ${t.seatTypeId == row.value[0].seatTypeId ? 'selected' : ''}><c:out value="${t.typeName}"/></option>
                         </c:forEach>
                       </select>
-                      <button class="btn btn-soft" type="submit">Đổi loại</button>
+                      <button class="btn btn-soft" type="submit">Äá»•i loáº¡i</button>
                     </form>
                   </div>
                 </div>
@@ -132,24 +132,24 @@
               <input type="hidden" name="_csrf" value="${csrf}">
               <input type="hidden" name="roomId" value="${room.roomId}">
               <div class="maint-bar">
-                <button class="btn btn-danger" type="submit" name="action" value="maintain" id="btnMaintain" disabled>Bảo trì ghế đã chọn</button>
-                <button class="btn btn-primary" type="submit" name="action" value="reopen" id="btnReopen" disabled>Mở lại ghế đã chọn</button>
-                <button class="btn btn-outline" type="button" id="btnClear">Bỏ chọn</button>
-                <span class="count" id="selCount">Chưa chọn ghế nào</span>
+                <button class="btn btn-danger" type="submit" name="action" value="maintain" id="btnMaintain" disabled>Báº£o trÃ¬ gháº¿ Ä‘Ã£ chá»n</button>
+                <button class="btn btn-primary" type="submit" name="action" value="reopen" id="btnReopen" disabled>Má»Ÿ láº¡i gháº¿ Ä‘Ã£ chá»n</button>
+                <button class="btn btn-outline" type="button" id="btnClear">Bá» chá»n</button>
+                <span class="count" id="selCount">ChÆ°a chá»n gháº¿ nÃ o</span>
               </div>
             </form>
           </c:otherwise>
         </c:choose>
       </div>
 
-      <%-- ================= Thiết lập layout ================= --%>
+      <%-- ================= Thiáº¿t láº­p layout ================= --%>
       <div class="rm-panel">
-        <h2>Thiết lập layout ghế</h2>
-        <p class="sub">Nhập số hàng, số ghế mỗi hàng và chọn loại ghế cho từng hàng (hàng A là hàng gần màn hình nhất). Ghế đôi được ghép cặp 1-2, 3-4, … nên số ghế mỗi hàng phải chẵn.</p>
+        <h2>Thiáº¿t láº­p layout gháº¿</h2>
+        <p class="sub">Nháº­p sá»‘ hÃ ng, sá»‘ gháº¿ má»—i hÃ ng vÃ  chá»n loáº¡i gháº¿ cho tá»«ng hÃ ng (hÃ ng A lÃ  hÃ ng gáº§n mÃ n hÃ¬nh nháº¥t). Gháº¿ Ä‘Ã´i Ä‘Æ°á»£c ghÃ©p cáº·p 1-2, 3-4, â€¦ nÃªn sá»‘ gháº¿ má»—i hÃ ng pháº£i cháºµn.</p>
         <c:if test="${seatTotal > 0}">
           <div class="rm-warnbox">
-            Phòng đã có ${seatTotal} ghế. Bấm “Áp dụng layout” sẽ <strong>thay thế toàn bộ</strong> layout hiện tại
-            (cả trạng thái bảo trì). Nếu ghế đã từng có vé, hệ thống sẽ từ chối — khi đó hãy dùng “Đổi loại” theo từng hàng ở trên.
+            PhÃ²ng Ä‘Ã£ cÃ³ ${seatTotal} gháº¿. Báº¥m â€œÃp dá»¥ng layoutâ€ sáº½ <strong>thay tháº¿ toÃ n bá»™</strong> layout hiá»‡n táº¡i
+            (cáº£ tráº¡ng thÃ¡i báº£o trÃ¬). Náº¿u gháº¿ Ä‘Ã£ tá»«ng cÃ³ vÃ©, há»‡ thá»‘ng sáº½ tá»« chá»‘i â€” khi Ä‘Ã³ hÃ£y dÃ¹ng â€œÄá»•i loáº¡iâ€ theo tá»«ng hÃ ng á»Ÿ trÃªn.
           </div>
         </c:if>
         <form id="layoutForm" method="post" action="${ctx}/admin/seats">
@@ -159,21 +159,21 @@
           <input type="hidden" name="rowTypes" id="rowTypes" value="<c:out value='${layoutRowTypes}'/>">
           <div class="layout-grid">
             <div class="field">
-              <label for="f-rows">Số hàng (1–26)</label>
+              <label for="f-rows">Sá»‘ hÃ ng (1â€“26)</label>
               <input id="f-rows" type="number" name="rows" min="1" max="26" value="${layoutRows}" required>
             </div>
             <div class="field">
-              <label for="f-cols">Ghế mỗi hàng (1–30)</label>
+              <label for="f-cols">Gháº¿ má»—i hÃ ng (1â€“30)</label>
               <input id="f-cols" type="number" name="cols" min="1" max="30" value="${layoutCols}" required>
             </div>
             <div class="hint" style="align-self:end;color:var(--slate-500);font-size:13px">
-              Loại ghế:
-              <c:forEach var="t" items="${seatTypes}" varStatus="vs"><c:out value="${t.typeName}"/><c:if test="${t.couple}"> (đôi)</c:if><c:if test="${!vs.last}">, </c:if></c:forEach>
+              Loáº¡i gháº¿:
+              <c:forEach var="t" items="${seatTypes}" varStatus="vs"><c:out value="${t.typeName}"/><c:if test="${t.couple}"> (Ä‘Ã´i)</c:if><c:if test="${!vs.last}">, </c:if></c:forEach>
             </div>
           </div>
           <div class="row-types" id="rowTypeBox"></div>
           <p class="alert alert-error" id="layoutErr" style="display:none"></p>
-          <button class="btn btn-cta" type="submit">Áp dụng layout</button>
+          <button class="btn btn-cta" type="submit">Ãp dá»¥ng layout</button>
         </form>
 
         <template id="typeTpl">
@@ -190,7 +190,7 @@
 
 <script>
 (function () {
-  /* ---------- chọn ghế để bảo trì ---------- */
+  /* ---------- chá»n gháº¿ Ä‘á»ƒ báº£o trÃ¬ ---------- */
   var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name="seatIds"]'));
   var byId = {};
   boxes.forEach(function (b) { byId[b.value] = b; });
@@ -201,11 +201,11 @@
     var n = boxes.filter(function (b) { return b.checked; }).length;
     if (btnM) btnM.disabled = n === 0;
     if (btnR) btnR.disabled = n === 0;
-    if (cnt) cnt.textContent = n === 0 ? 'Chưa chọn ghế nào' : 'Đã chọn ' + n + ' ghế';
+    if (cnt) cnt.textContent = n === 0 ? 'ChÆ°a chá»n gháº¿ nÃ o' : 'ÄÃ£ chá»n ' + n + ' gháº¿';
   }
   boxes.forEach(function (b) {
     b.addEventListener('change', function () {
-      var p = b.getAttribute('data-pair');           /* ghế đôi: chọn/bỏ cả cặp */
+      var p = b.getAttribute('data-pair');           /* gháº¿ Ä‘Ã´i: chá»n/bá» cáº£ cáº·p */
       if (p && byId[p]) byId[p].checked = b.checked;
       refresh();
     });
@@ -214,7 +214,7 @@
   if (clr) clr.addEventListener('click', function () { boxes.forEach(function (b) { b.checked = false; }); refresh(); });
   refresh();
 
-  /* ---------- form layout: chọn loại ghế theo từng hàng ---------- */
+  /* ---------- form layout: chá»n loáº¡i gháº¿ theo tá»«ng hÃ ng ---------- */
   var rowsIn = document.getElementById('f-rows'), colsIn = document.getElementById('f-cols');
   var box = document.getElementById('rowTypeBox'), hidden = document.getElementById('rowTypes');
   var tpl = document.getElementById('typeTpl'), err = document.getElementById('layoutErr');
@@ -230,7 +230,7 @@
     for (var i = 0; i < n; i++) {
       var wrap = document.createElement('div');
       var lab = document.createElement('label');
-      lab.textContent = 'Hàng ' + String.fromCharCode(65 + i);
+      lab.textContent = 'HÃ ng ' + String.fromCharCode(65 + i);
       var sel = document.createElement('select');
       sel.innerHTML = tpl.innerHTML;
       var want = current[i] !== undefined ? current[i] : current[current.length - 1];
@@ -243,16 +243,19 @@
 
   document.getElementById('layoutForm').addEventListener('submit', function (e) {
     var sels = box.querySelectorAll('select'), cols = parseInt(colsIn.value, 10), msg = '';
-    if (!sels.length) msg = 'Số hàng không hợp lệ.';
+    if (!sels.length) msg = 'Sá»‘ hÃ ng khÃ´ng há»£p lá»‡.';
     Array.prototype.forEach.call(sels, function (s, i) {
       if (s.options[s.selectedIndex].getAttribute('data-couple') === 'true' && cols % 2 !== 0)
-        msg = 'Hàng ' + String.fromCharCode(65 + i) + ' là ghế đôi nên số ghế mỗi hàng phải là số chẵn.';
+        msg = 'HÃ ng ' + String.fromCharCode(65 + i) + ' lÃ  gháº¿ Ä‘Ã´i nÃªn sá»‘ gháº¿ má»—i hÃ ng pháº£i lÃ  sá»‘ cháºµn.';
     });
     if (msg) { e.preventDefault(); err.textContent = msg; err.style.display = 'block'; return; }
     err.style.display = 'none';
     hidden.value = Array.prototype.map.call(sels, function (s) { return s.value; }).join(',');
-    if (${seatTotal > 0} && !confirm('Thay thế toàn bộ layout ghế hiện tại?')) e.preventDefault();
+    if (${seatTotal > 0} && !confirm('Thay tháº¿ toÃ n bá»™ layout gháº¿ hiá»‡n táº¡i?')) e.preventDefault();
   });
 })();
 </script>
 <%@ include file="../_footer.jspf" %>
+
+
+

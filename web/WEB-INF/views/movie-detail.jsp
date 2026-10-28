@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
+﻿﻿﻿<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="${movie.title}"/>
 <c:set var="posterSrc"><c:out value="${movie.posterDisplayUrl}"/></c:set>
@@ -22,42 +22,42 @@
               <c:otherwise><img src="${posterSrc}" alt="Poster phim ${escapedMovieTitle}"></c:otherwise>
             </c:choose>
           </c:when>
-          <c:otherwise><div class="poster-placeholder">Chưa có poster</div></c:otherwise>
+          <c:otherwise><div class="poster-placeholder">ChÆ°a cÃ³ poster</div></c:otherwise>
         </c:choose>
       </div>
       <div class="movie-detail-copy">
-        <p class="eyebrow">CHI TIẾT PHIM</p>
+        <p class="eyebrow">CHI TIáº¾T PHIM</p>
         <h1><c:out value="${movie.title}"/></h1>
         <c:if test="${not empty movie.originalTitle}"><p class="movie-original-title"><c:out value="${movie.originalTitle}"/></p></c:if>
         <div class="movie-detail-badges">
           <span class="badge"><c:out value="${movie.ageRating}"/></span>
           <span class="chip"><c:choose>
-            <c:when test="${movie.status == 'NowShowing'}">Đang chiếu</c:when>
-            <c:when test="${movie.status == 'Upcoming'}">Sắp chiếu</c:when>
-            <c:otherwise>Ngừng chiếu</c:otherwise>
+            <c:when test="${movie.status == 'NowShowing'}">Äang chiáº¿u</c:when>
+            <c:when test="${movie.status == 'Upcoming'}">Sáº¯p chiáº¿u</c:when>
+            <c:otherwise>Ngá»«ng chiáº¿u</c:otherwise>
           </c:choose></span>
         </div>
         <dl class="movie-metadata">
-          <dt>Mã phim</dt><dd><c:out value="${movie.movieId}"/></dd>
-          <dt>Thể loại</dt><dd><c:out value="${movie.genres}"/></dd>
-          <dt>Thời lượng</dt><dd><c:out value="${movie.durationMinutes}"/> phút</dd>
-          <dt>Đạo diễn</dt><dd><c:out value="${movie.director}"/></dd>
-          <dt>Diễn viên</dt><dd><c:out value="${movie.mainCast}"/></dd>
-          <dt>Ngôn ngữ</dt><dd><c:out value="${movie.spokenLanguage}"/></dd>
-          <dt>Quốc gia</dt><dd><c:out value="${movie.country}"/></dd>
-          <dt>Ngày khởi chiếu</dt><dd><c:out value="${movie.releaseDate}"/></dd>
-          <dt>Ngày kết thúc</dt><dd><c:out value="${movie.endDate}"/></dd>
-          <dt>Phân loại tuổi</dt><dd><c:out value="${movie.ageRating}"/></dd>
-          <dt>Trạng thái</dt><dd><c:out value="${movie.status}"/></dd>
-          <dt>Ngày tạo</dt><dd><c:out value="${movie.createdAt}"/></dd>
-          <dt>Cập nhật</dt><dd><c:out value="${movie.updatedAt}"/></dd>
+          <dt>MÃ£ phim</dt><dd><c:out value="${movie.movieId}"/></dd>
+          <dt>Thá»ƒ loáº¡i</dt><dd><c:out value="${movie.genres}"/></dd>
+          <dt>Thá»i lÆ°á»£ng</dt><dd><c:out value="${movie.durationMinutes}"/> phÃºt</dd>
+          <dt>Äáº¡o diá»…n</dt><dd><c:out value="${movie.director}"/></dd>
+          <dt>Diá»…n viÃªn</dt><dd><c:out value="${movie.mainCast}"/></dd>
+          <dt>NgÃ´n ngá»¯</dt><dd><c:out value="${movie.spokenLanguage}"/></dd>
+          <dt>Quá»‘c gia</dt><dd><c:out value="${movie.country}"/></dd>
+          <dt>NgÃ y khá»Ÿi chiáº¿u</dt><dd><c:out value="${movie.releaseDate}"/></dd>
+          <dt>NgÃ y káº¿t thÃºc</dt><dd><c:out value="${movie.endDate}"/></dd>
+          <dt>PhÃ¢n loáº¡i tuá»•i</dt><dd><c:out value="${movie.ageRating}"/></dd>
+          <dt>Tráº¡ng thÃ¡i</dt><dd><c:out value="${movie.status}"/></dd>
+          <dt>NgÃ y táº¡o</dt><dd><c:out value="${movie.createdAt}"/></dd>
+          <dt>Cáº­p nháº­t</dt><dd><c:out value="${movie.updatedAt}"/></dd>
           <dt>URL trailer</dt><dd><c:out value="${movie.trailerUrl}"/></dd>
-          <dt>Tệp trailer</dt><dd><c:out value="${movie.trailerFile}"/></dd>
+          <dt>Tá»‡p trailer</dt><dd><c:out value="${movie.trailerFile}"/></dd>
           <dt>URL poster</dt><dd><c:out value="${movie.posterUrl}"/></dd>
         </dl>
         <c:if test="${not empty movie.synopsis}">
           <section class="movie-synopsis">
-            <h2>Nội dung phim</h2>
+            <h2>Ná»™i dung phim</h2>
             <p><c:out value="${movie.synopsis}"/></p>
           </section>
         </c:if>
@@ -70,7 +70,7 @@
         <c:when test="${not empty movie.trailerFileDisplayUrl}">
           <video controls preload="metadata" playsinline>
             <source src="${ctx}${trailerSrc}" type="${trailerMimeType}">
-            Trình duyệt của bạn không hỗ trợ video.
+            TrÃ¬nh duyá»‡t cá»§a báº¡n khÃ´ng há»— trá»£ video.
           </video>
         </c:when>
         <c:when test="${not empty movie.trailerEmbedUrl}">
@@ -79,16 +79,19 @@
           </div>
         </c:when>
         <c:when test="${not empty movie.trailerLinkUrl}">
-          <a class="btn btn-outline" href="${trailerLinkSrc}" target="_blank" rel="noopener noreferrer">Mở trailer trong tab mới</a>
+          <a class="btn btn-outline" href="${trailerLinkSrc}" target="_blank" rel="noopener noreferrer">Má»Ÿ trailer trong tab má»›i</a>
         </c:when>
-        <c:otherwise><p>Chưa có trailer</p></c:otherwise>
+        <c:otherwise><p>ChÆ°a cÃ³ trailer</p></c:otherwise>
       </c:choose>
     </section>
     <div class="movie-detail-actions">
-      <a class="btn btn-outline" href="${ctx}/movies">Quay lại danh sách</a>
-      <c:if test="${canManageMovies}"><a class="btn btn-primary" href="${escapedEditUrl}">Sửa phim</a></c:if>
+      <a class="btn btn-outline" href="${ctx}/movies">Quay láº¡i danh sÃ¡ch</a>
+      <c:if test="${canManageMovies}"><a class="btn btn-primary" href="${escapedEditUrl}">Sá»­a phim</a></c:if>
     </div>
   </article>
 </main>
 
 <%@ include file="_footer.jspf" %>
+
+
+

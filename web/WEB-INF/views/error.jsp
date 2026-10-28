@@ -1,4 +1,4 @@
-<%@ page isErrorPage="true" %>
+﻿<%@ page isErrorPage="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Có lỗi xảy ra"/>
 <%@ include file="_header.jspf" %>

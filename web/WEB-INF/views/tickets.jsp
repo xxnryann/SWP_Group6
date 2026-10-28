@@ -1,12 +1,12 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<c:set var="pageTitle" value="Lịch sử vé"/>
-<c:set var="parentTitle" value="Tài khoản"/>
+<c:set var="pageTitle" value="Lá»‹ch sá»­ vÃ©"/>
+<c:set var="parentTitle" value="TÃ i khoáº£n"/>
 <c:set var="parentUrl" value="${pageContext.request.contextPath}/account/profile"/>
 <c:set var="activeNav" value="tickets"/>
 <%@ include file="_header.jspf" %>
 <style>
-  /* ---------- vé dạng thẻ (mỗi vé 1 thẻ + 1 mã QR) ---------- */
+  /* ---------- vÃ© dáº¡ng tháº» (má»—i vÃ© 1 tháº» + 1 mÃ£ QR) ---------- */
   .tk-list { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
 
   .tk-card {
@@ -41,7 +41,7 @@
   .tk-cancel[disabled] { opacity: .45; cursor: not-allowed; }
   .tk-note { margin-top: 10px; color: var(--slate-400); font-size: 13px; }
 
-  /* ---------- cột QR ---------- */
+  /* ---------- cá»™t QR ---------- */
   .tk-right { background: #fff; color: var(--navy);
               padding: 22px; display: flex; flex-direction: column;
               align-items: center; justify-content: center; gap: 8px;
@@ -55,7 +55,7 @@
   .tk-right .tk-seat-mini { color: var(--slate-500); font-size: 13.5px; font-weight: 600; }
   .tk-right .tk-muted { color: var(--slate-400); font-size: 12.5px; text-align: center; }
 
-  /* Vé hết hạn / đã huỷ -> làm mờ QR (không dùng để soát vé nữa) */
+  /* VÃ© háº¿t háº¡n / Ä‘Ã£ huá»· -> lÃ m má» QR (khÃ´ng dÃ¹ng Ä‘á»ƒ soÃ¡t vÃ© ná»¯a) */
   .tk-card.is-inactive .tk-right img { opacity: .22; filter: grayscale(1); }
   .tk-card.is-inactive .tk-left { opacity: .78; }
 
@@ -71,19 +71,19 @@
 <main class="page"><div class="container">
   <div class="account-grid">
     <section class="panel">
-      <h2>Lịch sử vé</h2>
-      <p class="sub">Các vé bạn đã đặt. Mỗi vé có một mã QR riêng để check-in tại rạp.</p>
+      <h2>Lá»‹ch sá»­ vÃ©</h2>
+      <p class="sub">CÃ¡c vÃ© báº¡n Ä‘Ã£ Ä‘áº·t. Má»—i vÃ© cÃ³ má»™t mÃ£ QR riÃªng Ä‘á»ƒ check-in táº¡i ráº¡p.</p>
       <c:choose>
         <c:when test="${empty tickets}">
           <div class="tk-empty">
-            <p>Bạn chưa có vé nào.</p>
-            <a class="btn btn-cta" href="${pageContext.request.contextPath}/showtimes">Đặt vé ngay</a>
+            <p>Báº¡n chÆ°a cÃ³ vÃ© nÃ o.</p>
+            <a class="btn btn-cta" href="${pageContext.request.contextPath}/showtimes">Äáº·t vÃ© ngay</a>
           </div>
         </c:when>
         <c:otherwise>
           <div class="tk-list">
           <c:forEach var="t" items="${tickets}">
-            <%-- is-inactive: vé không còn hiệu lực -> mờ QR, không hiện nút Huỷ --%>
+            <%-- is-inactive: vÃ© khÃ´ng cÃ²n hiá»‡u lá»±c -> má» QR, khÃ´ng hiá»‡n nÃºt Huá»· --%>
             <article class="tk-card ${t.active ? '' : 'is-inactive'}">
               <div class="tk-left">
                 <div class="tk-head">
@@ -93,21 +93,21 @@
 
                 <div class="tk-rows">
                   <div class="tk-row">
-                    <span class="tk-label">Ghế</span>
+                    <span class="tk-label">Gháº¿</span>
                     <span class="tk-value tk-seat"><c:out value="${t.seatDisplay}"/></span>
                   </div>
                   <div class="tk-row">
-                    <span class="tk-label">Phòng / Rạp</span>
+                    <span class="tk-label">PhÃ²ng / Ráº¡p</span>
                     <span class="tk-value muted">
-                      <c:out value="${t.roomName}"/> — <c:out value="${t.cinemaName}"/>
+                      <c:out value="${t.roomName}"/> â€” <c:out value="${t.cinemaName}"/>
                     </span>
                   </div>
                   <div class="tk-row">
-                    <span class="tk-label">Suất chiếu</span>
+                    <span class="tk-label">Suáº¥t chiáº¿u</span>
                     <span class="tk-value muted"><c:out value="${t.showTimeLabel}"/></span>
                   </div>
                   <div class="tk-row">
-                    <span class="tk-label">Giá</span>
+                    <span class="tk-label">GiÃ¡</span>
                     <span class="tk-value"><c:out value="${t.priceLabel}"/></span>
                   </div>
                 </div>
@@ -116,43 +116,43 @@
                   <c:choose>
                     <c:when test="${t.canCancel}">
                       <form method="post" action="${pageContext.request.contextPath}/account/tickets"
-                            onsubmit="return confirm('Huỷ vé ${t.seatDisplay}? Tiền vé sẽ được hoàn lại.');">
+                            onsubmit="return confirm('Huá»· vÃ© ${t.seatDisplay}? Tiá»n vÃ© sáº½ Ä‘Æ°á»£c hoÃ n láº¡i.');">
                         <input type="hidden" name="_csrf" value="${csrf}">
                         <input type="hidden" name="action" value="cancel">
                         <input type="hidden" name="ticketId" value="${t.ticketId}">
-                        <button class="tk-cancel" type="submit">Huỷ vé</button>
+                        <button class="tk-cancel" type="submit">Huá»· vÃ©</button>
                       </form>
                     </c:when>
                     <c:when test="${t.active}">
-                      <%-- Còn hiệu lực nhưng đã quá thời hạn huỷ -> không cho huỷ --%>
-                      <button class="tk-cancel" type="button" disabled>Huỷ vé</button>
-                      <p class="tk-note">Đã quá thời hạn cho phép huỷ vé. Vui lòng liên hệ rạp để được hỗ trợ.</p>
+                      <%-- CÃ²n hiá»‡u lá»±c nhÆ°ng Ä‘Ã£ quÃ¡ thá»i háº¡n huá»· -> khÃ´ng cho huá»· --%>
+                      <button class="tk-cancel" type="button" disabled>Huá»· vÃ©</button>
+                      <p class="tk-note">ÄÃ£ quÃ¡ thá»i háº¡n cho phÃ©p huá»· vÃ©. Vui lÃ²ng liÃªn há»‡ ráº¡p Ä‘á»ƒ Ä‘Æ°á»£c há»— trá»£.</p>
                     </c:when>
                     <c:when test="${t.expired}">
-                      <p class="tk-note">Vé đã quá thời gian chiếu nên không còn hiệu lực.</p>
+                      <p class="tk-note">VÃ© Ä‘Ã£ quÃ¡ thá»i gian chiáº¿u nÃªn khÃ´ng cÃ²n hiá»‡u lá»±c.</p>
                     </c:when>
                     <c:when test="${t.used}">
-                      <p class="tk-note">Vé đã được soát vé tại rạp.</p>
+                      <p class="tk-note">VÃ© Ä‘Ã£ Ä‘Æ°á»£c soÃ¡t vÃ© táº¡i ráº¡p.</p>
                     </c:when>
                     <c:otherwise>
-                      <p class="tk-note">Vé đã được huỷ.</p>
+                      <p class="tk-note">VÃ© Ä‘Ã£ Ä‘Æ°á»£c huá»·.</p>
                     </c:otherwise>
                   </c:choose>
                 </div>
               </div>
 
               <div class="tk-right">
-                <span class="tk-qr-title">Mã vé</span>
+                <span class="tk-qr-title">MÃ£ vÃ©</span>
                 <img src="${pageContext.request.contextPath}/account/tickets/qr?ticketId=${t.ticketId}"
-                     alt="Mã QR vé <c:out value='${t.ticketCode}'/>" loading="lazy">
+                     alt="MÃ£ QR vÃ© <c:out value='${t.ticketCode}'/>" loading="lazy">
                 <span class="tk-code"><c:out value="${t.ticketCode}"/></span>
-                <span class="tk-seat-mini">Ghế <c:out value="${t.seatDisplay}"/></span>
+                <span class="tk-seat-mini">Gháº¿ <c:out value="${t.seatDisplay}"/></span>
                 <c:choose>
                   <c:when test="${t.active}">
-                    <span class="tk-muted">Đưa mã này cho nhân viên để vào rạp</span>
+                    <span class="tk-muted">ÄÆ°a mÃ£ nÃ y cho nhÃ¢n viÃªn Ä‘á»ƒ vÃ o ráº¡p</span>
                   </c:when>
                   <c:otherwise>
-                    <span class="tk-muted">Mã không còn dùng để soát vé</span>
+                    <span class="tk-muted">MÃ£ khÃ´ng cÃ²n dÃ¹ng Ä‘á»ƒ soÃ¡t vÃ©</span>
                   </c:otherwise>
                 </c:choose>
               </div>
@@ -165,3 +165,6 @@
   </div>
 </div></main>
 <%@ include file="_footer.jspf" %>
+
+
+

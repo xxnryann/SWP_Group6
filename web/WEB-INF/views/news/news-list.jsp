@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Quản lý tin tức"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Quáº£n lÃ½ tin tá»©c"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -30,28 +30,28 @@
         <div>
       <div class="uip-head">
         <div>
-          <h1>Quản lý tin tức</h1>
-          <p>Đăng, sửa và ẩn các bài tin tức hiển thị ở trang công khai.</p>
+          <h1>Quáº£n lÃ½ tin tá»©c</h1>
+          <p>ÄÄƒng, sá»­a vÃ  áº©n cÃ¡c bÃ i tin tá»©c hiá»ƒn thá»‹ á»Ÿ trang cÃ´ng khai.</p>
         </div>
-        <a class="btn btn-cta" href="${ctx}/manager/news?action=add">+ Đăng tin mới</a>
+        <a class="btn btn-cta" href="${ctx}/manager/news?action=add">+ ÄÄƒng tin má»›i</a>
       </div>
 
       <form method="get" action="${ctx}/manager/news" class="uip-filter">
-        <a class="btn ${empty statusFilter ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news">Tất cả</a>
-        <a class="btn ${statusFilter == 'Published' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news?status=Published">Đã xuất bản</a>
-        <a class="btn ${statusFilter == 'Draft' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news?status=Draft">Bản nháp</a>
-        <a class="btn ${statusFilter == 'Hidden' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news?status=Hidden">Đã ẩn</a>
+        <a class="btn ${empty statusFilter ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news">Táº¥t cáº£</a>
+        <a class="btn ${statusFilter == 'Published' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news?status=Published">ÄÃ£ xuáº¥t báº£n</a>
+        <a class="btn ${statusFilter == 'Draft' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news?status=Draft">Báº£n nhÃ¡p</a>
+        <a class="btn ${statusFilter == 'Hidden' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/manager/news?status=Hidden">ÄÃ£ áº©n</a>
         <span class="uip-search">
-          <input type="search" name="q" placeholder="Tìm theo tiêu đề..." value="<c:out value='${keyword}'/>">
+          <input type="search" name="q" placeholder="TÃ¬m theo tiÃªu Ä‘á»..." value="<c:out value='${keyword}'/>">
           <c:if test="${not empty statusFilter}"><input type="hidden" name="status" value="${statusFilter}"></c:if>
-          <button class="btn btn-outline" type="submit">Tìm</button>
+          <button class="btn btn-outline" type="submit">TÃ¬m</button>
         </span>
       </form>
 
       <div class="table-wrap">
         <table class="data">
           <thead>
-            <tr><th>Ảnh</th><th>Tiêu đề</th><th>Tác giả</th><th>Ngày đăng</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr>
+            <tr><th>áº¢nh</th><th>TiÃªu Ä‘á»</th><th>TÃ¡c giáº£</th><th>NgÃ y Ä‘Äƒng</th><th>Tráº¡ng thÃ¡i</th><th style="text-align:right">Thao tÃ¡c</th></tr>
           </thead>
           <tbody>
             <c:forEach var="n" items="${newsList}">
@@ -59,7 +59,7 @@
                 <td>
                   <c:choose>
                     <c:when test="${not empty n.thumbnailUrl}"><img class="uip-thumb" src="<c:out value='${n.thumbnailUrl}'/>" alt=""></c:when>
-                    <c:otherwise><span class="uip-thumb-ph">🎬</span></c:otherwise>
+                    <c:otherwise><span class="uip-thumb-ph">ðŸŽ¬</span></c:otherwise>
                   </c:choose>
                 </td>
                 <td><span class="uip-title"><c:out value="${n.title}"/></span></td>
@@ -67,26 +67,26 @@
                 <td>${n.createdAtLabel}</td>
                 <td>
                   <c:choose>
-                    <c:when test="${n.status == 'Published'}"><span class="uip-badge uip-badge-pub">Đã xuất bản</span></c:when>
-                    <c:when test="${n.status == 'Draft'}"><span class="uip-badge uip-badge-draft">Bản nháp</span></c:when>
-                    <c:otherwise><span class="uip-badge uip-badge-hidden">Đã ẩn</span></c:otherwise>
+                    <c:when test="${n.status == 'Published'}"><span class="uip-badge uip-badge-pub">ÄÃ£ xuáº¥t báº£n</span></c:when>
+                    <c:when test="${n.status == 'Draft'}"><span class="uip-badge uip-badge-draft">Báº£n nhÃ¡p</span></c:when>
+                    <c:otherwise><span class="uip-badge uip-badge-hidden">ÄÃ£ áº©n</span></c:otherwise>
                   </c:choose>
                 </td>
                 <td class="uip-actions" style="text-align:right">
-                  <a href="${ctx}/manager/news?action=view&id=${n.newsId}">Xem</a> ·
-                  <a href="${ctx}/manager/news?action=edit&id=${n.newsId}">Sửa</a> ·
+                  <a href="${ctx}/manager/news?action=view&id=${n.newsId}">Xem</a> Â·
+                  <a href="${ctx}/manager/news?action=edit&id=${n.newsId}">Sá»­a</a> Â·
                   <form method="post" action="${ctx}/manager/news"
-                        onsubmit="return confirm('Xóa tin này?')">
+                        onsubmit="return confirm('XÃ³a tin nÃ y?')">
                     <input type="hidden" name="_csrf" value="${csrf}">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="${n.newsId}">
-                    <button class="btn-link uip-danger" type="submit">Xóa</button>
+                    <button class="btn-link uip-danger" type="submit">XÃ³a</button>
                   </form>
                 </td>
               </tr>
             </c:forEach>
             <c:if test="${empty newsList}">
-              <tr><td colspan="6" class="uip-empty">Không có tin tức nào. Bấm “+ Đăng tin mới” để tạo bài đầu tiên.</td></tr>
+              <tr><td colspan="6" class="uip-empty">KhÃ´ng cÃ³ tin tá»©c nÃ o. Báº¥m â€œ+ ÄÄƒng tin má»›iâ€ Ä‘á»ƒ táº¡o bÃ i Ä‘áº§u tiÃªn.</td></tr>
             </c:if>
           </tbody>
         </table>
@@ -97,3 +97,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

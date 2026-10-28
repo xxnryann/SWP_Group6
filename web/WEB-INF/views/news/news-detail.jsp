@@ -1,4 +1,4 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="${news.title}"/>
 <%@ include file="../_header.jspf" %>
 <style>
@@ -13,18 +13,21 @@
 <main>
   <section class="page">
     <div class="container uip-article">
-      <a class="uip-back" href="${ctx}/news">← Tất cả tin tức</a>
+      <a class="uip-back" href="${ctx}/news">â† Táº¥t cáº£ tin tá»©c</a>
       <article>
-        <span class="chip">Tin tức</span>
+        <span class="chip">Tin tá»©c</span>
         <h1><c:out value="${news.title}"/></h1>
-        <p class="uip-meta"><span>✍ Tác giả: <strong><c:out value="${news.authorName}"/></strong></span><span>·</span><span>🕒 ${news.createdAtLabel}</span></p>
+        <p class="uip-meta"><span>âœ TÃ¡c giáº£: <strong><c:out value="${news.authorName}"/></strong></span><span>Â·</span><span>ðŸ•’ ${news.createdAtLabel}</span></p>
         <c:if test="${not empty news.thumbnailUrl}">
           <img class="uip-hero-img" src="<c:out value='${news.thumbnailUrl}'/>" alt="<c:out value='${news.title}'/>">
         </c:if>
         <div class="uip-content"><c:out value="${news.content}"/></div>
       </article>
-      <a class="uip-back" href="${ctx}/news">← Tất cả tin tức</a>
+      <a class="uip-back" href="${ctx}/news">â† Táº¥t cáº£ tin tá»©c</a>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

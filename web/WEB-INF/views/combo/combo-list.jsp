@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Quản lý combo"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Quáº£n lÃ½ combo"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -40,57 +40,60 @@
         <div>
       <div class="uip-head">
         <div>
-          <h1>Quản lý combo bắp nước</h1>
-          <p>Cập nhật giá và tồn kho các combo bán kèm vé tại rạp (SRS: Staff cập nhật tồn kho &amp; giá combo).</p>
+          <h1>Quáº£n lÃ½ combo báº¯p nÆ°á»›c</h1>
+          <p>Cáº­p nháº­t giÃ¡ vÃ  tá»“n kho cÃ¡c combo bÃ¡n kÃ¨m vÃ© táº¡i ráº¡p (SRS: Staff cáº­p nháº­t tá»“n kho &amp; giÃ¡ combo).</p>
         </div>
-        <a class="btn btn-cta" href="${ctx}/staff/combo?action=add">+ Thêm combo mới</a>
+        <a class="btn btn-cta" href="${ctx}/staff/combo?action=add">+ ThÃªm combo má»›i</a>
       </div>
 
       <form method="get" action="${ctx}/staff/combo" class="uip-search">
-        <input type="search" name="q" placeholder="Tìm theo tên combo..." value="<c:out value='${keyword}'/>">
-        <button class="btn btn-outline" type="submit">Tìm</button>
+        <input type="search" name="q" placeholder="TÃ¬m theo tÃªn combo..." value="<c:out value='${keyword}'/>">
+        <button class="btn btn-outline" type="submit">TÃ¬m</button>
       </form>
 
       <div class="uip-grid">
         <c:forEach var="c" items="${comboList}">
           <article class="uip-ccard">
-            <div class="uip-top">🍿
+            <div class="uip-top">ðŸ¿
               <span class="uip-status">
                 <c:choose>
-                  <c:when test="${c.active}"><span class="uip-badge uip-badge-on">Đang bán</span></c:when>
-                  <c:otherwise><span class="uip-badge uip-badge-off">Đã ẩn</span></c:otherwise>
+                  <c:when test="${c.active}"><span class="uip-badge uip-badge-on">Äang bÃ¡n</span></c:when>
+                  <c:otherwise><span class="uip-badge uip-badge-off">ÄÃ£ áº©n</span></c:otherwise>
                 </c:choose>
               </span>
             </div>
             <div class="uip-body">
               <h3><c:out value="${c.comboName}"/></h3>
               <p class="uip-desc"><c:out value="${c.description}"/></p>
-              <div class="uip-price-wrap"><span class="uip-price">${c.priceLabel}</span> <small>VNĐ</small></div>
+              <div class="uip-price-wrap"><span class="uip-price">${c.priceLabel}</span> <small>VNÄ</small></div>
               <div>
                 <c:choose>
-                  <c:when test="${c.stock == 0}"><span class="uip-stock uip-stock-out">Hết hàng</span></c:when>
-                  <c:when test="${c.stock <= 10}"><span class="uip-stock uip-stock-low">Sắp hết · còn ${c.stock}</span></c:when>
-                  <c:otherwise><span class="uip-stock uip-stock-ok">Còn ${c.stock} phần</span></c:otherwise>
+                  <c:when test="${c.stock == 0}"><span class="uip-stock uip-stock-out">Háº¿t hÃ ng</span></c:when>
+                  <c:when test="${c.stock <= 10}"><span class="uip-stock uip-stock-low">Sáº¯p háº¿t Â· cÃ²n ${c.stock}</span></c:when>
+                  <c:otherwise><span class="uip-stock uip-stock-ok">CÃ²n ${c.stock} pháº§n</span></c:otherwise>
                 </c:choose>
               </div>
               <div class="uip-actions">
-                <a class="btn btn-soft" href="${ctx}/staff/combo?action=edit&id=${c.comboId}">Sửa</a>
+                <a class="btn btn-soft" href="${ctx}/staff/combo?action=edit&id=${c.comboId}">Sá»­a</a>
                 <form method="post" action="${ctx}/staff/combo"
-                      onsubmit="return confirm('Xóa combo này?')">
+                      onsubmit="return confirm('XÃ³a combo nÃ y?')">
                   <input type="hidden" name="_csrf" value="${csrf}">
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="id" value="${c.comboId}">
-                  <button class="btn btn-outline" type="submit" style="color:var(--danger);border-color:var(--danger)">Xóa</button>
+                  <button class="btn btn-outline" type="submit" style="color:var(--danger);border-color:var(--danger)">XÃ³a</button>
                 </form>
               </div>
             </div>
           </article>
         </c:forEach>
       </div>
-      <c:if test="${empty comboList}"><div class="uip-empty">🍿<br>Không có combo nào.</div></c:if>
+      <c:if test="${empty comboList}"><div class="uip-empty">ðŸ¿<br>KhÃ´ng cÃ³ combo nÃ o.</div></c:if>
         </div>
       </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

@@ -1,26 +1,26 @@
-<footer class="site-footer">
+﻿﻿<footer class="site-footer">
   <div class="container">
     <div class="footer-grid">
       <div>
         <a class="logo" href="${ctx}/home"><span>Cine<b>Star</b> Cinemas</span></a>
-        <p>Hệ thống rạp chiếu phim hiện đại với âm thanh Dolby Atmos và hình ảnh sắc nét, mang đến trải nghiệm điện ảnh trọn vẹn cho mọi khán giả.</p>
+        <p>Há»‡ thá»‘ng ráº¡p chiáº¿u phim hiá»‡n Ä‘áº¡i vá»›i Ã¢m thanh Dolby Atmos vÃ  hÃ¬nh áº£nh sáº¯c nÃ©t, mang Ä‘áº¿n tráº£i nghiá»‡m Ä‘iá»‡n áº£nh trá»n váº¹n cho má»i khÃ¡n giáº£.</p>
       </div>
       <div>
-        <h4>Dịch vụ</h4>
-        <ul><li><a href="#">Mua vé online</a></li><li><a href="#">Thẻ quà tặng</a></li><li><a href="#">Thuê rạp</a></li><li><a href="#">Bắp nước combo</a></li></ul>
+        <h4>Dá»‹ch vá»¥</h4>
+        <ul><li><a href="#">Mua vÃ© online</a></li><li><a href="#">Tháº» quÃ  táº·ng</a></li><li><a href="#">ThuÃª ráº¡p</a></li><li><a href="#">Báº¯p nÆ°á»›c combo</a></li></ul>
       </div>
       <div>
-        <h4>Hỗ trợ</h4>
-        <ul><li>Hotline: <a href="tel:1900636807">1900 636807</a></li><li><a href="#">Câu hỏi thường gặp</a></li><li><a href="#">Liên hệ</a></li><li><a href="#">Tuyển dụng</a></li></ul>
+        <h4>Há»— trá»£</h4>
+        <ul><li>Hotline: <a href="tel:1900636807">1900 636807</a></li><li><a href="#">CÃ¢u há»i thÆ°á»ng gáº·p</a></li><li><a href="#">LiÃªn há»‡</a></li><li><a href="#">Tuyá»ƒn dá»¥ng</a></li></ul>
       </div>
       <div>
-        <h4>Chính sách</h4>
-        <ul><li><a href="#">Điều khoản sử dụng</a></li><li><a href="#">Chính sách bảo mật</a></li><li><a href="#">Chính sách thanh toán</a></li><li><a href="#">Quy định hoàn vé</a></li></ul>
+        <h4>ChÃ­nh sÃ¡ch</h4>
+        <ul><li><a href="#">Äiá»u khoáº£n sá»­ dá»¥ng</a></li><li><a href="#">ChÃ­nh sÃ¡ch báº£o máº­t</a></li><li><a href="#">ChÃ­nh sÃ¡ch thanh toÃ¡n</a></li><li><a href="#">Quy Ä‘á»‹nh hoÃ n vÃ©</a></li></ul>
       </div>
     </div>
     <div class="footer-note">
       <span>&copy; 2026 CineStar Cinemas. All rights reserved.</span>
-      <span class="warn">⚠ Đây là dự án mô phỏng phục vụ học tập, không phải website chính thức của CineStar.</span>
+      <span class="warn">âš  ÄÃ¢y lÃ  dá»± Ã¡n mÃ´ phá»ng phá»¥c vá»¥ há»c táº­p, khÃ´ng pháº£i website chÃ­nh thá»©c cá»§a CineStar.</span>
     </div>
   </div>
 </footer>
@@ -29,7 +29,7 @@
   <div class="modal-dialog">
     <h3 id="modalTitle"></h3>
     <p id="modalBody"></p>
-    <div class="modal-actions"><button class="btn btn-soft" type="button" data-modal-close>Đóng</button></div>
+    <div class="modal-actions"><button class="btn btn-soft" type="button" data-modal-close>ÄÃ³ng</button></div>
   </div>
 </div>
 
@@ -39,7 +39,7 @@
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   function store(fn) { try { return fn(); } catch (e) { return null; } }
 
-  /* Toast: tự ẩn sau 3 giây */
+  /* Toast: tá»± áº©n sau 3 giÃ¢y */
   window.showToast = function (msg, type) {
     var t = document.createElement('div');
     t.className = 'toast' + (type ? ' toast-' + type : '');
@@ -55,7 +55,7 @@
     a.addEventListener('click', function (e) { e.preventDefault(); showToast(a.dataset.toast); });
   });
 
-  /* Modal: đóng bằng nút, click nền hoặc phím Esc */
+  /* Modal: Ä‘Ã³ng báº±ng nÃºt, click ná»n hoáº·c phÃ­m Esc */
   var modal = $('#modal');
   window.openModal = function (title, body) {
     $('#modalTitle').textContent = title; $('#modalBody').textContent = body; modal.classList.add('open');
@@ -66,7 +66,7 @@
     if (e.key === 'Escape') { closeModal(); document.body.classList.remove('drawer-open'); $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); }); }
   });
 
-  /* Dropdown "Khác" mở bằng click */
+  /* Dropdown "KhÃ¡c" má»Ÿ báº±ng click */
   $$('.dropdown > button').forEach(function (b) {
     b.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -76,7 +76,7 @@
   });
   document.addEventListener('click', function () { $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); }); });
 
-  /* Mobile drawer (chỉ có trên trang công khai; trang nội bộ bỏ thanh nav) */
+  /* Mobile drawer (chá»‰ cÃ³ trÃªn trang cÃ´ng khai; trang ná»™i bá»™ bá» thanh nav) */
   function drawer(open) { document.body.classList.toggle('drawer-open', open); }
   var menuBtn = $('#menuBtn');
   if (menuBtn) menuBtn.addEventListener('click', function () { drawer(true); });
@@ -85,7 +85,7 @@
   var drawerBackdrop = $('#drawerBackdrop');
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { drawer(false); });
 
-  /* Rail dọc (menu role): mở/đóng trên màn hình hẹp */
+  /* Rail dá»c (menu role): má»Ÿ/Ä‘Ã³ng trÃªn mÃ n hÃ¬nh háº¹p */
   var railToggle = $('#railToggle');
   function rail(open) { document.body.classList.toggle('rail-open', open); }
   if (railToggle) {
@@ -105,11 +105,11 @@
     if (e.key === 'Escape') rail(false);
   });
 
-  /* Tài khoản hiện tại -> localStorage.currentUser (nguồn thật vẫn là session phía server) */
+  /* TÃ i khoáº£n hiá»‡n táº¡i -> localStorage.currentUser (nguá»“n tháº­t váº«n lÃ  session phÃ­a server) */
   var user = document.body.dataset.user;
   store(function () { user ? localStorage.setItem('currentUser', JSON.stringify({ name: user })) : localStorage.removeItem('currentUser'); });
 
-  /* Ngôn ngữ VIE/ENG (lưu lựa chọn; nội dung hiện chỉ có tiếng Việt) */
+  /* NgÃ´n ngá»¯ VIE/ENG (lÆ°u lá»±a chá»n; ná»™i dung hiá»‡n chá»‰ cÃ³ tiáº¿ng Viá»‡t) */
   var lang = store(function () { return localStorage.getItem('lang'); }) || 'vi';
   $$('.lang-switch button').forEach(function (b) {
     b.classList.toggle('active', b.dataset.lang === lang);
@@ -120,15 +120,15 @@
     });
   });
 
-  /* Hiện/ẩn mật khẩu */
+  /* Hiá»‡n/áº©n máº­t kháº©u */
   $$('.pw-toggle').forEach(function (b) {
     b.addEventListener('click', function () {
       var i = b.parentElement.querySelector('input'), show = i.type === 'password';
-      i.type = show ? 'text' : 'password'; b.textContent = show ? 'Ẩn' : 'Hiện';
+      i.type = show ? 'text' : 'password'; b.textContent = show ? 'áº¨n' : 'Hiá»‡n';
     });
   });
 
-  /* Nút submit hiện spinner, chống bấm đúp */
+  /* NÃºt submit hiá»‡n spinner, chá»‘ng báº¥m Ä‘Ãºp */
   $$('form[novalidate], form[action$="verify-otp"]').forEach(function (f) {
     f.addEventListener('submit', function () {
       var b = f.querySelector('button[type=submit].btn');
@@ -139,3 +139,4 @@
 </script>
 </body>
 </html>
+

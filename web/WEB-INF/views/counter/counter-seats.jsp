@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Bán vé tại quầy — Chọn ghế"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="BÃ¡n vÃ© táº¡i quáº§y â€” Chá»n gháº¿"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
@@ -44,37 +44,37 @@
   <section class="page">
     <div class="container">
       <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">2</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step"><span class="uip-num">3</span> Thanh toán</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n suáº¥t chiáº¿u</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step active"><span class="uip-num">2</span> Chá»n gháº¿</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step"><span class="uip-num">3</span> Thanh toÃ¡n</span>
       </div>
 
       <div class="uip-movie-bar">
         <h1><c:out value="${showtime.title}"/></h1>
-        <span class="chip">🎬 <c:out value="${showtime.roomName}"/></span>
-        <span class="chip">🕒 ${showtime.startTimeLabel}</span>
+        <span class="chip">ðŸŽ¬ <c:out value="${showtime.roomName}"/></span>
+        <span class="chip">ðŸ•’ ${showtime.startTimeLabel}</span>
       </div>
 
       <c:if test="${not empty error}">
         <p class="alert alert-error"><c:out value="${error}"/></p>
       </c:if>
       <c:if test="${reselectWarning}">
-        <p class="alert alert-info">Đơn hiện tại đã giữ ghế của suất này — nếu chọn lại,
-           đơn cũ sẽ bị hủy và tạo đơn mới (ghế cũ được nhả lại).</p>
+        <p class="alert alert-info">ÄÆ¡n hiá»‡n táº¡i Ä‘Ã£ giá»¯ gháº¿ cá»§a suáº¥t nÃ y â€” náº¿u chá»n láº¡i,
+           Ä‘Æ¡n cÅ© sáº½ bá»‹ há»§y vÃ  táº¡o Ä‘Æ¡n má»›i (gháº¿ cÅ© Ä‘Æ°á»£c nháº£ láº¡i).</p>
       </c:if>
 
       <div class="legend">
-        <span><button class="seat GREEN" type="button" disabled></button> Trống</span>
-        <span><button class="seat YELLOW" type="button" disabled></button> Đang giữ</span>
-        <span><button class="seat RED" type="button" disabled></button> Đã bán</span>
-        <span><button class="seat GREY" type="button" disabled></button> Bảo trì</span>
-        <span><button class="seat selected" type="button" disabled></button> Đang chọn</span>
+        <span><button class="seat GREEN" type="button" disabled></button> Trá»‘ng</span>
+        <span><button class="seat YELLOW" type="button" disabled></button> Äang giá»¯</span>
+        <span><button class="seat RED" type="button" disabled></button> ÄÃ£ bÃ¡n</span>
+        <span><button class="seat GREY" type="button" disabled></button> Báº£o trÃ¬</span>
+        <span><button class="seat selected" type="button" disabled></button> Äang chá»n</span>
       </div>
 
       <div class="seatmap">
-        <div class="screen">MÀN HÌNH</div>
+        <div class="screen">MÃ€N HÃŒNH</div>
         <c:forEach var="row" items="${seatRows}">
           <div class="seat-row">
             <span class="row-label">${row[0].rowLabel}</span>
@@ -87,7 +87,7 @@
           </div>
         </c:forEach>
       </div>
-      <p class="uip-note">Ghế đôi (hàng E) luôn phải chọn cả cặp — bấm một ghế sẽ tự chọn luôn ghế còn lại.</p>
+      <p class="uip-note">Gháº¿ Ä‘Ã´i (hÃ ng E) luÃ´n pháº£i chá»n cáº£ cáº·p â€” báº¥m má»™t gháº¿ sáº½ tá»± chá»n luÃ´n gháº¿ cÃ²n láº¡i.</p>
 
       <form method="post" action="${ctx}/staff/counter" onsubmit="return checkSeats()">
         <input type="hidden" name="_csrf" value="${csrf}">
@@ -95,9 +95,9 @@
         <input type="hidden" name="showtimeId" value="${showtime.showtimeId}">
         <input type="hidden" id="seatIds" name="seatIds" value="">
         <div class="uip-actions">
-          <span class="uip-count">Đã chọn: <strong id="selCount">0</strong> ghế</span>
-          <button class="btn btn-cta" type="submit">Giữ ghế &amp; sang thanh toán →</button>
-          <a class="btn btn-outline" href="${ctx}/staff/counter">← Đổi suất chiếu</a>
+          <span class="uip-count">ÄÃ£ chá»n: <strong id="selCount">0</strong> gháº¿</span>
+          <button class="btn btn-cta" type="submit">Giá»¯ gháº¿ &amp; sang thanh toÃ¡n â†’</button>
+          <a class="btn btn-outline" href="${ctx}/staff/counter">â† Äá»•i suáº¥t chiáº¿u</a>
         </div>
       </form>
     </div>
@@ -123,8 +123,11 @@
   }
 
   function checkSeats() {
-    if (selected.size === 0) { alert('Vui lòng chọn ít nhất một ghế.'); return false; }
+    if (selected.size === 0) { alert('Vui lÃ²ng chá»n Ã­t nháº¥t má»™t gháº¿.'); return false; }
     return true;
   }
 </script>
 <%@ include file="../_footer.jspf" %>
+
+
+

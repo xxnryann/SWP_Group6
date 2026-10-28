@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="${empty news ? 'Đăng tin mới' : 'Sửa tin tức'}"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="${empty news ? 'ÄÄƒng tin má»›i' : 'Sá»­a tin tá»©c'}"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-form-card { max-width: 860px; }
@@ -17,47 +17,47 @@
         <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
-        <p class="sub">Bài ở trạng thái “Xuất bản ngay” sẽ xuất hiện ngay trên trang Tin tức công khai.</p>
+        <p class="sub">BÃ i á»Ÿ tráº¡ng thÃ¡i â€œXuáº¥t báº£n ngayâ€ sáº½ xuáº¥t hiá»‡n ngay trÃªn trang Tin tá»©c cÃ´ng khai.</p>
         <c:if test="${not empty error}"><p class="alert alert-error">${error}</p></c:if>
         <form method="post" action="${ctx}/manager/news">
           <input type="hidden" name="_csrf" value="${csrf}">
           <input type="hidden" name="id" value="${news.newsId}">
 
           <div class="field">
-            <label for="f-title">Tiêu đề (tối đa 200 ký tự)</label>
+            <label for="f-title">TiÃªu Ä‘á» (tá»‘i Ä‘a 200 kÃ½ tá»±)</label>
             <input id="f-title" type="text" name="title" maxlength="200" required
-                   placeholder="VD: Khai trương rạp CineStar"
+                   placeholder="VD: Khai trÆ°Æ¡ng ráº¡p CineStar"
                    value="<c:out value='${news.title}'/>">
           </div>
 
           <div class="field">
-            <label for="f-content">Nội dung</label>
+            <label for="f-content">Ná»™i dung</label>
             <textarea id="f-content" name="content" rows="10" required
-                      placeholder="Nội dung bài viết..."><c:out value="${news.content}"/></textarea>
+                      placeholder="Ná»™i dung bÃ i viáº¿t..."><c:out value="${news.content}"/></textarea>
           </div>
 
           <div class="field">
-            <label for="f-thumb">Link ảnh thumbnail</label>
+            <label for="f-thumb">Link áº£nh thumbnail</label>
             <input id="f-thumb" type="text" name="thumbnailUrl"
-                   placeholder="https://... (để trống sẽ dùng ảnh mặc định)"
+                   placeholder="https://... (Ä‘á»ƒ trá»‘ng sáº½ dÃ¹ng áº£nh máº·c Ä‘á»‹nh)"
                    value="<c:out value='${news.thumbnailUrl}'/>">
             <c:if test="${not empty news.thumbnailUrl}">
-              <div class="uip-preview"><img src="<c:out value='${news.thumbnailUrl}'/>" alt="Ảnh thumbnail hiện tại"></div>
+              <div class="uip-preview"><img src="<c:out value='${news.thumbnailUrl}'/>" alt="áº¢nh thumbnail hiá»‡n táº¡i"></div>
             </c:if>
           </div>
 
           <div class="field">
-            <label for="f-status">Trạng thái</label>
+            <label for="f-status">Tráº¡ng thÃ¡i</label>
             <select id="f-status" name="status">
-              <option value="Published" ${news.status == 'Published' ? 'selected' : ''}>Xuất bản ngay</option>
-              <option value="Draft" ${news.status == 'Draft' ? 'selected' : ''}>Lưu bản nháp</option>
-              <option value="Hidden" ${news.status == 'Hidden' ? 'selected' : ''}>Ẩn khỏi trang tin</option>
+              <option value="Published" ${news.status == 'Published' ? 'selected' : ''}>Xuáº¥t báº£n ngay</option>
+              <option value="Draft" ${news.status == 'Draft' ? 'selected' : ''}>LÆ°u báº£n nhÃ¡p</option>
+              <option value="Hidden" ${news.status == 'Hidden' ? 'selected' : ''}>áº¨n khá»i trang tin</option>
             </select>
           </div>
 
           <div class="uip-actions">
-            <button class="btn btn-cta" type="submit">Lưu bài viết</button>
-            <a class="btn btn-outline" href="${ctx}/manager/news">Hủy</a>
+            <button class="btn btn-cta" type="submit">LÆ°u bÃ i viáº¿t</button>
+            <a class="btn btn-outline" href="${ctx}/manager/news">Há»§y</a>
           </div>
         </form>
       </div>
@@ -67,3 +67,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

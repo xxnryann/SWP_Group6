@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Đặt vé — Combo & ưu đãi"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Äáº·t vÃ© â€” Combo & Æ°u Ä‘Ã£i"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
@@ -43,23 +43,23 @@
   <section class="page">
     <div class="container">
       <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">3</span> Thanh toán</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n suáº¥t chiáº¿u</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n gháº¿</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step active"><span class="uip-num">3</span> Thanh toÃ¡n</span>
       </div>
 
       <div class="uip-layout">
         <div>
           <div class="card uip-sec">
-            <h2><span class="uip-n">1</span> Combo bắp nước (tùy chọn)</h2>
+            <h2><span class="uip-n">1</span> Combo báº¯p nÆ°á»›c (tÃ¹y chá»n)</h2>
             <form method="post" action="${ctx}/booking/extras">
               <input type="hidden" name="_csrf" value="${csrf}">
               <input type="hidden" name="action" value="updateCombos">
               <div class="table-wrap" style="margin-bottom:14px">
                 <table class="data" style="min-width:0">
-                  <thead><tr><th>Combo</th><th>Giá (VNĐ)</th><th>Tồn kho</th><th>Số lượng</th></tr></thead>
+                  <thead><tr><th>Combo</th><th>GiÃ¡ (VNÄ)</th><th>Tá»“n kho</th><th>Sá»‘ lÆ°á»£ng</th></tr></thead>
                   <tbody>
                     <c:forEach var="cb" items="${combos}">
                       <tr>
@@ -76,7 +76,7 @@
                   </tbody>
                 </table>
               </div>
-              <button class="btn btn-outline" type="submit">Cập nhật combo</button>
+              <button class="btn btn-outline" type="submit">Cáº­p nháº­t combo</button>
             </form>
           </div>
 
@@ -85,45 +85,45 @@
             <c:if test="${not empty pointConfig}">
               <p><em><c:out value="${pointConfig.ruleLabel}"/></em></p>
             </c:if>
-            <p>Số dư MyPoint của bạn: <strong>${pointBalance}</strong> điểm.</p>
+            <p>Sá»‘ dÆ° MyPoint cá»§a báº¡n: <strong>${pointBalance}</strong> Ä‘iá»ƒm.</p>
             <form method="post" action="${ctx}/booking/extras" class="uip-inline-form">
               <input type="hidden" name="_csrf" value="${csrf}">
               <input type="hidden" name="action" value="applyDiscount">
-              <input type="text" name="voucherCode" placeholder="Mã voucher (nếu có)" maxlength="30">
+              <input type="text" name="voucherCode" placeholder="MÃ£ voucher (náº¿u cÃ³)" maxlength="30">
               <input type="number" name="points" min="0" max="${pointBalance}" value="0"
-                     placeholder="Điểm muốn dùng">
-              <button class="btn btn-outline" type="submit">Áp dụng giảm giá</button>
+                     placeholder="Äiá»ƒm muá»‘n dÃ¹ng">
+              <button class="btn btn-outline" type="submit">Ãp dá»¥ng giáº£m giÃ¡</button>
             </form>
-            <p style="margin-top:12px">Đã giảm: voucher <strong>${booking.voucherDiscountLabel} VNĐ</strong>,
-               MyPoint <strong>${booking.pointsDiscountLabel} VNĐ</strong> (${booking.pointsUsed} điểm).</p>
-            <p style="margin-top:6px"><em>Voucher được áp trước, MyPoint áp sau — vì áp voucher sẽ
-               huỷ số điểm đã dùng trước đó.</em></p>
+            <p style="margin-top:12px">ÄÃ£ giáº£m: voucher <strong>${booking.voucherDiscountLabel} VNÄ</strong>,
+               MyPoint <strong>${booking.pointsDiscountLabel} VNÄ</strong> (${booking.pointsUsed} Ä‘iá»ƒm).</p>
+            <p style="margin-top:6px"><em>Voucher Ä‘Æ°á»£c Ã¡p trÆ°á»›c, MyPoint Ã¡p sau â€” vÃ¬ Ã¡p voucher sáº½
+               huá»· sá»‘ Ä‘iá»ƒm Ä‘Ã£ dÃ¹ng trÆ°á»›c Ä‘Ã³.</em></p>
           </div>
         </div>
 
         <aside class="card uip-summary">
-          <h2>Tóm tắt đơn</h2>
-          <div>Mã đơn: <span class="uip-code"><c:out value="${booking.bookingCode}"/></span></div>
-          <p class="uip-movie">🎬 <strong><c:out value="${booking.movieTitle}"/></strong><br>
-             <c:out value="${booking.roomName}"/> — ${booking.startTimeLabel}<br>
-             Ghế: <strong><c:out value="${booking.seatLabelText}"/></strong></p>
-          <div class="uip-line"><span>Tiền vé</span><span>${booking.ticketTotalLabel} VNĐ</span></div>
-          <div class="uip-line"><span>Tiền combo</span><span>${booking.comboTotalLabel} VNĐ</span></div>
+          <h2>TÃ³m táº¯t Ä‘Æ¡n</h2>
+          <div>MÃ£ Ä‘Æ¡n: <span class="uip-code"><c:out value="${booking.bookingCode}"/></span></div>
+          <p class="uip-movie">ðŸŽ¬ <strong><c:out value="${booking.movieTitle}"/></strong><br>
+             <c:out value="${booking.roomName}"/> â€” ${booking.startTimeLabel}<br>
+             Gháº¿: <strong><c:out value="${booking.seatLabelText}"/></strong></p>
+          <div class="uip-line"><span>Tiá»n vÃ©</span><span>${booking.ticketTotalLabel} VNÄ</span></div>
+          <div class="uip-line"><span>Tiá»n combo</span><span>${booking.comboTotalLabel} VNÄ</span></div>
           <c:if test="${booking.voucherDiscount > 0}">
-            <div class="uip-line"><span>Giảm voucher</span>
-                 <span class="uip-neg">− ${booking.voucherDiscountLabel} VNĐ</span></div>
+            <div class="uip-line"><span>Giáº£m voucher</span>
+                 <span class="uip-neg">âˆ’ ${booking.voucherDiscountLabel} VNÄ</span></div>
           </c:if>
           <c:if test="${booking.pointsDiscount > 0}">
-            <div class="uip-line"><span>Giảm MyPoint</span>
-                 <span class="uip-neg">− ${booking.pointsDiscountLabel} VNĐ</span></div>
+            <div class="uip-line"><span>Giáº£m MyPoint</span>
+                 <span class="uip-neg">âˆ’ ${booking.pointsDiscountLabel} VNÄ</span></div>
           </c:if>
-          <div class="uip-total"><span><strong>Tổng phải trả</strong></span>
-               <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNĐ</small></span></div>
+          <div class="uip-total"><span><strong>Tá»•ng pháº£i tráº£</strong></span>
+               <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNÄ</small></span></div>
 
           <form class="uip-next" method="post" action="${ctx}/booking/extras">
             <input type="hidden" name="_csrf" value="${csrf}">
             <input type="hidden" name="action" value="next">
-            <button class="btn btn-cta btn-block" type="submit">Tiếp tục thanh toán →</button>
+            <button class="btn btn-cta btn-block" type="submit">Tiáº¿p tá»¥c thanh toÃ¡n â†’</button>
           </form>
         </aside>
       </div>
@@ -131,3 +131,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

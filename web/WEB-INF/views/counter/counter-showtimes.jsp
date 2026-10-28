@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Bán vé tại quầy — Chọn suất chiếu"/>
+﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="BÃ¡n vÃ© táº¡i quáº§y â€” Chá»n suáº¥t chiáº¿u"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
@@ -34,13 +34,13 @@
     <div class="container">
       <div class="dash-layout">
         <div>
-      <h1>Bán vé tại quầy</h1>
+      <h1>BÃ¡n vÃ© táº¡i quáº§y</h1>
       <div class="uip-steps">
-        <span class="uip-step active"><span class="uip-num">1</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step"><span class="uip-num">2</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step"><span class="uip-num">3</span> Thanh toán</span>
+        <span class="uip-step active"><span class="uip-num">1</span> Chá»n suáº¥t chiáº¿u</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step"><span class="uip-num">2</span> Chá»n gháº¿</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step"><span class="uip-num">3</span> Thanh toÃ¡n</span>
       </div>
 
       <div class="uip-list">
@@ -53,30 +53,32 @@
             <div>
               <h3><c:out value="${s.title}"/></h3>
               <div class="uip-facts">
-                <span class="chip">🎬 <c:out value="${s.roomName}"/></span>
-                <span class="chip">🕒 <c:out value="${s.timeRangeLabel}"/></span>
+                <span class="chip">ðŸŽ¬ <c:out value="${s.roomName}"/></span>
+                <span class="chip">ðŸ•’ <c:out value="${s.timeRangeLabel}"/></span>
                 <c:choose>
-                  <c:when test="${s.availableSeats == 0}"><span class="chip uip-seats-out">Hết ghế</span></c:when>
-                  <c:when test="${s.availableSeats <= 10}"><span class="chip uip-seats-low">Sắp hết · còn ${s.availableSeats} ghế</span></c:when>
-                  <c:otherwise><span class="chip uip-seats-ok">Còn ${s.availableSeats} ghế trống</span></c:otherwise>
+                  <c:when test="${s.availableSeats == 0}"><span class="chip uip-seats-out">Háº¿t gháº¿</span></c:when>
+                  <c:when test="${s.availableSeats <= 10}"><span class="chip uip-seats-low">Sáº¯p háº¿t Â· cÃ²n ${s.availableSeats} gháº¿</span></c:when>
+                  <c:otherwise><span class="chip uip-seats-ok">CÃ²n ${s.availableSeats} gháº¿ trá»‘ng</span></c:otherwise>
                 </c:choose>
               </div>
             </div>
             <div>
               <c:choose>
                 <c:when test="${s.availableSeats > 0}">
-                  <a class="btn btn-cta" href="${ctx}/staff/counter?action=seats&showtimeId=${s.showtimeId}">Chọn ghế →</a>
+                  <a class="btn btn-cta" href="${ctx}/staff/counter?action=seats&showtimeId=${s.showtimeId}">Chá»n gháº¿ â†’</a>
                 </c:when>
-                <c:otherwise><span class="badge">Hết ghế</span></c:otherwise>
+                <c:otherwise><span class="badge">Háº¿t gháº¿</span></c:otherwise>
               </c:choose>
             </div>
           </article>
         </c:forEach>
       </div>
-      <c:if test="${empty showtimeList}"><div class="uip-empty">🎬<br>Không có suất chiếu nào sắp diễn ra.</div></c:if>
+      <c:if test="${empty showtimeList}"><div class="uip-empty">ðŸŽ¬<br>KhÃ´ng cÃ³ suáº¥t chiáº¿u nÃ o sáº¯p diá»…n ra.</div></c:if>
         </div>
       </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+

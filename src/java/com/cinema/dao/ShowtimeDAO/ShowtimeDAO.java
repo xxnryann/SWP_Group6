@@ -225,59 +225,6 @@ public class ShowtimeDAO {
         return slots;
     }
 
-    public void save(Showtime showtime) throws SQLException {
-        try (Connection connection = DBContext.getConnection()) {
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            connection.setAutoCommit(false);
-            try {
-                RoomSlot roomSlot = validateRoomAndSlot(connection, showtime);
-                int duration = "Scheduled".equals(showtime.getStatus())
-                        ? validateMovieAndRoomConflict(connection, showtime)
-                        : findMovieDuration(connection, showtime.getMovieId());
-                if (duration <= 0 || duration > ShowtimeRules.MAX_MOVIE_MINUTES) {
-                    throw new SQLException("Thời lượng phim không hợp lệ.");
-                }
-                LocalDateTime start = showtime.getStartsAt();
-                if (!ShowtimeRules.fitsOpeningHours(start, duration)) {
-                    throw new SQLException("Suất chiếu phải nằm trong giờ mở cửa "
-                            + ShowtimeRules.OPEN_TIME + " – " + ShowtimeRules.CLOSE_TIME
-                            + " và phim phải kết thúc trước giờ đóng cửa.");
-                }
-                LocalDateTime end = start.plusMinutes(duration);
-                String sql = showtime.getShowtimeId() == 0
-                        ? "INSERT INTO dbo.Showtime "
-                                + "(movie_id, room_id, slot_id, start_time, end_time, status, created_by, "
-                                + "created_at, room_name, starts_at) "
-                                + "VALUES (?, ?, ?, ?, ?, ?, NULL, SYSDATETIME(), ?, ?)"
-                        : "UPDATE dbo.Showtime SET movie_id = ?, room_id = ?, slot_id = ?, "
-                                + "start_time = ?, end_time = ?, status = ?, room_name = ?, starts_at = ? "
-                                + "WHERE showtime_id = ?";
-                try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                    statement.setInt(1, showtime.getMovieId());
-                    statement.setInt(2, roomSlot.roomId());
-                    statement.setInt(3, roomSlot.slotId());
-                    statement.setTimestamp(4, Timestamp.valueOf(start));
-                    statement.setTimestamp(5, Timestamp.valueOf(end));
-                    statement.setString(6, showtime.getStatus());
-                    statement.setString(7, showtime.getRoomName());
-                    statement.setTimestamp(8, Timestamp.valueOf(start));
-                    if (showtime.getShowtimeId() > 0) {
-                        statement.setInt(9, showtime.getShowtimeId());
-                        if (statement.executeUpdate() == 0) {
-                            throw new SQLException("Không tìm thấy suất chiếu cần sửa.");
-                        }
-                    } else {
-                        statement.executeUpdate();
-                    }
-                }
-                connection.commit();
-            } catch (SQLException | RuntimeException e) {
-                connection.rollback();
-                throw e;
-            }
-        }
-    }
-
     /**
      * Ghi hàng loạt suất chiếu trong một transaction.
      *
@@ -325,6 +272,59 @@ public class ShowtimeDAO {
                 }
                 connection.commit();
                 return inserted;
+            } catch (SQLException | RuntimeException e) {
+                connection.rollback();
+                throw e;
+            }
+        }
+    }
+
+    public void save(Showtime showtime) throws SQLException {
+        try (Connection connection = DBContext.getConnection()) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            connection.setAutoCommit(false);
+            try {
+                RoomSlot roomSlot = validateRoomAndSlot(connection, showtime);
+                int duration = "Scheduled".equals(showtime.getStatus())
+                        ? validateMovieAndRoomConflict(connection, showtime)
+                        : findMovieDuration(connection, showtime.getMovieId());
+                if (duration <= 0 || duration > ShowtimeRules.MAX_MOVIE_MINUTES) {
+                    throw new SQLException("Thời lượng phim không hợp lệ.");
+                }
+                LocalDateTime start = showtime.getStartsAt();
+                if (!ShowtimeRules.fitsOpeningHours(start, duration)) {
+                    throw new SQLException("Suất chiếu phải nằm trong giờ mở cửa "
+                            + ShowtimeRules.OPEN_TIME + " – " + ShowtimeRules.CLOSE_TIME
+                            + " và phim phải kết thúc trước giờ đóng cửa.");
+                }
+                LocalDateTime end = start.plusMinutes(duration);
+                String sql = showtime.getShowtimeId() == 0
+                        ? "INSERT INTO dbo.Showtime "
+                                + "(movie_id, room_id, slot_id, start_time, end_time, status, created_by, "
+                                + "created_at, room_name, starts_at) "
+                                + "VALUES (?, ?, ?, ?, ?, ?, NULL, SYSDATETIME(), ?, ?)"
+                        : "UPDATE dbo.Showtime SET movie_id = ?, room_id = ?, slot_id = ?, "
+                                + "start_time = ?, end_time = ?, status = ?, room_name = ?, starts_at = ? "
+                                + "WHERE showtime_id = ?";
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setInt(1, showtime.getMovieId());
+                    statement.setInt(2, roomSlot.roomId());
+                    statement.setInt(3, roomSlot.slotId());
+                    statement.setTimestamp(4, Timestamp.valueOf(start));
+                    statement.setTimestamp(5, Timestamp.valueOf(end));
+                    statement.setString(6, showtime.getStatus());
+                    statement.setString(7, showtime.getRoomName());
+                    statement.setTimestamp(8, Timestamp.valueOf(start));
+                    if (showtime.getShowtimeId() > 0) {
+                        statement.setInt(9, showtime.getShowtimeId());
+                        if (statement.executeUpdate() == 0) {
+                            throw new SQLException("Không tìm thấy suất chiếu cần sửa.");
+                        }
+                    } else {
+                        statement.executeUpdate();
+                    }
+                }
+                connection.commit();
             } catch (SQLException | RuntimeException e) {
                 connection.rollback();
                 throw e;

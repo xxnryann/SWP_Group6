@@ -1,6 +1,6 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
+﻿﻿<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Quản lý lịch chiếu"/>
+<c:set var="pageTitle" value="Quáº£n lÃ½ lá»‹ch chiáº¿u"/>
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="_header.jspf" %>
 
@@ -9,20 +9,20 @@
     <div>
   <section class="movie-page-heading">
     <div>
-      <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
-      <h1>Quản lý lịch chiếu</h1>
-      <p class="sub">Tạo, cập nhật hoặc xóa suất chiếu. Giờ bắt đầu tự do theo mốc 15 phút, giờ kết thúc tính bằng giờ bắt đầu cộng thời lượng phim, mỗi phòng cách nhau tối thiểu 15 phút.</p>
+      <p class="eyebrow">KHU Vá»°C QUáº¢N LÃ</p>
+      <h1>Quáº£n lÃ½ lá»‹ch chiáº¿u</h1>
+      <p class="sub">Táº¡o, cáº­p nháº­t hoáº·c xÃ³a suáº¥t chiáº¿u. Giá» báº¯t Ä‘áº§u tá»± do theo má»‘c 15 phÃºt, giá» káº¿t thÃºc tÃ­nh báº±ng giá» báº¯t Ä‘áº§u cá»™ng thá»i lÆ°á»£ng phim, má»—i phÃ²ng cÃ¡ch nhau tá»‘i thiá»ƒu 15 phÃºt.</p>
     </div>
     <div class="movie-actions">
-      <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
-      <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
+      <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lá»‹ch tá»± Ä‘á»™ng</a>
+      <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">ThÃªm suáº¥t chiáº¿u</a>
     </div>
   </section>
 
   <div class="table-wrap">
     <table class="data">
       <thead>
-        <tr><th>Phim</th><th>Ngày chiếu</th><th>Thời gian lịch chiếu</th><th>Phòng chiếu</th><th>Trạng thái</th><th>Thao tác</th></tr>
+        <tr><th>Phim</th><th>NgÃ y chiáº¿u</th><th>Thá»i gian lá»‹ch chiáº¿u</th><th>PhÃ²ng chiáº¿u</th><th>Tráº¡ng thÃ¡i</th><th>Thao tÃ¡c</th></tr>
       </thead>
       <tbody>
         <c:forEach var="showtime" items="${showtimes}">
@@ -35,23 +35,23 @@
             <td><c:out value="${showtime.scheduleTimeDisplay}"/></td>
             <td><c:out value="${showtime.roomName}"/></td>
             <td><c:choose>
-              <c:when test="${showtime.managementStatus == 'Scheduled'}">Đang mở</c:when>
-              <c:when test="${showtime.managementStatus == 'Pending'}">Chờ</c:when>
-              <c:when test="${showtime.managementStatus == 'Maintenance'}">Bảo trì</c:when>
-              <c:otherwise>Đã hủy</c:otherwise>
+              <c:when test="${showtime.managementStatus == 'Scheduled'}">Äang má»Ÿ</c:when>
+              <c:when test="${showtime.managementStatus == 'Pending'}">Chá»</c:when>
+              <c:when test="${showtime.managementStatus == 'Maintenance'}">Báº£o trÃ¬</c:when>
+              <c:otherwise>ÄÃ£ há»§y</c:otherwise>
             </c:choose></td>
             <td class="movie-actions">
-              <a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sửa</a>
-              <form method="post" action="${ctx}/manage/showtimes" onsubmit="return confirm('Bạn có chắc muốn xóa suất chiếu này?');">
+              <a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sá»­a</a>
+              <form method="post" action="${ctx}/manage/showtimes" onsubmit="return confirm('Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a suáº¥t chiáº¿u nÃ y?');">
                 <input type="hidden" name="_csrf" value="${escapedCsrf}">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="id" value="${escapedId}">
-                <button class="btn btn-danger btn-small" type="submit">Xóa</button>
+                <button class="btn btn-danger btn-small" type="submit">XÃ³a</button>
               </form>
             </td>
           </tr>
         </c:forEach>
-        <c:if test="${empty showtimes}"><tr><td colspan="6">Chưa có suất chiếu. Hãy thêm suất chiếu đầu tiên.</td></tr></c:if>
+        <c:if test="${empty showtimes}"><tr><td colspan="6">ChÆ°a cÃ³ suáº¥t chiáº¿u. HÃ£y thÃªm suáº¥t chiáº¿u Ä‘áº§u tiÃªn.</td></tr></c:if>
       </tbody>
     </table>
   </div>
@@ -60,3 +60,5 @@
 </div></main>
 
 <%@ include file="_footer.jspf" %>
+
+

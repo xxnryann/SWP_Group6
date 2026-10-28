@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Đặt vé — Thanh toán"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Äáº·t vÃ© â€” Thanh toÃ¡n"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
@@ -35,60 +35,60 @@
   <section class="page">
     <div class="container">
       <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">3</span> Thanh toán</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n suáº¥t chiáº¿u</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n gháº¿</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step active"><span class="uip-num">3</span> Thanh toÃ¡n</span>
       </div>
 
       <div class="uip-layout">
         <div class="card">
-          <h2>Thanh toán đơn vé</h2>
-          <p class="sub">Kiểm tra lại thông tin trước khi thanh toán qua cổng VNPAY.</p>
+          <h2>Thanh toÃ¡n Ä‘Æ¡n vÃ©</h2>
+          <p class="sub">Kiá»ƒm tra láº¡i thÃ´ng tin trÆ°á»›c khi thanh toÃ¡n qua cá»•ng VNPAY.</p>
 
           <div class="uip-countdown">
             <div class="uip-clock" id="clock"><c:out value="${remainingSeconds}"/></div>
-            <div class="uip-label">giây còn lại để thanh toán (ghế được giữ tối đa 5 phút)</div>
+            <div class="uip-label">giÃ¢y cÃ²n láº¡i Ä‘á»ƒ thanh toÃ¡n (gháº¿ Ä‘Æ°á»£c giá»¯ tá»‘i Ä‘a 5 phÃºt)</div>
           </div>
 
           <div class="uip-line"><span>Phim</span><span><strong><c:out value="${booking.movieTitle}"/></strong></span></div>
-          <div class="uip-line"><span>Phòng</span><span><c:out value="${booking.roomName}"/></span></div>
-          <div class="uip-line"><span>Suất chiếu</span><span>${booking.startTimeLabel}</span></div>
-          <div class="uip-line"><span>Ghế</span><span><strong><c:out value="${booking.seatLabelText}"/></strong></span></div>
-          <div class="uip-line"><span>Số vé</span><span>${booking.ticketCodes.size()}</span></div>
+          <div class="uip-line"><span>PhÃ²ng</span><span><c:out value="${booking.roomName}"/></span></div>
+          <div class="uip-line"><span>Suáº¥t chiáº¿u</span><span>${booking.startTimeLabel}</span></div>
+          <div class="uip-line"><span>Gháº¿</span><span><strong><c:out value="${booking.seatLabelText}"/></strong></span></div>
+          <div class="uip-line"><span>Sá»‘ vÃ©</span><span>${booking.ticketCodes.size()}</span></div>
 
           <form class="uip-pay" method="post" action="${ctx}/booking/payment">
             <input type="hidden" name="_csrf" value="${csrf}">
             <input type="hidden" name="action" value="pay">
-            <button class="btn btn-cta btn-block" type="submit" id="payBtn">Thanh toán qua VNPAY</button>
+            <button class="btn btn-cta btn-block" type="submit" id="payBtn">Thanh toÃ¡n qua VNPAY</button>
           </form>
 
           <div class="uip-cancel">
             <form method="post" action="${ctx}/booking/payment"
-                  onsubmit="return confirm('Huỷ đơn này? Ghế đã giữ sẽ được trả lại.');">
+                  onsubmit="return confirm('Huá»· Ä‘Æ¡n nÃ y? Gháº¿ Ä‘Ã£ giá»¯ sáº½ Ä‘Æ°á»£c tráº£ láº¡i.');">
               <input type="hidden" name="_csrf" value="${csrf}">
               <input type="hidden" name="action" value="cancel">
-              <button class="btn-link" type="submit" style="color:var(--danger)">Huỷ đơn này</button>
+              <button class="btn-link" type="submit" style="color:var(--danger)">Huá»· Ä‘Æ¡n nÃ y</button>
             </form>
           </div>
         </div>
 
         <aside class="card uip-summary">
-          <h2>Tóm tắt đơn</h2>
-          <div>Mã đơn: <span class="uip-code"><c:out value="${booking.bookingCode}"/></span></div>
-          <div class="uip-line"><span>Tiền vé</span><span>${booking.ticketTotalLabel} VNĐ</span></div>
-          <div class="uip-line"><span>Tiền combo</span><span>${booking.comboTotalLabel} VNĐ</span></div>
+          <h2>TÃ³m táº¯t Ä‘Æ¡n</h2>
+          <div>MÃ£ Ä‘Æ¡n: <span class="uip-code"><c:out value="${booking.bookingCode}"/></span></div>
+          <div class="uip-line"><span>Tiá»n vÃ©</span><span>${booking.ticketTotalLabel} VNÄ</span></div>
+          <div class="uip-line"><span>Tiá»n combo</span><span>${booking.comboTotalLabel} VNÄ</span></div>
           <c:if test="${booking.voucherDiscount > 0}">
-            <div class="uip-line"><span>Giảm voucher</span>
-                 <span class="uip-neg">− ${booking.voucherDiscountLabel} VNĐ</span></div>
+            <div class="uip-line"><span>Giáº£m voucher</span>
+                 <span class="uip-neg">âˆ’ ${booking.voucherDiscountLabel} VNÄ</span></div>
           </c:if>
           <c:if test="${booking.pointsDiscount > 0}">
-            <div class="uip-line"><span>Giảm MyPoint</span>
-                 <span class="uip-neg">− ${booking.pointsDiscountLabel} VNĐ</span></div>
+            <div class="uip-line"><span>Giáº£m MyPoint</span>
+                 <span class="uip-neg">âˆ’ ${booking.pointsDiscountLabel} VNÄ</span></div>
           </c:if>
-          <div class="uip-total"><span><strong>Tổng phải trả</strong></span>
-               <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNĐ</small></span></div>
+          <div class="uip-total"><span><strong>Tá»•ng pháº£i tráº£</strong></span>
+               <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNÄ</small></span></div>
         </aside>
       </div>
     </div>
@@ -107,7 +107,7 @@
         clock.textContent = '0:00';
         if (payBtn) {
           payBtn.disabled = true;
-          payBtn.textContent = 'Đã hết thời gian thanh toán';
+          payBtn.textContent = 'ÄÃ£ háº¿t thá»i gian thanh toÃ¡n';
         }
         return;
       }
@@ -118,3 +118,6 @@
   })();
 </script>
 <%@ include file="../_footer.jspf" %>
+
+
+

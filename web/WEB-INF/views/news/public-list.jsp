@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Tin tức"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Tin tá»©c"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-hero { background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); color: #fff;
@@ -43,9 +43,9 @@
 <main>
   <div class="uip-hero">
     <div class="container">
-      <p class="uip-eyebrow">Tin tức điện ảnh</p>
-      <h1>Tạp chí Điện Ảnh &amp; Sự Kiện</h1>
-      <p>Cập nhật tin tức phim ảnh nóng hổi, sự kiện độc quyền và chương trình ưu đãi mới nhất từ CineStar Cinemas.</p>
+      <p class="uip-eyebrow">Tin tá»©c Ä‘iá»‡n áº£nh</p>
+      <h1>Táº¡p chÃ­ Äiá»‡n áº¢nh &amp; Sá»± Kiá»‡n</h1>
+      <p>Cáº­p nháº­t tin tá»©c phim áº£nh nÃ³ng há»•i, sá»± kiá»‡n Ä‘á»™c quyá»n vÃ  chÆ°Æ¡ng trÃ¬nh Æ°u Ä‘Ã£i má»›i nháº¥t tá»« CineStar Cinemas.</p>
     </div>
   </div>
   <section class="page">
@@ -55,15 +55,15 @@
           <div class="uip-img">
             <c:choose>
               <c:when test="${not empty n.thumbnailUrl}"><img src="<c:out value='${n.thumbnailUrl}'/>" alt="<c:out value='${n.title}'/>"></c:when>
-              <c:otherwise>🎬</c:otherwise>
+              <c:otherwise>ðŸŽ¬</c:otherwise>
             </c:choose>
           </div>
           <div class="uip-body">
-            <span class="chip" style="align-self:flex-start">Nổi bật</span>
+            <span class="chip" style="align-self:flex-start">Ná»•i báº­t</span>
             <h2><a href="${ctx}/news?id=${n.newsId}"><c:out value="${n.title}"/></a></h2>
             <p class="uip-excerpt"><c:out value="${n.content}"/></p>
-            <p class="uip-meta"><span>✍ <c:out value="${n.authorName}"/></span><span>·</span><span>${n.createdAtLabel}</span></p>
-            <p style="margin:0"><a class="btn btn-cta" href="${ctx}/news?id=${n.newsId}">Đọc tiếp →</a></p>
+            <p class="uip-meta"><span>âœ <c:out value="${n.authorName}"/></span><span>Â·</span><span>${n.createdAtLabel}</span></p>
+            <p style="margin:0"><a class="btn btn-cta" href="${ctx}/news?id=${n.newsId}">Äá»c tiáº¿p â†’</a></p>
           </div>
         </article>
       </c:forEach>
@@ -74,19 +74,22 @@
             <div class="uip-img">
               <c:choose>
                 <c:when test="${not empty n.thumbnailUrl}"><img src="<c:out value='${n.thumbnailUrl}'/>" alt="<c:out value='${n.title}'/>"></c:when>
-                <c:otherwise>🎬</c:otherwise>
+                <c:otherwise>ðŸŽ¬</c:otherwise>
               </c:choose>
             </div>
             <div class="uip-body">
               <h3><a href="${ctx}/news?id=${n.newsId}"><c:out value="${n.title}"/></a></h3>
               <p class="uip-meta"><span>${n.createdAtLabel}</span></p>
-              <a class="uip-more" href="${ctx}/news?id=${n.newsId}">Đọc tiếp →</a>
+              <a class="uip-more" href="${ctx}/news?id=${n.newsId}">Äá»c tiáº¿p â†’</a>
             </div>
           </article>
         </c:forEach>
       </div>
-      <c:if test="${empty newsList}"><div class="uip-empty">📰<br>Chưa có tin tức nào được xuất bản.</div></c:if>
+      <c:if test="${empty newsList}"><div class="uip-empty">ðŸ“°<br>ChÆ°a cÃ³ tin tá»©c nÃ o Ä‘Æ°á»£c xuáº¥t báº£n.</div></c:if>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

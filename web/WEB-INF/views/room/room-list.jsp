@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Quản lý phòng chiếu"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Quáº£n lÃ½ phÃ²ng chiáº¿u"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .rm-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -26,23 +26,23 @@
         <div>
       <div class="rm-head">
         <div>
-          <h1>Quản lý phòng chiếu</h1>
-          <p>Tạo phòng chiếu, thiết lập thông tin phòng (tên, loại phòng, sức chứa) và layout ghế.</p>
+          <h1>Quáº£n lÃ½ phÃ²ng chiáº¿u</h1>
+          <p>Táº¡o phÃ²ng chiáº¿u, thiáº¿t láº­p thÃ´ng tin phÃ²ng (tÃªn, loáº¡i phÃ²ng, sá»©c chá»©a) vÃ  layout gháº¿.</p>
         </div>
-        <a class="btn btn-cta" href="${ctx}/admin/rooms?action=new">+ Thêm phòng chiếu</a>
+        <a class="btn btn-cta" href="${ctx}/admin/rooms?action=new">+ ThÃªm phÃ²ng chiáº¿u</a>
       </div>
 
       <form method="get" action="${ctx}/admin/rooms" class="rm-search">
-        <input type="search" name="q" placeholder="Tìm theo tên phòng..." value="<c:out value='${keyword}'/>">
-        <button class="btn btn-outline" type="submit">Tìm</button>
+        <input type="search" name="q" placeholder="TÃ¬m theo tÃªn phÃ²ng..." value="<c:out value='${keyword}'/>">
+        <button class="btn btn-outline" type="submit">TÃ¬m</button>
       </form>
 
       <div class="table-wrap">
         <table class="data">
           <thead>
             <tr>
-              <th>Phòng</th><th>Rạp</th><th>Loại</th><th>Sức chứa</th><th>Ghế</th>
-              <th>Suất sắp tới</th><th>Trạng thái</th><th>Thao tác</th>
+              <th>PhÃ²ng</th><th>Ráº¡p</th><th>Loáº¡i</th><th>Sá»©c chá»©a</th><th>Gháº¿</th>
+              <th>Suáº¥t sáº¯p tá»›i</th><th>Tráº¡ng thÃ¡i</th><th>Thao tÃ¡c</th>
             </tr>
           </thead>
           <tbody>
@@ -55,12 +55,12 @@
                 <td>
                   <c:choose>
                     <c:when test="${r.hasLayout}">
-                      ${r.seatCount} ghế
+                      ${r.seatCount} gháº¿
                       <c:if test="${r.maintenanceCount > 0}">
-                        <div class="rm-warn">${r.maintenanceCount} đang bảo trì</div>
+                        <div class="rm-warn">${r.maintenanceCount} Ä‘ang báº£o trÃ¬</div>
                       </c:if>
                     </c:when>
-                    <c:otherwise><span class="rm-warn">Chưa có layout</span></c:otherwise>
+                    <c:otherwise><span class="rm-warn">ChÆ°a cÃ³ layout</span></c:otherwise>
                   </c:choose>
                 </td>
                 <td>${r.upcomingShowtimes}</td>
@@ -72,34 +72,34 @@
                 </td>
                 <td>
                   <div class="rm-actions">
-                    <a class="btn btn-primary btn-small" href="${ctx}/admin/seats?roomId=${r.roomId}">Layout &amp; ghế</a>
-                    <a class="btn btn-soft btn-small" href="${ctx}/admin/rooms?action=edit&id=${r.roomId}">Sửa</a>
+                    <a class="btn btn-primary btn-small" href="${ctx}/admin/seats?roomId=${r.roomId}">Layout &amp; gháº¿</a>
+                    <a class="btn btn-soft btn-small" href="${ctx}/admin/rooms?action=edit&id=${r.roomId}">Sá»­a</a>
                     <form method="post" action="${ctx}/admin/rooms"
-                          onsubmit="return confirm('${r.active ? 'Đóng' : 'Mở lại'} phòng này?')">
+                          onsubmit="return confirm('${r.active ? 'ÄÃ³ng' : 'Má»Ÿ láº¡i'} phÃ²ng nÃ y?')">
                       <input type="hidden" name="_csrf" value="${csrf}">
                       <input type="hidden" name="action" value="toggle">
                       <input type="hidden" name="id" value="${r.roomId}">
-                      <button class="btn btn-outline btn-small" type="submit">${r.active ? 'Đóng phòng' : 'Mở lại'}</button>
+                      <button class="btn btn-outline btn-small" type="submit">${r.active ? 'ÄÃ³ng phÃ²ng' : 'Má»Ÿ láº¡i'}</button>
                     </form>
                     <form method="post" action="${ctx}/admin/rooms"
-                          onsubmit="return confirm('Xóa phòng này cùng toàn bộ ghế? Chỉ xóa được khi phòng chưa có suất chiếu hay vé.')">
+                          onsubmit="return confirm('XÃ³a phÃ²ng nÃ y cÃ¹ng toÃ n bá»™ gháº¿? Chá»‰ xÃ³a Ä‘Æ°á»£c khi phÃ²ng chÆ°a cÃ³ suáº¥t chiáº¿u hay vÃ©.')">
                       <input type="hidden" name="_csrf" value="${csrf}">
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="id" value="${r.roomId}">
-                      <button class="btn btn-danger btn-small" type="submit">Xóa</button>
+                      <button class="btn btn-danger btn-small" type="submit">XÃ³a</button>
                     </form>
                   </div>
                 </td>
               </tr>
             </c:forEach>
             <c:if test="${empty rooms}">
-              <tr><td colspan="8" class="rm-empty">Chưa có phòng chiếu nào.</td></tr>
+              <tr><td colspan="8" class="rm-empty">ChÆ°a cÃ³ phÃ²ng chiáº¿u nÃ o.</td></tr>
             </c:if>
           </tbody>
         </table>
       </div>
       <p class="rm-muted" style="margin-top:12px">
-        Phòng đã có suất chiếu hoặc vé không thể xóa — hãy dùng “Đóng phòng” (chỉ đóng được khi không còn suất chiếu sắp tới).
+        PhÃ²ng Ä‘Ã£ cÃ³ suáº¥t chiáº¿u hoáº·c vÃ© khÃ´ng thá»ƒ xÃ³a â€” hÃ£y dÃ¹ng â€œÄÃ³ng phÃ²ngâ€ (chá»‰ Ä‘Ã³ng Ä‘Æ°á»£c khi khÃ´ng cÃ²n suáº¥t chiáº¿u sáº¯p tá»›i).
       </p>
         </div>
       </div>
@@ -107,3 +107,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

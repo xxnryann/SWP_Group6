@@ -1,52 +1,52 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Quản lý tài khoản"/>
-<c:set var="parentTitle" value="Quản trị"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="Quáº£n lÃ½ tÃ i khoáº£n"/>
+<c:set var="parentTitle" value="Quáº£n trá»‹"/>
 <c:set var="parentUrl" value="${pageContext.request.contextPath}/admin/users"/>
 <%@ include file="_header.jspf" %>
 <main class="page"><div class="container">
   <div class="dash-layout">
     <div>
   <section class="panel">
-    <h2>Quản lý tài khoản &amp; phân quyền</h2>
-    <p class="sub">Khóa/mở tài khoản và phân quyền cho khách hàng, nhân viên, quản lý rạp.</p>
+    <h2>Quáº£n lÃ½ tÃ i khoáº£n &amp; phÃ¢n quyá»n</h2>
+    <p class="sub">KhÃ³a/má»Ÿ tÃ i khoáº£n vÃ  phÃ¢n quyá»n cho khÃ¡ch hÃ ng, nhÃ¢n viÃªn, quáº£n lÃ½ ráº¡p.</p>
 
     <form method="get" action="${ctx}/admin/users" class="row" style="margin-bottom:16px">
       <div class="field">
-        <label for="q">TÌM KIẾM</label>
-        <input id="q" name="q" type="text" placeholder="Tên, email hoặc SĐT" value="<c:out value='${q}'/>">
+        <label for="q">TÃŒM KIáº¾M</label>
+        <input id="q" name="q" type="text" placeholder="TÃªn, email hoáº·c SÄT" value="<c:out value='${q}'/>">
       </div>
       <div class="field">
-        <label for="fRole">QUYỀN</label>
+        <label for="fRole">QUYá»€N</label>
         <select id="fRole" name="role">
-          <option value="">Tất cả</option>
+          <option value="">Táº¥t cáº£</option>
           <c:forEach var="r" items="CUSTOMER,STAFF,MANAGER,ADMIN">
             <option value="${r}" ${fRole == r ? 'selected' : ''}>${r}</option>
           </c:forEach>
         </select>
       </div>
       <div class="field">
-        <label for="fStatus">TRẠNG THÁI</label>
+        <label for="fStatus">TRáº NG THÃI</label>
         <select id="fStatus" name="status">
-          <option value="">Tất cả</option>
+          <option value="">Táº¥t cáº£</option>
           <c:forEach var="st" items="PENDING,ACTIVE,BLOCKED">
             <option value="${st}" ${fStatus == st ? 'selected' : ''}>${st}</option>
           </c:forEach>
         </select>
       </div>
-      <div class="field" style="align-self:end"><button class="btn btn-primary" type="submit">Lọc</button></div>
+      <div class="field" style="align-self:end"><button class="btn btn-primary" type="submit">Lá»c</button></div>
     </form>
 
     <c:choose>
-      <c:when test="${empty users}"><p class="sub">Không có tài khoản phù hợp.</p></c:when>
+      <c:when test="${empty users}"><p class="sub">KhÃ´ng cÃ³ tÃ i khoáº£n phÃ¹ há»£p.</p></c:when>
       <c:otherwise>
         <div class="table-wrap">
           <table class="data">
-            <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Quyền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>Há» tÃªn</th><th>Email</th><th>SÄT</th><th>Quyá»n</th><th>Tráº¡ng thÃ¡i</th><th>Thao tÃ¡c</th></tr></thead>
             <tbody>
             <c:forEach var="u" items="${users}">
               <c:set var="isSelf" value="${u.userId == sessionScope.authUser.userId}"/>
               <tr>
-                <td><c:out value="${u.fullName}"/><c:if test="${isSelf}"> <span class="badge">Bạn</span></c:if></td>
+                <td><c:out value="${u.fullName}"/><c:if test="${isSelf}"> <span class="badge">Báº¡n</span></c:if></td>
                 <td><c:out value="${u.email}"/></td>
                 <td><c:out value="${u.phone}"/></td>
                 <td>
@@ -60,12 +60,12 @@
                         <input type="hidden" name="q" value="<c:out value='${q}'/>">
                         <input type="hidden" name="fRole" value="${fRole}">
                         <input type="hidden" name="fStatus" value="${fStatus}">
-                        <select name="value" aria-label="Quyền">
+                        <select name="value" aria-label="Quyá»n">
                           <c:forEach var="r" items="CUSTOMER,STAFF,MANAGER,ADMIN">
                             <option value="${r}" ${u.role == r ? 'selected' : ''}>${r}</option>
                           </c:forEach>
                         </select>
-                        <button class="btn btn-soft" type="submit">Lưu</button>
+                        <button class="btn btn-soft" type="submit">LÆ°u</button>
                       </form>
                     </c:otherwise>
                   </c:choose>
@@ -82,7 +82,7 @@
                       <input type="hidden" name="fStatus" value="${fStatus}">
                       <input type="hidden" name="value" value="${u.status == 'BLOCKED' ? 'ACTIVE' : 'BLOCKED'}">
                       <button class="btn ${u.status == 'BLOCKED' ? 'btn-primary' : 'btn-outline'}" type="submit">
-                        ${u.status == 'BLOCKED' ? 'Mở khóa' : 'Khóa'}
+                        ${u.status == 'BLOCKED' ? 'Má»Ÿ khÃ³a' : 'KhÃ³a'}
                       </button>
                     </form>
                   </c:if>
@@ -99,3 +99,6 @@
   </div>
 </div></main>
 <%@ include file="_footer.jspf" %>
+
+
+

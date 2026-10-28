@@ -1,5 +1,5 @@
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Bán vé tại quầy — Thanh toán"/>
+﻿﻿﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="pageTitle" value="BÃ¡n vÃ© táº¡i quáº§y â€” Thanh toÃ¡n"/>
 <%@ include file="../_header.jspf" %>
 <style>
   .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
@@ -45,23 +45,23 @@
   <section class="page">
     <div class="container">
       <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">3</span> Thanh toán</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n suáº¥t chiáº¿u</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step done"><span class="uip-num">âœ“</span> Chá»n gháº¿</span>
+        <span class="uip-arrow">â†’</span>
+        <span class="uip-step active"><span class="uip-num">3</span> Thanh toÃ¡n</span>
       </div>
 
       <div class="uip-layout">
         <div>
           <div class="card uip-sec">
-            <h2><span class="uip-n">1</span> Combo bắp nước (tùy chọn)</h2>
+            <h2><span class="uip-n">1</span> Combo báº¯p nÆ°á»›c (tÃ¹y chá»n)</h2>
             <form method="post" action="${ctx}/staff/counter">
               <input type="hidden" name="_csrf" value="${csrf}">
               <input type="hidden" name="action" value="updateCombos">
               <div class="table-wrap" style="margin-bottom:14px">
                 <table class="data" style="min-width:0">
-                  <thead><tr><th>Combo</th><th>Giá (VNĐ)</th><th>Tồn kho</th><th>Số lượng</th></tr></thead>
+                  <thead><tr><th>Combo</th><th>GiÃ¡ (VNÄ)</th><th>Tá»“n kho</th><th>Sá»‘ lÆ°á»£ng</th></tr></thead>
                   <tbody>
                     <c:forEach var="c" items="${combos}">
                       <tr>
@@ -78,23 +78,23 @@
                   </tbody>
                 </table>
               </div>
-              <button class="btn btn-outline" type="submit">Cập nhật combo</button>
+              <button class="btn btn-outline" type="submit">Cáº­p nháº­t combo</button>
             </form>
           </div>
 
           <div class="card uip-sec">
-            <h2><span class="uip-n">2</span> Khách hàng (tùy chọn)</h2>
+            <h2><span class="uip-n">2</span> KhÃ¡ch hÃ ng (tÃ¹y chá»n)</h2>
             <c:choose>
               <c:when test="${summary.hasCustomer}">
-                <p>Khách hàng: <strong><c:out value="${summary.customerName}"/></strong>
-                   <span class="chip chip-success" style="margin-left:8px">Đã gắn</span></p>
+                <p>KhÃ¡ch hÃ ng: <strong><c:out value="${summary.customerName}"/></strong>
+                   <span class="chip chip-success" style="margin-left:8px">ÄÃ£ gáº¯n</span></p>
               </c:when>
               <c:otherwise>
                 <form method="post" action="${ctx}/staff/counter" class="uip-inline-form">
                   <input type="hidden" name="_csrf" value="${csrf}">
                   <input type="hidden" name="action" value="attachCustomer">
-                  <input type="search" name="q" placeholder="Email hoặc SĐT khách hàng đã đăng ký...">
-                  <button class="btn btn-outline" type="submit">Gắn khách hàng</button>
+                  <input type="search" name="q" placeholder="Email hoáº·c SÄT khÃ¡ch hÃ ng Ä‘Ã£ Ä‘Äƒng kÃ½...">
+                  <button class="btn btn-outline" type="submit">Gáº¯n khÃ¡ch hÃ ng</button>
                 </form>
               </c:otherwise>
             </c:choose>
@@ -105,61 +105,61 @@
             <c:choose>
               <c:when test="${summary.hasCustomer}">
                 <c:if test="${not empty pointConfig}">
-                  <p><em>1 điểm = ${pointConfig.pointValueVnd} VNĐ, dùng tối đa ${pointConfig.maxRedeemPercent}% giá trị đơn.</em></p>
+                  <p><em>1 Ä‘iá»ƒm = ${pointConfig.pointValueVnd} VNÄ, dÃ¹ng tá»‘i Ä‘a ${pointConfig.maxRedeemPercent}% giÃ¡ trá»‹ Ä‘Æ¡n.</em></p>
                 </c:if>
                 <form method="post" action="${ctx}/staff/counter" class="uip-inline-form">
                   <input type="hidden" name="_csrf" value="${csrf}">
                   <input type="hidden" name="action" value="applyDiscount">
-                  <input type="text" name="voucherCode" placeholder="Mã voucher (nếu có)">
-                  <input type="number" name="points" min="0" value="0" placeholder="Điểm muốn dùng">
-                  <button class="btn btn-outline" type="submit">Áp dụng giảm giá</button>
+                  <input type="text" name="voucherCode" placeholder="MÃ£ voucher (náº¿u cÃ³)">
+                  <input type="number" name="points" min="0" value="0" placeholder="Äiá»ƒm muá»‘n dÃ¹ng">
+                  <button class="btn btn-outline" type="submit">Ãp dá»¥ng giáº£m giÃ¡</button>
                 </form>
-                <p style="margin-top:12px">Đã giảm: voucher <strong>${summary.voucherDiscountLabel} VNĐ</strong>,
-                   MyPoint <strong>${summary.pointsDiscountLabel} VNĐ</strong> (${summary.pointsUsed} điểm).</p>
+                <p style="margin-top:12px">ÄÃ£ giáº£m: voucher <strong>${summary.voucherDiscountLabel} VNÄ</strong>,
+                   MyPoint <strong>${summary.pointsDiscountLabel} VNÄ</strong> (${summary.pointsUsed} Ä‘iá»ƒm).</p>
               </c:when>
               <c:otherwise>
-                <p><em>Khách vãng lai không dùng được voucher/MyPoint (quy định trong sp_ApplyVoucher).
-                   Gắn khách hàng đã đăng ký ở mục 2 để áp dụng.</em></p>
+                <p><em>KhÃ¡ch vÃ£ng lai khÃ´ng dÃ¹ng Ä‘Æ°á»£c voucher/MyPoint (quy Ä‘á»‹nh trong sp_ApplyVoucher).
+                   Gáº¯n khÃ¡ch hÃ ng Ä‘Ã£ Ä‘Äƒng kÃ½ á»Ÿ má»¥c 2 Ä‘á»ƒ Ã¡p dá»¥ng.</em></p>
               </c:otherwise>
             </c:choose>
           </div>
         </div>
 
         <aside class="card uip-summary">
-          <h2>Tóm tắt đơn</h2>
-          <div>Mã đơn: <span class="uip-code"><c:out value="${summary.bookingCode}"/></span></div>
+          <h2>TÃ³m táº¯t Ä‘Æ¡n</h2>
+          <div>MÃ£ Ä‘Æ¡n: <span class="uip-code"><c:out value="${summary.bookingCode}"/></span></div>
           <c:if test="${not empty showtime}">
-            <p class="uip-movie">🎬 <strong><c:out value="${showtime.title}"/></strong><br>
-               <c:out value="${showtime.roomName}"/> — ${showtime.startTimeLabel}<br>
-               Vé đã giữ: <strong>${summary.ticketCodes.size()}</strong> ghế</p>
+            <p class="uip-movie">ðŸŽ¬ <strong><c:out value="${showtime.title}"/></strong><br>
+               <c:out value="${showtime.roomName}"/> â€” ${showtime.startTimeLabel}<br>
+               VÃ© Ä‘Ã£ giá»¯: <strong>${summary.ticketCodes.size()}</strong> gháº¿</p>
           </c:if>
-          <div class="uip-line"><span>Tiền vé</span><span>${summary.ticketTotalLabel} VNĐ</span></div>
-          <div class="uip-line"><span>Tiền combo</span><span>${summary.comboTotalLabel} VNĐ</span></div>
+          <div class="uip-line"><span>Tiá»n vÃ©</span><span>${summary.ticketTotalLabel} VNÄ</span></div>
+          <div class="uip-line"><span>Tiá»n combo</span><span>${summary.comboTotalLabel} VNÄ</span></div>
           <c:if test="${summary.voucherDiscount > 0}">
-            <div class="uip-line"><span>Giảm voucher</span><span class="uip-neg">− ${summary.voucherDiscountLabel} VNĐ</span></div>
+            <div class="uip-line"><span>Giáº£m voucher</span><span class="uip-neg">âˆ’ ${summary.voucherDiscountLabel} VNÄ</span></div>
           </c:if>
           <c:if test="${summary.pointsDiscount > 0}">
-            <div class="uip-line"><span>Giảm MyPoint</span><span class="uip-neg">− ${summary.pointsDiscountLabel} VNĐ</span></div>
+            <div class="uip-line"><span>Giáº£m MyPoint</span><span class="uip-neg">âˆ’ ${summary.pointsDiscountLabel} VNÄ</span></div>
           </c:if>
-          <div class="uip-total"><span><strong>Tổng phải thu</strong></span><span class="uip-amt">${summary.totalAmountLabel} <small style="font-size:14px">VNĐ</small></span></div>
+          <div class="uip-total"><span><strong>Tá»•ng pháº£i thu</strong></span><span class="uip-amt">${summary.totalAmountLabel} <small style="font-size:14px">VNÄ</small></span></div>
 
           <form class="uip-cash" method="post" action="${ctx}/staff/counter"
-                onsubmit="return confirm('Xác nhận đã thu đủ tiền mặt?')">
+                onsubmit="return confirm('XÃ¡c nháº­n Ä‘Ã£ thu Ä‘á»§ tiá»n máº·t?')">
             <input type="hidden" name="_csrf" value="${csrf}">
             <input type="hidden" name="action" value="pay">
             <div class="field">
-              <label for="f-cash">Tiền khách đưa (VNĐ)</label>
+              <label for="f-cash">Tiá»n khÃ¡ch Ä‘Æ°a (VNÄ)</label>
               <input id="f-cash" type="number" name="cashReceived" min="0" required placeholder="VD: 500000">
             </div>
-            <button class="btn btn-cta btn-block" type="submit">Xác nhận thu tiền</button>
+            <button class="btn btn-cta btn-block" type="submit">XÃ¡c nháº­n thu tiá»n</button>
           </form>
 
           <div class="uip-cancel">
             <form method="post" action="${ctx}/staff/counter"
-                  onsubmit="return confirm('Hủy đơn này? Ghế đã giữ sẽ được nhả lại.')">
+                  onsubmit="return confirm('Há»§y Ä‘Æ¡n nÃ y? Gháº¿ Ä‘Ã£ giá»¯ sáº½ Ä‘Æ°á»£c nháº£ láº¡i.')">
               <input type="hidden" name="_csrf" value="${csrf}">
               <input type="hidden" name="action" value="cancelBooking">
-              <button class="btn-link" type="submit" style="color:var(--danger)">Hủy đơn này</button>
+              <button class="btn-link" type="submit" style="color:var(--danger)">Há»§y Ä‘Æ¡n nÃ y</button>
             </form>
           </div>
         </aside>
@@ -168,3 +168,6 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+
