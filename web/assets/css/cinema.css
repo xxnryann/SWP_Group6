@@ -65,9 +65,9 @@ body.has-rail .topbar .sep { display: none; }
 .logout-icon { display: inline-flex; align-items: center; background: none; border: 0; padding: 4px; color: #fff; cursor: pointer; }
 .logout-icon:hover { opacity: .8; }
 body.has-rail .lang-switch { background: transparent; border-color: rgba(255,255,255,.55); }
-.role-header .container { max-width: none; padding: 0 28px; gap: 26px; min-height: 74px; }
-.role-header .container { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(0, 1fr); }
-.role-header .container::after { content: ''; }
+.site-header.role-header .container { max-width: none; padding: 0 28px; gap: 26px; min-height: 74px; }
+.site-header.role-header .container { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(0, 1fr); }
+.site-header.role-header .container::after { content: ''; }
 .role-header .topbar-nav { justify-content: center; }
 .role-header .logo { font-size: 24px; }
 .cinema-pill { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 1px solid var(--slate-300); border-radius: 999px; background: #f8fafc; color: var(--slate-800); font-size: 14px; white-space: nowrap; }
@@ -277,8 +277,10 @@ table.data td { padding: 12px 14px; border-top: 1px solid var(--slate-100); }
   .topbar-left span.hide-sm, .topbar-right .hide-sm { display: none; }
   .hero-home h1 { font-size: 32px; }
   .card, .panel { padding: 22px; }
-  body.has-rail .topbar .container { grid-template-columns: 1fr; padding: 8px 16px; row-gap: 6px; }
-  body.has-rail .topbar-left, body.has-rail .topbar-right { justify-content: space-between; }
-  .topbar-nav { justify-content: flex-start; order: 3; }
+  .site-header.role-header .container { display: flex; flex-wrap: wrap; padding: 8px 16px; gap: 8px 14px; min-height: 0; }
+  .site-header.role-header .container::after { display: none; }
+  .role-header .topbar-nav { justify-content: flex-start; gap: 2px 16px; width: 100%; }
+  .topbar-nav a { font-size: 13.5px; }
+  body.has-rail .topbar .container { padding: 6px 16px; }
 }
 @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
