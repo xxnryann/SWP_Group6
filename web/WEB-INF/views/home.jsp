@@ -19,7 +19,7 @@
   <section class="page">
     <div class="container">
       <div class="feature-grid">
-        <div class="feature"><div class="ico">🎬</div><h3>Phim bom tấn</h3><p>Cập nhật suất chiếu mới nhất từ các cụm rạp CineStar trên toàn quốc.</p></div>
+        <div class="feature"><div class="ico">🎬</div><h3>Phim bom tấn</h3><p>Cập nhật suất chiếu mới nhất tại rạp CineStar.</p></div>
         <div class="feature"><div class="ico">🔊</div><h3>Chất lượng đỉnh cao</h3><p>Phòng chiếu 2D, 3D, IMAX và Dolby Atmos cho trải nghiệm trọn vẹn.</p></div>
         <div class="feature"><div class="ico">🎁</div><h3>Ưu đãi thành viên</h3><p>Tích điểm mỗi lần mua vé và nhận khuyến mãi dành riêng cho hội viên.</p></div>
       </div>

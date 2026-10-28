@@ -1,7 +1,7 @@
 package com.cinema.model;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class Showtime {
@@ -12,7 +12,7 @@ public class Showtime {
     private int movieDurationMinutes;
     private String roomName;
     private LocalDateTime startsAt;
-    private BigDecimal ticketPrice;
+    private LocalDateTime endsAt;
     private String status = "Scheduled";
 
     public int getShowtimeId() {
@@ -63,12 +63,12 @@ public class Showtime {
         this.startsAt = startsAt;
     }
 
-    public BigDecimal getTicketPrice() {
-        return ticketPrice;
+    public LocalDateTime getEndsAt() {
+        return endsAt == null && startsAt != null ? startsAt.plusMinutes(movieDurationMinutes) : endsAt;
     }
 
-    public void setTicketPrice(BigDecimal ticketPrice) {
-        this.ticketPrice = ticketPrice;
+    public void setEndsAt(LocalDateTime endsAt) {
+        this.endsAt = endsAt;
     }
 
     public String getStatus() {
@@ -87,16 +87,46 @@ public class Showtime {
         return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
+    public String getScheduleDateDisplay() {
+        return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    public String getScheduleTimeDisplay() {
+        return startsAt == null ? "" : getStartTimeOnly() + " – " + getEndTimeOnly();
+    }
+
+    public String getManagementStatus() {
+        if ("Cancelled".equals(status)) return "Cancelled";
+        if ("Maintenance".equals(status)) return "Maintenance";
+        return startsAt != null && startsAt.toLocalDate().equals(LocalDate.now())
+                ? "Scheduled" : "Pending";
+    }
+
     public String getEndDisplay() {
-        return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes).format(DISPLAY_FORMAT);
+        return getEndsAt() == null ? "" : getEndsAt().format(DISPLAY_FORMAT);
     }
 
     public String getEndTimeOnly() {
-        return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes)
-                .format(DateTimeFormatter.ofPattern("HH:mm"));
+        if (getEndsAt() == null) return "";
+        if (startsAt != null && getEndsAt().equals(startsAt.toLocalDate().plusDays(1).atStartOfDay())) {
+            return "24:00";
+        }
+        return getEndsAt().format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
     public String getInputDateTime() {
         return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+    }
+
+    public String getInputDate() {
+        return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    public String getInputTime() {
+        return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    public String getInputEndTime() {
+        return getEndTimeOnly();
     }
 }

@@ -24,7 +24,7 @@
           <div class="field">
             <label for="f-title">Tiêu đề (tối đa 200 ký tự)</label>
             <input id="f-title" type="text" name="title" maxlength="200" required
-                   placeholder="VD: Khai trương cụm rạp mới tại Quận 7"
+                   placeholder="VD: Khai trương rạp CineStar"
                    value="<c:out value='${news.title}'/>">
           </div>
 

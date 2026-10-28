@@ -31,7 +31,7 @@ public final class MediaUploadUtil {
 
     public static Path root() throws IOException {
         String configured = AppConfig.get("media.upload.root");
-        if (configured.isBlank()) throw new IOException("Chưa cấu hình thư mục lưu tệp media.");
+        if (configured.isBlank()) configured = "media";
         Path root = Path.of(configured).toAbsolutePath().normalize();
         Files.createDirectories(root);
         return root.toRealPath();

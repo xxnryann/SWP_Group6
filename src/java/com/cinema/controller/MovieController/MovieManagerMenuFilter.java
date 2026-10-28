@@ -21,7 +21,9 @@ public class MovieManagerMenuFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession(false);
         User user = session == null ? null : (User) session.getAttribute(BaseServlet.SESSION_USER);
-        httpRequest.setAttribute("isManager", user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole()));
+        boolean canManageMovies = user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole());
+        httpRequest.setAttribute("isManager", canManageMovies);
+        httpRequest.setAttribute("canManageMovies", canManageMovies);
         String path = httpRequest.getServletPath();
         httpRequest.setAttribute("movieModule", path.startsWith("/movies")
                 || path.startsWith("/showtimes") || path.startsWith("/manage/movies")

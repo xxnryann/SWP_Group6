@@ -1,4 +1,6 @@
 /web/WEB-INF/classes/
+/dist/
+/build/
 src/java/app.properties
 .idea/
 nbproject/private/

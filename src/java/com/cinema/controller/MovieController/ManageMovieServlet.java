@@ -9,6 +9,7 @@ import com.cinema.model.User;
 import com.cinema.util.MovieUtil.MovieAccess;
 import com.cinema.util.MovieUtil.MediaUploadUtil;
 import com.cinema.util.MovieUtil.MovieValidator;
+import com.cinema.util.MovieUtil.MovieSchedule;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
@@ -29,7 +31,7 @@ import java.util.Set;
         maxRequestSize = 110L * 1024L * 1024L
 )
 public class ManageMovieServlet extends BaseServlet {
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 20;
     private final MovieDAO movieDAO;
     private final GenreDAO genreDAO;
 
@@ -61,11 +63,27 @@ public class ManageMovieServlet extends BaseServlet {
                         return;
                     }
                 }
+                boolean reschedule = "rerun".equals(request.getParameter("action"));
+                if (!reschedule && movie != null && "NowShowing".equals(movie.getStatus())) {
+                    flash(request, "error", "Phim đang chiếu đã được cố định. Chỉ có thể ngừng chiếu hoặc xóa phim.");
+                    response.sendRedirect(request.getContextPath() + "/manage/movies");
+                    return;
+                }
+                if (reschedule && (movie == null || !"Stopped".equals(movie.getStatus()))) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                    return;
+                }
+                if (reschedule) {
+                    movie.setStatus("Upcoming");
+                    movie.setReleaseDate(LocalDate.now());
+                    movie.setEndDate(movie.getReleaseDate().plusMonths(1));
+                }
+                request.setAttribute("rescheduleMovie", reschedule);
                 forwardForm(request, response, movie);
                 return;
             }
             int page = positiveInt(request.getParameter("page"), 1);
-            MovieDAO.MoviePage result = movieDAO.search(null, null, null, page, PAGE_SIZE);
+            MovieDAO.MoviePage result = movieDAO.filter(null, null, page, PAGE_SIZE);
             request.setAttribute("movies", result.movies());
             request.setAttribute("moviePage", result);
             request.setAttribute("pageTitle", "Quản lý phim");
@@ -147,10 +165,43 @@ public class ManageMovieServlet extends BaseServlet {
     private Movie saveMovie(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException, ServletException {
         String idValue = request.getParameter("id");
-        int id = idValue == null || idValue.isBlank() ? 0 : parseId(idValue);
+        int id = idValue == null || idValue.isBlank() || "0".equals(idValue.trim()) ? 0 : parseId(idValue);
         Movie oldMovie = id == 0 ? null : movieDAO.findById(id);
         if (id > 0 && oldMovie == null) throw new IllegalArgumentException("Không tìm thấy phim cần sửa.");
-        Movie movie = readMovie(request, id);
+        if (id > 0 && oldMovie != null && "NowShowing".equals(oldMovie.getStatus())) {
+            throw new IllegalArgumentException("Phim đang chiếu đã được cố định. Chỉ có thể ngừng chiếu hoặc xóa phim.");
+        }
+        boolean reschedule = "true".equals(request.getParameter("reschedule"));
+        if (reschedule && (oldMovie == null || !"Stopped".equals(oldMovie.getStatus()))) {
+            throw new IllegalArgumentException("Chỉ có thể lên lịch chiếu lại phim đang ngừng chiếu.");
+        }
+        Movie movie;
+        if (reschedule) {
+            movie = oldMovie;
+            movie.setReleaseDate(MovieValidator.parseDate(request.getParameter("releaseDate")));
+            movie.setEndDate(MovieValidator.parseDate(request.getParameter("endDate")));
+            movie.setStatus(null);
+        } else {
+            movie = readMovie(request, id);
+            if (oldMovie != null && "Stopped".equals(oldMovie.getStatus())) {
+                movie.setStatus("Stopped");
+            }
+        }
+        if (movie.getEndDate() == null && movie.getReleaseDate() != null) {
+            movie.setEndDate(movie.getReleaseDate().plusMonths(1));
+        }
+        if (movie.getReleaseDate() != null && movie.getReleaseDate().isBefore(LocalDate.now())
+                && (id == 0 || oldMovie == null || !movie.getReleaseDate().equals(oldMovie.getReleaseDate()))) {
+            throw new IllegalArgumentException("Ngày bắt đầu chiếu không được ở quá khứ.");
+        }
+        if ("true".equals(request.getParameter("reschedule"))) {
+            if (movie.getEndDate() == null) {
+                throw new IllegalArgumentException("Vui lòng chọn ngày kết thúc đợt chiếu lại.");
+            }
+            if ("Stopped".equals(movie.getStatus())) {
+                throw new IllegalArgumentException("Chọn Sắp chiếu hoặc Đang chiếu để lên lịch chiếu lại.");
+            }
+        }
         String posterInput = trimToNull(request.getParameter("posterUrl"));
         String trailerInput = trimToNull(request.getParameter("trailerUrl"));
         boolean removePoster = request.getParameter("deletePoster") != null;
@@ -169,21 +220,28 @@ public class ManageMovieServlet extends BaseServlet {
             movie.setTrailerUrl(trailerInput != null ? trailerInput : oldMovie == null ? null : oldMovie.getTrailerUrl());
             movie.setTrailerFile(oldMovie == null ? null : oldMovie.getTrailerFile());
         }
-        String validationMessage = MovieValidator.validate(movie);
+        String calculatedStatus = MovieSchedule.statusFor(movie);
+        if (!"Upcoming".equals(calculatedStatus)
+                && !"NowShowing".equals(calculatedStatus)
+                && !"Stopped".equals(calculatedStatus)) {
+            throw new IllegalArgumentException("Trạng thái phim không hợp lệ.");
+        }
+        movie.setStatus(calculatedStatus);
+        String validationMessage = MovieValidator.validate(movie, id == 0);
         if (validationMessage != null) throw new IllegalArgumentException(validationMessage);
-
-        Part posterPart = request.getPart("posterFile");
-        Part trailerPart = request.getPart("trailerFile");
+        Part posterPart = reschedule ? null : request.getPart("posterFile");
+        Part trailerPart = reschedule ? null : request.getPart("trailerFile");
         String posterPath = MediaUploadUtil.store(posterPart, MediaUploadUtil.MediaType.POSTER);
         request.setAttribute("newPoster", posterPath);
         String trailerPath = MediaUploadUtil.store(trailerPart, MediaUploadUtil.MediaType.TRAILER);
         request.setAttribute("newTrailer", trailerPath);
         if (posterPath != null) movie.setPosterUrl(posterPath);
         if (trailerPath != null) movie.setTrailerFile(trailerPath);
-        int[] genreIds = parseGenreIds(request.getParameterValues("genreIds"));
+        String genreIds = reschedule ? oldMovie.getGenreIds()
+                : join(parseGenreIds(request.getParameterValues("genreIds")));
         String savedPoster = movie.getPosterUrl();
         String savedTrailer = movie.getTrailerFile();
-        movieDAO.save(movie, join(genreIds), currentUser(request).getUserId());
+        movieDAO.save(movie, genreIds, currentUser(request).getUserId());
         request.setAttribute("savedPoster", savedPoster);
         request.setAttribute("savedTrailer", savedTrailer);
         return oldMovie;
@@ -204,7 +262,14 @@ public class ManageMovieServlet extends BaseServlet {
         List<Genre> genres = genreDAO.findAll();
         Set<Integer> selected = movie == null ? Set.of() : parseGenreIdSet(movie.getGenreIds());
         for (Genre genre : genres) genre.setSelected(selected.contains(genre.getGenreId()));
-        request.setAttribute("movie", movie == null ? new Movie() : movie);
+        Movie formMovie = movie == null ? new Movie() : movie;
+        if (formMovie.getEndDate() == null && formMovie.getReleaseDate() != null) {
+            formMovie.setEndDate(formMovie.getReleaseDate().plusMonths(1));
+        }
+        request.setAttribute("movie", formMovie);
+        if (formMovie.getMovieId() == 0 || Boolean.TRUE.equals(request.getAttribute("rescheduleMovie"))) {
+            request.setAttribute("minReleaseDate", LocalDate.now());
+        }
         request.setAttribute("posterExternalUrl", movie != null && movie.getPosterDisplayUrl() != null
                 && movie.getPosterUrl() != null && !movie.getPosterUrl().startsWith("/media/") ? movie.getPosterUrl() : "");
         request.setAttribute("genres", genres);
@@ -226,7 +291,7 @@ public class ManageMovieServlet extends BaseServlet {
         movie.setAgeRating(request.getParameter("ageRating"));
         movie.setReleaseDate(MovieValidator.parseDate(request.getParameter("releaseDate")));
         movie.setEndDate(MovieValidator.parseDate(request.getParameter("endDate")));
-        movie.setStatus(request.getParameter("status"));
+        movie.setStatus(null);
         movie.setPosterUrl(trimToNull(request.getParameter("posterUrl")));
         movie.setTrailerUrl(trimToNull(request.getParameter("trailerUrl")));
         return movie;
@@ -239,7 +304,13 @@ public class ManageMovieServlet extends BaseServlet {
 
     private int[] parseGenreIds(String[] values) {
         if (values == null || values.length == 0) return new int[0];
-        return java.util.Arrays.stream(values).mapToInt(value -> parseId(value)).distinct().toArray();
+        return java.util.Arrays.stream(values)
+                .map(String::trim)
+                .filter(value -> value.matches("\\d+"))
+                .mapToInt(Integer::parseInt)
+                .filter(value -> value > 0)
+                .distinct()
+                .toArray();
     }
 
     private Set<Integer> parseGenreIdSet(String ids) {

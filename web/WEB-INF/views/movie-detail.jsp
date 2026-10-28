@@ -49,8 +49,6 @@
           <dt>Ngày kết thúc</dt><dd><c:out value="${movie.endDate}"/></dd>
           <dt>Phân loại tuổi</dt><dd><c:out value="${movie.ageRating}"/></dd>
           <dt>Trạng thái</dt><dd><c:out value="${movie.status}"/></dd>
-          <dt>Mã người tạo</dt><dd><c:out value="${movie.createdBy}"/></dd>
-          <dt>Tạo bởi</dt><dd><c:out value="${movie.createdByName}"/></dd>
           <dt>Ngày tạo</dt><dd><c:out value="${movie.createdAt}"/></dd>
           <dt>Cập nhật</dt><dd><c:out value="${movie.updatedAt}"/></dd>
           <dt>URL trailer</dt><dd><c:out value="${movie.trailerUrl}"/></dd>
@@ -88,7 +86,7 @@
     </section>
     <div class="movie-detail-actions">
       <a class="btn btn-outline" href="${ctx}/movies">Quay lại danh sách</a>
-      <c:if test="${isManager}"><a class="btn btn-primary" href="${escapedEditUrl}">Sửa phim</a></c:if>
+      <c:if test="${canManageMovies}"><a class="btn btn-primary" href="${escapedEditUrl}">Sửa phim</a></c:if>
     </div>
   </article>
 </main>

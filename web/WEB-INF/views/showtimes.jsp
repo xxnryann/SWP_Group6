@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Lịch chiếu"/>
 <%@ include file="_header.jspf" %>
 
@@ -24,6 +23,18 @@
     <button class="btn btn-primary" type="submit">Xem lịch</button>
   </form>
 
+  <section class="panel showtime-rule" aria-labelledby="showtime-rule-title">
+    <div>
+      <p class="eyebrow">QUY TẮC LỊCH CHIẾU</p>
+      <h2 id="showtime-rule-title">Lịch chiếu linh hoạt</h2>
+    </div>
+    <div class="showtime-rule-slots">
+      <span>07:00 – 24:00</span>
+      <i aria-hidden="true">|</i>
+      <span>Mỗi 5 phút</span>
+    </div>
+  </section>
+
   <nav class="showtime-day-nav" aria-label="Chọn ngày">
     <c:url var="previousUrl" value="/showtimes"><c:param name="date" value="${previousDate}"/></c:url>
     <c:url var="nextUrl" value="/showtimes"><c:param name="date" value="${nextDate}"/></c:url>
@@ -33,7 +44,7 @@
   </nav>
 
   <c:choose>
-    <c:when test="${empty showtimes}">
+    <c:when test="${empty showtimeGroups}">
       <div class="panel movie-empty">
         <h2>Chưa có suất chiếu</h2>
         <p>Không tìm thấy lịch chiếu cho ngày đã chọn.</p>
@@ -41,20 +52,38 @@
     </c:when>
     <c:otherwise>
       <div class="showtime-list">
-        <c:forEach var="showtime" items="${showtimes}">
-          <article class="panel showtime-card">
-            <div class="showtime-time">
-              <strong><c:out value="${showtime.startTimeOnly}"/></strong>
-              <span>Kết thúc khoảng <c:out value="${showtime.endTimeOnly}"/></span>
+        <c:forEach var="schedule" items="${showtimeGroups}">
+          <c:set var="posterSrc"><c:out value="${schedule.movie.posterDisplayUrl}"/></c:set>
+          <c:set var="movieTitle"><c:out value="${schedule.movie.title}"/></c:set>
+          <article class="panel showtime-movie-row">
+            <div class="showtime-poster">
+              <c:choose>
+                <c:when test="${not empty schedule.movie.posterDisplayUrl}">
+                  <c:choose>
+                    <c:when test="${schedule.movie.uploadedPoster}"><img src="${ctx}${posterSrc}" alt="Poster phim ${movieTitle}" loading="lazy"></c:when>
+                    <c:otherwise><img src="${posterSrc}" alt="Poster phim ${movieTitle}" loading="lazy"></c:otherwise>
+                  </c:choose>
+                </c:when>
+                <c:otherwise><span>Chưa có poster</span></c:otherwise>
+              </c:choose>
+              <span class="showtime-age-rating"><c:out value="${schedule.movie.ageRating}"/></span>
             </div>
-            <div class="showtime-info">
-              <h2><c:out value="${showtime.movieTitle}"/></h2>
-              <p>Phòng <c:out value="${showtime.roomName}"/></p>
-              <p><c:out value="${showtime.movieDurationMinutes}"/> phút</p>
-            </div>
-            <div class="showtime-price">
-              <strong><fmt:formatNumber value="${showtime.ticketPrice}" type="number" maxFractionDigits="0"/> đ</strong>
-              <span>Giá vé từ</span>
+            <div class="showtime-movie-details">
+              <h2><c:out value="${schedule.movie.title}"/></h2>
+              <p class="showtime-original-title"><c:out value="${schedule.movie.originalTitle}"/> · <c:out value="${schedule.movie.durationMinutes}"/> phút</p>
+              <c:if test="${not empty schedule.movie.genres}"><p class="showtime-genres"><c:out value="${schedule.movie.genres}"/></p></c:if>
+              <div class="showtime-slots" aria-label="Các giờ chiếu">
+                <c:forEach var="showtime" items="${schedule.showtimes}">
+                  <button class="showtime-slot" type="button" data-showtime-info
+                          data-movie="<c:out value='${schedule.movie.title}'/>"
+                          data-start="<c:out value='${showtime.startTimeOnly}'/>"
+                          data-end="<c:out value='${showtime.endTimeOnly}'/>"
+                          data-room="<c:out value='${showtime.roomName}'/>">
+                    <c:out value="${showtime.startTimeOnly}"/>–<c:out value="${showtime.endTimeOnly}"/>
+                    <span><c:out value="${showtime.roomName}"/></span>
+                  </button>
+                </c:forEach>
+              </div>
             </div>
           </article>
         </c:forEach>
@@ -63,4 +92,5 @@
   </c:choose>
 </main>
 
+<script src="${ctx}/assets/js/showtimes.js" defer></script>
 <%@ include file="_footer.jspf" %>

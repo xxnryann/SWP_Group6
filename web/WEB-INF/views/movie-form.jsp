@@ -1,6 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="${empty movie.movieId ? 'Thêm phim' : 'Sửa phim'}"/>
+<c:choose>
+  <c:when test="${rescheduleMovie}"><c:set var="pageTitle" value="Lên lịch chiếu lại"/></c:when>
+  <c:when test="${movie.movieId == 0}"><c:set var="pageTitle" value="Thêm phim"/></c:when>
+  <c:otherwise><c:set var="pageTitle" value="Sửa phim"/></c:otherwise>
+</c:choose>
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <c:set var="escapedMovieId"><c:out value="${movie.movieId}"/></c:set>
 <c:set var="escapedTitle"><c:out value="${movie.title}"/></c:set>
@@ -13,7 +17,6 @@
 <c:set var="escapedCountry"><c:out value="${movie.country}"/></c:set>
 <c:set var="escapedReleaseDate"><c:out value="${movie.releaseDate}"/></c:set>
 <c:set var="escapedEndDate"><c:out value="${movie.endDate}"/></c:set>
-<c:set var="escapedStatus"><c:out value="${movie.status}"/></c:set>
 <c:set var="escapedPosterUrl"><c:out value="${posterExternalUrl}"/></c:set>
 <c:set var="escapedTrailerUrl"><c:out value="${movie.trailerUrl}"/></c:set>
 <c:set var="posterSrc"><c:out value="${movie.posterDisplayUrl}"/></c:set>
@@ -24,15 +27,20 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1><c:out value="${pageTitle}"/></h1>
-      <p class="sub">Các trường có dấu * là bắt buộc.</p>
+      <p class="sub"><c:choose>
+        <c:when test="${rescheduleMovie}"><strong><c:out value="${movie.title}"/></strong> — chọn ngày bắt đầu, ngày kết thúc và trạng thái cho đợt chiếu lại.</c:when>
+        <c:otherwise>Ngày kết thúc mặc định sau một tháng kể từ ngày khởi chiếu; bạn có thể chỉnh sửa ngày này.</c:otherwise>
+      </c:choose></p>
     </div>
   </section>
   <form id="movie-form" class="panel movie-form" action="${ctx}/manage/movies" method="post" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="${escapedCsrf}">
     <input type="hidden" name="action" value="save">
     <input type="hidden" name="id" value="${escapedMovieId}">
+    <c:if test="${rescheduleMovie}"><input type="hidden" name="reschedule" value="true"></c:if>
 
     <div class="movie-form-grid">
+      <c:if test="${not rescheduleMovie}">
       <div class="field">
         <label for="title">Tên phim *</label>
         <input id="title" name="title" type="text" maxlength="200" required value="${escapedTitle}">
@@ -55,7 +63,7 @@
       </div>
       <div class="field">
         <label for="durationMinutes">Thời lượng (phút) *</label>
-        <input id="durationMinutes" name="durationMinutes" type="number" min="1" required value="${escapedDuration}">
+        <input id="durationMinutes" name="durationMinutes" type="number" min="1" max="150" required value="${escapedDuration}">
       </div>
       <div class="field">
         <label for="ageRating">Phân loại tuổi *</label>
@@ -76,22 +84,17 @@
         <label for="country">Quốc gia</label>
         <input id="country" name="country" type="text" maxlength="50" value="${escapedCountry}">
       </div>
+      </c:if>
       <div class="field">
-        <label for="releaseDate">Ngày khởi chiếu *</label>
-        <input id="releaseDate" name="releaseDate" type="date" required value="${escapedReleaseDate}">
+        <label for="releaseDate"><c:out value="${rescheduleMovie ? 'Ngày bắt đầu chiếu lại *' : 'Ngày khởi chiếu *'}"/></label>
+        <input id="releaseDate" name="releaseDate" type="date" required value="${escapedReleaseDate}"
+               <c:if test="${not empty minReleaseDate}">min="${minReleaseDate}"</c:if>>
       </div>
       <div class="field">
-        <label for="endDate">Ngày kết thúc</label>
-        <input id="endDate" name="endDate" type="date" value="${escapedEndDate}">
+        <label for="endDate"><c:out value="${rescheduleMovie ? 'Ngày kết thúc đợt chiếu lại *' : 'Ngày kết thúc'}"/></label>
+        <input id="endDate" name="endDate" type="date" value="${escapedEndDate}" <c:if test="${rescheduleMovie}">required</c:if>>
       </div>
-      <div class="field">
-        <label for="status">Trạng thái *</label>
-        <select id="status" name="status" required>
-          <option value="Upcoming" <c:if test="${empty movie.status or movie.status == 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
-          <option value="NowShowing" <c:if test="${movie.status == 'NowShowing'}">selected</c:if>>Đang chiếu</option>
-          <option value="Stopped" <c:if test="${movie.status == 'Stopped'}">selected</c:if>>Ngừng chiếu</option>
-        </select>
-      </div>
+      <c:if test="${not rescheduleMovie}">
       <div class="field movie-form-full">
         <span class="field-label">Thể loại</span>
         <div class="genre-checkboxes">
@@ -134,6 +137,7 @@
           <label class="check movie-remove-check"><input type="checkbox" name="deleteTrailer" value="true"><span>Xóa video và URL trailer hiện tại</span></label>
         </c:if>
       </div>
+      </c:if>
     </div>
     <div class="movie-form-actions">
       <a class="btn btn-outline" href="${ctx}/manage/movies">Hủy</a>
