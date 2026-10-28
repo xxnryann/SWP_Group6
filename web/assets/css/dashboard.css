@@ -34,6 +34,8 @@
     border-radius: 8px;
     overflow: hidden;
     transition: box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-movie-card:hover {
@@ -42,6 +44,7 @@
 
 .dashboard-movie-card-main {
     display: block;
+    flex: 1 1 auto;
     text-decoration: none;
     color: inherit;
 }
@@ -122,8 +125,10 @@
 }
 
 .dashboard-movie-buy {
+    flex: none;
     width: 100%;
-    margin-top: 0.75rem;
+    margin-top: auto;
+    border-radius: 0;
 }
 
 .dashboard-links {

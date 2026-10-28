@@ -54,17 +54,25 @@ body.role-page .topbar-left > a:not(.topbar-brand) { display: none; }
 body.role-page .dash-side { top: 58px; }
 body.role-page .page { padding-top: 28px; }
 
-/* ---------- MENU TRÊN CÙNG theo vai trò ----------
-   Đã đăng nhập: logo ở trái, menu theo vai trò nằm GIỮA thanh trên, tài khoản ở phải.
-   Thanh trên dính đầu trang nên điều hướng luôn trong tầm tay ở mọi trang. */
-body.has-rail .topbar { position: sticky; top: 0; z-index: 60; box-shadow: 0 2px 10px rgba(15,23,42,.25); }
-body.has-rail .topbar .container { max-width: none; padding: 0 28px; min-height: 60px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; }
-.topbar-nav { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px 6px; min-width: 0; }
-.topbar-nav a { padding: 8px 13px; border-radius: 8px; color: var(--slate-300); font-size: 14.5px; font-weight: 600; white-space: nowrap; }
-.topbar-nav a:hover { background: rgba(255,255,255,.09); color: #fff; }
-.topbar-nav a.active { background: var(--brand); color: #fff; }
-body.has-rail .topbar-brand { font-size: 17px; }
-body.has-rail .topbar-right > span:first-of-type { white-space: nowrap; }
+/* ---------- MENU THEO VAI TRÒ (kiểu Beta Cinemas) ----------
+   Đã đăng nhập: dải xanh mỏng ở trên (chào, đăng xuất, ngôn ngữ) + thanh trắng gồm
+   logo · chọn rạp · menu chữ in hoa. Thanh trắng dính đầu trang khi cuộn. */
+body.has-rail .topbar { background: #00539f; color: #fff; font-size: 14px; }
+body.has-rail .topbar .container { max-width: none; padding: 0 28px; min-height: 34px; }
+body.has-rail .topbar a { color: #fff; }
+body.has-rail .topbar-right { margin-left: auto; gap: 16px; }
+body.has-rail .topbar .sep { display: none; }
+.logout-icon { display: inline-flex; align-items: center; background: none; border: 0; padding: 4px; color: #fff; cursor: pointer; }
+.logout-icon:hover { opacity: .8; }
+body.has-rail .lang-switch { background: transparent; border-color: rgba(255,255,255,.55); }
+.role-header .container { max-width: none; padding: 0 28px; gap: 26px; min-height: 74px; }
+.role-header .logo { font-size: 24px; }
+.cinema-pill { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 1px solid var(--slate-300); border-radius: 999px; background: #f8fafc; color: var(--slate-800); font-size: 14px; white-space: nowrap; }
+.cinema-pill:hover { border-color: var(--brand); color: var(--brand); }
+.topbar-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 28px; min-width: 0; }
+.topbar-nav a { padding: 8px 0; border-bottom: 3px solid transparent; color: var(--slate-800); font-size: 15.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; white-space: nowrap; }
+.topbar-nav a:hover { color: var(--brand); }
+.topbar-nav a.active { color: var(--brand); border-bottom-color: var(--brand); }
 body.has-rail .account-grid { grid-template-columns: 1fr; }
 /* ---------- sticky header ---------- */
 .site-header { background: #fff; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 0 var(--slate-200); }
