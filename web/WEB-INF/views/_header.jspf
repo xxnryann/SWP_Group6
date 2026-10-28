@@ -31,6 +31,7 @@
       <c:choose>
         <c:when test="${not empty sessionScope.authUser}">
           <span>Xin chào, <a href="${ctx}/account/profile"><strong><c:out value="${sessionScope.authUser.fullName}"/></strong></a></span>
+          <c:if test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}"><a href="${ctx}/staff">Staff</a></c:if>
           <span class="sep">|</span>
           <form method="post" action="${ctx}/logout" id="logoutForm">
             <input type="hidden" name="_csrf" value="${csrf}">
@@ -55,22 +56,33 @@
       <span>Cine<b>Star</b> Cinemas</span>
     </a>
     <nav class="main-nav" aria-label="Điều hướng chính">
-      <%-- Movie module navigation additions; keep the existing News link below intact. --%>
-      <a href="${ctx}/showtimes">Lịch Chiếu</a>
-      <a href="${ctx}/movies">Phim</a>
-      <a href="#">Giá Vé</a>
-      <a href="#">Khuyến Mãi</a>
-      <a href="${ctx}/news">Tin Tức</a>
-      <div class="dropdown">
-        <button type="button" aria-haspopup="true" aria-expanded="false">Khác ▾</button>
-        <div class="dropdown-menu">
-          <a href="#">Giới thiệu</a>
-          <a href="#">Tuyển dụng</a>
-          <a href="#">Liên hệ</a>
-          <c:if test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:if>
-        </div>
-      </div>
-      <a class="btn btn-cta" href="#" data-toast="Tính năng đặt vé sắp ra mắt!">MUA VÉ NHANH</a>
+      <c:choose>
+        <c:when test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
+          <a href="${ctx}/staff/counter">Đặt vé tại quầy</a>
+          <a href="${ctx}/staff/voucher">Quản lý voucher</a>
+          <a href="${ctx}/staff/point">Quản lý point</a>
+        </c:when>
+        <c:otherwise>
+          <a href="${ctx}/showtimes">Lịch Chiếu</a>
+          <a href="${ctx}/movies">Phim</a>
+          <a href="#">Cụm Rạp</a>
+          <a href="#">Giá Vé</a>
+          <a href="#">Khuyến Mãi</a>
+          <a href="${ctx}/news">Tin Tức</a>
+          <div class="dropdown">
+            <button type="button" aria-haspopup="true" aria-expanded="false">Khác ▾</button>
+            <div class="dropdown-menu">
+              <a href="#">Giới thiệu</a>
+              <a href="#">Tuyển dụng</a>
+              <a href="#">Liên hệ</a>
+              <c:if test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:if>
+            </div>
+          </div>
+        </c:otherwise>
+      </c:choose>
+      <c:if test="${not (sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN')}">
+        <a class="btn btn-cta" href="#" data-toast="Tính năng đặt vé sắp ra mắt!">MUA VÉ NHANH</a>
+      </c:if>
     </nav>
     <button class="menu-btn" type="button" aria-label="Mở menu" id="menuBtn">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -84,14 +96,38 @@
     <strong>Menu</strong>
     <button class="drawer-close" type="button" id="drawerClose" aria-label="Đóng">&times;</button>
   </div>
-  <%-- Movie module navigation additions; the existing News link remains unchanged. --%>
-  <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a>
-  <a href="#">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="${ctx}/news">Tin Tức</a><a href="#">Khác</a>
+  <label class="cinema-pick">Rạp của bạn
+    <select class="cinema-select" aria-label="Chọn rạp" style="max-width:none;width:100%">
+      <option>CineStar Quốc Thanh</option>
+      <option>CineStar Hai Bà Trưng</option>
+      <option>CineStar Sinh Viên</option>
+      <option>CineStar Huế</option>
+      <option>CineStar Đà Lạt</option>
+    </select>
+  </label>
   <c:choose>
-    <c:when test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:when>
+    <c:when test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
+      <a href="${ctx}/staff/counter">Đặt vé tại quầy</a>
+      <a href="${ctx}/staff/voucher">Quản lý voucher</a>
+      <a href="${ctx}/staff/point">Quản lý point</a>
+    </c:when>
+    <c:otherwise>
+      <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a><a href="#">Cụm Rạp</a>
+      <a href="#">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="${ctx}/news">Tin Tức</a><a href="#">Khác</a>
+    </c:otherwise>
+  </c:choose>
+  <c:choose>
+    <c:when test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a><c:if test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}"><a href="${ctx}/staff">Staff Dashboard</a></c:if></c:when>
     <c:otherwise><a href="${ctx}/login">Đăng nhập</a><a href="${ctx}/register">Đăng ký</a></c:otherwise>
   </c:choose>
-  <a class="btn btn-cta" href="#" data-toast="Tính năng đặt vé sắp ra mắt!">MUA VÉ NHANH</a>
+  <c:choose>
+    <c:when test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
+      <a class="btn btn-cta" href="${ctx}/staff/counter">ĐẶT VÉ TẠI QUẦY</a>
+    </c:when>
+    <c:otherwise>
+      <a class="btn btn-cta" href="#" data-toast="Tính năng đặt vé sắp ra mắt!">MUA VÉ NHANH</a>
+    </c:otherwise>
+  </c:choose>
 </aside>
 
 <nav class="breadcrumb" aria-label="Breadcrumb">

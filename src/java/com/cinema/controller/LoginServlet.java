@@ -30,7 +30,8 @@ public class LoginServlet extends BaseServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (currentUser(req) != null) {
-            resp.sendRedirect(req.getContextPath() + "/home");
+            resp.sendRedirect(req.getContextPath()
+                    + (StaffDashboardServlet.isStaff(currentUser(req)) ? "/staff" : "/home"));
             return;
         }
         forward(req, resp, "login");
@@ -81,12 +82,15 @@ public class LoginServlet extends BaseServlet {
             req.changeSessionId(); // prevent session fixation
             var session = req.getSession();
             session.setAttribute(SESSION_USER, sessionCopy(u));
-            String next = (String) session.getAttribute("afterLogin");
-            session.removeAttribute("afterLogin");
-            if (next == null || !next.startsWith("/account/")) {
-                next = "/home";
+            String role = u.getRole() == null ? "" : u.getRole().trim();
+            if ("STAFF".equalsIgnoreCase(role)
+                    || "MANAGER".equalsIgnoreCase(role)
+                    || "ADMIN".equalsIgnoreCase(role)) {
+                resp.sendRedirect(req.getContextPath() + "/staff");
+                return;
             }
-            resp.sendRedirect(req.getContextPath() + next);
+            session.removeAttribute("afterLogin");
+            resp.sendRedirect(req.getContextPath() + "/home");
         } catch (SQLException e) {
             throw new ServletException(e);
         }

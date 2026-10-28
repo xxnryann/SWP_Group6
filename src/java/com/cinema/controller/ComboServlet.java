@@ -35,8 +35,7 @@ public class ComboServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return false;
         }
-        String r = u.getRole();
-        if (!"STAFF".equals(r) && !"MANAGER".equals(r) && !"ADMIN".equals(r)) {
+        if (!StaffDashboardServlet.isStaff(u)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ nhân viên được truy cập.");
             return false;
         }

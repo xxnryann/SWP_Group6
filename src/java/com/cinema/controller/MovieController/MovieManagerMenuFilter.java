@@ -2,7 +2,6 @@ package com.cinema.controller.MovieController;
 
 import com.cinema.controller.BaseServlet;
 import com.cinema.model.User;
-import com.cinema.util.MovieUtil.MovieAccess;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,7 +20,10 @@ public class MovieManagerMenuFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession(false);
         User user = session == null ? null : (User) session.getAttribute(BaseServlet.SESSION_USER);
-        boolean canManageMovies = user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole());
+        String role = user == null || user.getRole() == null ? "" : user.getRole().trim();
+        boolean canManageMovies = "STAFF".equalsIgnoreCase(role)
+                || "MANAGER".equalsIgnoreCase(role)
+                || "ADMIN".equalsIgnoreCase(role);
         httpRequest.setAttribute("isManager", canManageMovies);
         httpRequest.setAttribute("canManageMovies", canManageMovies);
         String path = httpRequest.getServletPath();
