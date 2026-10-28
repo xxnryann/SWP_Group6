@@ -70,7 +70,6 @@
 </style>
 <main class="page"><div class="container">
   <div class="account-grid">
-    <%@ include file="_account_side.jspf" %>
     <section class="panel">
       <h2>Lịch sử vé</h2>
       <p class="sub">Các vé bạn đã đặt. Mỗi vé có một mã QR riêng để check-in tại rạp.</p>

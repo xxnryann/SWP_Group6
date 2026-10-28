@@ -9,6 +9,7 @@ import com.cinema.model.Combo;
 import com.cinema.model.OnlineBooking;
 import com.cinema.model.PointConfig;
 import com.cinema.model.SeatCell;
+import com.cinema.model.SeatTypeInfo;
 import com.cinema.model.ShowtimeInfo;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -204,6 +205,19 @@ public class OnlineBookingService {
             return bookingDAO.findShowtimeById(showtimeId);
         } catch (SQLException e) {
             return null;
+        }
+    }
+
+    /**
+     * Loại ghế kèm giá vé của suất chiếu — dùng để dựng chú thích
+     * "hàng nào thuộc loại ghế nào" ở màn hình chọn ghế.
+     */
+    public List<SeatTypeInfo> getSeatTypesWithPrice(int showtimeId) {
+        try {
+            return bookingDAO.findSeatTypesWithPrice(showtimeId);
+        } catch (SQLException e) {
+            System.err.println("[OnlineBookingService] findSeatTypesWithPrice lỗi: " + e.getMessage());
+            return List.of();
         }
     }
 

@@ -2,6 +2,8 @@ package com.cinema.controller.booking;
 
 import com.cinema.model.OnlineBooking;
 import com.cinema.model.SeatCell;
+import com.cinema.model.SeatRowLegend;
+import com.cinema.model.SeatTypeInfo;
 import com.cinema.service.OnlineBookingService;
 import com.cinema.util.Validator;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,6 +53,54 @@ public final class BookingSession {
             rows.computeIfAbsent(s.getRowLabel(), k -> new ArrayList<>()).add(s);
         }
         return new ArrayList<>(rows.values());
+    }
+
+    /**
+     * Tóm tắt từng hàng ghế: hàng nào thuộc loại ghế nào, có bao nhiêu ghế,
+     * khoảng ghế và giá vé của loại ghế đó.
+     *
+     * <p>Loại ghế lấy theo ghế đầu tiên của hàng (mỗi hàng trong hệ thống hiện
+     * dùng chung một loại ghế — quản trị đổi loại theo cả hàng).</p>
+     *
+     * @param rows        ghế đã group theo hàng
+     * @param typesByName map loại ghế theo tên (key = {@code SeatType.type_name})
+     * @return danh sách chú thích theo thứ tự hàng hiển thị
+     */
+    public static List<SeatRowLegend> buildRowLegends(List<List<SeatCell>> rows,
+            Map<String, SeatTypeInfo> typesByName) {
+        List<SeatRowLegend> legends = new ArrayList<>();
+        if (rows == null) {
+            return legends;
+        }
+        for (List<SeatCell> row : rows) {
+            if (row == null || row.isEmpty()) {
+                continue;
+            }
+            SeatCell first = row.get(0);
+            SeatRowLegend legend = new SeatRowLegend();
+            legend.setRowLabel(first.getRowLabel());
+            legend.setSeatTypeName(first.getSeatType());
+            legend.setSeatCount(row.size());
+
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
+            for (SeatCell s : row) {
+                min = Math.min(min, s.getSeatNumber());
+                max = Math.max(max, s.getSeatNumber());
+            }
+            legend.setFirstSeat(min == Integer.MAX_VALUE ? 0 : min);
+            legend.setLastSeat(max == Integer.MIN_VALUE ? 0 : max);
+
+            SeatTypeInfo type = typesByName == null ? null : typesByName.get(first.getSeatType());
+            if (type != null) {
+                legend.setCouple(type.isCouple());
+                legend.setPrice(type.getPrice());
+            } else {
+                legend.setCouple(first.isCouple());
+            }
+            legends.add(legend);
+        }
+        return legends;
     }
 
     /**

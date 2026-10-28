@@ -13,7 +13,7 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1><c:out value="${pageTitle}"/></h1>
-      <p class="sub">Khung giờ cố định áp dụng cho cả 4 phòng: 09:00–11:30, 11:45–14:15, 14:30–17:00, 17:15–19:45 và 20:00–22:30. Mỗi phòng cần chọn khung còn trống.</p>
+      <p class="sub">Giờ bắt đầu tự do theo mốc 15 phút trong ngày. Giờ kết thúc được tính bằng giờ bắt đầu cộng thời lượng phim, và mỗi phòng cách nhau tối thiểu 15 phút để dọn phòng.</p>
     </div>
   </section>
   <form class="panel showtime-form" id="showtime-form" method="post" action="${ctx}/manage/showtimes"
@@ -47,7 +47,7 @@
         <input id="showDate" name="showDate" type="date" min="${todayDate}" value="${escapedShowDate}" required>
       </div>
       <div class="field">
-        <label for="showTime">Khung giờ chiếu</label>
+        <label for="showTime">Giờ bắt đầu</label>
         <select id="showTime" name="showTime" required data-current-time="${escapedShowTime}">
           <option value="">Chọn phim, phòng và ngày trước</option>
         </select>

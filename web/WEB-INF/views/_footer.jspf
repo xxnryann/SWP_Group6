@@ -76,11 +76,34 @@
   });
   document.addEventListener('click', function () { $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); }); });
 
-  /* Mobile drawer */
+  /* Mobile drawer (chỉ có trên trang công khai; trang nội bộ bỏ thanh nav) */
   function drawer(open) { document.body.classList.toggle('drawer-open', open); }
-  $('#menuBtn').addEventListener('click', function () { drawer(true); });
-  $('#drawerClose').addEventListener('click', function () { drawer(false); });
-  $('#drawerBackdrop').addEventListener('click', function () { drawer(false); });
+  var menuBtn = $('#menuBtn');
+  if (menuBtn) menuBtn.addEventListener('click', function () { drawer(true); });
+  var drawerClose = $('#drawerClose');
+  if (drawerClose) drawerClose.addEventListener('click', function () { drawer(false); });
+  var drawerBackdrop = $('#drawerBackdrop');
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { drawer(false); });
+
+  /* Rail dọc (menu role): mở/đóng trên màn hình hẹp */
+  var railToggle = $('#railToggle');
+  function rail(open) { document.body.classList.toggle('rail-open', open); }
+  if (railToggle) {
+    railToggle.addEventListener('click', function () {
+      var open = !document.body.classList.contains('rail-open');
+      rail(open);
+      railToggle.setAttribute('aria-expanded', open);
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (!document.body.classList.contains('rail-open')) return;
+    if (e.target.closest && e.target.closest('.dash-rail')) return;
+    if (e.target === railToggle || railToggle.contains(e.target)) return;
+    rail(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') rail(false);
+  });
 
   /* Tài khoản hiện tại -> localStorage.currentUser (nguồn thật vẫn là session phía server) */
   var user = document.body.dataset.user;

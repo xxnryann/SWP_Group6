@@ -13,8 +13,12 @@
     NOTES
       - The script drops and recreates CinemaWebDB. Back it up first if it
         already contains data you care about.
-      - ShowtimeDAO only accepts 5 fixed time slots, so dbo.TimeSlot and
-        dbo.TicketPrice are seeded for exactly those 5 slots.
+      - Showtimes are flexible: each screening starts at any 15-minute mark
+        between 09:00 and 23:00, ends at start + movie duration, and the next
+        screening in the same room starts 15 minutes after the previous one ends.
+        dbo.TimeSlot now holds three PRICE BANDS (morning / afternoon / evening);
+        the band of a showtime is derived from its start time so ticket prices
+        keep working through fn_GetTicketPrice.
       - The demo schedule is generated relative to the current date so the
         counter-sale screens always have upcoming showtimes.
     ============================================================================
@@ -1369,7 +1373,8 @@ GO
 /* =====================================================================
    6. TRIGGER - DONG BO COT TUONG THICH CHO ShowtimeDAO
    ShowtimeDAO ghi bang room_name + starts_at; trigger quy chuyen ve
-   room_id / slot_id / start_time / end_time chuan hoa.
+   room_id / slot_id / start_time / end_time chuan hoa. Gio bat dau tu do
+   trong ngay; slot_id chi la khung gia suy ra tu gio bat dau.
    ===================================================================== */
 
 /* Mac dinh tuong thich: cho phep chen Showtime chi can movie_id + room_name +
@@ -1422,7 +1427,7 @@ BEGIN
                      OR (ts.end_time < ts.start_time AND CONVERT(TIME(7), i.starts_at) >= ts.start_time))
           )
     )
-        THROW 51031, N'Giờ bắt đầu không nằm trong khung giờ chiếu đã cấu hình.', 1;
+        THROW 51031, N'Giờ bắt đầu không thuộc khung giá nào đã cấu hình.', 1;
 
     UPDATE s
     SET s.room_id = roomChoice.room_id,
@@ -1494,31 +1499,32 @@ INSERT dbo.Room(cinema_id, room_name, room_type, capacity) VALUES
     (1, N'Phòng 4', '3D', 50);
 GO
 
+/* TimeSlot = KHUNG GIA (khong con la suat chien co dinh).
+   Lich chien bay gio tu do trong ngay; slot_id cua mot suat duoc suy ra tu
+   gio bat dau (Sáng / Chiều / Tối) de tra gia ve theo khung giờ. */
 INSERT dbo.TimeSlot(slot_name, start_time, end_time) VALUES
-    (N'Suất 1', '09:00', '11:30'),
-    (N'Suất 2', '11:45', '14:15'),
-    (N'Suất 3', '14:30', '17:00'),
-    (N'Suất 4', '17:15', '19:45'),
-    (N'Suất 5', '20:00', '22:30');
+    (N'Sáng', '00:00:00', '12:00:00'),
+    (N'Chiều', '12:00:00', '18:00:00'),
+    (N'Tối', '18:00:00', '23:59:59');
 GO
 
 SET IDENTITY_INSERT dbo.Movie ON;
 INSERT dbo.Movie (movie_id, title, original_title, synopsis, director, main_cast, duration_minutes,
                   spoken_language, country, age_rating, trailer_url, poster_url, release_date, end_date, status) VALUES
-(1, N'TRẠI BUÔN NGƯỜI', N'The Human Market', N'Một nhóm người xa lạ bị cuốn vào cuộc sinh tồn kinh hoàng trong khu chợ bí ẩn.', N'Đạo diễn A', N'Diễn viên 1, Diễn viên 2', 135, N'Tiếng Việt', N'Việt Nam', N'T18', NULL, NULL, '2026-09-25', '2026-10-12', N'Stopped'),
-(2, N'VERITY: BÍ MẬT BỊ CHÔN VÙI', N'Verity', N'Những trang bản thảo hé lộ bí mật đen tối phía sau một gia đình tưởng như hoàn hảo.', N'Đạo diễn B', N'Diễn viên 3, Diễn viên 4', 117, N'Tiếng Anh, phụ đề Tiếng Việt', N'Mỹ', N'T18', NULL, NULL, '2026-09-16', '2026-10-10', N'Stopped'),
-(3, N'MÙA XUÂN ĐẾN MUỘN', N'Late Spring', N'Câu chuyện gia đình về những cuộc gặp gỡ và lựa chọn làm thay đổi một mùa xuân.', N'Đạo diễn C', N'Diễn viên 5, Diễn viên 6', 120, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, NULL, '2026-09-05', '2026-10-01', N'Stopped'),
-(4, N'QUỶ ĂN TẠNG 4: HỒI TỈNH', N'The Possessed 4', N'Một nghi lễ cổ xưa đánh thức thế lực đang ngủ yên trong ngôi làng hẻo lánh.', N'Đạo diễn D', N'Diễn viên 7, Diễn viên 8', 111, N'Tiếng Thái, phụ đề Tiếng Việt', N'Thái Lan', N'T18', NULL, NULL, '2026-10-16', NULL, N'NowShowing'),
-(5, N'SHAUN THE SHEEP: “QUÁI LẠ” GHÉ NHÀ', N'Shaun the Sheep: The Strange Visitor', N'Shaun và cả đàn cừu gặp một vị khách bất ngờ trong chuyến phiêu lưu hài hướng.', N'Đạo diễn E', N'Lồng tiếng Việt', 81, N'Lồng tiếng Việt', N'Anh', N'P', NULL, NULL, '2026-10-16', NULL, N'NowShowing'),
-(6, N'CÕI NGUYÊN', N'The Origin', N'Những dấu vết kỳ lạ dẫn một nhóm bạn đến bí mật bị chôn vùi dưới khu rừng già.', N'Đạo diễn F', N'Diễn viên 9, Diễn viên 10', 89, N'Tiếng Việt', N'Việt Nam', N'T18', NULL, NULL, '2026-10-23', NULL, N'NowShowing'),
-(7, N'BAMBI: LÃNH ĐỊA SĂN MỒI', N'Bambi: The Reckoning', N'Cuộc đối đầu sinh tồn bắt đầu khi khu rừng yên bình trở thành lãnh địa săn mồi.', N'Đạo diễn G', N'Diễn viên 11, Diễn viên 12', 80, N'Tiếng Anh, phụ đề Tiếng Việt', N'Anh', N'T16', NULL, NULL, '2026-10-23', NULL, N'NowShowing'),
-(8, N'ÁN MẠNG KARAOKE', N'Karaoke Murders', N'Một buổi tối karaoke biến thành vụ án bí ẩn mà không ai trong nhóm có thể rời đi.', N'Đạo diễn H', N'Diễn viên 13, Diễn viên 14', 96, N'Tiếng Việt', N'Việt Nam', N'T18', NULL, NULL, '2026-10-30', NULL, N'Upcoming'),
-(9, N'CẢM XÚC LẠ KỲ', N'Strange Feelings', N'Chuyến phiêu lưu hoạt hình khám phá thế giới cảm xúc và tình bạn.', N'Đạo diễn I', N'Lồng tiếng Việt', 96, N'Lồng tiếng Việt', N'Mỹ', N'P', NULL, NULL, '2026-11-07', NULL, N'Upcoming'),
-(10, N'OÁN LINH ĐÒI MẠNG', N'Laudanum', N'Một căn phòng khóa kín lưu giữ câu chuyện khiến những người bước vào phải trả giá.', N'Đạo diễn J', N'Diễn viên 15, Diễn viên 16', 98, N'Tiếng Việt', N'Việt Nam', N'T18', NULL, NULL, '2026-11-13', NULL, N'Upcoming'),
-(11, N'TRÁI TIM MÙA ĐÔNG', N'Winter Hearts', N'Hai con người xa lạ học cách bắt đầu lại sau những biến cố của cuộc sống.', N'Đạo diễn K', N'Diễn viên 17, Diễn viên 18', 108, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, NULL, '2026-11-21', NULL, N'Upcoming'),
-(12, N'CẢM XÚC LẠ KỲ: PHẦN 2', N'Strange Feelings 2', N'Phần tiếp theo mở ra chuyến phiêu lưu mới trong thế giới cảm xúc, với những thay đổi khi nhân vật bước sang giai đoạn trưởng thành.', N'Đạo diễn L', N'Lồng tiếng Việt', 102, N'Lồng tiếng Việt', N'Mỹ', N'P', NULL, NULL, '2026-11-14', NULL, N'Upcoming'),
-(13, N'THÀNH PHỐ SAU MƯA', N'City After Rain', N'Một nhiếp ảnh trẻ lần theo những bức ảnh cũ để tìm lại người bạn đã mất liên lạc.', N'Đạo diễn M', N'Diễn viên 19, Diễn viên 20', 100, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, NULL, '2026-10-24', NULL, N'NowShowing'),
-(14, N'HÀNH TRÌNH SAO BĂNG', N'Meteor Journey', N'Một nhóm bạn cùng thực hiện chuyến đi xuyên Việt để quan sát trận mưa sao băng hiếm gặp.', N'Đạo diễn N', N'Diễn viên 21, Diễn viên 22', 110, N'Tiếng Việt', N'Việt Nam', N'P', NULL, NULL, '2026-10-24', NULL, N'NowShowing');
+(1, N'TRẠI BUÔN NGƯỜI', N'The Human Market', N'Một nhóm người xa lạ bị cuốn vào cuộc sinh tồn kinh hoàng trong khu chợ bí ẩn.', N'Đạo diễn A', N'Diễn viên 1, Diễn viên 2', 135, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=nlFar2vq4Yo', '/media/posters/ca6c44ce-a0c6-45f9-a855-8e8461b86415.jpg', '2026-09-25', '2026-10-12', N'Stopped'),
+(2, N'VERITY: BÍ MẬT BỊ CHÔN VÙI', N'Verity', N'Những trang bản thảo hé lộ bí mật đen tối phía sau một gia đình tưởng như hoàn hảo.', N'Đạo diễn B', N'Diễn viên 3, Diễn viên 4', 117, N'Tiếng Anh, phụ đề Tiếng Việt', N'Mỹ', N'T18', 'https://www.youtube.com/watch?v=V-JKf_FgRjU', '/media/posters/b230b406-8e4d-415a-9e73-a053c3e3c15a.webp', '2026-09-16', '2026-10-10', N'Stopped'),
+(3, N'MÙA XUÂN ĐẾN MUỘN', N'Late Spring', N'Câu chuyện gia đình về những cuộc gặp gỡ và lựa chọn làm thay đổi một mùa xuân.', N'Đạo diễn C', N'Diễn viên 5, Diễn viên 6', 120, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, '/media/posters/bbf5824d-978f-4f91-9d07-00ddeed0dbfe.jpg', '2026-09-05', '2026-10-01', N'Stopped'),
+(4, N'QUỶ ĂN TẠNG 4: HỒI TỈNH', N'The Possessed 4', N'Một nghi lễ cổ xưa đánh thức thế lực đang ngủ yên trong ngôi làng hẻo lánh.', N'Đạo diễn D', N'Diễn viên 7, Diễn viên 8', 111, N'Tiếng Thái, phụ đề Tiếng Việt', N'Thái Lan', N'T18', 'https://www.youtube.com/watch?v=BP2_TUBOS6U', '/media/posters/b21ca0cc-a98e-4041-87b4-530649d8b1d9.jpg', '2026-10-16', NULL, N'NowShowing'),
+(5, N'SHAUN THE SHEEP: “QUÁI LẠ” GHÉ NHÀ', N'Shaun the Sheep: The Strange Visitor', N'Shaun và cả đàn cừu gặp một vị khách bất ngờ trong chuyến phiêu lưu hài hướng.', N'Đạo diễn E', N'Lồng tiếng Việt', 81, N'Lồng tiếng Việt', N'Anh', N'P', 'https://www.youtube.com/watch?v=UZ46Smi6mOw', '/media/posters/3a72af13-0439-48a9-bd11-d57b8b82974e.jpg', '2026-10-16', NULL, N'NowShowing'),
+(6, N'CÕI NGUYÊN', N'The Origin', N'Những dấu vết kỳ lạ dẫn một nhóm bạn đến bí mật bị chôn vùi dưới khu rừng già.', N'Đạo diễn F', N'Diễn viên 9, Diễn viên 10', 89, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=zsMuQUkduug', '/media/posters/ebf03e6b-51d6-42fd-b6ff-aacd4f75e6d9.png', '2026-10-23', NULL, N'NowShowing'),
+(7, N'BAMBI: LÃNH ĐỊA SĂN MỒI', N'Bambi: The Reckoning', N'Cuộc đối đầu sinh tồn bắt đầu khi khu rừng yên bình trở thành lãnh địa săn mồi.', N'Đạo diễn G', N'Diễn viên 11, Diễn viên 12', 80, N'Tiếng Anh, phụ đề Tiếng Việt', N'Anh', N'T16', 'https://www.youtube.com/watch?v=U6vHNWqdO0s', '/media/posters/94455dd6-caee-41de-b18c-20c4d0fa8ed5.jpg', '2026-10-23', NULL, N'NowShowing'),
+(8, N'ÁN MẠNG KARAOKE', N'Karaoke Murders', N'Một buổi tối karaoke biến thành vụ án bí ẩn mà không ai trong nhóm có thể rời đi.', N'Đạo diễn H', N'Diễn viên 13, Diễn viên 14', 96, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=UOjRGIatX38', '/media/posters/68257345-cc14-4c19-a8c6-d053ed8a80d6.jpg', '2026-10-30', NULL, N'Upcoming'),
+(9, N'CẢM XÚC LẠ KỲ', N'Strange Feelings', N'Chuyến phiêu lưu hoạt hình khám phá thế giới cảm xúc và tình bạn.', N'Đạo diễn I', N'Lồng tiếng Việt', 96, N'Lồng tiếng Việt', N'Mỹ', N'P', 'https://www.youtube.com/watch?v=yRUAzGQ3nSY', '/media/posters/16116417-13e8-46d3-a29a-61e529048adc.jpg', '2026-11-07', NULL, N'Upcoming'),
+(10, N'OÁN LINH ĐÒI MẠNG', N'Laudanum', N'Một căn phòng khóa kín lưu giữ câu chuyện khiến những người bước vào phải trả giá.', N'Đạo diễn J', N'Diễn viên 15, Diễn viên 16', 98, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=vM9t7-_Kenk', '/media/posters/3c6c718a-7c67-44b1-ba1e-af428ea43bb8.jpg', '2026-11-13', NULL, N'Upcoming'),
+(11, N'TRÁI TIM MÙA ĐÔNG', N'Winter Hearts', N'Hai con người xa lạ học cách bắt đầu lại sau những biến cố của cuộc sống.', N'Đạo diễn K', N'Diễn viên 17, Diễn viên 18', 108, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, '/media/posters/4c574fa7-af54-4fc1-881b-c013224acdc8.webp', '2026-11-21', NULL, N'Upcoming'),
+(12, N'CẢM XÚC LẠ KỲ: PHẦN 2', N'Strange Feelings 2', N'Phần tiếp theo mở ra chuyến phiêu lưu mới trong thế giới cảm xúc, với những thay đổi khi nhân vật bước sang giai đoạn trưởng thành.', N'Đạo diễn L', N'Lồng tiếng Việt', 102, N'Lồng tiếng Việt', N'Mỹ', N'P', 'https://www.youtube.com/watch?v=LEjhY15eCx0', '/media/posters/b698c1c6-ee1f-428f-9cdf-11687f437460.webp', '2026-11-14', NULL, N'Upcoming'),
+(13, N'THÀNH PHỐ SAU MƯA', N'City After Rain', N'Một nhiếp ảnh trẻ lần theo những bức ảnh cũ để tìm lại người bạn đã mất liên lạc.', N'Đạo diễn M', N'Diễn viên 19, Diễn viên 20', 100, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, '/media/posters/6e22e5c3-a4ad-4d5b-bc88-7adee586ed0c.jpg', '2026-10-24', NULL, N'NowShowing'),
+(14, N'HÀNH TRÌNH SAO BĂNG', N'Meteor Journey', N'Một nhóm bạn cùng thực hiện chuyến đi xuyên Việt để quan sát trận mưa sao băng hiếm gặp.', N'Đạo diễn N', N'Diễn viên 21, Diễn viên 22', 110, N'Tiếng Việt', N'Việt Nam', N'P', NULL, '/media/posters/895021ad-16aa-46d6-90de-5595c5b3ab67.jpg', '2026-10-24', NULL, N'NowShowing');
 SET IDENTITY_INSERT dbo.Movie OFF;
 GO
 
@@ -1576,16 +1582,17 @@ INSERT dbo.Holiday(holiday_date, holiday_name) VALUES
     ('2027-02-06', N'Tết Nguyên đán');
 GO
 
+/* Gia ve theo loai ghe + khung gia (Sang / Chieu / Toi) + loai ngay. */
 INSERT dbo.TicketPrice(seat_type_id, slot_id, day_type, price) VALUES
-    (3,1,'Weekday',100000),(3,2,'Weekday',110000),(3,3,'Weekday',110000),(3,4,'Weekday',105000),(3,5,'Weekday',105000),
-    (3,1,'Weekend',110000),(3,2,'Weekend',120000),(3,3,'Weekend',120000),(3,4,'Weekend',115000),(3,5,'Weekend',115000),
-    (3,1,'Holiday',120000),(3,2,'Holiday',130000),(3,3,'Holiday',130000),(3,4,'Holiday',125000),(3,5,'Holiday',125000),
-    (1,1,'Weekday',60000),(1,2,'Weekday',70000),(1,3,'Weekday',70000),(1,4,'Weekday',65000),(1,5,'Weekday',65000),
-    (1,1,'Weekend',70000),(1,2,'Weekend',80000),(1,3,'Weekend',80000),(1,4,'Weekend',75000),(1,5,'Weekend',75000),
-    (1,1,'Holiday',80000),(1,2,'Holiday',90000),(1,3,'Holiday',90000),(1,4,'Holiday',85000),(1,5,'Holiday',85000),
-    (2,1,'Weekday',80000),(2,2,'Weekday',90000),(2,3,'Weekday',90000),(2,4,'Weekday',85000),(2,5,'Weekday',85000),
-    (2,1,'Weekend',90000),(2,2,'Weekend',100000),(2,3,'Weekend',100000),(2,4,'Weekend',95000),(2,5,'Weekend',95000),
-    (2,1,'Holiday',100000),(2,2,'Holiday',110000),(2,3,'Holiday',110000),(2,4,'Holiday',105000),(2,5,'Holiday',105000);
+    (3,1,'Weekday',100000),(3,2,'Weekday',110000),(3,3,'Weekday',105000),
+    (3,1,'Weekend',110000),(3,2,'Weekend',120000),(3,3,'Weekend',115000),
+    (3,1,'Holiday',120000),(3,2,'Holiday',130000),(3,3,'Holiday',125000),
+    (1,1,'Weekday',60000),(1,2,'Weekday',70000),(1,3,'Weekday',65000),
+    (1,1,'Weekend',70000),(1,2,'Weekend',80000),(1,3,'Weekend',75000),
+    (1,1,'Holiday',80000),(1,2,'Holiday',90000),(1,3,'Holiday',85000),
+    (2,1,'Weekday',80000),(2,2,'Weekday',90000),(2,3,'Weekday',85000),
+    (2,1,'Weekend',90000),(2,2,'Weekend',100000),(2,3,'Weekend',95000),
+    (2,1,'Holiday',100000),(2,2,'Holiday',110000),(2,3,'Holiday',105000);
 GO
 
 INSERT dbo.Combo(combo_name, description, price, stock, status) VALUES
@@ -1631,49 +1638,83 @@ INSERT dbo.News(title, content, thumbnail_url, status, created_by, created_at, u
  (N'Bài test nội bộ - không hiển thị', N'Tin này dùng để kiểm tra tab trạng thái Đã ẩn, khách hàng không bao giờ thấy.', NULL, 'Hidden', 2, '2026-10-21T11:50:21.8015869', '2026-10-21T11:50:21.8015869');
 GO
 
-/* Lich chien 15 ngay ke tu hom nay: moi ngay 4 phong x 5 suat, xen ke cac phim
-   dang phat hanh va sap phat hanh. */
-WITH Dates AS (
-    SELECT DATEADD(DAY, d.day_offset, CAST(GETDATE() AS DATE)) AS show_date, d.day_offset
-    FROM (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15)) AS d(day_offset)
-),
-EligibleMovies AS (
-    SELECT d.show_date, m.movie_id, m.duration_minutes,
-           ROW_NUMBER() OVER (PARTITION BY d.show_date ORDER BY m.movie_id) AS movie_number,
-           COUNT(*) OVER (PARTITION BY d.show_date) AS movie_count
-    FROM dbo.Movie AS m
-    CROSS JOIN Dates AS d
-    WHERE m.release_date <= d.show_date
-      AND (m.end_date IS NULL OR m.end_date >= d.show_date)
-      AND m.status <> 'Stopped'
-),
-ShowtimeGrid AS (
-    SELECT d.show_date, d.day_offset, r.room_id, r.room_name, ts.slot_id, ts.start_time,
-           ROW_NUMBER() OVER (PARTITION BY d.show_date ORDER BY r.room_id, ts.slot_id) AS grid_number
-    FROM Dates AS d
-    CROSS JOIN dbo.Room AS r
-    CROSS JOIN dbo.TimeSlot AS ts
-)
-INSERT dbo.Showtime
-    (movie_id, room_id, slot_id, start_time, end_time, status, created_by, room_name, starts_at, ticket_price)
-SELECT m.movie_id,
-       g.room_id,
-       g.slot_id,
-       starts.starts_at,
-       DATEADD(MINUTE, m.duration_minutes, starts.starts_at),
-       'Scheduled',
-       NULL,
-       g.room_name,
-       starts.starts_at,
-       0
-FROM ShowtimeGrid AS g
-JOIN EligibleMovies AS m
-  ON m.show_date = g.show_date
- AND m.movie_number = ((g.grid_number - 1) % m.movie_count) + 1
-CROSS APPLY (
-    SELECT CAST(DATEADD(MINUTE, DATEDIFF(MINUTE, CAST('00:00' AS TIME), g.start_time),
-                        CAST(g.show_date AS DATETIME2(7))) AS DATETIME2(7)) AS starts_at
-) AS starts;
+/* Lich chien 15 ngay ke tu hom nay.
+   Moi phong duoc xep suat lien tuc tu 09:00 den khi khong con phim vua gio dong cua:
+     - gio ket thuc = gio bat dau + thoi luong phim
+     - suat ke tiep bat dau sau khi suat truoc ket thuc 15 phut
+     - phim xoay vong va lech nhau giua cac phong, nen cung mot phim co suat o
+       nhieu phong voi gio khac nhau (khach co nhieu lua chon hon).
+   slot_id (khung gia Sang/Chieu/Toi) duoc suy ra tu gio bat dau. */
+DECLARE @day_offset INT = 1;
+DECLARE @open_min INT = 9 * 60;    -- 09:00
+DECLARE @close_min INT = 23 * 60;  -- 23:00
+DECLARE @turnover INT = 15;
+
+DECLARE @day DATE, @room_id INT, @room_name NVARCHAR(50), @room_index INT;
+DECLARE @cursor DATETIME2(7), @close_dt DATETIME2(7);
+DECLARE @movie_count INT, @movie_id INT, @duration INT, @slot_id INT, @step INT;
+DECLARE @movies TABLE (rn INT PRIMARY KEY, movie_id INT NOT NULL, duration_minutes INT NOT NULL);
+
+DECLARE roomCur CURSOR LOCAL FAST_FORWARD FOR
+    SELECT room_id, room_name FROM dbo.Room WHERE status = 'Active' ORDER BY room_id;
+
+WHILE @day_offset <= 15
+BEGIN
+    SET @day = DATEADD(DAY, @day_offset, CAST(GETDATE() AS DATE));
+    SET @close_dt = DATEADD(MINUTE, @close_min, CAST(@day AS DATETIME2(7)));
+    SET @room_index = 0;
+
+    OPEN roomCur;
+    FETCH NEXT FROM roomCur INTO @room_id, @room_name;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        DELETE FROM @movies;
+        INSERT INTO @movies(rn, movie_id, duration_minutes)
+        SELECT ROW_NUMBER() OVER (ORDER BY m.movie_id), m.movie_id, m.duration_minutes
+        FROM dbo.Movie m
+        WHERE m.release_date <= @day
+          AND (m.end_date IS NULL OR m.end_date >= @day)
+          AND m.status <> 'Stopped';
+
+        SET @movie_count = (SELECT COUNT(*) FROM @movies);
+        SET @cursor = DATEADD(MINUTE, @open_min, CAST(@day AS DATETIME2(7)));
+        SET @step = 0;
+
+        WHILE @movie_count > 0
+        BEGIN
+            SET @movie_id = NULL;
+            -- Uu tien phim theo vong tron lech nhau giua cac phong, nhung chi
+            -- chon phim ket thuc truoc gio dong cua.
+            SELECT TOP (1) @movie_id = movie_id, @duration = duration_minutes
+            FROM @movies
+            WHERE DATEADD(MINUTE, duration_minutes, @cursor) <= @close_dt
+            ORDER BY ((rn - 1 - @room_index - @step) % @movie_count + @movie_count) % @movie_count, rn;
+
+            IF @movie_id IS NULL BREAK;
+
+            SET @slot_id = (
+                SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts
+                WHERE CAST(@cursor AS TIME(7)) >= ts.start_time
+                  AND CAST(@cursor AS TIME(7)) < ts.end_time
+                ORDER BY ts.start_time);
+
+            INSERT dbo.Showtime
+                (movie_id, room_id, slot_id, start_time, end_time, status, created_by, room_name, starts_at, ticket_price)
+            VALUES (@movie_id, @room_id, @slot_id, @cursor, DATEADD(MINUTE, @duration, @cursor),
+                    'Scheduled', NULL, @room_name, @cursor, 0);
+
+            SET @cursor = DATEADD(MINUTE, @duration + @turnover, @cursor);
+            SET @step = @step + 1;
+        END
+
+        SET @room_index = @room_index + 1;
+        FETCH NEXT FROM roomCur INTO @room_id, @room_name;
+    END
+    CLOSE roomCur;
+
+    SET @day_offset = @day_offset + 1;
+END
+DEALLOCATE roomCur;
 GO
 
 -- Dien gia tri hien thi cho cac suat da sinh (gia tham chu = loai ghe re nhat).

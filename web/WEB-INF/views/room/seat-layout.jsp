@@ -61,6 +61,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="rm-head">
         <div>
           <h1><c:out value="${room.roomName}"/> <span class="chip"><c:out value="${room.roomType}"/></span></h1>
@@ -179,6 +181,8 @@
             <option value="${t.seatTypeId}" data-couple="${t.couple}"><c:out value="${t.typeName}"/></option>
           </c:forEach>
         </template>
+      </div>
+        </div>
       </div>
     </div>
   </section>

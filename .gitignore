@@ -3,12 +3,12 @@
 /build/
 /dist/
 
-# ---- Media upload runtime (app tự tạo lại khi cần) ----
+# ---- Media upload runtime (app tạo file lúc chạy) ----
 /media/
 
 # ---- IDE: cấu hình riêng của máy ----
-# .idea/ giữ lại để chia sẻ cấu hình project chung (iml, compiler, misc...)
-# nhưng datasource cache và thư mục private chứa đường dẫn máy-local thì bỏ.
+# .idea/ giữ lại cấu hình chung project (iml, compiler, misc...)
+# nhưng datasource cache là private nên không đồng bộ lên máy khác.
 .idea/dataSources/
 .idea/dataSources.local.xml
 .idea/dataSources.xml

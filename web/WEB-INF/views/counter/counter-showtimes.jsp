@@ -32,6 +32,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <h1>Bán vé tại quầy</h1>
       <div class="uip-steps">
         <span class="uip-step active"><span class="uip-num">1</span> Chọn suất chiếu</span>
@@ -52,7 +54,7 @@
               <h3><c:out value="${s.title}"/></h3>
               <div class="uip-facts">
                 <span class="chip">🎬 <c:out value="${s.roomName}"/></span>
-                <span class="chip">🕒 <c:out value="${s.slotName}"/></span>
+                <span class="chip">🕒 <c:out value="${s.timeRangeLabel}"/></span>
                 <c:choose>
                   <c:when test="${s.availableSeats == 0}"><span class="chip uip-seats-out">Hết ghế</span></c:when>
                   <c:when test="${s.availableSeats <= 10}"><span class="chip uip-seats-low">Sắp hết · còn ${s.availableSeats} ghế</span></c:when>
@@ -72,6 +74,8 @@
         </c:forEach>
       </div>
       <c:if test="${empty showtimeList}"><div class="uip-empty">🎬<br>Không có suất chiếu nào sắp diễn ra.</div></c:if>
+        </div>
+      </div>
     </div>
   </section>
 </main>

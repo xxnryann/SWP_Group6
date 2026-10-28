@@ -3,9 +3,12 @@ package com.cinema.controller.ShowtimeController;
 import com.cinema.controller.BaseServlet;
 import com.cinema.dao.MovieDAO.MovieDAO;
 import com.cinema.dao.ShowtimeDAO.ShowtimeDAO;
+import com.cinema.model.Movie;
 import com.cinema.model.Showtime;
 import com.cinema.model.User;
 import com.cinema.util.MovieUtil.MovieAccess;
+import com.cinema.util.ShowtimeUtil.ShowtimePlanner;
+import com.cinema.util.ShowtimeUtil.ShowtimeRules;
 import com.cinema.util.ShowtimeUtil.ShowtimeUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/manage/showtimes")
@@ -42,6 +46,10 @@ public class ManageShowtimesServlet extends BaseServlet {
         }
         if ("available-times".equals(request.getParameter("action"))) {
             writeAvailableTimes(request, response);
+            return;
+        }
+        if ("generate".equals(request.getParameter("action"))) {
+            showGenerateForm(request, response);
             return;
         }
         try {
@@ -89,6 +97,9 @@ public class ManageShowtimesServlet extends BaseServlet {
             if ("save".equals(action)) {
                 showtimeDAO.save(readShowtime(request));
                 flash(request, "success", "Đã lưu suất chiếu.");
+            } else if ("generate".equals(action)) {
+                int created = generateSchedule(request);
+                flash(request, "success", "Đã tạo " + created + " suất chiếu.");
             } else if ("delete".equals(action)) {
                 showtimeDAO.delete(ShowtimeUtil.parseId(request.getParameter("id")));
                 flash(request, "success", "Đã xóa suất chiếu.");
@@ -99,7 +110,7 @@ public class ManageShowtimesServlet extends BaseServlet {
         } catch (IllegalArgumentException | DateTimeParseException e) {
             flash(request, "error", e.getMessage());
         } catch (SQLException e) {
-            getServletContext().log("Unable to save or delete showtime.", e);
+            getServletContext().log("Unable to save, generate or delete showtime.", e);
             flash(request, "error", "Không thể cập nhật lịch chiếu: " + e.getMessage());
         }
         response.sendRedirect(request.getContextPath() + "/manage/showtimes");
@@ -124,6 +135,102 @@ public class ManageShowtimesServlet extends BaseServlet {
         showtime.setStartsAt(start);
         showtime.setStatus("Scheduled");
         return showtime;
+    }
+
+    /** Mở form sinh lịch tự động cho một ngày. */
+    private void showGenerateForm(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            LocalDate defaultDate = LocalDate.now().plusDays(1);
+            String dateValue = request.getParameter("date");
+            if (dateValue != null && !dateValue.isBlank()) {
+                defaultDate = LocalDate.parse(dateValue);
+            }
+            request.setAttribute("rooms", showtimeDAO.findActiveRoomNames());
+            request.setAttribute("movies", movieDAO.findAllForDate(defaultDate));
+            request.setAttribute("defaultDate", defaultDate);
+            request.setAttribute("todayDate", LocalDate.now());
+            request.setAttribute("openTime", ShowtimeRules.OPEN_TIME);
+            request.setAttribute("closeTime", ShowtimeRules.CLOSE_TIME);
+            request.setAttribute("turnoverMinutes", ShowtimeRules.TURNOVER_MINUTES);
+            request.setAttribute("pageTitle", "Sinh lịch chiếu tự động");
+            forward(request, response, "showtime-generate");
+        } catch (DateTimeParseException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Ngày không hợp lệ.");
+        } catch (SQLException e) {
+            getServletContext().log("Unable to load showtime generator form.", e);
+            flash(request, "error", "Không thể tải dữ liệu lịch chiếu: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/manage/showtimes");
+        }
+    }
+
+    /**
+     * Sinh lịch chiếu tự động cho ngày được chọn.
+     *
+     * <p>Mỗi phòng được xếp suất liên tục: suất sau bắt đầu 15 phút sau khi
+     * suất trước kết thúc, phim xoay vòn và lệch nhau giữa các phòng nên cùng
+     * một phim xuất hiện ở nhiều phòng với các giờ khác nhau.</p>
+     */
+    private int generateSchedule(HttpServletRequest request) throws SQLException {
+        LocalDate date = LocalDate.parse(ShowtimeUtil.requiredText(
+                request.getParameter("showDate"), "Ngày chiếu không hợp lệ.", 10));
+        if (date.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày chiếu không được nằm trong quá khứ.");
+        }
+        LocalTime openTime = ShowtimeRules.OPEN_TIME;
+        String openValue = request.getParameter("openTime");
+        if (openValue != null && !openValue.isBlank()) {
+            openTime = LocalTime.parse(openValue);
+            if (openTime.isBefore(ShowtimeRules.OPEN_TIME) || openTime.isAfter(ShowtimeRules.CLOSE_TIME)) {
+                throw new IllegalArgumentException("Giờ mở cửa phải nằm trong khoảng "
+                        + ShowtimeRules.OPEN_TIME + " – " + ShowtimeRules.CLOSE_TIME + ".");
+            }
+        }
+
+        List<String> rooms = readSelectedValues(request, "roomNames");
+        if (rooms.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng chiếu.");
+        }
+        List<Integer> movieIds = new ArrayList<>();
+        for (String value : readSelectedValues(request, "movieIds")) {
+            movieIds.add(ShowtimeUtil.parseId(value));
+        }
+        if (movieIds.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một phim.");
+        }
+
+        List<Movie> available = movieDAO.findAllForDate(date);
+        List<Movie> selected = new ArrayList<>();
+        for (Movie movie : available) {
+            if (movieIds.contains(movie.getMovieId())) {
+                selected.add(movie);
+            }
+        }
+        if (selected.isEmpty()) {
+            throw new IllegalArgumentException("Không có phim nào đang phát hành phù hợp với ngày đã chọn.");
+        }
+
+        List<Showtime> planned = ShowtimePlanner.plan(date, openTime, rooms, selected,
+                showtimeDAO.findOccupiedSlots(date));
+        if (planned.isEmpty()) {
+            throw new IllegalArgumentException("Không thể xếp lịch: các phòng đã kín suất trong ngày.");
+        }
+        return showtimeDAO.insertBatch(planned);
+    }
+
+    /** Đọc các giá trị đã chọn của một nhóm checkbox. */
+    private List<String> readSelectedValues(HttpServletRequest request, String name) {
+        String[] raw = request.getParameterValues(name);
+        List<String> values = new ArrayList<>();
+        if (raw == null) {
+            return values;
+        }
+        for (String value : raw) {
+            if (value != null && !value.isBlank()) {
+                values.add(value.trim());
+            }
+        }
+        return values;
     }
 
     private void writeAvailableTimes(HttpServletRequest request, HttpServletResponse response)

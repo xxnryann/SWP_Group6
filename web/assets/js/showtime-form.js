@@ -11,6 +11,13 @@
   var requestNumber = 0;
   var currentTime = timeSelect.dataset.currentTime;
 
+  function endTimeLabel(start, duration) {
+    var parts = start.split(':').map(Number);
+    var endMinutes = parts[0] * 60 + parts[1] + duration;
+    return String(Math.floor(endMinutes / 60)).padStart(2, '0')
+      + ':' + String(endMinutes % 60).padStart(2, '0');
+  }
+
   function updateEstimatedEnd() {
     var selectedMovie = movieSelect.options[movieSelect.selectedIndex];
     var duration = Number(selectedMovie && selectedMovie.dataset.duration);
@@ -19,11 +26,7 @@
       estimatedEnd.textContent = '';
       return;
     }
-    var parts = start.split(':').map(Number);
-    var endMinutes = parts[0] * 60 + parts[1] + duration;
-    var hours = String(Math.floor(endMinutes / 60)).padStart(2, '0');
-    var minutes = String(endMinutes % 60).padStart(2, '0');
-    estimatedEnd.textContent = 'Kết thúc dự kiến: ' + hours + ':' + minutes;
+    estimatedEnd.textContent = 'Kết thúc dự kiến: ' + endTimeLabel(start, duration);
   }
 
   function resetOptions(label) {
@@ -66,21 +69,11 @@
       if (requestId !== requestNumber) return;
 
       resetOptions(times.length ? 'Chọn giờ bắt đầu' : 'Không còn giờ phù hợp');
-      var windows = {
-        '09:00': '11:30',
-        '11:45': '14:15',
-        '14:30': '17:00',
-        '17:15': '19:45',
-        '20:00': '22:30'
-      };
+      var selectedMovie = movieSelect.options[movieSelect.selectedIndex];
+      var duration = Number(selectedMovie.dataset.duration);
       times.forEach(function (time) {
-        var selectedMovie = movieSelect.options[movieSelect.selectedIndex];
-        var duration = Number(selectedMovie.dataset.duration);
-        var parts = time.split(':').map(Number);
-        var endMinutes = parts[0] * 60 + parts[1] + duration;
-        var end = String(Math.floor(endMinutes / 60)).padStart(2, '0')
-          + ':' + String(endMinutes % 60).padStart(2, '0');
-        var option = new Option(time + ' – ' + windows[time] + ' (phim kết thúc dự kiến ' + end + ')', time);
+        var end = endTimeLabel(time, duration);
+        var option = new Option(time + ' – ' + end, time);
         timeSelect.add(option);
       });
       if (currentTime && times.indexOf(currentTime) !== -1) {
@@ -88,7 +81,7 @@
       }
       currentTime = '';
       message.textContent = times.length
-        ? 'Chỉ có 5 khung giờ cố định; giờ kết thúc dự kiến được tính theo thời lượng phim.'
+        ? 'Các suất cách nhau 15 phút; giờ kết thúc dự kiến được tính theo thời lượng phim.'
         : 'Không có khung giờ trống phù hợp trong phòng này.';
       updateEstimatedEnd();
     } catch (error) {

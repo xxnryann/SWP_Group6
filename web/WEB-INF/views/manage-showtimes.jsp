@@ -4,14 +4,19 @@
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="_header.jspf" %>
 
-<main class="container page">
+<main class="page"><div class="container">
+  <div class="dash-layout">
+    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Quản lý lịch chiếu</h1>
-      <p class="sub">Tạo, cập nhật hoặc xóa suất chiếu theo 5 khung giờ cố định. Mỗi phòng chỉ có một suất trong mỗi khung.</p>
+      <p class="sub">Tạo, cập nhật hoặc xóa suất chiếu. Giờ bắt đầu tự do theo mốc 15 phút, giờ kết thúc tính bằng giờ bắt đầu cộng thời lượng phim, mỗi phòng cách nhau tối thiểu 15 phút.</p>
     </div>
-    <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
+    <div class="movie-actions">
+      <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
+      <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
+    </div>
   </section>
 
   <div class="table-wrap">
@@ -50,6 +55,8 @@
       </tbody>
     </table>
   </div>
-</main>
+    </div>
+  </div>
+</div></main>
 
 <%@ include file="_footer.jspf" %>

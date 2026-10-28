@@ -8,6 +8,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="card rm-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
         <p class="sub">
@@ -73,6 +75,8 @@
             <a class="btn btn-outline" href="${ctx}/admin/rooms">Hủy</a>
           </div>
         </form>
+      </div>
+        </div>
       </div>
     </div>
   </section>

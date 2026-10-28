@@ -4,7 +4,9 @@
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="_header.jspf" %>
 
-<main class="container page">
+<main class="page"><div class="container">
+  <div class="dash-layout">
+    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
@@ -73,6 +75,8 @@
       </c:forEach>
     </nav>
   </c:if>
-</main>
+    </div>
+  </div>
+</div></main>
 
 <%@ include file="_footer.jspf" %>

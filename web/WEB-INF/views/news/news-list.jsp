@@ -26,6 +26,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="uip-head">
         <div>
           <h1>Quản lý tin tức</h1>
@@ -88,6 +90,8 @@
             </c:if>
           </tbody>
         </table>
+      </div>
+        </div>
       </div>
     </div>
   </section>

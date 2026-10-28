@@ -4,6 +4,8 @@
 <c:set var="parentUrl" value="${pageContext.request.contextPath}/admin/users"/>
 <%@ include file="_header.jspf" %>
 <main class="page"><div class="container">
+  <div class="dash-layout">
+    <div>
   <section class="panel">
     <h2>Quản lý tài khoản &amp; phân quyền</h2>
     <p class="sub">Khóa/mở tài khoản và phân quyền cho khách hàng, nhân viên, quản lý rạp.</p>
@@ -93,5 +95,7 @@
       </c:otherwise>
     </c:choose>
   </section>
+    </div>
+  </div>
 </div></main>
 <%@ include file="_footer.jspf" %>

@@ -116,8 +116,12 @@ function Get-ShowtimeId {
         Tra ve id suat chien dang ban (uu tien hom nay, neu khong co thi ngay mai).
 
     .DESCRIPTION
-        Chi tra ve suat chien CON GHE TRONG. Neu suat dau tien da het ghe
-        (do da chay test nhieu lan), tiep tuc tim suat tiep theo.
+        Chi tra ve suat chien CON GHE TRONG va CHUA BAT DAU. Neu suat dau tien
+        da het ghe (do da chay test nhieu lan) hoac da bat dau chieu
+        (sp_CreateBooking tu choi suat da start), tiep tuc tim suat tiep theo.
+
+        Suat da bat dau duoc loai bang cach so sanh gio bat dau (data-start
+        cua the suat chien) voi gio hien tai.
     #>
     param(
         [Parameter(Mandatory = $true)] $Session,
@@ -129,9 +133,15 @@ function Get-ShowtimeId {
     foreach ($date in $dates) {
         $url = if ($date -eq $dates[0]) { "$BaseUrl/showtimes" } else { "$BaseUrl/showtimes?date=$date" }
         $page = Invoke-WebRequest -Uri $url -WebSession $Session -UseBasicParsing
-        $ids = [regex]::Matches($page.Content, '/booking/seats\?showtimeId=(\d+)') |
-               ForEach-Object { [int]$_.Groups[1].Value } | Sort-Object -Unique
-        foreach ($id in $ids) {
+        # Moi the suat chien: href chua showtimeId, data-start chua gio chieu (HH:mm).
+        $pattern = 'href="[^"]*booking/seats\?showtimeId=(\d+)"[^>]*data-start="(\d{1,2}:\d{2})"'
+        $seen = @{}
+        foreach ($m in [regex]::Matches($page.Content, $pattern)) {
+            $id = [int]$m.Groups[1].Value
+            if ($seen.ContainsKey($id)) { continue }
+            $seen[$id] = $true
+            # Bo qua suat da bat dau chieu (khong the mo phien dat ve).
+            if (Test-TimeAlreadyPassed -Date $date -Time $m.Groups[2].Value) { continue }
             # Chi chon suat con ghe GREEN, neu khong thi thu suat ke tiep.
             if (Test-ShowtimeHasFreeSeat -Session $Session -BaseUrl $BaseUrl -ShowtimeId $id) {
                 return $id
@@ -139,6 +149,25 @@ function Get-ShowtimeId {
         }
     }
     return 0
+}
+
+function Test-TimeAlreadyPassed {
+    <#
+    .SYNOPSIS
+        Tra ve $true neu gio chieu (HH:mm) cua ngay $Date da qua so voi hien tai.
+    #>
+    param(
+        [Parameter(Mandatory = $true)] [string]$Date,
+        [Parameter(Mandatory = $true)] [string]$Time
+    )
+    try {
+        $day = [datetime]::ParseExact($Date, 'yyyy-MM-dd', $null)
+        $parts = $Time.Split(':')
+        $start = $day.AddHours([int]$parts[0]).AddMinutes([int]$parts[1])
+        return ($start -le (Get-Date))
+    } catch {
+        return $false
+    }
 }
 
 function Test-ShowtimeHasFreeSeat {

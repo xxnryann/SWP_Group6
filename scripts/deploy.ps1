@@ -67,6 +67,16 @@ foreach ($item in @('assets', 'WEB-INF')) {
     Write-Host "  copied $item"
 }
 
+# --- Chuan hoa moi thoi gian file vua copy ---
+# Tomcat cache JarFile theo (duong dan, lastModified, size). Copy-Item GIU NGUYEN
+# LastWriteTime cua file nguon, nen jar moi co cung ten + cung size + cung
+# LastWriteTime voi jar cu -> Tomcat tra ve Cache cu (tro toi file DA BI XOA)
+# -> ClassNotFoundException (vi du JstlCoreTLV) va moi trang bao loi 500.
+# Cham lai moi file da copy de buoc cache bi invalidate.
+Get-ChildItem $webDest -Recurse -File -Force | ForEach-Object {
+    $_.LastWriteTime = Get-Date
+}
+
 $webXml = Join-Path $webSrc 'WEB-INF\web.xml'
 if (Test-Path $webXml) {
     Copy-Item $webXml (Join-Path $webDest 'WEB-INF\web.xml') -Force

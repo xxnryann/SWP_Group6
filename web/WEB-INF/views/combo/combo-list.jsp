@@ -36,6 +36,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="uip-head">
         <div>
           <h1>Quản lý combo bắp nước</h1>
@@ -86,6 +88,8 @@
         </c:forEach>
       </div>
       <c:if test="${empty comboList}"><div class="uip-empty">🍿<br>Không có combo nào.</div></c:if>
+        </div>
+      </div>
     </div>
   </section>
 </main>

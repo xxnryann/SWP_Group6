@@ -60,7 +60,8 @@ Mở `http://localhost:8080/CinemaWeb/`.
 | `scripts/compare-procedures.ps1` | Đối chiếu stored procedure trong `sql/new.sql` với DB đã deploy (thêm `-Sync` để tạo lại procedure lệch) |
 | `scripts/test-booking-flow.ps1` | Kiểm thử trọn luồng BF-02 (happy path) |
 | `scripts/test-booking-errors.ps1` | Kiểm thử các nhánh lỗi (hủy, webhook sai chữ ký, idempotency) |
-| `scripts/test-smoke.ps1` | Kiểm thử nhanh toàn bộ 5 vai trò: mọi trang chính trả 200, `/booking/*` chặn khách chưa đăng nhập |
+| `scripts/test-smoke.ps1` | Kiểm thử nhanh toàn bộ 5 vai trò: mọi trang chính trả 200, 4 dashboard theo vai trò, `/booking/*` chặn khách chưa đăng nhập |
+| `scripts/test-rail.py` | Kiểm thử menu dọc (rail): đăng nhập từng vai trò rồi duyệt các trang con, xác nhận rail luôn hiện, đúng link active và không còn thanh nav ngang |
 
 ---
 
@@ -131,13 +132,36 @@ Cơ chế hết hạn chạy ở **cả hai tầng**, nên việc giải phóng 
 
 > Job nền định kỳ (`@Scheduled` / `@WebListener`) chưa đưa vào phạm vi lần này — cơ chế trên đã đảm bảo ghế được trả về dù khách đóng trình duyệt.
 
-### 2.6. Tối ưu truy vấn
+### 2.6. Quy tắc lịch chiếu (linh hoạt, không còn 5 khung cố định)
+
+Lịch chiếu được xếp theo từng phòng, không còn 5 khung giờ cố định áp dụng chung:
+
+| Quy tắc | Giá trị | Nơi enforce |
+|---|---|---|
+| Giờ mở cửa / đóng cửa | 09:00 – 23:00 | `ShowtimeRules.OPEN_TIME` / `CLOSE_TIME`, `save()` + `insertBatch()` |
+| Giờ kết thúc suất chiếu | `giờ bắt đầu + thời lượng phim` | `ShowtimeDAO.save`, trigger `trg_Showtime_SyncDaoCompatibility` |
+| Khoảng cách giữa 2 suất cùng phòng | 15 phút (dọn phòng) | `ShowtimeRules.TURNOVER_MINUTES`, `validateMovieAndRoomConflict` |
+| Bước chọn giờ bắt đầu | mốc tròn 15 phút | `ShowtimeRules.isOnGrid`, `findAvailableStartTimes` |
+
+Một phim có thể có nhiều suất ở **các phòng khác nhau với giờ khác nhau** — `ShowtimePlanner` xoay vòng phim và lệch chỉ số giữa các phòng (`index = (roomIndex + step) % movies.size()`) nên khách có nhiều lựa chọn hơn.
+
+`dbo.TimeSlot` giờ là **khung giá** (Sáng 00:00–12:00, Chiều 12:00–18:00, Tối 18:00–23:59) chứ không phải suất chiếu; `slot_id` của một suất được suy ra từ giờ bắt đầu nên `fn_GetTicketPrice` và `dbo.TicketPrice` giữ nguyên cách tính.
+
+Manager tạo lịch theo một trong hai cách:
+
+| Cách | URL | Mô tả |
+|---|---|---|
+| Sinh lịch tự động | `/manage/showtimes?action=generate` | Chọn ngày + giờ mở cửa + phòng + phim; hệ thống xếp liên tục đến giờ đóng cửa |
+| Thêm/sửa từng suất | `/manage/showtimes?action=new` | Nhập từng suất, giờ bắt đầu chọn từ danh sách mốc 15 phút còn trống |
+
+### 2.7. Tối ưu truy vấn
 
 | Kỹ thuật | Ở đâu | Tác dụng |
 |---|---|---|
 | Gộp 3 truy vấn chi tiết đơn (booking + vé + combo) vào **1 connection** | `BookingDAO.findOnlineBooking(Connection, int)` | Tiết kiệm 2 round-trip mỗi lần mở màn hình combo/thanh toán |
 | Tra mã đơn → đọc chi tiết trong cùng connection | `BookingDAO.findOnlineBookingByCode` | Return URL / IPN chỉ cần 1 connection thay vì 2 |
 | Gộp 4 truy vấn kiểm tra lịch chiếu (phim + phòng + lịch cùng ngày) vào **1 connection** | `ShowtimeDAO.findAvailableStartTimes` | Giảm 4 round-trip xuống 1 khi mở form lập lịch |
+| Xếp lịch tự động dùng hàm thuần (không JDBC) + ghi cả ngày trong **1 transaction** | `ShowtimePlanner.plan`, `ShowtimeDAO.insertBatch` | Sinh lịch cho nhiều phòng chỉ tốn 1 connection; hoặc ghi hết, hoặc không ghi gì |
 | Cache cấu hình MyPoint **có TTL 5 phút** | `OnlineBookingService.getPointConfig()` | Bỏ 1 vòng truy vấn DB mỗi lần mở màn hình combo, vẫn tự nhận cấu hình mới khi Manager sửa |
 | Cache cấu hình VNPAY trong bộ nhớ | `VNPayProperties.load()` | Không dựng lại map cấu hình ở mỗi request |
 | Throttle 2 giây cho `sp_ReleaseExpiredHolds` | `OnlineBookingService.releaseExpiredHolds()` | Không dồn 3 lệnh `UPDATE` thừa mỗi lần bấm chuột |
@@ -153,6 +177,7 @@ Cơ chế hết hạn chạy ở **cả hai tầng**, nên việc giải phóng 
 src/java/com/cinema/
 ├── controller/            # Servlet + Filter (@WebServlet / @WebFilter)
 │   ├── booking/           # Luồng đặt vé online (BF-02)
+│   ├── dashboard/         # 4 servlet dashboard + DashboardAuthFilter
 │   ├── MovieController/   # Quản lý phim
 │   ├── RoomController/    # Quản lý phòng + sơ đồ ghế
 │   └── ShowtimeController/# Lịch chiếu
@@ -161,10 +186,12 @@ src/java/com/cinema/
 ├── model/                 # POJO (field + getter/setter)
 ├── integration/vnpay/     # Adapter VNPAY + MockPaymentGateway
 └── util/                  # DBContext, EmailService, Validator, RequestParams…
+    └── ShowtimeUtil/      # ShowtimeRules (15 phút) + ShowtimePlanner (sinh lịch)
 
 web/
 ├── WEB-INF/views/         # JSP + JSTL (không scriptlet)
-│   └── booking/           # 5 màn hình của luồng đặt vé
+│   ├── booking/           # 5 màn hình của luồng đặt vé
+│   └── dashboard/         # 4 trang dashboard + menu dọc dùng chung (_dash_rail.jspf)
 ├── WEB-INF/web.xml
 └── assets/                # CSS / JS
 
@@ -183,14 +210,69 @@ scripts/                   # Build, deploy, test (PowerShell)
 | `/login`, `/logout` | all | Đăng nhập / đăng xuất |
 | `/movies`, `/movies/detail?id=` | Guest | Danh sách phim, chi tiết phim |
 | `/showtimes` | all | Lịch chiếu (link đặt vé cho Customer) |
+| `/pricing` | all | Bảng giá vé 2D (đọc động từ bảng `TicketPrice`) |
 | `/news` | Guest | Tin tức công khai |
 | `/account/profile`, `/account/password` | Customer | Hồ sơ, đổi mật khẩu |
 | `/account/tickets` | Customer | Lịch sử vé |
 | `/account/points` | Customer | Biến động MyPoint |
+| `/admin/dashboard` | Admin | Dashboard quản trị (tổng quan hệ thống) |
+| `/manager/dashboard` | Manager, Admin | Dashboard quản lý rạp (vận hành, doanh thu) |
+| `/staff/dashboard` | Staff, Manager, Admin | Dashboard nhân viên quầy (lịch chiếu, ghế) |
+| `/customer/dashboard` | Customer | Dashboard khách hàng (MyPoint, vé, phim) |
 | `/admin/users`, `/admin/rooms`, `/admin/seats` | Admin | Quản lý người dùng, phòng, sơ đồ ghế |
 | `/staff/counter`, `/staff/combo` | Staff | Bán vé / combo tại quầy |
 | `/manage/movies`, `/manage/showtimes` | Manager | Quản lý phim, lịch chiếu |
+| `/manage/showtimes?action=generate` | Manager | Sinh lịch chiếu tự động cho một ngày |
 | `/manager/news` | Manager | Quản lý tin tức |
+
+### 4.1. Dashboard theo vai trò
+
+Sau khi đăng nhập thành công, hệ thống **tự động chuyển tới dashboard của đúng vai trò**:
+
+| Vai trò | Đích sau đăng nhập | Nội dung dashboard |
+|---|---|---|
+| `ADMIN` | `/admin/dashboard` | Tổng người dùng, người dùng bị khoá, phòng chiếu, ghế, vé bán & doanh thu hôm nay; lịch chiếu; tài khoản mới nhất |
+| `MANAGER` | `/manager/dashboard` | Phim đang chiếu / sắp chiếu, phòng chiếu, suất chiếu hôm nay, doanh thu hôm nay; lịch chiếu; top phim doanh thu 7 ngày |
+| `STAFF` | `/staff/dashboard` | Suất chiếu hôm nay, ghế trống / đang giữ / đã bán, combo đang bán; lịch chiếu kèm nút "Chọn ghế" → bán vé tại quầy |
+| `CUSTOMER` | `/customer/dashboard` | Điểm MyPoint, tổng chi tiêu, số vé đã mua, số đơn đã thanh toán; vé sắp tới; lưới phim đang chiếu |
+
+Cơ chế hoạt động:
+
+| Thành phần | Vai trò |
+|---|---|
+| `com.cinema.util.RoleDashboard` | Ánh xạ vai trò → URL dashboard; whitelist tiền tố URL theo vai trò (chống open redirect khi tôn trọng `afterLogin`) |
+| `LoginServlet` | Đọc `RoleDashboard.pathFor(role)` để chuyển hướng; deep-link hợp lệ (vd `/account/tickets`) vẫn được giữ |
+| `DashboardAuthFilter` | Bảo vệ 4 URL dashboard: chưa đăng nhập → 302 `/login`; tài khoản không `ACTIVE` → đăng xuất; sai vai trò → **403** |
+| `DashboardDAO` | Số liệu tổng hợp chỉ đọc (PreparedStatement): người dùng, hạ tầng, phim, lịch chiếu + thống kê ghế (qua `vw_SeatMap`), doanh thu (qua `vw_RevenueByMovie`) |
+| `web/WEB-INF/views/dashboard/_dash_rail.jspf` | Menu dọc cố định (rail) dùng chung cho mọi trang đã đăng nhập, đổi menu theo vai trò, highlight mục đang xem |
+
+> **Quy ước phân quyền:** `/admin/dashboard` → ADMIN · `/manager/dashboard` → MANAGER, ADMIN · `/staff/dashboard` → STAFF, MANAGER, ADMIN · `/customer/dashboard` → CUSTOMER.
+>
+> **Fallback ngày:** nếu hôm nay rạp chưa có suất chiếu (dữ liệu seed được tạo từ một ngày khác), dashboard tự lùi về ngày gần nhất có lịch (`findNextShowtimeDate()`) và hiển thị đúng ngày đó trên tiêu đề.
+
+### 4.2. Menu dọc (rail) cố định
+
+Sau khi đăng nhập, **menu dọc bên trái luôn hiện ở mọi trang** — kể cả khi điều hướng sang trang khác (quản lý phim, lịch chiếu, hồ sơ, đặt vé…), nên không bao giờ bị mất menu.
+
+Cơ chế:
+
+| Thành phần | Vai trò |
+|---|---|
+| `web/WEB-INF/views/dashboard/_dash_rail.jspf` | Rail cố định (`position: fixed`), sinh **một lần** trong `_header.jspf` — mọi trang đều include file này nên menu luôn tồn tại |
+| `MovieManagerMenuFilter` | Gắn cờ `railModule` = đã đăng nhập **và** không phải trang chủ; `roleModule` cho các khu vực nội bộ |
+| `_header.jspf` | Bỏ thanh nav ngang + breadcrumb khi rail hiện; nút "Đăng xuất" chỉ nằm ở chân rail |
+| `cinema.css` | `body.has-rail { padding-left: 260px }` — nội dung trang lệch sang phải, không chồng lên rail |
+
+Menu theo vai trò (mỗi role **chỉ** thấy chức năng của role đó):
+
+| Vai trò | Menu dọc |
+|---|---|
+| `ADMIN` | Tổng quan · Người dùng · Phòng chiếu · Sơ đồ ghế · Báo cáo vận hành |
+| `MANAGER` | Tổng quan · Quản lý phim · Lịch chiếu · Sinh lịch tự động · Quản lý tin tức |
+| `STAFF` | Tổng quan · Bán vé tại quầy · Quản lý combo |
+| `CUSTOMER` | Tổng quan · Lịch chiếu · Phim đang chiếu · Lịch sử vé · Điểm MyPoint · Thông tin cá nhân · Đổi mật khẩu · **Bảng giá vé** · **Tin tức** |
+
+> Trang chủ `/` và `/home` giữ nguyên layout công khai (thanh nav ngang, không có rail) theo yêu cầu.
 
 ### Tài khoản seed
 
@@ -218,7 +300,8 @@ powershell -ExecutionPolicy Bypass -File scripts\test-smoke.ps1
 |---|---|---|
 | `test-booking-flow.ps1` | Đăng nhập → chọn suất → giữ ghế → combo/voucher → cổng giả lập → lịch sử vé | `TAT CA BUOC PASS` |
 | `test-booking-errors.ps1` | A. Hủy ở cổng ⇒ ghế về GREEN<br>B. Webhook sai chữ ký ⇒ `RspCode 97`, không phát vé<br>C. Gọi lại callback ⇒ vé **không** phát 2 lần<br>D. Thanh toán OK ⇒ ghế chuyển RED | `TAT CA BUOC PASS` |
-| `test-smoke.ps1` | Mọi trang chính của 5 vai trò (guest/customer/staff/manager/admin) trả HTTP 200; `/booking/*` chưa đăng nhập ⇒ 302 về `/login` | `SMOKE TEST PASS` |
+| `test-smoke.ps1` | Mọi trang chính của 5 vai trò (guest/customer/staff/manager/admin) trả HTTP 200; 4 URL dashboard trả 200 đúng vai trò; sai vai trò ⇒ 403; đăng nhập ⇒ chuyển đúng dashboard; `/booking/*` chưa đăng nhập ⇒ 302 về `/login` | `SMOKE TEST PASS` |
+| `test-rail.py` | Duyệt 27 trang con của 4 vai trò: rail luôn hiện, số link cố định theo role, đúng mục `active`, không còn thanh nav ngang | `TONG: 27/27 trang OK` |
 
 Tài khoản seed: `khach1@gmail.com` / `123456`.
 

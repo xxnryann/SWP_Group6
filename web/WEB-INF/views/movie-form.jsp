@@ -22,7 +22,9 @@
 <c:set var="posterSrc"><c:out value="${movie.posterDisplayUrl}"/></c:set>
 <%@ include file="_header.jspf" %>
 
-<main class="container page">
+<main class="page"><div class="container">
+  <div class="dash-layout">
+    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
@@ -144,6 +146,8 @@
       <button class="btn btn-primary" type="submit">Lưu phim</button>
     </div>
   </form>
-</main>
+    </div>
+  </div>
+</div></main>
 <script src="${ctx}/assets/js/movie-form.js" defer></script>
 <%@ include file="_footer.jspf" %>

@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,6 +99,31 @@ public class MovieDAO {
                 ResultSet result = statement.executeQuery()) {
             while (result.next()) {
                 movies.add(map(result));
+            }
+        }
+        return movies;
+    }
+
+    /**
+     * Các phim đang được phát hành vào một ngày cụ thể (dùng để xếp lịch tự động).
+     *
+     * @param date ngày cần xếp lịch
+     */
+    public List<Movie> findAllForDate(LocalDate date) throws SQLException {
+        List<Movie> movies = new ArrayList<>();
+        String sql = "SELECT * FROM dbo.vw_MovieDetail "
+                + "WHERE status <> 'Stopped' "
+                + "AND release_date <= ? "
+                + "AND (end_date IS NULL OR end_date >= ?) "
+                + "ORDER BY title";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDate(1, Date.valueOf(date));
+            statement.setDate(2, Date.valueOf(date));
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    movies.add(map(result));
+                }
             }
         }
         return movies;

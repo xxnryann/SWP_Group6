@@ -4,6 +4,8 @@ import com.cinema.model.Showtime;
 import com.cinema.model.Movie;
 import com.cinema.model.ShowtimeMovieGroup;
 import com.cinema.util.DBContext;
+import com.cinema.util.ShowtimeUtil.ShowtimePlanner;
+import com.cinema.util.ShowtimeUtil.ShowtimeRules;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,13 +23,6 @@ public class ShowtimeDAO {
     private record RoomSlot(int roomId, int slotId) {
     }
 
-    private static final List<LocalTime> FIXED_STARTS = List.of(
-            LocalTime.of(9, 0), LocalTime.of(11, 45), LocalTime.of(14, 30),
-            LocalTime.of(17, 15), LocalTime.of(20, 0));
-    private static final List<LocalTime> FIXED_ENDS = List.of(
-            LocalTime.of(11, 30), LocalTime.of(14, 15), LocalTime.of(17, 0),
-            LocalTime.of(19, 45), LocalTime.of(22, 30));
-    private static final int ROOM_TURNOVER_MINUTES = 15;
     private static final String SELECT_COLUMNS = "s.showtime_id, s.movie_id, m.title AS movie_title, "
             + "m.duration_minutes, s.room_name, s.starts_at, s.status ";
     private static final String SELECT_FROM = "FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id ";
@@ -107,6 +102,14 @@ public class ShowtimeDAO {
         }
     }
 
+    /**
+     * Các mốc giờ bắt đầu còn trống trong phòng cho ngày đã chọn.
+     *
+     * <p>Không còn khung giờ cố định: mọi mốc 15 phút từ giờ mở cửa tới giờ
+     * đóng cửa đều được xét. Một mốc hợp lệ khi suất chiếu kết thúc trước
+     * giờ đóng cửa và không đè lên suất đã có của phòng (tính cả 15 phút
+     * dọn phòng).</p>
+     */
     public List<LocalTime> findAvailableStartTimes(LocalDate date, String roomName, int movieId,
             int excludedShowtimeId) throws SQLException {
         if (date.isBefore(LocalDate.now())) {
@@ -137,7 +140,7 @@ public class ShowtimeDAO {
                     duration = result.getInt("duration_minutes");
                 }
             }
-            if (duration <= 0 || duration > 150) {
+            if (duration <= 0 || duration > ShowtimeRules.MAX_MOVIE_MINUTES) {
                 return List.of();
             }
 
@@ -172,21 +175,22 @@ public class ShowtimeDAO {
             }
 
             LocalDateTime now = LocalDateTime.now();
+            LocalTime earliest = ShowtimeRules.earliestStartFor(date, now);
             List<LocalTime> available = new ArrayList<>();
-            for (int slotIndex = 0; slotIndex < FIXED_STARTS.size(); slotIndex++) {
-                LocalTime candidate = FIXED_STARTS.get(slotIndex);
+            for (LocalTime candidate = earliest;
+                    !candidate.isAfter(ShowtimeRules.CLOSE_TIME);
+                    candidate = candidate.plusMinutes(ShowtimeRules.GRID_MINUTES)) {
                 LocalDateTime start = date.atTime(candidate);
                 LocalDateTime end = start.plusMinutes(duration);
-                if (end.isAfter(date.atTime(FIXED_ENDS.get(slotIndex)))
-                        || (date.equals(now.toLocalDate()) && !start.isAfter(now))) {
+                if (end.isAfter(date.atTime(ShowtimeRules.CLOSE_TIME))) {
                     continue;
                 }
                 boolean roomAvailable = true;
                 for (int i = 0; i < existingStarts.size(); i++) {
                     LocalDateTime existingStart = existingStarts.get(i);
                     LocalDateTime existingEnd = existingStart.plusMinutes(existingDurations.get(i));
-                    if (start.isBefore(existingEnd.plusMinutes(ROOM_TURNOVER_MINUTES))
-                            && end.plusMinutes(ROOM_TURNOVER_MINUTES).isAfter(existingStart)) {
+                    if (start.isBefore(existingEnd.plusMinutes(ShowtimeRules.TURNOVER_MINUTES))
+                            && end.plusMinutes(ShowtimeRules.TURNOVER_MINUTES).isAfter(existingStart)) {
                         roomAvailable = false;
                         break;
                     }
@@ -199,6 +203,28 @@ public class ShowtimeDAO {
         }
     }
 
+    /** Các mốc giờ đã bị chiếm trong ngày (dùng để xếp lịch không trùng). */
+    public List<ShowtimePlanner.OccupiedSlot> findOccupiedSlots(LocalDate date) throws SQLException {
+        List<ShowtimePlanner.OccupiedSlot> slots = new ArrayList<>();
+        String sql = "SELECT room_name, starts_at FROM dbo.Showtime "
+                + "WHERE status = 'Scheduled' AND CAST(starts_at AS DATE) = ?";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDate(1, java.sql.Date.valueOf(date));
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    Timestamp startsAt = result.getTimestamp("starts_at");
+                    if (startsAt == null) {
+                        continue;
+                    }
+                    slots.add(new ShowtimePlanner.OccupiedSlot(
+                            result.getString("room_name"), startsAt.toLocalDateTime()));
+                }
+            }
+        }
+        return slots;
+    }
+
     public void save(Showtime showtime) throws SQLException {
         try (Connection connection = DBContext.getConnection()) {
             connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
@@ -208,12 +234,16 @@ public class ShowtimeDAO {
                 int duration = "Scheduled".equals(showtime.getStatus())
                         ? validateMovieAndRoomConflict(connection, showtime)
                         : findMovieDuration(connection, showtime.getMovieId());
-                int slotIndex = FIXED_STARTS.indexOf(showtime.getStartsAt().toLocalTime());
-                if (duration <= 0 || showtime.getStartsAt().plusMinutes(duration)
-                        .isAfter(showtime.getStartsAt().toLocalDate().atTime(FIXED_ENDS.get(slotIndex)))) {
-                    throw new SQLException("Phim phải kết thúc trong khung giờ chiếu đã chọn.");
+                if (duration <= 0 || duration > ShowtimeRules.MAX_MOVIE_MINUTES) {
+                    throw new SQLException("Thời lượng phim không hợp lệ.");
                 }
-                LocalDateTime end = showtime.getStartsAt().plusMinutes(duration);
+                LocalDateTime start = showtime.getStartsAt();
+                if (!ShowtimeRules.fitsOpeningHours(start, duration)) {
+                    throw new SQLException("Suất chiếu phải nằm trong giờ mở cửa "
+                            + ShowtimeRules.OPEN_TIME + " – " + ShowtimeRules.CLOSE_TIME
+                            + " và phim phải kết thúc trước giờ đóng cửa.");
+                }
+                LocalDateTime end = start.plusMinutes(duration);
                 String sql = showtime.getShowtimeId() == 0
                         ? "INSERT INTO dbo.Showtime "
                                 + "(movie_id, room_id, slot_id, start_time, end_time, status, created_by, "
@@ -226,11 +256,11 @@ public class ShowtimeDAO {
                     statement.setInt(1, showtime.getMovieId());
                     statement.setInt(2, roomSlot.roomId());
                     statement.setInt(3, roomSlot.slotId());
-                    statement.setTimestamp(4, Timestamp.valueOf(showtime.getStartsAt()));
+                    statement.setTimestamp(4, Timestamp.valueOf(start));
                     statement.setTimestamp(5, Timestamp.valueOf(end));
                     statement.setString(6, showtime.getStatus());
                     statement.setString(7, showtime.getRoomName());
-                    statement.setTimestamp(8, Timestamp.valueOf(showtime.getStartsAt()));
+                    statement.setTimestamp(8, Timestamp.valueOf(start));
                     if (showtime.getShowtimeId() > 0) {
                         statement.setInt(9, showtime.getShowtimeId());
                         if (statement.executeUpdate() == 0) {
@@ -241,6 +271,60 @@ public class ShowtimeDAO {
                     }
                 }
                 connection.commit();
+            } catch (SQLException | RuntimeException e) {
+                connection.rollback();
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Ghi hàng loạt suất chiếu trong một transaction.
+     *
+     * <p>Dùng cho luồng "sinh lịch tự động": toàn bộ lịch của ngày hoặc được
+     * ghi hết, hoặc không gì cả — tránh để lại nửa lịch khi một suất bị trùng.</p>
+     *
+     * @return số suất chiếu đã ghi
+     */
+    public int insertBatch(List<Showtime> showtimes) throws SQLException {
+        if (showtimes == null || showtimes.isEmpty()) {
+            return 0;
+        }
+        try (Connection connection = DBContext.getConnection()) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            connection.setAutoCommit(false);
+            try {
+                String sql = "INSERT INTO dbo.Showtime "
+                        + "(movie_id, room_id, slot_id, start_time, end_time, status, created_by, "
+                        + "created_at, room_name, starts_at) "
+                        + "VALUES (?, ?, ?, ?, ?, 'Scheduled', NULL, SYSDATETIME(), ?, ?)";
+                int inserted = 0;
+                for (Showtime showtime : showtimes) {
+                    RoomSlot roomSlot = validateRoomAndSlot(connection, showtime);
+                    int duration = validateMovieAndRoomConflict(connection, showtime);
+                    if (duration <= 0 || duration > ShowtimeRules.MAX_MOVIE_MINUTES) {
+                        throw new SQLException("Thời lượng phim không hợp lệ.");
+                    }
+                    LocalDateTime start = showtime.getStartsAt();
+                    if (!ShowtimeRules.fitsOpeningHours(start, duration)) {
+                        throw new SQLException("Suất chiếu phải nằm trong giờ mở cửa "
+                                + ShowtimeRules.OPEN_TIME + " – " + ShowtimeRules.CLOSE_TIME
+                                + " và phim phải kết thúc trước giờ đóng cửa.");
+                    }
+                    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                        statement.setInt(1, showtime.getMovieId());
+                        statement.setInt(2, roomSlot.roomId());
+                        statement.setInt(3, roomSlot.slotId());
+                        statement.setTimestamp(4, Timestamp.valueOf(start));
+                        statement.setTimestamp(5, Timestamp.valueOf(start.plusMinutes(duration)));
+                        statement.setString(6, showtime.getRoomName());
+                        statement.setTimestamp(7, Timestamp.valueOf(start));
+                        statement.executeUpdate();
+                    }
+                    inserted++;
+                }
+                connection.commit();
+                return inserted;
             } catch (SQLException | RuntimeException e) {
                 connection.rollback();
                 throw e;
@@ -302,9 +386,9 @@ public class ShowtimeDAO {
         try (PreparedStatement statement = connection.prepareStatement(conflictSql)) {
             statement.setString(1, showtime.getRoomName());
             statement.setInt(2, showtime.getShowtimeId());
-            statement.setInt(3, duration + ROOM_TURNOVER_MINUTES);
+            statement.setInt(3, duration + ShowtimeRules.TURNOVER_MINUTES);
             statement.setTimestamp(4, Timestamp.valueOf(showtime.getStartsAt()));
-            statement.setInt(5, ROOM_TURNOVER_MINUTES);
+            statement.setInt(5, ShowtimeRules.TURNOVER_MINUTES);
             statement.setTimestamp(6, Timestamp.valueOf(showtime.getStartsAt()));
             try (ResultSet result = statement.executeQuery()) {
                 result.next();
@@ -329,26 +413,35 @@ public class ShowtimeDAO {
         }
     }
 
+    /**
+     * Tra room_id của phòng đang hoạt động và slot_id (khung giá Sáng/Chiều/Tối)
+     * suy ra từ giờ bắt đầu. Không còn khung giờ chiếu cố định.
+     */
     private RoomSlot validateRoomAndSlot(Connection connection, Showtime showtime) throws SQLException {
-        if (!FIXED_STARTS.contains(showtime.getStartsAt().toLocalTime())) {
-            throw new SQLException("Vui lòng chọn một trong 5 khung giờ chiếu cố định.");
-        }
-        int slotIndex = FIXED_STARTS.indexOf(showtime.getStartsAt().toLocalTime());
-        String roomSlotSql = "SELECT TOP (1) r.room_id, ts.slot_id "
-                + "FROM dbo.Room r CROSS JOIN dbo.TimeSlot ts "
-                + "WHERE r.room_name = ? AND r.status = 'Active' "
-                + "AND CONVERT(TIME(7), ts.start_time) = CONVERT(TIME(7), ?) "
-                + "AND CONVERT(TIME(7), ts.end_time) = CONVERT(TIME(7), ?) "
-                + "ORDER BY r.room_id";
-        try (PreparedStatement statement = connection.prepareStatement(roomSlotSql)) {
+        String roomSql = "SELECT TOP (1) r.room_id FROM dbo.Room r "
+                + "WHERE r.room_name = ? AND r.status = 'Active' ORDER BY r.room_id";
+        int roomId;
+        try (PreparedStatement statement = connection.prepareStatement(roomSql)) {
             statement.setString(1, showtime.getRoomName());
-            statement.setTime(2, java.sql.Time.valueOf(FIXED_STARTS.get(slotIndex)));
-            statement.setTime(3, java.sql.Time.valueOf(FIXED_ENDS.get(slotIndex)));
             try (ResultSet result = statement.executeQuery()) {
                 if (!result.next()) {
-                    throw new SQLException("Phòng hoặc khung giờ cố định chưa được cấu hình trong cơ sở dữ liệu.");
+                    throw new SQLException("Vui lòng chọn một phòng chiếu đang hoạt động.");
                 }
-                return new RoomSlot(result.getInt("room_id"), result.getInt("slot_id"));
+                roomId = result.getInt("room_id");
+            }
+        }
+        String slotSql = "SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts "
+                + "WHERE CONVERT(TIME(7), ?) >= CONVERT(TIME(7), ts.start_time) "
+                + "AND CONVERT(TIME(7), ?) < CONVERT(TIME(7), ts.end_time) "
+                + "ORDER BY ts.start_time";
+        try (PreparedStatement statement = connection.prepareStatement(slotSql)) {
+            statement.setTimestamp(1, Timestamp.valueOf(showtime.getStartsAt()));
+            statement.setTimestamp(2, Timestamp.valueOf(showtime.getStartsAt()));
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    throw new SQLException("Giờ chiếu không thuộc khung giá nào đã cấu hình.");
+                }
+                return new RoomSlot(roomId, result.getInt("slot_id"));
             }
         }
     }

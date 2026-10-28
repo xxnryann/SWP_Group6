@@ -4,8 +4,10 @@ import com.cinema.model.Combo;
 import com.cinema.model.OnlineBooking;
 import com.cinema.model.PointConfig;
 import com.cinema.model.SeatCell;
+import com.cinema.model.SeatTypeInfo;
 import com.cinema.model.ShowtimeInfo;
 import com.cinema.util.DBContext;
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,7 +43,7 @@ public class BookingDAO {
     /** Thông tin suất chiếu để hiển thị trên màn hình đặt vé. */
     public ShowtimeInfo findShowtimeById(int showtimeId) throws SQLException {
         String sql =
-                "SELECT s.showtime_id, m.title, r.room_name, ts.slot_name, s.start_time " +
+                "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time " +
                         "FROM Showtime s " +
                         "JOIN Movie m ON m.movie_id = s.movie_id " +
                         "JOIN Room r ON r.room_id = s.room_id " +
@@ -55,6 +57,7 @@ public class BookingDAO {
                 ShowtimeInfo s = new ShowtimeInfo();
                 s.setShowtimeId(rs.getInt("showtime_id"));
                 s.setTitle(rs.getString("title"));
+                s.setDurationMinutes(rs.getInt("duration_minutes"));
                 s.setRoomName(rs.getString("room_name"));
                 s.setSlotName(rs.getString("slot_name"));
                 Timestamp t = rs.getTimestamp("start_time");
@@ -84,6 +87,41 @@ public class BookingDAO {
                     s.setPairSeatId(rs.wasNull() ? null : pair);
                     s.setColor(rs.getString("color"));
                     list.add(s);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Danh sách loại ghế kèm giá vé của suất chiếu.
+     *
+     * <p>Giá lấy từ {@code dbo.fn_GetTicketPrice} — hàm này tự suy ra khung giờ
+     * và loại ngày (thường / cuối tuần / lễ) của suất chiếu rồi tra bảng
+     * {@code TicketPrice}. Nếu chưa cấu hình giá cho (loại ghế, khung giờ, loại ngày)
+     * thì giá là {@code null} và UI hiển thị "—".</p>
+     *
+     * @param showtimeId suất chiếu
+     * @return danh sách loại ghế (không rỗng trừ khi lỗi truy vấn)
+     */
+    public List<SeatTypeInfo> findSeatTypesWithPrice(int showtimeId) throws SQLException {
+        List<SeatTypeInfo> list = new ArrayList<>();
+        String sql = "SELECT st.seat_type_id, st.type_name, st.is_couple, st.description, "
+                + "dbo.fn_GetTicketPrice(?, st.seat_type_id) AS price "
+                + "FROM SeatType st ORDER BY st.seat_type_id";
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, showtimeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    SeatTypeInfo t = new SeatTypeInfo();
+                    t.setSeatTypeId(rs.getInt("seat_type_id"));
+                    t.setTypeName(rs.getString("type_name"));
+                    t.setCouple(rs.getBoolean("is_couple"));
+                    t.setDescription(rs.getString("description"));
+                    BigDecimal price = rs.getBigDecimal("price");
+                    t.setPrice(price);
+                    list.add(t);
                 }
             }
         }

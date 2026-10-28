@@ -70,7 +70,7 @@ public class CounterSaleDAO {
     public List<ShowtimeInfo> findUpcomingShowtimes() throws SQLException {
         List<ShowtimeInfo> list = new ArrayList<>();
         String sql =
-                "SELECT s.showtime_id, m.title, r.room_name, ts.slot_name, s.start_time, " +
+                "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time, " +
                         "       SUM(CASE WHEN sm.color = 'GREEN' THEN 1 ELSE 0 END) AS available_seats " +
                         "FROM Showtime s " +
                         "JOIN Movie m ON m.movie_id = s.movie_id " +
@@ -78,7 +78,7 @@ public class CounterSaleDAO {
                         "JOIN TimeSlot ts ON ts.slot_id = s.slot_id " +
                         "LEFT JOIN vw_SeatMap sm ON sm.showtime_id = s.showtime_id " +
                         "WHERE s.status = 'Scheduled' AND s.start_time > SYSDATETIME() " +
-                        "GROUP BY s.showtime_id, m.title, r.room_name, ts.slot_name, s.start_time " +
+                        "GROUP BY s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time " +
                         "ORDER BY s.start_time";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -87,6 +87,7 @@ public class CounterSaleDAO {
                 ShowtimeInfo s = new ShowtimeInfo();
                 s.setShowtimeId(rs.getInt("showtime_id"));
                 s.setTitle(rs.getString("title"));
+                s.setDurationMinutes(rs.getInt("duration_minutes"));
                 s.setRoomName(rs.getString("room_name"));
                 s.setSlotName(rs.getString("slot_name"));
                 Timestamp t = rs.getTimestamp("start_time");

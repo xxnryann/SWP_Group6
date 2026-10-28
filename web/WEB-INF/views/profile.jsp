@@ -6,7 +6,6 @@
 <%@ include file="_header.jspf" %>
 <main class="page"><div class="container">
   <div class="account-grid">
-    <%@ include file="_account_side.jspf" %>
     <form class="panel" method="post" action="${pageContext.request.contextPath}/account/profile" novalidate>
       <h2>Thông tin cá nhân</h2>
       <p class="sub">Cập nhật thông tin liên hệ của bạn.</p>

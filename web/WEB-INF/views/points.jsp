@@ -6,7 +6,6 @@
 <%@ include file="_header.jspf" %>
 <main class="page"><div class="container">
   <div class="account-grid">
-    <%@ include file="_account_side.jspf" %>
     <section class="panel">
       <h2>Điểm MyPoint</h2>
       <p class="sub">Số điểm hiện có: <strong><c:out value="${points}"/></strong></p>

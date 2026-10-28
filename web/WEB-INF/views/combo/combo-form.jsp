@@ -11,6 +11,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
         <p class="sub">Combo ở trạng thái “Đang bán” sẽ xuất hiện ở màn hình bán vé tại quầy và đặt vé online.</p>
@@ -58,6 +60,8 @@
             <a class="btn btn-outline" href="${ctx}/staff/combo">Hủy</a>
           </div>
         </form>
+      </div>
+        </div>
       </div>
     </div>
   </section>

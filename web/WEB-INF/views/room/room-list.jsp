@@ -22,6 +22,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="rm-head">
         <div>
           <h1>Quản lý phòng chiếu</h1>
@@ -99,6 +101,8 @@
       <p class="rm-muted" style="margin-top:12px">
         Phòng đã có suất chiếu hoặc vé không thể xóa — hãy dùng “Đóng phòng” (chỉ đóng được khi không còn suất chiếu sắp tới).
       </p>
+        </div>
+      </div>
     </div>
   </section>
 </main>
