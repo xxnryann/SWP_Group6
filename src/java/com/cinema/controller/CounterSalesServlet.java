@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * STT 21 — Bán vé tại quầy (Staff).
@@ -137,8 +139,20 @@ public class CounterSalesServlet extends BaseServlet {
             return;
         }
         // Gom ghế theo hàng để vẽ sơ đồ
+        Map<Integer, SeatCell> seatsById = new LinkedHashMap<>();
+        for (SeatCell s : dao.getSeatMap(showtimeId)) seatsById.put(s.getSeatId(), s);
         Map<String, List<SeatCell>> rows = new LinkedHashMap<>();
-        for (SeatCell s : dao.getSeatMap(showtimeId)) {
+        Set<Integer> renderedPairSeats = new HashSet<>();
+        for (SeatCell s : seatsById.values()) {
+            if (renderedPairSeats.contains(s.getSeatId())) continue;
+            if (s.getPairSeatId() != null) {
+                SeatCell pair = seatsById.get(s.getPairSeatId());
+                if (pair != null) {
+                    s.setDisplayLabel(s.getLabel() + "-" + pair.getLabel());
+                    renderedPairSeats.add(pair.getSeatId());
+                }
+            }
+            if (s.getPairSeatId() != null) renderedPairSeats.add(s.getSeatId());
             rows.computeIfAbsent(s.getRowLabel(), k -> new ArrayList<>()).add(s);
         }
         // Cảnh báo nếu đơn hiện tại đã giữ ghế của suất này (chọn lại = tạo đơn mới)

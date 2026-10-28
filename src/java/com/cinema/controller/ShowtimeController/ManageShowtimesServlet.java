@@ -5,7 +5,6 @@ import com.cinema.dao.MovieDAO.MovieDAO;
 import com.cinema.dao.ShowtimeDAO.ShowtimeDAO;
 import com.cinema.model.Showtime;
 import com.cinema.model.User;
-import com.cinema.util.MovieUtil.MovieAccess;
 import com.cinema.util.ShowtimeUtil.ShowtimeUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -172,6 +171,12 @@ public class ManageShowtimesServlet extends BaseServlet {
 
     private boolean isManager(HttpServletRequest request) {
         User user = currentUser(request);
-        return user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole());
+        if (user == null) {
+            return false;
+        }
+        String role = user.getRole() == null ? "" : user.getRole().trim();
+        return "STAFF".equalsIgnoreCase(role)
+                || "MANAGER".equalsIgnoreCase(role)
+                || "ADMIN".equalsIgnoreCase(role);
     }
 }

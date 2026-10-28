@@ -11,6 +11,7 @@ public class SeatCell {
     private int seatNumber;
     private String seatType;    // Standard / VIP / Couple
     private Integer pairSeatId; // id ghế còn lại của cặp (null nếu không phải ghế đôi)
+    private String displayLabel;
     private String color;       // GREEN / YELLOW / RED / GREY
 
     public int getSeatId() { return seatId; }
@@ -27,6 +28,9 @@ public class SeatCell {
 
     public Integer getPairSeatId() { return pairSeatId; }
     public void setPairSeatId(Integer pairSeatId) { this.pairSeatId = pairSeatId; }
+
+    public String getDisplayLabel() { return displayLabel == null ? getLabel() : displayLabel; }
+    public void setDisplayLabel(String displayLabel) { this.displayLabel = displayLabel; }
 
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }

@@ -67,7 +67,7 @@
                       <tr>
                         <td><strong><c:out value="${c.comboName}"/></strong></td>
                         <td>${c.priceLabel}</td>
-                        <td>${c.stock}</td>
+                        <td><strong>${c.stock}</strong> phần</td>
                         <td>
                           <input type="hidden" name="comboId" value="${c.comboId}">
                           <input class="uip-qty" type="number" name="qty" min="0" max="${c.stock}"

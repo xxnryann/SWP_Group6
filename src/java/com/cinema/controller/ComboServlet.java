@@ -35,8 +35,7 @@ public class ComboServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return false;
         }
-        String r = u.getRole();
-        if (!"STAFF".equals(r) && !"MANAGER".equals(r) && !"ADMIN".equals(r)) {
+        if (!StaffDashboardServlet.isStaff(u)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ nhân viên được truy cập.");
             return false;
         }
@@ -52,6 +51,10 @@ public class ComboServlet extends BaseServlet {
         try {
             switch (action) {
                 case "add":
+                    Combo newCombo = new Combo();
+                    newCombo.setStatus("Active");
+                    newCombo.setStock(0);
+                    req.setAttribute("combo", newCombo);
                     req.setAttribute("pageTitle", "Thêm combo mới");
                     forward(req, resp, "combo/combo-form");
                     break;

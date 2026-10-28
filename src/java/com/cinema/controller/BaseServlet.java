@@ -38,7 +38,7 @@ public abstract class BaseServlet extends HttpServlet {
         c.setUserId(u.getUserId());
         c.setFullName(u.getFullName());
         c.setEmail(u.getEmail());
-        c.setRole(u.getRole());
+        c.setRole(u.getRole() == null ? null : u.getRole().trim().toUpperCase(java.util.Locale.ROOT));
         c.setStatus(u.getStatus());
         return c;
     }
