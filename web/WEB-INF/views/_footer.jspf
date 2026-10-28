@@ -87,7 +87,7 @@
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { drawer(false); });
 
   /* Đánh dấu mục menu đang mở */
-  ('.topbar-nav a').forEach(function (a) {
+  $$('.topbar-nav a').forEach(function (a) {
     var p = a.pathname.replace(/\/$/, '');
     if (location.pathname.replace(/\/$/, '') === p) a.classList.add('active');
   });
