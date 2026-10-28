@@ -31,7 +31,14 @@
       <c:choose>
         <c:when test="${not empty sessionScope.authUser}">
           <span>Xin chào, <a href="${ctx}/account/profile"><strong><c:out value="${sessionScope.authUser.fullName}"/></strong></a></span>
-          <c:if test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}"><a href="${ctx}/staff">Staff</a></c:if>
+          <c:if test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
+            <a href="${ctx}/staff">
+              <c:choose>
+                <c:when test="${sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">Manager</c:when>
+                <c:otherwise>Staff</c:otherwise>
+              </c:choose>
+            </a>
+          </c:if>
           <span class="sep">|</span>
           <form method="post" action="${ctx}/logout" id="logoutForm">
             <input type="hidden" name="_csrf" value="${csrf}">
@@ -59,8 +66,12 @@
       <c:choose>
         <c:when test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
           <a href="${ctx}/staff/counter">Đặt vé tại quầy</a>
+          <a href="${ctx}/staff/combo">Quản lý combo</a>
           <a href="${ctx}/staff/voucher">Quản lý voucher</a>
           <a href="${ctx}/staff/point">Quản lý point</a>
+          <c:if test="${sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
+            <a href="${ctx}/manager/news">Quản lý tin tức</a>
+          </c:if>
         </c:when>
         <c:otherwise>
           <a href="${ctx}/showtimes">Lịch Chiếu</a>
@@ -108,8 +119,12 @@
   <c:choose>
     <c:when test="${sessionScope.authUser.role == 'STAFF' || sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
       <a href="${ctx}/staff/counter">Đặt vé tại quầy</a>
+      <a href="${ctx}/staff/combo">Quản lý combo</a>
       <a href="${ctx}/staff/voucher">Quản lý voucher</a>
       <a href="${ctx}/staff/point">Quản lý point</a>
+      <c:if test="${sessionScope.authUser.role == 'MANAGER' || sessionScope.authUser.role == 'ADMIN'}">
+        <a href="${ctx}/manager/news">Quản lý tin tức</a>
+      </c:if>
     </c:when>
     <c:otherwise>
       <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a><a href="#">Cụm Rạp</a>

@@ -14,16 +14,19 @@
   .uip-arrow { color: var(--slate-300); font-weight: 800; }
   .uip-movie-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
   .uip-movie-bar h1 { margin: 0 10px 0 0; font-size: 24px; }
-  .seatmap { display:flex; flex-direction:column; gap:8px; align-items:center; margin:14px 0 20px;
+  .seatmap { display:flex; flex-direction:column; gap:10px; align-items:center; margin:14px 0 20px;
              background:#fff; border:1px solid var(--slate-200); border-radius:16px; box-shadow:var(--shadow);
-             padding:28px 16px 24px; overflow-x:auto; }
-  .seat-row { display:flex; gap:6px; align-items:center; }
-  .uip-aisle { flex: 0 0 30px; align-self: stretch;
+             padding:28px 20px 24px; overflow-x:auto; }
+  .seat-row { display:grid; grid-template-columns:30px repeat(5,42px) 34px repeat(5,42px);
+              gap:6px; align-items:center; min-height:38px; }
+  .uip-aisle { grid-column:7; grid-row:1; width:100%; height:100%; min-height:38px;
                background: linear-gradient(90deg, transparent calc(50% - 1px), var(--slate-200) calc(50% - 1px), var(--slate-200) calc(50% + 1px), transparent calc(50% + 1px)); }
-  .row-label { width:24px; font-weight:800; text-align:center; color:var(--slate-500); font-size:13px; }
+  .row-label { grid-column:1; font-weight:800; text-align:center; color:var(--slate-500); font-size:13px; }
   .seat { width:42px; height:38px; border-radius:10px 10px 4px 4px; border:2px solid var(--slate-300);
           cursor:pointer; font: 700 11.5px var(--font); background:#fff; color:var(--slate-700);
           transition: transform .08s, background .12s, border-color .12s; }
+  .seat.couple { width:92px; border-radius:10px 10px 6px 6px; font-size:12px; }
+  .seat.couple.pair-gap { margin-right:8px; }
   .seat:hover:not(:disabled) { transform: translateY(-2px); }
   .seat.GREEN { background:#ecfdf5; border-color:var(--success); color:#065f46; }
   .seat.YELLOW { background:#fef3c7; border-color:var(--accent); color:#92400e; cursor:not-allowed; }
@@ -80,17 +83,21 @@
         <c:forEach var="row" items="${seatRows}">
           <div class="seat-row">
             <span class="row-label">${row[0].rowLabel}</span>
+            <span class="uip-aisle" aria-hidden="true"></span>
             <c:forEach var="s" items="${row}">
-              <button type="button" class="seat ${s.color}" title="${s.label} (${s.seatType})"
+              <c:if test="${!(s.couple && (s.seatNumber == 9 || s.seatNumber == 10))}">
+              <button type="button" class="seat ${s.color} ${s.couple ? 'couple' : ''} ${s.couple && (s.seatNumber == 1 || s.seatNumber == 5) ? 'pair-gap' : ''}"
+                      style="grid-column:${s.couple ? (s.seatNumber == 1 ? 2 : (s.seatNumber == 3 ? 5 : (s.seatNumber == 5 ? 8 : 11))) : (s.seatNumber <= 5 ? s.seatNumber + 1 : s.seatNumber + 2)} / span ${s.couple ? 2 : 1}"
+                      title="${s.displayLabel} (${s.seatType})"
                       data-id="${s.seatId}" data-pair="${s.pairSeatId}"
                       ${s.available ? '' : 'disabled="disabled"'}
-                      onclick="toggleSeat(this)">${s.seatNumber}</button>
-              <c:if test="${s.seatNumber == 5}"><span class="uip-aisle"></span></c:if>
+                      onclick="toggleSeat(this)">${s.displayLabel}</button>
+              </c:if>
             </c:forEach>
           </div>
         </c:forEach>
       </div>
-      <p class="uip-note">Ghế đôi (hàng E) luôn phải chọn cả cặp — bấm một ghế sẽ tự chọn luôn ghế còn lại.</p>
+      <p class="uip-note">Ghế đôi hiển thị thành một ô. Bấm vào ô ghế đôi sẽ chọn đủ 2 vé.</p>
 
       <form method="post" action="${ctx}/staff/counter" onsubmit="return checkSeats()">
         <input type="hidden" name="_csrf" value="${csrf}">

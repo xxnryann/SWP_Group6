@@ -51,6 +51,10 @@ public class ComboServlet extends BaseServlet {
         try {
             switch (action) {
                 case "add":
+                    Combo newCombo = new Combo();
+                    newCombo.setStatus("Active");
+                    newCombo.setStock(0);
+                    req.setAttribute("combo", newCombo);
                     req.setAttribute("pageTitle", "Thêm combo mới");
                     forward(req, resp, "combo/combo-form");
                     break;
