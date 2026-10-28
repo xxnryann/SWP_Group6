@@ -66,6 +66,9 @@ body.has-rail .topbar .sep { display: none; }
 .logout-icon:hover { opacity: .8; }
 body.has-rail .lang-switch { background: transparent; border-color: rgba(255,255,255,.55); }
 .role-header .container { max-width: none; padding: 0 28px; gap: 26px; min-height: 74px; }
+.role-header .container { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(0, 1fr); }
+.role-header .container::after { content: ''; }
+.role-header .topbar-nav { justify-content: center; }
 .role-header .logo { font-size: 24px; }
 .cinema-pill { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 1px solid var(--slate-300); border-radius: 999px; background: #f8fafc; color: var(--slate-800); font-size: 14px; white-space: nowrap; }
 .cinema-pill:hover { border-color: var(--brand); color: var(--brand); }
