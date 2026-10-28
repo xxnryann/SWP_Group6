@@ -8,7 +8,12 @@
     <div>
       <p class="eyebrow">CINESTAR CINEMAS</p>
       <h1>Danh sách phim</h1>
-      <p class="sub">Lọc phim theo thể loại và trạng thái phát hành.</p>
+      <p class="sub">
+        <c:choose>
+          <c:when test="${showStatusFilter}">Lọc phim theo thể loại và trạng thái phát hành.</c:when>
+          <c:otherwise>Danh sách phim đang chiếu và sắp chiếu tại rạp.</c:otherwise>
+        </c:choose>
+      </p>
     </div>
     <c:if test="${canManageMovies}">
       <a class="btn btn-primary" href="${ctx}/manage/movies">Quản lý phim</a>
@@ -26,15 +31,17 @@
         </c:forEach>
       </select>
     </div>
-    <div class="field">
-      <label for="movie-status">Trạng thái</label>
-      <select id="movie-status" name="status">
-        <option value="">Tất cả trạng thái</option>
-        <option value="Upcoming" <c:if test="${selectedStatus == 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
-        <option value="NowShowing" <c:if test="${selectedStatus == 'NowShowing'}">selected</c:if>>Đang chiếu</option>
-        <option value="Stopped" <c:if test="${selectedStatus == 'Stopped'}">selected</c:if>>Ngừng chiếu</option>
-      </select>
-    </div>
+    <c:if test="${showStatusFilter}">
+      <div class="field">
+        <label for="movie-status">Trạng thái</label>
+        <select id="movie-status" name="status">
+          <option value="">Tất cả trạng thái</option>
+          <option value="Upcoming" <c:if test="${selectedStatus == 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
+          <option value="NowShowing" <c:if test="${selectedStatus == 'NowShowing'}">selected</c:if>>Đang chiếu</option>
+          <option value="Stopped" <c:if test="${selectedStatus == 'Stopped'}">selected</c:if>>Ngừng chiếu</option>
+        </select>
+      </div>
+    </c:if>
     <button class="btn btn-primary movie-filter-submit" type="submit">Lọc phim</button>
   </form>
 

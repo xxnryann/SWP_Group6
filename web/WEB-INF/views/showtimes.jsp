@@ -26,18 +26,12 @@
   <section class="panel showtime-rule" aria-labelledby="showtime-rule-title">
     <div>
       <p class="eyebrow">QUY TẮC LỊCH CHIẾU</p>
-      <h2 id="showtime-rule-title">5 suất cố định áp dụng cho cả 4 phòng</h2>
+      <h2 id="showtime-rule-title">Lịch chiếu linh hoạt</h2>
     </div>
     <div class="showtime-rule-slots">
-      <span>09:00 – 11:30</span>
+      <span>07:00 – 24:00</span>
       <i aria-hidden="true">|</i>
-      <span>11:45 – 14:15</span>
-      <i aria-hidden="true">|</i>
-      <span>14:30 – 17:00</span>
-      <i aria-hidden="true">|</i>
-      <span>17:15 – 19:45</span>
-      <i aria-hidden="true">|</i>
-      <span>20:00 – 22:30</span>
+      <span>Mỗi 5 phút</span>
     </div>
   </section>
 

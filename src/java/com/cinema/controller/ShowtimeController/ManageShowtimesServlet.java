@@ -113,15 +113,28 @@ public class ManageShowtimesServlet extends BaseServlet {
         showtime.setRoomName(ShowtimeUtil.requiredText(request.getParameter("roomName"),
                 "Tên phòng không được để trống.", 50));
         String showDate = request.getParameter("showDate");
-        String showTime = request.getParameter("showTime");
-        if (showDate == null || showDate.isBlank() || showTime == null || showTime.isBlank()) {
-            throw new IllegalArgumentException("Vui lòng chọn ngày và giờ chiếu.");
+        String startTime = request.getParameter("startTime");
+        String endTime = request.getParameter("endTime");
+        if (showDate == null || showDate.isBlank() || startTime == null || startTime.isBlank()
+                || endTime == null || endTime.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn ngày, giờ bắt đầu và giờ kết thúc.");
         }
-        LocalDateTime start = LocalDate.parse(showDate).atTime(LocalTime.parse(showTime));
+        LocalDateTime start = LocalDate.parse(showDate).atTime(LocalTime.parse(startTime));
+        LocalDate showDateValue = LocalDate.parse(showDate);
+        LocalDateTime end = "24:00".equals(endTime)
+                ? showDateValue.plusDays(1).atStartOfDay()
+                : showDateValue.atTime(LocalTime.parse(endTime));
+        if (start.toLocalTime().isBefore(LocalTime.of(7, 0))
+                || start.toLocalTime().isAfter(LocalTime.of(23, 55))
+                || !end.isAfter(start) || end.isAfter(showDateValue.plusDays(1).atStartOfDay())
+                || start.getMinute() % 5 != 0 || end.getMinute() % 5 != 0) {
+            throw new IllegalArgumentException("Giờ bắt đầu và kết thúc phải theo mốc 5 phút trong khoảng 07:00–24:00.");
+        }
         if (!start.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Giờ chiếu phải ở trong tương lai.");
         }
         showtime.setStartsAt(start);
+        showtime.setEndsAt(end);
         showtime.setStatus("Scheduled");
         return showtime;
     }

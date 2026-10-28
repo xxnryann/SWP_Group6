@@ -38,8 +38,10 @@ public class MovieDAO {
             + "OR (? = 'NowShowing' AND d.release_date <= CAST(GETDATE() AS DATE) "
             + "AND (d.end_date IS NULL OR d.end_date >= CAST(GETDATE() AS DATE)) "
             + "AND d.status <> 'Stopped') "
+            + "OR (? = 'Public' AND d.status <> 'Stopped' "
+            + "AND (d.end_date IS NULL OR d.end_date >= CAST(GETDATE() AS DATE))) "
             + "OR (? = 'Stopped' AND (d.status = 'Stopped' "
-            + "OR (d.end_date IS NOT NULL AND d.end_date < CAST(GETDATE() AS DATE)))))) "
+            + "OR (d.end_date IS NOT NULL AND d.end_date < CAST(GETDATE() AS DATE))))) "
             + "AND (? IS NULL OR EXISTS (SELECT 1 FROM dbo.MovieGenre mg "
             + "WHERE mg.movie_id = d.movie_id AND mg.genre_id = ?)) ";
 
@@ -148,6 +150,7 @@ public class MovieDAO {
     private int bindFilters(PreparedStatement statement, Integer genreId, String status)
             throws SQLException {
         int index = 1;
+        statement.setString(index++, status);
         statement.setString(index++, status);
         statement.setString(index++, status);
         statement.setString(index++, status);

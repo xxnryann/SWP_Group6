@@ -31,7 +31,7 @@ import java.util.Set;
         maxRequestSize = 110L * 1024L * 1024L
 )
 public class ManageMovieServlet extends BaseServlet {
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 20;
     private final MovieDAO movieDAO;
     private final GenreDAO genreDAO;
 

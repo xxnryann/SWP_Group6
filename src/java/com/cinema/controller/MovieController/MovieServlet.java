@@ -4,6 +4,8 @@ import com.cinema.controller.BaseServlet;
 import com.cinema.dao.MovieDAO.GenreDAO;
 import com.cinema.dao.MovieDAO.MovieDAO;
 import com.cinema.model.Movie;
+import com.cinema.model.User;
+import com.cinema.util.MovieUtil.MovieAccess;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +15,7 @@ import java.sql.SQLException;
 
 @WebServlet(urlPatterns = {"/movies", "/movies/detail"})
 public class MovieServlet extends BaseServlet {
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 20;
     private final MovieDAO movieDAO;
     private final GenreDAO genreDAO;
 
@@ -43,8 +45,15 @@ public class MovieServlet extends BaseServlet {
 
     private void showMovies(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        String status = request.getParameter("status");
-        if (!"Upcoming".equals(status) && !"NowShowing".equals(status) && !"Stopped".equals(status)) status = null;
+        // Guest/customer chỉ xem phim công khai; manager giữ đầy đủ bộ lọc trạng thái.
+        boolean canFilterByStatus = canManageMovies(request);
+        String status;
+        if (canFilterByStatus) {
+            status = request.getParameter("status");
+            if (!"Upcoming".equals(status) && !"NowShowing".equals(status) && !"Stopped".equals(status)) status = null;
+        } else {
+            status = "Public";
+        }
         Integer genreId = parsePositiveInt(request.getParameter("genre"));
         int requestedPage = parsePositiveInt(request.getParameter("page")) == null
                 ? 1 : parsePositiveInt(request.getParameter("page"));
@@ -55,6 +64,8 @@ public class MovieServlet extends BaseServlet {
         request.setAttribute("selectedGenre", genreId);
         request.setAttribute("selectedStatus", status);
         request.setAttribute("pageTitle", "Phim");
+        request.setAttribute("showStatusFilter", canFilterByStatus);
+        request.setAttribute("canManageMovies", canFilterByStatus);
         forward(request, response, "movies");
     }
 
@@ -70,9 +81,19 @@ public class MovieServlet extends BaseServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
+        // Guest/customer không được xem chi tiết phim đã ngừng chiếu.
+        if (!canManageMovies(request) && "Stopped".equals(movie.getStatus())) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         request.setAttribute("movie", movie);
         request.setAttribute("pageTitle", movie.getTitle());
         forward(request, response, "movie-detail");
+    }
+
+    private boolean canManageMovies(HttpServletRequest request) {
+        User user = currentUser(request);
+        return user != null && MovieAccess.ROLE_MANAGER.equals(user.getRole());
     }
 
     private Integer parsePositiveInt(String value) {

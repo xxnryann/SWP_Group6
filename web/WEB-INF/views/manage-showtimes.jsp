@@ -9,7 +9,7 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Quản lý lịch chiếu</h1>
-      <p class="sub">Tạo, cập nhật hoặc xóa suất chiếu theo 5 khung giờ cố định. Mỗi phòng chỉ có một suất trong mỗi khung.</p>
+      <p class="sub">Tạo, cập nhật hoặc xóa lịch chiếu linh hoạt từ 07:00 đến 24:00 theo từng mốc 5 phút.</p>
     </div>
     <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
   </section>

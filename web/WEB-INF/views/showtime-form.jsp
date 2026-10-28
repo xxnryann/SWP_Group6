@@ -5,7 +5,8 @@
 <c:set var="escapedId"><c:out value="${showtime.showtimeId}"/></c:set>
 <c:set var="showDateValue" value="${empty showtime.inputDate ? defaultDate : showtime.inputDate}"/>
 <c:set var="escapedShowDate"><c:out value="${showDateValue}"/></c:set>
-<c:set var="escapedShowTime"><c:out value="${showtime.inputTime}"/></c:set>
+<c:set var="escapedStartTime"><c:out value="${showtime.inputTime}"/></c:set>
+<c:set var="escapedEndTime"><c:out value="${showtime.inputEndTime}"/></c:set>
 <%@ include file="_header.jspf" %>
 
 <main class="container page">
@@ -13,7 +14,7 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1><c:out value="${pageTitle}"/></h1>
-      <p class="sub">Khung giờ cố định áp dụng cho cả 4 phòng: 09:00–11:30, 11:45–14:15, 14:30–17:00, 17:15–19:45 và 20:00–22:30. Mỗi phòng cần chọn khung còn trống.</p>
+      <p class="sub">Chọn giờ bắt đầu và kết thúc trong khoảng 07:00–24:00. Thời gian phải theo mốc 5 phút, đủ thời lượng phim và không trùng lịch trong phòng.</p>
     </div>
   </section>
   <form class="panel showtime-form" id="showtime-form" method="post" action="${ctx}/manage/showtimes"
@@ -47,12 +48,18 @@
         <input id="showDate" name="showDate" type="date" min="${todayDate}" value="${escapedShowDate}" required>
       </div>
       <div class="field">
-        <label for="showTime">Khung giờ chiếu</label>
-        <select id="showTime" name="showTime" required data-current-time="${escapedShowTime}">
+        <label for="startTime">Thời gian bắt đầu</label>
+        <select id="startTime" name="startTime" required data-current-time="${escapedStartTime}">
           <option value="">Chọn phim, phòng và ngày trước</option>
         </select>
         <small id="showtime-availability-message" role="status">Chọn phim, phòng và ngày để tải giờ còn trống.</small>
-        <small id="showtime-estimated-end"></small>
+      </div>
+      <div class="field">
+        <label for="endTime">Thời gian kết thúc</label>
+        <select id="endTime" name="endTime" required data-current-time="${escapedEndTime}">
+          <option value="">Chọn giờ bắt đầu trước</option>
+        </select>
+        <small id="showtime-duration-message"></small>
       </div>
     </div>
     <div class="form-actions">
