@@ -109,41 +109,9 @@
       <a href="${ctx}/showtimes">Lịch Chiếu</a>
       <a href="${ctx}/movies">Phim</a>
       <a href="${ctx}/pricing">Giá Vé</a>
-      <a href="#">Khuyến Mãi</a>
+      <a href="${ctx}/promotions">Khuyến Mãi</a>
       <a href="${ctx}/news">Tin Tức</a>
 
-      <div class="dropdown">
-        <button type="button" aria-haspopup="true" aria-expanded="false">Khác ▾</button>
-        <div class="dropdown-menu">
-          <a href="#">Giới thiệu</a>
-          <a href="#">Tuyển dụng</a>
-          <a href="#">Liên hệ</a>
-          <c:if test="${not empty sessionScope.authUser}"><a href="${ctx}/account/profile">Tài khoản</a></c:if>
-          <c:choose>
-            <c:when test="${sessionScope.authUser.role == 'ADMIN'}">
-              <a href="${ctx}/dashboard/admin">Bảng điều khiển</a>
-              <a href="${ctx}/admin/users">Quản lý người dùng</a>
-              <a href="${ctx}/admin/rooms">Quản lý phòng chiếu</a>
-            </c:when>
-            <c:when test="${sessionScope.authUser.role == 'MANAGER'}">
-              <a href="${ctx}/dashboard/manager">Bảng điều khiển</a>
-              <a href="${ctx}/manage/movies">Quản lý phim</a>
-              <a href="${ctx}/manage/showtimes">Lịch chiếu</a>
-              <a href="${ctx}/manager/news">Tin tức</a>
-            </c:when>
-            <c:when test="${sessionScope.authUser.role == 'STAFF'}">
-              <a href="${ctx}/dashboard/staff">Bảng điều khiển</a>
-              <a href="${ctx}/staff/counter">Bán vé tại quầy</a>
-              <a href="${ctx}/staff/combo">Quản lý combo</a>
-            </c:when>
-            <c:when test="${sessionScope.authUser.role == 'CUSTOMER'}">
-              <a href="${ctx}/dashboard/customer">Bảng điều khiển</a>
-              <a href="${ctx}/account/tickets">Lịch sử vé</a>
-              <a href="${ctx}/account/points">Điểm MyPoint</a>
-            </c:when>
-          </c:choose>
-        </div>
-      </div>
       <a class="btn btn-cta" href="${ctx}/showtimes">MUA VÉ NHANH</a>
     </nav>
     <button class="menu-btn" type="button" aria-label="Mở menu" id="menuBtn">
@@ -163,7 +131,7 @@
     </div>
     <%-- Movie module navigation additions; the existing News link remains unchanged. --%>
     <a href="${ctx}/showtimes">Lịch Chiếu</a><a href="${ctx}/movies">Phim</a>
-    <a href="${ctx}/pricing">Giá Vé</a><a href="#">Khuyến Mãi</a><a href="#">Tin Tức</a><a href="#">Khác</a>
+    <a href="${ctx}/pricing">Giá Vé</a><a href="${ctx}/promotions">Khuyến Mãi</a><a href="${ctx}/news">Tin Tức</a>
     <c:choose>
       <c:when test="${not empty sessionScope.authUser}">
         <a href="${ctx}<c:out value='${roleDashboardPath}'/>">Bảng điều khiển</a>
