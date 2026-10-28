@@ -21,7 +21,8 @@ public class PasswordServlet extends BaseServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        forward(req, resp, "change-password");
+        // Đổi mật khẩu nằm trong trang Thông tin cá nhân; giữ URL cũ chuyển hướng về đó.
+        resp.sendRedirect(req.getContextPath() + "/account/profile#password");
     }
 
     @Override
@@ -46,8 +47,10 @@ public class PasswordServlet extends BaseServlet {
                 errors.put("confirmPassword", "Mật khẩu xác nhận không khớp.");
             }
             if (!errors.isEmpty()) {
+                req.setAttribute("profile", u);
                 req.setAttribute("errors", errors);
-                forward(req, resp, "change-password");
+                req.setAttribute("passwordOpen", true);
+                forward(req, resp, "profile");
                 return;
             }
             dao.updatePassword(u.getUserId(), SecurityUtil.hashPassword(next));

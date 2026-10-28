@@ -32,7 +32,6 @@
       <a href="${ctx}/account/tickets">Lịch sử vé</a>
       <a href="${ctx}/account/points">Điểm MyPoint</a>
       <a href="${ctx}/account/profile">Thông tin cá nhân</a>
-      <a href="${ctx}/account/password">Đổi mật khẩu</a>
       <a href="${ctx}/news">Tin tức</a>
     </c:otherwise>
   </c:choose>

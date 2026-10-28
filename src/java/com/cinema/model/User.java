@@ -18,6 +18,11 @@ public class User {
     private LocalDateTime otpExpiry;
     private int otpAttempts;
     private int myPoint;
+    private String idNumber;
+    private String province;
+    private String district;
+    private String address;
+    private String avatarUrl;
 
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
@@ -43,6 +48,16 @@ public class User {
     public void setOtpExpiry(LocalDateTime otpExpiry) { this.otpExpiry = otpExpiry; }
     public int getOtpAttempts() { return otpAttempts; }
     public void setOtpAttempts(int otpAttempts) { this.otpAttempts = otpAttempts; }
+    public String getIdNumber() { return idNumber; }
+    public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
+    public String getProvince() { return province; }
+    public void setProvince(String province) { this.province = province; }
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public int getMyPoint() { return myPoint; }
     public void setMyPoint(int myPoint) { this.myPoint = myPoint; }
 }

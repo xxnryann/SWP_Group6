@@ -107,6 +107,11 @@ CREATE TABLE dbo.Users (
     PasswordHash VARCHAR(100) NOT NULL,
     DateOfBirth DATE NULL,
     Gender VARCHAR(10) NULL,
+    IdNumber VARCHAR(20) NULL,          -- CMND/CCCD/Ho chieu
+    Province NVARCHAR(100) NULL,
+    District NVARCHAR(100) NULL,
+    Address NVARCHAR(255) NULL,
+    AvatarUrl VARCHAR(100) NULL,        -- /media/avatars/<uuid>.<ext>
     Role VARCHAR(20) NOT NULL CONSTRAINT DF_Users_Role DEFAULT 'CUSTOMER',
     Status VARCHAR(20) NOT NULL CONSTRAINT DF_Users_Status DEFAULT 'PENDING',
     OtpHash VARCHAR(64) NULL,

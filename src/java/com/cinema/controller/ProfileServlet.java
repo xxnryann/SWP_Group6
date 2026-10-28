@@ -47,6 +47,10 @@ public class ProfileServlet extends BaseServlet {
         String phone = Validator.trim(req.getParameter("phone"));
         String dobStr = Validator.trim(req.getParameter("dob"));
         String gender = Validator.trim(req.getParameter("gender"));
+        String idNumber = Validator.trim(req.getParameter("idNumber")).toUpperCase();
+        String province = Validator.trim(req.getParameter("province"));
+        String district = Validator.trim(req.getParameter("district"));
+        String address = Validator.trim(req.getParameter("address"));
 
         Map<String, String> errors = new LinkedHashMap<>();
         if (!Validator.isFullName(fullName)) {
@@ -56,8 +60,24 @@ public class ProfileServlet extends BaseServlet {
             errors.put("phone", "Số điện thoại phải gồm 10 số (bắt đầu 0) hoặc +84.");
         }
         LocalDate dob = Validator.parseDob(dobStr);
-        if (!dobStr.isEmpty() && dob == null) {
+        if (dobStr.isEmpty()) {
+            errors.put("dob", "Vui lòng nhập ngày sinh.");
+        } else if (dob == null) {
             errors.put("dob", "Ngày sinh không hợp lệ.");
+        }
+        if (idNumber.isEmpty()) {
+            errors.put("idNumber", "Vui lòng nhập CMND/CCCD/Hộ chiếu.");
+        } else if (!Validator.isIdNumber(idNumber)) {
+            errors.put("idNumber", "CMND gồm 9 số, CCCD gồm 12 số, hộ chiếu gồm 1 chữ cái và 7 số.");
+        }
+        if (province.length() > 100 || district.length() > 100) {
+            errors.put("province", "Địa điểm không hợp lệ.");
+        }
+        if (province.isEmpty()) {
+            district = "";
+        }
+        if (address.length() > 255) {
+            errors.put("address", "Địa chỉ tối đa 255 ký tự.");
         }
         try {
             if (!errors.containsKey("phone") && dao.phoneExists(phone, id)) {
@@ -69,12 +89,18 @@ public class ProfileServlet extends BaseServlet {
                 u.setPhone(phone);
                 u.setGender(gender);
                 u.setDateOfBirth(dob);
+                u.setIdNumber(idNumber);
+                u.setProvince(province);
+                u.setDistrict(district);
+                u.setAddress(address);
                 req.setAttribute("profile", u);
                 req.setAttribute("errors", errors);
                 forward(req, resp, "profile");
                 return;
             }
-            dao.updateProfile(id, fullName, phone, dob, GENDERS.contains(gender) ? gender : null);
+            dao.updateProfile(id, fullName, phone, dob, GENDERS.contains(gender) ? gender : null,
+                    idNumber, province.isEmpty() ? null : province, district.isEmpty() ? null : district,
+                    address.isEmpty() ? null : address);
             User fresh = dao.findById(id);
             req.getSession().setAttribute(SESSION_USER, sessionCopy(fresh));
             flash(req, "success", "Đã cập nhật thông tin cá nhân.");

@@ -17,6 +17,7 @@ import java.util.List;
 public class UserDAO {
 
     private static final String COLS = "UserId, FullName, Email, Phone, PasswordHash, DateOfBirth, Gender, "
+            + "IdNumber, Province, District, Address, AvatarUrl, "
             + "Role, Status, OtpHash, OtpExpiry, OtpAttempts, "
             // MyPoint nằm ở hệ thống nghiệp vụ (Customer.my_point_balance) và được
             // định danh bằng Account.account_id — KHÔNG phải Users.UserId.
@@ -35,6 +36,11 @@ public class UserDAO {
         Date d = rs.getDate("DateOfBirth");
         u.setDateOfBirth(d == null ? null : d.toLocalDate());
         u.setGender(rs.getString("Gender"));
+        u.setIdNumber(rs.getString("IdNumber"));
+        u.setProvince(rs.getString("Province"));
+        u.setDistrict(rs.getString("District"));
+        u.setAddress(rs.getString("Address"));
+        u.setAvatarUrl(rs.getString("AvatarUrl"));
         u.setRole(rs.getString("Role"));
         u.setStatus(rs.getString("Status"));
         u.setOtpHash(rs.getString("OtpHash"));
@@ -121,10 +127,16 @@ public class UserDAO {
                 + "WHERE UserId = ?", userId);
     }
 
-    public void updateProfile(int userId, String fullName, String phone, LocalDate dob, String gender)
-            throws SQLException {
-        update("UPDATE Users SET FullName = ?, Phone = ?, DateOfBirth = ?, Gender = ? WHERE UserId = ?",
-                fullName, phone, dob == null ? null : Date.valueOf(dob), gender, userId);
+    public void updateProfile(int userId, String fullName, String phone, LocalDate dob, String gender,
+            String idNumber, String province, String district, String address) throws SQLException {
+        update("UPDATE Users SET FullName = ?, Phone = ?, DateOfBirth = ?, Gender = ?, "
+                + "IdNumber = ?, Province = ?, District = ?, Address = ? WHERE UserId = ?",
+                fullName, phone, dob == null ? null : Date.valueOf(dob), gender,
+                idNumber, province, district, address, userId);
+    }
+
+    public void updateAvatar(int userId, String avatarUrl) throws SQLException {
+        update("UPDATE Users SET AvatarUrl = ? WHERE UserId = ?", avatarUrl, userId);
     }
 
     public void updatePassword(int userId, String hash) throws SQLException {

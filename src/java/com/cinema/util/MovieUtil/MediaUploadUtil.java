@@ -20,11 +20,12 @@ public final class MediaUploadUtil {
     }
 
     public enum MediaType {
-        POSTER, TRAILER
+        POSTER, TRAILER, AVATAR
     }
 
     private static final long POSTER_LIMIT = 5L * 1024L * 1024L;
     private static final long TRAILER_LIMIT = 100L * 1024L * 1024L;
+    private static final long AVATAR_LIMIT = 2L * 1024L * 1024L;
 
     private MediaUploadUtil() {
     }
@@ -39,10 +40,11 @@ public final class MediaUploadUtil {
 
     public static String store(Part part, MediaType type) throws IOException {
         if (part == null || part.getSize() == 0) return null;
-        long limit = type == MediaType.POSTER ? POSTER_LIMIT : TRAILER_LIMIT;
+        long limit = type == MediaType.POSTER ? POSTER_LIMIT : type == MediaType.AVATAR ? AVATAR_LIMIT : TRAILER_LIMIT;
         if (part.getSize() > limit) {
             throw new IllegalArgumentException(type == MediaType.POSTER
                     ? "Ảnh poster vượt quá giới hạn 5 MB."
+                    : type == MediaType.AVATAR ? "Ảnh đại diện vượt quá giới hạn 2 MB."
                     : "Video trailer vượt quá giới hạn 100 MB.");
         }
         String extension = extension(part.getSubmittedFileName());
@@ -54,7 +56,7 @@ public final class MediaUploadUtil {
             byte[] signature = input.readNBytes(12);
             if (!matchesSignature(extension, signature)) throw invalidType(type);
         }
-        String folder = type == MediaType.POSTER ? "posters" : "trailers";
+        String folder = type == MediaType.POSTER ? "posters" : type == MediaType.AVATAR ? "avatars" : "trailers";
         Path directory = root().resolve(folder);
         Files.createDirectories(directory);
         Path realDirectory = directory.toRealPath();
@@ -72,13 +74,14 @@ public final class MediaUploadUtil {
     }
 
     public static Path resolve(String relativePath) throws IOException {
-        if (relativePath == null || !relativePath.matches("^/(media)/(posters|trailers)/[0-9a-fA-F-]{36}\\.(jpg|jpeg|png|webp|mp4|webm)$")) {
+        if (relativePath == null || !relativePath.matches("^/(media)/(posters|trailers|avatars)/[0-9a-fA-F-]{36}\\.(jpg|jpeg|png|webp|mp4|webm)$")) {
             throw new MediaNotFoundException("Đường dẫn media không hợp lệ.");
         }
         String[] parts = relativePath.split("/");
         String folder = parts[2];
         String extension = relativePath.substring(relativePath.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
         if ("posters".equals(folder) && !SetExtensions.POSTERS.contains(extension)) throw new MediaNotFoundException("Định dạng media không hợp lệ.");
+        if ("avatars".equals(folder) && !SetExtensions.POSTERS.contains(extension)) throw new MediaNotFoundException("Định dạng media không hợp lệ.");
         if ("trailers".equals(folder) && !SetExtensions.TRAILERS.contains(extension)) throw new MediaNotFoundException("Định dạng media không hợp lệ.");
         Path realRoot = root();
         Path candidate = realRoot.resolve(folder).resolve(parts[3]).normalize();
@@ -125,7 +128,7 @@ public final class MediaUploadUtil {
     }
 
     private static boolean isAllowed(String extension, String contentType, MediaType type) {
-        if (type == MediaType.POSTER) {
+        if (type == MediaType.POSTER || type == MediaType.AVATAR) {
             return ("jpg".equals(extension) || "jpeg".equals(extension)) && "image/jpeg".equals(contentType)
                     || "png".equals(extension) && "image/png".equals(contentType)
                     || "webp".equals(extension) && "image/webp".equals(contentType);
@@ -170,7 +173,7 @@ public final class MediaUploadUtil {
     }
 
     private static IllegalArgumentException invalidType(MediaType type) {
-        return new IllegalArgumentException(type == MediaType.POSTER
+        return new IllegalArgumentException(type == MediaType.POSTER || type == MediaType.AVATAR
                 ? "Ảnh không hợp lệ. Chỉ chấp nhận JPG, JPEG, PNG hoặc WEBP."
                 : "Video không hợp lệ. Chỉ chấp nhận MP4 hoặc WEBM.");
     }
