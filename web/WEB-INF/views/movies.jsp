@@ -85,7 +85,12 @@
                   <p class="status status-ended"><strong>Đã kết thúc</strong></p>
                 </c:otherwise>
               </c:choose>
-              <a class="btn btn-primary btn-sm" href="${detailUrl}">Xem chi tiết</a>
+              <div class="movie-card-actions">
+                <c:if test="${canBuy and bookableIds.contains(movie.movieId)}">
+                  <button type="button" class="btn btn-cta btn-sm js-buy-ticket" data-movie-id="${movie.movieId}">Mua vé</button>
+                </c:if>
+                <a class="btn btn-primary btn-sm" href="${detailUrl}">Xem chi tiết</a>
+              </div>
             </div>
           </article>
         </c:forEach>
@@ -94,4 +99,5 @@
   </c:choose>
 </main>
 
+<script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="_footer.jspf" %>

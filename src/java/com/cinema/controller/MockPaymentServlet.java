@@ -66,8 +66,28 @@ public class MockPaymentServlet extends HttpServlet {
                 ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP) : amount);
         request.setAttribute("txnRef", params.get("vnp_TxnRef"));
         request.setAttribute("orderInfo", params.get("vnp_OrderInfo"));
+        attachQr(request);
         request.getRequestDispatcher("/WEB-INF/views/booking/mock-payment.jsp")
                 .forward(request, response);
+    }
+
+    /**
+     * Sinh mã QR của chính trang thanh toán giả lập (như cổng thật hiển thị QR để quét bằng app ngân hàng).
+     * Quét bằng điện thoại sẽ mở lại trang này; điện thoại phải truy cập được địa chỉ máy chủ
+     * (không dùng được nếu địa chỉ là localhost).
+     */
+    private static void attachQr(HttpServletRequest request) {
+        String url = request.getRequestURL()
+                + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
+        try {
+            byte[] png = com.cinema.util.QrCodeUtil.toPngBytes(url, 300);
+            request.setAttribute("qrDataUri",
+                    "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(png));
+            request.setAttribute("qrUrl", url);
+        } catch (IOException | RuntimeException exception) {
+            // QR chi la phan hien thi them; loi sinh QR khong duoc chan thanh toan.
+            request.setAttribute("qrDataUri", null);
+        }
     }
 
     /**

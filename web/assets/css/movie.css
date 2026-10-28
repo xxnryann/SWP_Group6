@@ -184,3 +184,33 @@ a.showtime-btn:hover { border-color: var(--brand); background: var(--brand); col
   .movie-list .movie-card { grid-template-columns: 1fr; }
   .movie-card-poster { width: 100%; }
 }
+
+/* Nut hanh dong tren the phim + cua so lich chieu (Mua ve) */
+.movie-card-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+.movie-card-content .movie-card-actions .btn { margin-top: 0; }
+body.showtime-modal-open { overflow: hidden; }
+.showtime-modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; background: rgba(15,23,42,.6); overflow-y: auto; }
+.showtime-modal { width: 100%; max-width: 880px; min-height: 360px; background: #fff; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.showtime-modal-head { position: relative; padding: 18px 56px 14px 24px; border-bottom: 1px solid var(--slate-200); }
+.showtime-modal-head h3 { margin: 0; font-size: 18px; color: var(--slate-800); }
+.showtime-modal-close { position: absolute; top: 10px; right: 14px; width: 36px; height: 36px; border: 0; background: none; font-size: 30px; line-height: 1; color: var(--slate-500); cursor: pointer; }
+.showtime-modal-close:hover { color: var(--slate-800); }
+.showtime-modal-body { padding: 22px 24px 32px; }
+.showtime-cinema { text-align: center; margin: 4px 0 18px; font-size: 26px; color: var(--slate-800); }
+.showtime-note { text-align: center; color: var(--slate-500); margin: 0 0 14px; }
+.showtime-tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--slate-300); margin-bottom: 20px; }
+.showtime-tab { display: inline-flex; align-items: baseline; gap: 2px; padding: 8px 18px 6px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--slate-500); cursor: pointer; font-family: var(--font); }
+.showtime-tab-day { font-size: 34px; font-weight: 800; line-height: 1; }
+.showtime-tab-sub { font-size: 13px; font-weight: 700; }
+.showtime-tab.is-active { color: var(--brand); border-bottom-color: var(--brand); }
+.showtime-format { margin: 0 0 12px; font-size: 16px; color: var(--slate-800); }
+.showtime-times { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-bottom: 22px; }
+.showtime-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.showtime-time { display: inline-flex; align-items: center; justify-content: center; min-width: 82px; padding: 12px 16px; background: #e5e7eb; color: var(--slate-800); font-weight: 700; font-size: 16px; border-radius: 2px; text-decoration: none; }
+.showtime-time:hover { background: var(--brand); color: #fff; }
+.showtime-free { font-size: 12px; font-weight: 600; color: var(--slate-700); }
+
+.movie-showtimes-inline { margin: 28px 0; padding-top: 20px; border-top: 1px solid var(--slate-200); }
+.movie-showtimes-inline > h2 { margin: 0 0 12px; font-size: 20px; }
+.movie-showtimes-inline .showtime-cinema { text-align: left; font-size: 18px; margin: 0 0 14px; }
+.movie-showtimes-inline .showtime-note { text-align: left; }

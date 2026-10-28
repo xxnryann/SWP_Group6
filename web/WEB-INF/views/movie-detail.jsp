@@ -64,6 +64,13 @@
       </div>
     </div>
 
+    <c:if test="${canBuy and movie.status != 'Stopped'}">
+      <section class="movie-showtimes-inline" id="movie-showtimes-inline" data-movie-id="${movie.movieId}" hidden>
+        <h2>Lịch chiếu</h2>
+        <div class="movie-showtimes-body"></div>
+      </section>
+    </c:if>
+
     <section class="movie-trailer">
       <h2>Trailer</h2>
       <c:choose>
@@ -140,6 +147,7 @@
   </article>
 </main>
 
+<script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="_footer.jspf" %>
 
 

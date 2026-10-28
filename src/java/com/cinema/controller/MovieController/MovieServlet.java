@@ -62,6 +62,11 @@ public class MovieServlet extends BaseServlet {
         request.setAttribute("selectedStatus", status);
         request.setAttribute("pageTitle", "Phim");
         request.setAttribute("showStatusFilter", canFilterByStatus);
+        // Nút "Mua vé" chỉ hiện cho khách / khách vãng lai và chỉ với phim còn suất chiếu sắp tới.
+        User viewer = currentUser(request);
+        boolean canBuy = viewer == null || "CUSTOMER".equals(viewer.getRole());
+        request.setAttribute("canBuy", canBuy);
+        if (canBuy) request.setAttribute("bookableIds", MovieShowtimesServlet.bookableMovieIds());
         forward(request, response, "movies");
     }
 
@@ -78,6 +83,8 @@ public class MovieServlet extends BaseServlet {
             return;
         }
         loadReviews(request, movie.getMovieId());
+        User viewer = currentUser(request);
+        request.setAttribute("canBuy", viewer == null || "CUSTOMER".equals(viewer.getRole()));
         request.setAttribute("movie", movie);
         request.setAttribute("pageTitle", movie.getTitle());
         forward(request, response, "movie-detail");

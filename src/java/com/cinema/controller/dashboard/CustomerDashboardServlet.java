@@ -30,6 +30,16 @@ public class CustomerDashboardServlet extends DashboardBaseServlet {
             req.setAttribute("nowShowingMovies", List.of());
             flash(req, "error", "Không thể tải danh sách phim: " + e.getMessage());
         }
+        try {
+            // Tin nổi bật: tối đa 4 tin đã đăng có ảnh, mới nhất trước.
+            List<com.cinema.model.News> featured = new com.cinema.dao.NewsDAO().findPublished().stream()
+                    .filter(n -> n.getThumbnailUrl() != null && !n.getThumbnailUrl().isBlank())
+                    .limit(4).toList();
+            req.setAttribute("featuredNews", featured);
+        } catch (SQLException e) {
+            getServletContext().log("Unable to load featured news.", e);
+            req.setAttribute("featuredNews", List.of());
+        }
         forward(req, resp, "dashboard/customer-dashboard");
     }
 }

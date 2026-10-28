@@ -4,6 +4,7 @@
       <div>
         <a class="logo" href="${ctx}/home"><span>Cine<b>Star</b> Cinemas</span></a>
         <p>Hệ thống rạp chiếu phim hiện đại với âm thanh Dolby Atmos và hình ảnh sắc nét, mang đến trải nghiệm điện ảnh trọn vẹn cho mọi khán giả.</p>
+        <p class="footer-contact">Hotline hỗ trợ: <strong>1900 636807</strong> <span class="sep">|</span> <a href="#" data-toast="Ứng dụng CineStar sắp ra mắt!">Tải ứng dụng</a></p>
       </div>
       <div>
         <h4>Dịch vụ</h4>
@@ -85,24 +86,10 @@
   var drawerBackdrop = $('#drawerBackdrop');
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { drawer(false); });
 
-  /* Rail dọc (menu role): mở/đóng trên màn hình hẹp */
-  var railToggle = $('#railToggle');
-  function rail(open) { document.body.classList.toggle('rail-open', open); }
-  if (railToggle) {
-    railToggle.addEventListener('click', function () {
-      var open = !document.body.classList.contains('rail-open');
-      rail(open);
-      railToggle.setAttribute('aria-expanded', open);
-    });
-  }
-  document.addEventListener('click', function (e) {
-    if (!document.body.classList.contains('rail-open')) return;
-    if (e.target.closest && e.target.closest('.dash-rail')) return;
-    if (e.target === railToggle || railToggle.contains(e.target)) return;
-    rail(false);
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') rail(false);
+  /* Đánh dấu mục menu đang mở */
+  ('.topbar-nav a').forEach(function (a) {
+    var p = a.pathname.replace(/\/$/, '');
+    if (location.pathname.replace(/\/$/, '') === p) a.classList.add('active');
   });
 
   /* Tài khoản hiện tại -> localStorage.currentUser (nguồn thật vẫn là session phía server) */

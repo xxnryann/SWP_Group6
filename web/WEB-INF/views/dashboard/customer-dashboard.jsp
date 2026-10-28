@@ -4,7 +4,25 @@
 <%@ include file="../_header.jspf" %>
 <main class="dashboard">
   <div class="container">
-    <h1>Tài khoản của tôi</h1>
+    <c:if test="${not empty featuredNews}">
+      <section class="news-slider" id="news-slider" aria-label="Tin tức nổi bật">
+        <div class="news-slider-track">
+          <c:forEach var="n" items="${featuredNews}">
+            <a class="news-slide" href="${ctx}/news?id=${n.newsId}">
+              <c:set var="slideImg"><c:out value='${n.thumbnailUrl}'/></c:set>
+              <span class="news-slide-media">
+                <span class="news-slide-bg" style="background-image:url('${n.thumbnailUrl.startsWith('/') ? ctx : ''}${slideImg}')"></span>
+                <img src="${n.thumbnailUrl.startsWith('/') ? ctx : ''}${slideImg}" alt="<c:out value='${n.title}'/>">
+              </span>
+              <span class="news-slide-title"><c:out value="${n.title}"/></span>
+            </a>
+          </c:forEach>
+        </div>
+        <button type="button" class="news-slider-nav is-prev" aria-label="Tin trước">&#10094;</button>
+        <button type="button" class="news-slider-nav is-next" aria-label="Tin sau">&#10095;</button>
+        <div class="news-slider-dots"></div>
+      </section>
+    </c:if>
 
     <section class="dashboard-section">
       <h2>Phim đang chiếu</h2>
@@ -62,5 +80,33 @@
     </section>
   </div>
 </main>
+<script>
+(function () {
+  var root = document.getElementById('news-slider');
+  if (!root) return;
+  var track = root.querySelector('.news-slider-track');
+  var count = track.children.length;
+  var dots = root.querySelector('.news-slider-dots');
+  var index = 0, timer = null;
+  for (var i = 0; i < count; i++) {
+    var d = document.createElement('button');
+    d.type = 'button';
+    d.setAttribute('aria-label', 'Tin ' + (i + 1));
+    (function (n) { d.addEventListener('click', function () { go(n); restart(); }); })(i);
+    dots.appendChild(d);
+  }
+  function go(n) {
+    index = (n + count) % count;
+    track.style.transform = 'translateX(' + (-100 * index) + '%)';
+    Array.prototype.forEach.call(dots.children, function (b, k) { b.classList.toggle('is-active', k === index); });
+  }
+  function restart() { clearInterval(timer); if (count > 1) timer = setInterval(function () { go(index + 1); }, 1000); }
+  root.querySelector('.is-prev').addEventListener('click', function () { go(index - 1); restart(); });
+  root.querySelector('.is-next').addEventListener('click', function () { go(index + 1); restart(); });
+  root.addEventListener('mouseenter', function () { clearInterval(timer); });
+  root.addEventListener('mouseleave', restart);
+  go(0); restart();
+})();
+</script>
 <%@ include file="../_footer.jspf" %>
 

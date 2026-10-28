@@ -30,26 +30,10 @@
      không hiện thanh nav công khai. Trang chủ "/" và các trang công khai giữ nguyên. --%>
 <body class="${roleModule ? 'role-page' : ''} ${railModule ? 'has-rail' : ''}" data-user="<c:out value='${sessionScope.authUser.fullName}'/>">
 
-<%-- ============ SIDEBAR DỌC (rail) ============
-     Render một lần ở đây vì mọi trang đều include _header.jspf => menu dọc luôn
-     hiện khi điều hướng, không bị mất khi sang trang khác.
-     Chỉ hiện với user đã đăng nhập (guest xem layout công khai như cũ);
-     trang chủ "/" và "/home" giữ nguyên layout công khai. --%>
-<c:if test="${railModule}">
-  <%@ include file="dashboard/_dash_rail.jspf" %>
-</c:if>
-
 <div class="topbar">
   <div class="container">
     <div class="topbar-left">
-      <c:if test="${railModule}">
-        <button class="rail-toggle" type="button" id="railToggle" aria-label="Mở menu" aria-expanded="false">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-            <path d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
-      </c:if>
-      <c:if test="${roleModule and not railModule}">
+      <c:if test="${roleModule or railModule}">
         <a class="topbar-brand" href="${ctx}<c:out value='${roleDashboardPath}'/>" aria-label="CineStar Cinemas">
           <svg width="24" height="24" viewBox="0 0 34 34" aria-hidden="true">
             <rect width="34" height="34" rx="9" fill="#1d4ed8"/>
@@ -58,9 +42,10 @@
           <span>Cine<b>Star</b> Cinemas</span>
         </a>
       </c:if>
-      <span>Hotline hỗ trợ: <strong>1900 636807</strong></span>
-      <a class="hide-sm" href="#" data-toast="Ứng dụng CineStar sắp ra mắt!">Tải ứng dụng</a>
     </div>
+    <c:if test="${railModule}">
+      <%@ include file="dashboard/_dash_rail.jspf" %>
+    </c:if>
     <div class="topbar-right">
       <div class="lang-switch" role="group" aria-label="Ngôn ngữ">
         <button type="button" data-lang="vi" class="active">VIE</button>
@@ -68,19 +53,16 @@
       </div>
       <c:choose>
         <c:when test="${not empty sessionScope.authUser}">
-          <%-- Khi menu dọc (rail) hiện, nút "Đăng xuất" nằm ở chân rail nên không
-               lặp lại ở góc trên bên phải. Chỉ trang chủ (không có rail) mới
-               cần nút đăng xuất tại đây. --%>
           <span>Xin chào, <a href="${ctx}/account/profile"><strong><c:out value="${sessionScope.authUser.fullName}"/></strong></a></span>
-          <span class="sep">|</span>
-          <a href="${ctx}<c:out value='${roleDashboardPath}'/>">Bảng điều khiển</a>
           <c:if test="${not railModule}">
             <span class="sep">|</span>
-            <form method="post" action="${ctx}/logout" id="logoutForm">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <button class="btn-link" type="submit">Đăng xuất</button>
-            </form>
+            <a href="${ctx}<c:out value='${roleDashboardPath}'/>">Bảng điều khiển</a>
           </c:if>
+          <span class="sep">|</span>
+          <form method="post" action="${ctx}/logout" id="logoutForm">
+            <input type="hidden" name="_csrf" value="${csrf}">
+            <button class="btn-link" type="submit">Đăng xuất</button>
+          </form>
         </c:when>
         <c:otherwise>
           <span><a href="${ctx}/login">Đăng nhập</a> <span class="sep">|</span> <a href="${ctx}/register">Đăng ký</a></span>
