@@ -1,0 +1,10 @@
+db.url=
+db.user=
+db.password=
+mail.host=
+mail.port=
+mail.user=
+mail.password=
+mail.from=
+otp.ttl.minutes=
+otp.max.attempts=
