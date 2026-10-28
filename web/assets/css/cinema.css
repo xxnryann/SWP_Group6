@@ -317,3 +317,8 @@ body.has-rail .account-grid { max-width: 980px; }
 .profile-actions { display: flex; justify-content: center; margin-top: 8px; }
 .btn-update { min-width: 220px; padding: 14px 28px; border-radius: 14px; }
 @media (max-width: 760px) { .profile-panel .row { grid-template-columns: 1fr; } }
+/* Thanh tab "Thông tin tài khoản | Điểm MyPoint" */
+.account-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 auto 22px; max-width: 980px; border-bottom: 2px solid var(--slate-200); }
+.account-tabs a { padding: 14px 24px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .01em; color: var(--slate-800); }
+.account-tabs a:hover { color: #00539f; }
+.account-tabs a.active { background: #00539f; color: #fff; }

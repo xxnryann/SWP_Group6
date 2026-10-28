@@ -29,8 +29,8 @@
       <a href="${ctx}/dashboard/customer">Tổng quan</a>
       <a href="${ctx}/showtimes">Lịch chiếu</a>
       <a href="${ctx}/movies">Danh sách phim</a>
+      <a href="${ctx}/pricing">Giá vé</a>
       <a href="${ctx}/account/tickets">Lịch sử vé</a>
-      <a href="${ctx}/account/points">Điểm MyPoint</a>
       <a href="${ctx}/account/profile">Thông tin cá nhân</a>
       <a href="${ctx}/news">Tin tức</a>
     </c:otherwise>

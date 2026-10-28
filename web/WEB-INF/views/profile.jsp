@@ -4,7 +4,9 @@
 <c:set var="parentUrl" value="${pageContext.request.contextPath}/account/profile"/>
 <c:set var="activeNav" value="profile"/>
 <%@ include file="_header.jspf" %>
+<c:set var="accountTab" value="info"/>
 <main class="page"><div class="container">
+  <%@ include file="_account_tabs.jspf" %>
   <div class="account-grid">
     <div class="panel profile-panel">
       <h2>Thông tin cá nhân</h2>

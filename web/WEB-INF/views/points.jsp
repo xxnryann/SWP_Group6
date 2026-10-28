@@ -4,7 +4,9 @@
 <c:set var="parentUrl" value="${pageContext.request.contextPath}/account/profile"/>
 <c:set var="activeNav" value="points"/>
 <%@ include file="_header.jspf" %>
+<c:set var="accountTab" value="points"/>
 <main class="page"><div class="container">
+  <%@ include file="_account_tabs.jspf" %>
   <div class="account-grid">
     <section class="panel">
       <h2>Điểm MyPoint</h2>

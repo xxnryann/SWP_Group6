@@ -89,7 +89,10 @@
   /* Đánh dấu mục menu đang mở */
   $$('.topbar-nav a').forEach(function (a) {
     var p = a.pathname.replace(/\/$/, '');
-    if (location.pathname.replace(/\/$/, '') === p) a.classList.add('active');
+    var here = location.pathname.replace(/\/$/, '');
+    // Điểm MyPoint là tab trong khu Thông tin tài khoản -> vẫn tô sáng mục Thông tin cá nhân
+    if (/\/account\/points$/.test(here)) here = here.replace(/points$/, 'profile');
+    if (here === p) a.classList.add('active');
   });
 
   /* Tài khoản hiện tại -> localStorage.currentUser (nguồn thật vẫn là session phía server) */
