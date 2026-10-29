@@ -95,24 +95,21 @@
      Giá Vé · Khuyến Mãi · Tin Tức · Khác · MUA VÉ NHANH) vì sidebar đã điều hướng đầy đủ.
      Trang chủ "/" và các trang công khai (khi chưa đăng nhập) vẫn giữ nguyên. --%>
 <c:if test="${not roleModule and not railModule}">
-<header class="site-header">
+<header class="site-header role-header guest-header">
   <div class="container">
     <a class="logo" href="${ctx}<c:out value='${roleDashboardPath}'/>" aria-label="CineStar Cinemas">
-      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true">
         <rect width="34" height="34" rx="9" fill="#1d4ed8"/>
         <path d="M17 6l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2L17 22.4l-6.5 3.5 1.3-7.2-5.3-5.1 7.3-1z" fill="#f59e0b"/>
       </svg>
       <span>Cine<b>Star</b> Cinemas</span>
     </a>
-    <nav class="main-nav" aria-label="Điều hướng chính">
-      <%-- Movie module navigation additions; keep the existing News link below intact. --%>
+    <nav class="topbar-nav" aria-label="Điều hướng chính">
       <a href="${ctx}/showtimes">Lịch Chiếu</a>
       <a href="${ctx}/movies">Phim</a>
       <a href="${ctx}/pricing">Giá Vé</a>
       <a href="${ctx}/promotions">Khuyến Mãi</a>
       <a href="${ctx}/news">Tin Tức</a>
-
-      <a class="btn btn-cta" href="${ctx}/showtimes">MUA VÉ NHANH</a>
     </nav>
     <button class="menu-btn" type="button" aria-label="Mở menu" id="menuBtn">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -139,7 +136,6 @@
       </c:when>
       <c:otherwise><a href="${ctx}/login">Đăng nhập</a><a href="${ctx}/register">Đăng ký</a></c:otherwise>
     </c:choose>
-    <a class="btn btn-cta" href="${ctx}/showtimes">MUA VÉ NHANH</a>
   </aside>
 </c:if>
 
