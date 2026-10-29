@@ -25,6 +25,7 @@
     </c:if>
 
     <section class="dashboard-section dash-movies">
+      <h2 class="home-heading">Phim tại rạp</h2>
       <div class="dash-tabs" role="tablist" aria-label="Phim theo trạng thái">
         <button type="button" class="dash-tab is-active" role="tab" id="dtab-now" aria-controls="dpanel-now" aria-selected="true" data-target="dpanel-now">Phim đang chiếu</button>
         <button type="button" class="dash-tab" role="tab" id="dtab-soon" aria-controls="dpanel-soon" aria-selected="false" data-target="dpanel-soon">Phim sắp chiếu</button>
@@ -36,7 +37,7 @@
             <div class="dashboard-empty"><p>Không có phim đang chiếu lúc này.</p></div>
           </c:when>
           <c:otherwise>
-            <div class="dashboard-movie-grid">
+            <div class="mv-grid">
               <c:forEach var="item" items="${nowShowingMovies}">
                 <c:set var="upcoming" value="${false}"/>
                 <%@ include file="_dash_movie_card.jspf" %>
@@ -52,7 +53,7 @@
             <div class="dashboard-empty"><p>Chưa có phim sắp chiếu.</p></div>
           </c:when>
           <c:otherwise>
-            <div class="dashboard-movie-grid">
+            <div class="mv-grid">
               <c:forEach var="item" items="${upcomingMovies}">
                 <c:set var="upcoming" value="${true}"/>
                 <%@ include file="_dash_movie_card.jspf" %>
@@ -62,6 +63,8 @@
         </c:choose>
       </div>
     </section>
+    <p class="home-more"><a class="btn btn-outline" href="${ctx}/movies">Xem tất cả phim</a></p>
+
   </div>
 </main>
 <script>

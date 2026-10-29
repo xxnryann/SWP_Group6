@@ -39,6 +39,7 @@ public class Ticket {
 
     /** Vé còn hiệu lực và còn trong thời hạn huỷ được không. */
     private boolean canCancel;
+    private LocalDateTime purchasedAt;
 
     public int getTicketId() { return ticketId; }
     public void setTicketId(int ticketId) { this.ticketId = ticketId; }
@@ -91,6 +92,26 @@ public class Ticket {
      */
     public void setStatus(String status) {
         this.status = status == null ? null : status.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    /** Thời điểm mua vé (thanh toán thành công; nếu chưa có thì lấy lúc tạo đơn). */
+    public LocalDateTime getPurchasedAt() { return purchasedAt; }
+    public void setPurchasedAt(LocalDateTime purchasedAt) { this.purchasedAt = purchasedAt; }
+
+    /** Ngày giờ mua dạng "20:45 - 22/10/2026". */
+    public String getPurchasedLabel() {
+        if (purchasedAt == null) {
+            return "";
+        }
+        return purchasedAt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy"));
+    }
+
+    /** Thứ tự hiển thị lịch sử: còn hiệu lực -> đã dùng -> hết hạn -> đã huỷ. */
+    public int getSortRank() {
+        if (isActive()) return 0;
+        if (isUsed()) return 1;
+        if (isExpired()) return 2;
+        return 3;
     }
 
     public boolean isCanCancel() { return canCancel; }

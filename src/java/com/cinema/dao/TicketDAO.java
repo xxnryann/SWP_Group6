@@ -66,7 +66,27 @@ public class TicketDAO {
                     list.add(t);
                 }
             }
+            // Thời điểm mua vé: procedure không trả về nên đọc riêng theo ticket_id.
+            java.util.Map<Integer, java.time.LocalDateTime> bought = new java.util.HashMap<>();
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT t.ticket_id, COALESCE(b.paid_at, b.created_at) AS purchased_at "
+                    + "FROM Ticket t JOIN Booking b ON b.booking_id = t.booking_id "
+                    + "JOIN Account a ON a.account_id = b.customer_id WHERE a.email = ?")) {
+                ps.setString(1, email == null ? "" : email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Timestamp ts = rs.getTimestamp("purchased_at");
+                        if (ts != null) bought.put(rs.getInt("ticket_id"), ts.toLocalDateTime());
+                    }
+                }
+            }
+            for (Ticket t : list) t.setPurchasedAt(bought.get(t.getTicketId()));
         }
+        // Còn hiệu lực lên đầu, đã huỷ xuống cuối; trong mỗi nhóm vé mua gần nhất trước.
+        list.sort(java.util.Comparator
+                .comparingInt(Ticket::getSortRank)
+                .thenComparing(Ticket::getPurchasedAt, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
+                .thenComparing(Ticket::getTicketId, java.util.Comparator.reverseOrder()));
         return list;
     }
 

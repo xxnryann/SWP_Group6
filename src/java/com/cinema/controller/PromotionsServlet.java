@@ -26,7 +26,7 @@ public class PromotionsServlet extends BaseServlet {
     }
 
     /** Voucher còn hạn, còn lượt dùng (dùng chung với tab Voucher của tài khoản). */
-    static List<Map<String, Object>> activeVouchers() throws SQLException {
+    public static List<Map<String, Object>> activeVouchers() throws SQLException {
         return Rows.query("SELECT code, description, discount_type, discount_value, max_discount, min_order_amount, "
                     + "min_cumulative_spending, usage_limit, used_count, "
                     + "CONVERT(varchar(10), valid_from, 103) AS valid_from_txt, CONVERT(varchar(10), valid_to, 103) AS valid_to_txt "

@@ -30,7 +30,7 @@ public class MovieManagerMenuFilter implements Filter {
         boolean isHome = path.isEmpty() || path.startsWith("/home");
         httpRequest.setAttribute("movieModule", path.startsWith("/movies")
                 || path.startsWith("/showtimes") || path.startsWith("/manage/movies")
-                || path.startsWith("/manage/showtimes") || isHome);
+                || path.startsWith("/manage/showtimes") || path.startsWith("/dashboard/customer") || isHome);
         // Dashboard theo vai trò: nạp CSS dashboard + gắn cờ cho các trang quản trị.
         boolean isDashboard = path.startsWith("/dashboard/admin")
                 || path.startsWith("/dashboard/manager")

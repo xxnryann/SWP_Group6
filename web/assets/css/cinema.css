@@ -2,7 +2,9 @@
 :root {
   --brand: #1d4ed8;        /* Xanh thương hiệu */
   --brand-hover: #2563eb;  /* Xanh sáng hover */
-  --navy: #0f172a;         /* Navy tối (slate-900) */
+  --navy: #0f172a;
+  --beta: #00539f;      /* Xanh nền chính (header phụ, footer, banner, badge) */
+  --beta-2: #0a69c2;    /* Xanh sáng hơn dùng cho gradient */         /* Navy tối (slate-900) */
   --cta: #f97316;          /* Cam hành động */
   --cta-hover: #ea580c;
   --accent: #f59e0b;       /* Vàng nhấn */
@@ -29,7 +31,7 @@ h1 { font-size: 36px; } h2 { font-size: 24px; } h3 { font-size: 18px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* ---------- top bar ---------- */
-.topbar { background: var(--navy); color: var(--slate-300); font-size: 13px; }
+.topbar { background: var(--beta); color: rgba(255,255,255,.9); font-size: 13px; }
 .topbar .container { display: flex; justify-content: space-between; align-items: center; min-height: 38px; gap: 16px; }
 .topbar a, .topbar .btn-link { color: var(--slate-200); }
 .topbar a:hover, .topbar .btn-link:hover { color: #fff; }
@@ -188,7 +190,7 @@ main { flex: 1; }
 .card, .panel { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; box-shadow: var(--shadow); padding: 32px; }
 .auth-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 0; max-width: 960px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--slate-200); }
 .auth-hero {
-  background: linear-gradient(135deg, var(--navy), var(--brand)); color: #fff; padding: 48px 40px;
+  background: linear-gradient(135deg, var(--beta), var(--beta-2)); color: #fff; padding: 48px 40px;
   display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden;
 }
 .auth-hero::after { content: ""; position: absolute; width: 280px; height: 280px; border-radius: 50%; right: -90px; top: -90px; background: rgba(249,115,22,.35); }
@@ -204,7 +206,7 @@ main { flex: 1; }
 .account-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
 /* Đã đăng nhập: menu dọc đã nằm ở rail fixed bên trái -> bỏ cột sidebar cũ. */
 body.has-rail .account-grid { grid-template-columns: 1fr; }
-.member-card { background: linear-gradient(135deg, var(--brand), var(--navy)); color: #fff; border-radius: 14px; padding: 24px; }
+.member-card { background: linear-gradient(135deg, var(--beta-2), var(--beta)); color: #fff; border-radius: 14px; padding: 24px; }
 .member-card .tier { color: var(--accent); letter-spacing: .12em; font-size: 12px; text-transform: uppercase; font-weight: 700; }
 .member-card h3 { color: #fff; margin: 8px 0 2px; }
 .member-card .meta { color: var(--slate-300); font-size: 13px; word-break: break-all; }
@@ -214,7 +216,7 @@ body.has-rail .account-grid { grid-template-columns: 1fr; }
 .side-nav a.active { background: #dbeafe; color: var(--brand); }
 
 /* ---------- home ---------- */
-.hero-home { background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); color: #fff; padding: 84px 0; position: relative; overflow: hidden; }
+.hero-home { background: linear-gradient(120deg, var(--beta) 10%, var(--beta-2) 100%); color: #fff; padding: 84px 0; position: relative; overflow: hidden; }
 .hero-home::after { content: ""; position: absolute; right: -120px; bottom: -160px; width: 460px; height: 460px; border-radius: 50%; background: rgba(249,115,22,.28); }
 .hero-home .container { position: relative; z-index: 1; }
 .hero-home .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .14em; font-size: 12px; margin-bottom: 12px; }
@@ -244,18 +246,18 @@ table.data td { padding: 12px 14px; border-top: 1px solid var(--slate-100); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .toast-stack { position: fixed; top: 16px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
 .toast {
-  background: var(--navy); color: #fff; padding: 12px 18px; border-radius: var(--radius); box-shadow: var(--shadow);
+  background: var(--beta); color: #fff; padding: 12px 18px; border-radius: var(--radius); box-shadow: var(--shadow);
   font-size: 14px; border-left: 4px solid var(--brand); max-width: 340px; animation: toast-in .25s ease-out;
 }
 .toast-success { border-left-color: var(--success); } .toast-error { border-left-color: var(--danger); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } }
 
 /* ---------- footer ---------- */
-.site-footer { background: var(--navy); color: var(--slate-400); font-size: 14px; margin-top: auto; }
+.site-footer { background: var(--beta); color: rgba(255,255,255,.82); font-size: 14px; margin-top: auto; }
 .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; padding: 48px 0 32px; }
 .site-footer h4 { color: #fff; font-size: 14px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
 .site-footer ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.site-footer a { color: var(--slate-400); }
+.site-footer a { color: rgba(255,255,255,.82); }
 .site-footer a:hover { color: #fff; }
 .site-footer .logo { color: #fff; margin-bottom: 12px; }
 .site-footer .logo b { color: var(--accent); }
@@ -331,7 +333,7 @@ body.has-rail .account-grid { max-width: 980px; }
 .pr-board { display: grid; gap: 22px; max-width: 900px; margin: 0 auto; }
 .pr-block { border: 1px solid var(--slate-200); border-radius: 14px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
 .pr-block-title { margin: 0; padding: 14px 22px; color: #fff; font-size: 18px; text-transform: uppercase;
-                  background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); }
+                  background: linear-gradient(120deg, var(--beta) 10%, var(--beta-2) 100%); }
 .pr-table { width: 100%; border-collapse: collapse; }
 .pr-table th, .pr-table td { padding: 13px 18px; text-align: center; border-top: 1px solid var(--slate-100); }
 .pr-table thead th { background: var(--slate-100); color: var(--slate-800); font-size: 14px; border-top: 0; }

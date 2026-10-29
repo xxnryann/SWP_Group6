@@ -107,6 +107,10 @@
                     <span class="tk-value muted"><c:out value="${t.showTimeLabel}"/></span>
                   </div>
                   <div class="tk-row">
+                    <span class="tk-label">Ngày giờ mua</span>
+                    <span class="tk-value muted"><c:out value="${empty t.purchasedLabel ? '—' : t.purchasedLabel}"/></span>
+                  </div>
+                  <div class="tk-row">
                     <span class="tk-label">Giá</span>
                     <span class="tk-value"><c:out value="${t.priceLabel}"/></span>
                   </div>
