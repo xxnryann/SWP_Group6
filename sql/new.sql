@@ -257,10 +257,11 @@ CREATE TABLE dbo.Showtime (
     CONSTRAINT FK_Showtime_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
     CONSTRAINT FK_Showtime_Slot FOREIGN KEY (slot_id) REFERENCES dbo.TimeSlot(slot_id),
     CONSTRAINT FK_Showtime_Creator FOREIGN KEY (created_by) REFERENCES dbo.Account(account_id),
-    CONSTRAINT UQ_Showtime_Room_Start UNIQUE (room_id, start_time),
     CONSTRAINT CK_Showtime_Times CHECK (end_time > start_time),
     CONSTRAINT CK_Showtime_Status CHECK (status IN ('Scheduled','Cancelled','Finished'))
 );
+-- Mỗi phòng chỉ có một suất bắt đầu tại một thời điểm, KHÔNG tính suất đã huỷ (để dùng lại giờ trống sau khi huỷ / ngừng chiếu).
+CREATE UNIQUE INDEX UQ_Showtime_Room_Start ON dbo.Showtime(room_id, start_time) WHERE status <> 'Cancelled';
 GO
 
 CREATE TABLE dbo.Review (

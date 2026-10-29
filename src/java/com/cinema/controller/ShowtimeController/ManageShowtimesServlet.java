@@ -119,7 +119,10 @@ public class ManageShowtimesServlet extends BaseServlet {
             flash(request, "error", e.getMessage());
         } catch (SQLException e) {
             getServletContext().log("Unable to save, generate or delete showtime.", e);
-            flash(request, "error", "Không thể cập nhật lịch chiếu: " + e.getMessage());
+            // 2601 / 2627: vi phạm khoá duy nhất (phòng đã có suất bắt đầu đúng giờ này) -> báo bằng tiếng Việt thay vì lỗi SQL.
+            String reason = e.getErrorCode() == 2601 || e.getErrorCode() == 2627
+                    ? "Phòng đã có suất chiếu bắt đầu đúng giờ này." : e.getMessage();
+            flash(request, "error", "Không thể cập nhật lịch chiếu: " + reason);
         }
         response.sendRedirect(request.getContextPath() + "/manage/showtimes");
     }
