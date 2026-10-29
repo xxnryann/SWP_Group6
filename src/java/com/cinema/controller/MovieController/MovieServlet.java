@@ -50,6 +50,7 @@ public class MovieServlet extends BaseServlet {
         // Mọi người dùng xem được toàn bộ danh sách phim và lọc theo trạng thái.
         boolean canFilterByStatus = true;
         String status = request.getParameter("status");
+        // Không có status = tab "Tất cả"; mỗi tab trạng thái hiện đầy đủ phim thuộc trạng thái đó.
         if (!"Upcoming".equals(status) && !"NowShowing".equals(status) && !"Stopped".equals(status)) status = null;
         Integer genreId = parsePositiveInt(request.getParameter("genre"));
         int requestedPage = parsePositiveInt(request.getParameter("page")) == null

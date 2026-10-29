@@ -248,3 +248,47 @@ body.showtime-modal-open { overflow: hidden; }
 a.st-time:hover { border-color: var(--brand); background: var(--brand); color: #fff; }
 a.st-time:hover small { color: rgba(255,255,255,.85); }
 @media (max-width: 640px) { .st-movie { grid-template-columns: 110px minmax(0, 1fr); gap: 14px; padding: 18px 16px; } .st-date { min-width: 74px; padding: 8px; } }
+
+/* Trang danh sách phim: banner + tab trạng thái + chip thể loại + lưới poster */
+.mv-hero { position: relative; overflow: hidden; padding: 46px 0 50px; color: #fff;
+           background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); }
+.mv-hero::after { content: ""; position: absolute; right: -110px; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: rgba(249,115,22,.28); }
+.mv-hero .container { position: relative; z-index: 1; }
+.mv-hero .eyebrow { color: rgba(255,255,255,.8); }
+.mv-hero h1 { margin: 0 0 10px; color: #fff; font-size: clamp(30px, 4.4vw, 44px); }
+.mv-hero-sub { max-width: 620px; margin: 0 0 18px; color: rgba(255,255,255,.85); font-size: 16px; line-height: 1.6; }
+.mv-page { padding-top: 28px; }
+.mv-tabs { display: flex; justify-content: center; gap: 34px; flex-wrap: wrap; margin-bottom: 18px; border-bottom: 2px solid var(--slate-200); }
+.mv-tab { padding: 12px 4px; margin-bottom: -2px; border-bottom: 3px solid transparent; color: var(--slate-600);
+          font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
+.mv-tab:hover { color: var(--brand); }
+.mv-tab.is-active { color: var(--brand); border-bottom-color: var(--brand); }
+.mv-genres { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.mv-chip { padding: 6px 14px; border: 1px solid var(--slate-300); border-radius: 999px; background: #fff; color: var(--slate-700); font-size: 13.5px; font-weight: 600; }
+.mv-chip:hover { border-color: var(--brand); color: var(--brand); }
+.mv-chip.is-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.mv-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 26px 22px; }
+.mv-card { display: flex; flex-direction: column; }
+.mv-poster { position: relative; overflow: hidden; border-radius: 14px; background: var(--slate-100); box-shadow: 0 8px 22px rgba(15,23,42,.18);
+             transition: transform .2s, box-shadow .2s; }
+.mv-card:hover .mv-poster { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(15,23,42,.28); }
+.mv-poster-link { display: block; }
+.mv-poster img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.mv-poster .poster-placeholder { aspect-ratio: 2 / 3; }
+.mv-age { position: absolute; left: 10px; top: 10px; padding: 3px 9px; border-radius: 6px; background: var(--cta, #f97316); color: #fff; font-size: 13px; font-weight: 800; }
+.mv-flag { position: absolute; right: 0; top: 14px; padding: 4px 12px 4px 14px; border-radius: 999px 0 0 999px; color: #fff; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.mv-flag-now { background: var(--success, #16a34a); }
+.mv-flag-soon { background: var(--cta, #f97316); }
+.mv-flag-ended { background: var(--slate-500); }
+.mv-overlay { position: absolute; inset: auto 0 0 0; display: flex; justify-content: center; padding: 40px 12px 14px; opacity: 0; transition: opacity .2s;
+              background: linear-gradient(to top, rgba(15,23,42,.85), transparent); }
+.mv-overlay .btn { border-color: #fff; color: #fff; }
+.mv-card:hover .mv-overlay { opacity: 1; }
+.mv-body { display: flex; flex-direction: column; flex: 1; padding-top: 12px; }
+.mv-body h3 { margin: 0 0 6px; font-size: 18px; line-height: 1.3; }
+.mv-body h3 a { color: var(--brand); }
+.mv-meta { display: flex; flex-direction: column; gap: 2px; margin: 0 0 12px; color: var(--slate-600); font-size: 13.5px; }
+.mv-meta strong { color: var(--slate-800); font-weight: 600; }
+.mv-body .btn { margin-top: auto; }
+@media (max-width: 1000px) { .mv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .mv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; } .mv-tab { font-size: 14px; } .mv-tabs { gap: 18px; } }
