@@ -65,6 +65,12 @@ public class BookingExtrasServlet extends BaseServlet {
                 case "applyDiscount":
                     applyDiscount(req, booking);
                     break;
+                case "back":
+                    // Quay lại chọn ghế: huỷ đơn đang giữ để nhả ghế, tránh tự chặn chính mình khi chọn lại.
+                    service.cancelBooking(booking.getBookingId());
+                    BookingSession.clear(req);
+                    resp.sendRedirect(req.getContextPath() + "/booking/seats?showtimeId=" + booking.getShowtimeId());
+                    return;
                 case "next":
                     resp.sendRedirect(req.getContextPath() + "/booking/payment");
                     return;

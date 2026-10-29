@@ -64,6 +64,8 @@
             <button class="btn btn-cta btn-block" type="submit" id="payBtn">Thanh toán qua VNPAY</button>
           </form>
 
+          <p style="margin-top:12px"><a class="btn btn-outline btn-block" href="${ctx}/booking/extras">← Quay lại</a></p>
+
           <div class="uip-cancel">
             <form method="post" action="${ctx}/booking/payment"
                   onsubmit="return confirm('Huỷ đơn này? Ghế đã giữ sẽ được trả lại.');">

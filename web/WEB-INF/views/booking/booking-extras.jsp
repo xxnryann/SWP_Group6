@@ -37,6 +37,7 @@
                border-top: 2px solid var(--slate-200); margin-top: 8px; padding-top: 14px; }
   .uip-total .uip-amt { color: var(--cta); font-weight: 800; font-size: 25px; }
   .uip-next { margin-top: 18px; }
+  .uip-nav { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
   @media (max-width: 960px) { .uip-layout { grid-template-columns: 1fr; } .uip-summary { position: static; } }
 </style>
 <main>
@@ -120,16 +121,87 @@
           <div class="uip-total"><span><strong>Tổng phải trả</strong></span>
                <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNĐ</small></span></div>
 
-          <form class="uip-next" method="post" action="${ctx}/booking/extras">
-            <input type="hidden" name="_csrf" value="${csrf}">
-            <input type="hidden" name="action" value="next">
-            <button class="btn btn-cta btn-block" type="submit">Tiếp tục thanh toán →</button>
-          </form>
+          <div class="uip-next uip-nav">
+            <form method="post" action="${ctx}/booking/extras"
+                  onsubmit="return confirm('Quay lại chọn ghế? Ghế đang giữ sẽ được trả lại.');">
+              <input type="hidden" name="_csrf" value="${csrf}">
+              <input type="hidden" name="action" value="back">
+              <button class="btn btn-outline btn-block" type="submit">← Quay lại</button>
+            </form>
+            <form id="nextForm" method="post" action="${ctx}/booking/extras">
+              <input type="hidden" name="_csrf" value="${csrf}">
+              <input type="hidden" name="action" value="next">
+              <button class="btn btn-cta btn-block" type="submit">Tiếp tục thanh toán →</button>
+            </form>
+          </div>
         </aside>
       </div>
     </div>
   </section>
 </main>
+
+<div class="pay-notice" id="payNotice" role="dialog" aria-modal="true" aria-labelledby="payNoticeTitle" hidden>
+  <div class="pay-notice-box">
+    <h3 id="payNoticeTitle">THÔNG BÁO</h3>
+    <div class="pay-notice-body">
+      <p>Chào mừng Quý khách hàng đến với Hệ thống Bán Vé Online của chuỗi Rạp Chiếu Phim CINESTAR CINEMAS!</p>
+      <p>Xin cảm ơn và chúc Quý khách hàng có những giây phút xem phim tuyệt vời tại CINESTAR CINEMAS!</p>
+      <p><strong>Sau đây là một số lưu ý trước khi thanh toán trực tuyến:</strong></p>
+      <p>1. Thẻ phải được kích hoạt chức năng thanh toán trực tuyến, và có đủ hạn mức/ số dư để thanh toán. Quý khách cần nhập chính xác thông tin thẻ (tên chủ thẻ, số thẻ, ngày hết hạn, số CVC, OTP,...).</p>
+      <p>2. Vé và hàng hóa đã thanh toán thành công không thể hủy/đổi trả/hoàn tiền vì bất kỳ lý do gì. CineStar Cinemas chỉ thực hiện hoàn tiền trong trường hợp thẻ của Quý khách đã bị trừ tiền nhưng hệ thống của CineStar không ghi nhận việc đặt vé/đơn hàng của Quý khách, và Quý khách không nhận được xác nhận đặt vé/đơn hàng thành công.</p>
+      <p>3. Trong vòng 30 phút kể từ khi thanh toán thành công, CineStar Cinemas sẽ gửi Quý khách mã xác nhận thông tin vé/đơn hàng qua email của Quý khách. Nếu Quý khách cần hỗ trợ hay thắc mắc, khiếu nại về xác nhận mã vé/đơn hàng thì vui lòng phản hồi về Fanpage Facebook CineStar Cinemas trong vòng 60 phút kể từ khi thanh toán vé thành công. Sau khoảng thời gian trên, CineStar Cinemas sẽ không chấp nhận giải quyết bất kỳ khiếu nại nào.</p>
+      <p>4. CineStar Cinemas không chịu trách nhiệm trong trường hợp thông tin địa chỉ email, số điện thoại Quý khách nhập không chính xác dẫn đến không nhận được thư xác nhận. Vui lòng kiểm tra kỹ các thông tin này trước khi thực hiện thanh toán. CineStar Cinemas không hỗ trợ xử lý và không chịu trách nhiệm trong trường hợp đã gửi thư xác nhận mã vé/đơn hàng đến địa chỉ email của Quý khách nhưng vì một lý do nào đó mà Quý khách không thể đến xem phim.</p>
+      <p>5. Vui lòng kiểm tra thông tin xác nhận vé cẩn thận và ghi nhớ mã đặt vé/đơn hàng. Khi đến nhận vé/hàng hóa tại Quầy vé của CineStar Cinemas, Quý khách cũng cần mang theo giấy tờ tùy thân như Căn cước công dân/Chứng minh nhân dân, Thẻ học sinh, Thẻ sinh viên hoặc hộ chiếu.</p>
+      <p>6. Theo quy định của Cục Điện Ảnh, một số phim sẽ không dành cho khán giả dưới 13, hoặc 16, hoặc 18 tuổi. Khi đến lấy vé tại quầy vé, nhân viên có thể yêu cầu Quý khách hàng xuất trình giấy tờ tùy thân (Giấy khai sinh, Căn cước công dân, Thẻ học sinh, Thẻ sinh viên, Bằng lái xe hoặc các giấy tờ tùy thân khác) để xác định độ tuổi chính xác của Quý khách hàng. Quý khách hàng vui lòng lưu ý và cân nhắc trước khi mua vé.</p>
+      <p>Căn cứ vào Điều 9 Nghị định 131/2022/NĐ-CP quy định chi tiết một số điều của Luật Điện Ảnh, CineStar Cinemas áp dụng quy định về khung giờ chiếu phim cho trẻ em, áp dụng cho toàn bộ hệ thống rạp chiếu phim như sau:</p>
+      <p>Giờ chiếu phim cho trẻ em dưới 13 tuổi tại tất cả các cụm rạp CineStar Cinemas kết thúc trước 22 giờ.</p>
+      <p>Giờ chiếu phim cho trẻ em dưới 16 tuổi tại tất cả các cụm rạp CineStar Cinemas kết thúc trước 23 giờ.</p>
+      <p>Lưu ý, Ban Quản Lý tại các cụm rạp chiếu phim CineStar Cinemas có quyền kiểm tra và từ chối yêu cầu xem phim của Quý khách hàng nếu Quý khách hàng không tuân thủ quy định về độ tuổi xem phim.</p>
+      <p>7. Vì một số sự cố kỹ thuật bất khả kháng, suất chiếu có thể bị huỷ để đảm bảo an toàn tối đa cho khách hàng, CineStar Cinemas sẽ thực hiện hoàn trả số tiền giao dịch về tài khoản mà Quý khách đã thực hiện mua vé. CineStar Cinemas sẽ liên hệ với Quý khách qua các thông tin liên hệ trong mục Thông tin thành viên để thông báo và xác nhận.</p>
+      <p>Sau khi đã xác nhận, tùy theo từng loại tài khoản mà Quý khách sử dụng và tuỳ theo chính sách của các ngân hàng mà việc hoàn tiền sẽ có thời gian khác nhau:</p>
+      <ul>
+        <li>Thẻ quốc tế: trong vòng 30 ngày làm việc</li>
+        <li>Thẻ nội địa: trong vòng 7 ngày làm việc</li>
+        <li>Ứng dụng di động: 1-2 ngày làm việc</li>
+        <li>Ví điện tử: 7-14 ngày làm việc</li>
+      </ul>
+    </div>
+    <div class="pay-notice-actions">
+      <button type="button" class="btn btn-outline" id="payNoticeClose">Đóng</button>
+      <button type="button" class="btn btn-cta" id="payNoticeOk">Đồng ý và tiếp tục</button>
+    </div>
+  </div>
+</div>
+<style>
+  .pay-notice { position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,.55);
+                display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .pay-notice[hidden] { display: none; }
+  .pay-notice-box { background: #fff; border-radius: 10px; width: 100%; max-width: 760px; max-height: 90vh;
+                    display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+  .pay-notice-box h3 { margin: 0; padding: 16px 24px; text-align: center; font-size: 20px; color: var(--brand);
+                       border-bottom: 1px solid var(--slate-200); }
+  .pay-notice-body { padding: 16px 24px; overflow-y: auto; font-size: 14.5px; line-height: 1.55; color: var(--slate-700, #334155); }
+  .pay-notice-body p { margin: 0 0 10px; }
+  .pay-notice-body ul { margin: 0 0 6px 20px; padding: 0; }
+  .pay-notice-actions { display: flex; justify-content: center; gap: 12px; padding: 14px 24px;
+                        border-top: 1px solid var(--slate-200); }
+</style>
+<script>
+(function () {
+  var form = document.getElementById('nextForm'), box = document.getElementById('payNotice');
+  var confirmed = false;
+  form.addEventListener('submit', function (e) {
+    if (confirmed) return;
+    e.preventDefault();
+    box.hidden = false;
+    box.querySelector('.pay-notice-body').scrollTop = 0;
+  });
+  document.getElementById('payNoticeClose').addEventListener('click', function () { box.hidden = true; });
+  document.getElementById('payNoticeOk').addEventListener('click', function () { confirmed = true; form.submit(); });
+  box.addEventListener('click', function (e) { if (e.target === box) box.hidden = true; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') box.hidden = true; });
+})();
+</script>
 <%@ include file="../_footer.jspf" %>
 
 
