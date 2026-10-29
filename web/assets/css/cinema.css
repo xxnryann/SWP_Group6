@@ -322,3 +322,17 @@ body.has-rail .account-grid { max-width: 980px; }
 .account-tabs a { padding: 14px 24px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .01em; color: var(--slate-800); }
 .account-tabs a:hover { color: #00539f; }
 .account-tabs a.active { background: #00539f; color: #fff; }
+/* Trang giá vé: tiêu đề giữa + bảng giá theo loại ghế (kiểu Beta Cinemas) */
+.pr-title { text-align: center; margin: 8px 0 26px; font-size: clamp(24px, 3.4vw, 32px); text-transform: uppercase; color: var(--navy); }
+.pr-board { display: grid; gap: 22px; max-width: 900px; margin: 0 auto; }
+.pr-block { border: 1px solid var(--slate-200); border-radius: 14px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
+.pr-block-title { margin: 0; padding: 14px 22px; color: #fff; font-size: 18px; text-transform: uppercase;
+                  background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); }
+.pr-table { width: 100%; border-collapse: collapse; }
+.pr-table th, .pr-table td { padding: 13px 18px; text-align: center; border-top: 1px solid var(--slate-100); }
+.pr-table thead th { background: var(--slate-100); color: var(--slate-800); font-size: 14px; border-top: 0; }
+.pr-table td { font-size: 17px; font-weight: 700; color: var(--brand); }
+.pr-table td.pr-slot { text-align: left; color: var(--slate-800); }
+.pr-slot small { display: block; margin-top: 2px; color: var(--slate-500); font-size: 12.5px; font-weight: 500; }
+.pr-table tbody tr:hover { background: #f8fafc; }
+.pr-notes { max-width: 900px; margin: 22px auto 0; padding-left: 20px; color: var(--slate-600); font-size: 14px; line-height: 1.7; }

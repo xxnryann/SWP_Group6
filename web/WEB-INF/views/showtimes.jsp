@@ -3,25 +3,20 @@
 <c:set var="pageTitle" value="Lịch chiếu"/>
 <%@ include file="_header.jspf" %>
 
-<main class="container page">
-  <section class="movie-page-heading">
-    <div>
-      <p class="eyebrow">CINESTAR CINEMAS</p>
-      <h1>Lịch chiếu</h1>
-      <p class="sub">Xem các suất chiếu đang mở theo ngày.</p>
-    </div>
-    <c:if test="${isManager}">
-      <a class="btn btn-primary" href="${ctx}/manage/showtimes">Quản lý lịch chiếu</a>
-    </c:if>
-  </section>
+<main class="container page st-page">
+  <h1 class="st-title">Lịch chiếu</h1>
+  <c:if test="${isManager}">
+    <p class="st-manage"><a class="btn btn-primary" href="${ctx}/manage/showtimes">Quản lý lịch chiếu</a></p>
+  </c:if>
 
-  <form class="panel showtime-filters" method="get" action="${ctx}/showtimes">
-    <div class="field">
-      <label for="showtime-date">Ngày chiếu</label>
-      <input id="showtime-date" type="date" name="date" value="<c:out value='${selectedDate}'/>">
-    </div>
-    <button class="btn btn-cta" type="submit">Xem lịch</button>
-  </form>
+  <nav class="st-dates" aria-label="Chọn ngày chiếu">
+    <c:forEach var="t" items="${dateTabs}">
+      <a class="st-date ${t.active ? 'is-active' : ''}" href="${ctx}/showtimes?date=${t.iso}">
+        <strong><c:out value="${t.label}"/></strong>
+        <span><c:out value="${t.weekday}"/></span>
+      </a>
+    </c:forEach>
+  </nav>
 
   <c:choose>
     <c:when test="${empty showtimeGroups}">
@@ -30,49 +25,48 @@
       </div>
     </c:when>
     <c:otherwise>
-      <div class="movie-list">
-        <c:forEach var="group" items="${showtimeGroups}">
-          <article class="movie-card">
-            <div class="movie-card-poster">
-              <c:choose>
-                <c:when test="${not empty group.movie.posterDisplayUrl}">
-                  <img src="${group.movie.uploadedPoster ? ctx : ''}${group.movie.posterDisplayUrl}" alt="Poster phim ${group.movie.title}" loading="lazy">
-                </c:when>
-                <c:otherwise>
-                  <div class="poster-placeholder">Chưa có poster</div>
-                </c:otherwise>
-              </c:choose>
+      <c:forEach var="group" items="${showtimeGroups}">
+        <c:url var="detailUrl" value="/movies/detail"><c:param name="id" value="${group.movie.movieId}"/></c:url>
+        <article class="st-movie">
+          <a class="st-poster" href="${detailUrl}">
+            <c:choose>
+              <c:when test="${not empty group.movie.posterDisplayUrl}">
+                <img src="${group.movie.uploadedPoster ? ctx : ''}${group.movie.posterDisplayUrl}" alt="Poster phim ${group.movie.title}" loading="lazy">
+              </c:when>
+              <c:otherwise><div class="poster-placeholder">Chưa có poster</div></c:otherwise>
+            </c:choose>
+            <span class="badge"><c:out value="${group.movie.ageRating}"/></span>
+          </a>
+          <div class="st-info">
+            <h2><a href="${detailUrl}"><c:out value="${group.movie.title}"/></a></h2>
+            <p class="st-meta">
+              <c:if test="${not empty group.movie.genres}"><span>Thể loại: <strong><c:out value="${group.movie.genres}"/></strong></span></c:if>
+              <span>Thời lượng: <strong><c:out value="${group.movie.durationMinutes}"/> phút</strong></span>
+            </p>
+            <div class="st-times">
+              <c:forEach var="showtime" items="${group.showtimes}">
+                <c:choose>
+                  <c:when test="${empty sessionScope.authUser or sessionScope.authUser.role == 'CUSTOMER'}">
+                    <c:url var="bookingUrl" value="/booking/seats">
+                      <c:param name="showtimeId" value="${showtime.showtimeId}"/>
+                    </c:url>
+                    <a class="st-time" href="${bookingUrl}" data-start="<c:out value='${showtime.startTimeOnly}'/>">
+                      <strong><c:out value="${showtime.startTimeOnly}"/></strong>
+                      <small><c:out value="${showtime.roomName}"/></small>
+                    </a>
+                  </c:when>
+                  <c:otherwise>
+                    <span class="st-time">
+                      <strong><c:out value="${showtime.startTimeOnly}"/></strong>
+                      <small><c:out value="${showtime.roomName}"/></small>
+                    </span>
+                  </c:otherwise>
+                </c:choose>
+              </c:forEach>
             </div>
-            <div class="movie-card-content">
-              <h3><c:out value="${group.movie.title}"/></h3>
-              <p class="meta">
-                <c:if test="${not empty group.movie.genres}"><c:out value="${group.movie.genres}"/> · </c:if>
-                <c:out value="${group.movie.durationMinutes}"/> phút
-              </p>
-              <p class="rating">
-                <strong><c:out value="${group.movie.ageRating}"/></strong>
-              </p>
-              <div class="showtimes-list">
-                <c:forEach var="showtime" items="${group.showtimes}">
-                  <c:choose>
-                    <c:when test="${empty sessionScope.authUser or sessionScope.authUser.role == 'CUSTOMER'}">
-                      <c:url var="bookingUrl" value="/booking/seats">
-                        <c:param name="showtimeId" value="${showtime.showtimeId}"/>
-                      </c:url>
-                      <a class="showtime-btn" href="${bookingUrl}" data-start="<c:out value='${showtime.startTimeOnly}'/>">
-                        <c:out value="${showtime.startTimeOnly}"/>
-                      </a>
-                    </c:when>
-                    <c:otherwise>
-                      <span class="showtime-btn"><c:out value="${showtime.startTimeOnly}"/></span>
-                    </c:otherwise>
-                  </c:choose>
-                </c:forEach>
-              </div>
-            </div>
-          </article>
-        </c:forEach>
-      </div>
+          </div>
+        </article>
+      </c:forEach>
     </c:otherwise>
   </c:choose>
 </main>

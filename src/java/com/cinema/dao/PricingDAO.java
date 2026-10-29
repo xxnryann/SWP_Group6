@@ -16,13 +16,14 @@ public class PricingDAO {
     public List<PriceRow> findPriceTable() throws SQLException {
         List<PriceRow> list = new ArrayList<>();
         String sql = "SELECT ts.slot_name, st.type_name, "
+                + "CONVERT(varchar(5), ts.start_time, 108) AS slot_from, CONVERT(varchar(5), ts.end_time, 108) AS slot_to, "
                 + "MAX(CASE WHEN tp.day_type = 'Weekday' THEN tp.price END) AS weekday, "
                 + "MAX(CASE WHEN tp.day_type = 'Weekend' THEN tp.price END) AS weekend, "
                 + "MAX(CASE WHEN tp.day_type = 'Holiday' THEN tp.price END) AS holiday "
                 + "FROM TicketPrice tp "
                 + "JOIN TimeSlot ts ON ts.slot_id = tp.slot_id "
                 + "JOIN SeatType st ON st.seat_type_id = tp.seat_type_id "
-                + "GROUP BY ts.slot_id, ts.slot_name, ts.start_time, st.seat_type_id, st.type_name "
+                + "GROUP BY ts.slot_id, ts.slot_name, ts.start_time, ts.end_time, st.seat_type_id, st.type_name "
                 + "ORDER BY ts.start_time, st.seat_type_id";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -30,6 +31,8 @@ public class PricingDAO {
             while (rs.next()) {
                 PriceRow row = new PriceRow();
                 row.setSlotName(rs.getString("slot_name"));
+                String to = rs.getString("slot_to");
+                row.setSlotRange(rs.getString("slot_from") + " – " + ("23:59".equals(to) ? "24:00" : to));
                 row.setSeatTypeName(rs.getString("type_name"));
                 row.setWeekday(rs.getBigDecimal("weekday"));
                 row.setWeekend(rs.getBigDecimal("weekend"));

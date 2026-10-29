@@ -214,3 +214,37 @@ body.showtime-modal-open { overflow: hidden; }
 .movie-showtimes-inline > h2 { margin: 0 0 12px; font-size: 20px; }
 .movie-showtimes-inline .showtime-cinema { text-align: left; font-size: 18px; margin: 0 0 14px; }
 .movie-showtimes-inline .showtime-note { text-align: left; }
+
+/* Trang lịch chiếu: tab ngày + danh sách phim kèm giờ chiếu (kiểu Beta Cinemas) */
+.st-title { text-align: center; font-size: clamp(26px, 3.6vw, 34px); margin: 8px 0 18px; color: var(--navy, #0f172a); }
+.st-manage { text-align: center; margin: 0 0 14px; }
+.st-dates { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 26px; border-bottom: 2px solid var(--slate-200); }
+.st-date { display: flex; flex-direction: column; align-items: center; min-width: 96px; padding: 10px 14px 12px; color: var(--slate-600);
+           border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.st-date strong { font-size: 18px; color: var(--slate-800); }
+.st-date span { font-size: 13px; }
+.st-date:hover { color: var(--brand); }
+.st-date.is-active { border-bottom-color: var(--brand); }
+.st-date.is-active strong, .st-date.is-active span { color: var(--brand); }
+.st-movie { position: relative; overflow: hidden; display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 24px;
+            margin-bottom: 20px; padding: 26px 28px; border-radius: 14px; color: #fff;
+            background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); }
+.st-movie::after { content: ""; position: absolute; right: -90px; bottom: -130px; width: 330px; height: 330px; border-radius: 50%;
+                   background: rgba(249,115,22,.28); pointer-events: none; }
+.st-movie > * { position: relative; z-index: 1; }
+.st-poster { position: relative; display: block; border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.35); overflow: hidden; background: var(--slate-100); align-self: start; }
+.st-poster img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.st-poster .poster-placeholder { aspect-ratio: 2 / 3; }
+.st-poster .badge { position: absolute; left: 8px; top: 8px; background: var(--navy); color: #fff; }
+.st-info h2 { margin: 0 0 8px; font-size: 22px; }
+.st-info h2 a { color: #fff; }
+.st-meta { display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 0 0 16px; color: rgba(255,255,255,.78); font-size: 14px; }
+.st-meta strong { color: #fff; font-weight: 600; }
+.st-times { display: flex; flex-wrap: wrap; gap: 10px; }
+.st-time { display: inline-flex; flex-direction: column; align-items: center; min-width: 92px; padding: 8px 14px; border: 1px solid var(--slate-300);
+           border-radius: 8px; background: #fff; color: var(--slate-800); line-height: 1.25; }
+.st-time strong { font-size: 17px; }
+.st-time small { color: var(--slate-500); font-size: 12px; }
+a.st-time:hover { border-color: var(--brand); background: var(--brand); color: #fff; }
+a.st-time:hover small { color: rgba(255,255,255,.85); }
+@media (max-width: 640px) { .st-movie { grid-template-columns: 110px minmax(0, 1fr); gap: 14px; padding: 18px 16px; } .st-date { min-width: 74px; padding: 8px; } }
