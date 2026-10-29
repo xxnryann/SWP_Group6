@@ -122,10 +122,16 @@ function Get-ShowtimeId {
 
         Suat da bat dau duoc loai bang cach so sanh gio bat dau (data-start
         cua the suat chien) voi gio hien tai.
+
+        Mac dinh chi chon suat bat dau SAU it nhat 2.5 gio (-MinHoursAhead):
+        ve chi huy duoc khi con xa gio chieu hon 2 gio, nen neu chon suat
+        sap chieu thi bai kiem tra "ve moi co nut Huy ve" se that bai oan
+        (phu thuoc gio chay test). Dat -MinHoursAhead 0 de chap nhan moi suat chua bat dau.
     #>
     param(
         [Parameter(Mandatory = $true)] $Session,
-        [Parameter(Mandatory = $true)] [string]$BaseUrl
+        [Parameter(Mandatory = $true)] [string]$BaseUrl,
+        [double]$MinHoursAhead = 2.5
     )
     $dates = @((Get-Date).Date.ToString('yyyy-MM-dd'))
     $dates += (Get-Date).Date.AddDays(1).ToString('yyyy-MM-dd')
@@ -141,7 +147,7 @@ function Get-ShowtimeId {
             if ($seen.ContainsKey($id)) { continue }
             $seen[$id] = $true
             # Bo qua suat da bat dau chieu (khong the mo phien dat ve).
-            if (Test-TimeAlreadyPassed -Date $date -Time $m.Groups[2].Value) { continue }
+            if (Test-TimeAlreadyPassed -Date $date -Time $m.Groups[2].Value -MinHoursAhead $MinHoursAhead) { continue }
             # Chi chon suat con ghe GREEN, neu khong thi thu suat ke tiep.
             if (Test-ShowtimeHasFreeSeat -Session $Session -BaseUrl $BaseUrl -ShowtimeId $id) {
                 return $id
@@ -154,17 +160,19 @@ function Get-ShowtimeId {
 function Test-TimeAlreadyPassed {
     <#
     .SYNOPSIS
-        Tra ve $true neu gio chieu (HH:mm) cua ngay $Date da qua so voi hien tai.
+        Tra ve $true neu gio chieu (HH:mm) cua ngay $Date da qua, hoac chua toi
+        $MinHoursAhead gio ke tu bay gio (mac dinh 0 = chi loai suat da bat dau).
     #>
     param(
         [Parameter(Mandatory = $true)] [string]$Date,
-        [Parameter(Mandatory = $true)] [string]$Time
+        [Parameter(Mandatory = $true)] [string]$Time,
+        [double]$MinHoursAhead = 0
     )
     try {
         $day = [datetime]::ParseExact($Date, 'yyyy-MM-dd', $null)
         $parts = $Time.Split(':')
         $start = $day.AddHours([int]$parts[0]).AddMinutes([int]$parts[1])
-        return ($start -le (Get-Date))
+        return ($start -le (Get-Date).AddHours($MinHoursAhead))
     } catch {
         return $false
     }
