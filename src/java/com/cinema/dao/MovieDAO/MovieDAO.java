@@ -48,12 +48,31 @@ public class MovieDAO {
             + "AND (? IS NULL OR EXISTS (SELECT 1 FROM dbo.MovieGenre mg "
             + "WHERE mg.movie_id = d.movie_id AND mg.genre_id = ?)) ";
 
+    /** Quản lý: xem tất cả phim, kể cả phim đã kết thúc. */
     public MoviePage filter(Integer genreId, String status, int requestedPage, int pageSize)
             throws SQLException {
+        return filter(genreId, status, requestedPage, pageSize, false);
+    }
+
+    /**
+     * @param publicView true = khách / customer: ẩn phim đã kết thúc (hết hạn chiếu hoặc bị dừng),
+     *                   xếp phim đang chiếu lên đầu, phim sắp chiếu phía sau. Phim kết thúc chỉ hiện lại
+     *                   khi được mở chiếu lại (status khác Stopped và end_date còn hiệu lực).
+     */
+    public MoviePage filter(Integer genreId, String status, int requestedPage, int pageSize, boolean publicView)
+            throws SQLException {
+        String visible = publicView
+                ? " AND d.status <> 'Stopped' AND (d.end_date IS NULL OR d.end_date >= CAST(GETDATE() AS DATE)) "
+                : "";
+        String order = publicView
+                ? "ORDER BY CASE WHEN d.release_date <= CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END, "
+                  + "CASE WHEN d.release_date <= CAST(GETDATE() AS DATE) THEN d.created_at END DESC, "
+                  + "d.release_date ASC, d.movie_id DESC "
+                : "ORDER BY d.created_at DESC, d.movie_id DESC ";
         String cleanStatus = status == null || status.isBlank() ? null : status;
         int count;
         try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*)" + FROM_VIEW)) {
+                PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*)" + FROM_VIEW + visible)) {
             bindFilters(statement, genreId, cleanStatus);
             try (ResultSet result = statement.executeQuery()) {
                 result.next();
@@ -63,8 +82,8 @@ public class MovieDAO {
         int totalPages = Math.max(1, (int) Math.ceil((double) count / pageSize));
         int page = Math.max(1, Math.min(requestedPage, totalPages));
         List<Movie> movies = new ArrayList<>();
-        String sql = "SELECT d.*" + FROM_VIEW
-                + "ORDER BY d.created_at DESC, d.movie_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        String sql = "SELECT d.*" + FROM_VIEW + visible
+                + order + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             int next = bindFilters(statement, genreId, cleanStatus);

@@ -54,7 +54,12 @@ public class MovieServlet extends BaseServlet {
         Integer genreId = parsePositiveInt(request.getParameter("genre"));
         int requestedPage = parsePositiveInt(request.getParameter("page")) == null
                 ? 1 : parsePositiveInt(request.getParameter("page"));
-        MovieDAO.MoviePage result = movieDAO.filter(genreId, status, requestedPage, PAGE_SIZE);
+        // Khách và customer không thấy phim đã kết thúc; quản lý vẫn xem được tất cả.
+        User viewer = currentUser(request);
+        boolean publicView = viewer == null || "CUSTOMER".equals(viewer.getRole());
+        if (publicView && "Stopped".equals(status)) status = null;
+        MovieDAO.MoviePage result = movieDAO.filter(genreId, status, requestedPage, PAGE_SIZE, publicView);
+        request.setAttribute("hideEndedFilter", publicView);
         request.setAttribute("moviePage", result);
         request.setAttribute("movies", result.movies());
         request.setAttribute("genres", genreDAO.findAll());
@@ -63,7 +68,6 @@ public class MovieServlet extends BaseServlet {
         request.setAttribute("pageTitle", "Phim");
         request.setAttribute("showStatusFilter", canFilterByStatus);
         // Nút "Mua vé" chỉ hiện cho khách / khách vãng lai và chỉ với phim còn suất chiếu sắp tới.
-        User viewer = currentUser(request);
         boolean canBuy = viewer == null || "CUSTOMER".equals(viewer.getRole());
         request.setAttribute("canBuy", canBuy);
         if (canBuy) request.setAttribute("bookableIds", MovieShowtimesServlet.bookableMovieIds());

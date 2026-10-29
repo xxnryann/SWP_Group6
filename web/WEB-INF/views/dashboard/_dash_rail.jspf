@@ -26,7 +26,6 @@
       <a href="${ctx}/staff/emails">Hộp thư đi</a>
     </c:when>
     <c:otherwise>
-      <a href="${ctx}/dashboard/customer">Tổng quan</a>
       <a href="${ctx}/showtimes">Lịch chiếu</a>
       <a href="${ctx}/movies">Danh sách phim</a>
       <a href="${ctx}/pricing">Giá vé</a>

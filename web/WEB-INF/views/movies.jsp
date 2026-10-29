@@ -28,7 +28,7 @@
           <option value="">Tất cả</option>
           <option value="NowShowing" <c:if test="${selectedStatus == 'NowShowing'}">selected</c:if>>Đang chiếu</option>
           <option value="Upcoming" <c:if test="${selectedStatus == 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
-          <option value="Stopped" <c:if test="${selectedStatus == 'Stopped'}">selected</c:if>>Đã kết thúc</option>
+          <c:if test="${not hideEndedFilter}"><option value="Stopped" <c:if test="${selectedStatus == 'Stopped'}">selected</c:if>>Đã kết thúc</option></c:if>
         </select>
       </div>
       <div class="field">
