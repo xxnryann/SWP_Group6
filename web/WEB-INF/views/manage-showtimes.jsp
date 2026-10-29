@@ -13,9 +13,9 @@
       <h1>Quản lý lịch chiếu</h1>
       <p class="sub">Tạo, cập nhật hoặc xóa suất chiếu. Giờ bắt đầu tự do theo mốc 15 phút, giờ kết thúc tính bằng giờ bắt đầu cộng thời lượng phim, mỗi phòng cách nhau tối thiểu 15 phút.</p>
     </div>
-    <div class="movie-actions">
-      <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
+    <div class="movie-actions movie-actions-row">
       <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
+      <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
     </div>
   </section>
 

@@ -206,8 +206,9 @@ public class ShowtimeDAO {
     /** Các mốc giờ đã bị chiếm trong ngày (dùng để xếp lịch không trùng). */
     public List<ShowtimePlanner.OccupiedSlot> findOccupiedSlots(LocalDate date) throws SQLException {
         List<ShowtimePlanner.OccupiedSlot> slots = new ArrayList<>();
-        String sql = "SELECT room_name, starts_at FROM dbo.Showtime "
-                + "WHERE status = 'Scheduled' AND CAST(starts_at AS DATE) = ?";
+        String sql = "SELECT s.room_name, s.starts_at, DATEADD(MINUTE, m.duration_minutes, s.starts_at) AS ends_at "
+                + "FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id "
+                + "WHERE s.status = 'Scheduled' AND CAST(s.starts_at AS DATE) = ?";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setDate(1, java.sql.Date.valueOf(date));
@@ -217,8 +218,9 @@ public class ShowtimeDAO {
                     if (startsAt == null) {
                         continue;
                     }
-                    slots.add(new ShowtimePlanner.OccupiedSlot(
-                            result.getString("room_name"), startsAt.toLocalDateTime()));
+                    Timestamp endsAt = result.getTimestamp("ends_at");
+                    slots.add(new ShowtimePlanner.OccupiedSlot(result.getString("room_name"),
+                            startsAt.toLocalDateTime(), endsAt == null ? null : endsAt.toLocalDateTime()));
                 }
             }
         }

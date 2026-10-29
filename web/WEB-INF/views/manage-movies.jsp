@@ -51,6 +51,9 @@
                 <input type="hidden" name="id" value="${escapedMovieId}">
                 <button class="btn btn-danger btn-small" type="submit">Xóa</button>
               </form>
+              <c:if test="${movie.status == 'Stopped'}">
+                <a class="btn btn-cta btn-small" href="${ctx}/manage/movies?action=rerun&id=${escapedMovieId}">Chiếu lại</a>
+              </c:if>
               <c:if test="${movie.status != 'Stopped'}">
                 <a class="btn btn-danger btn-small" href="${ctx}/manage/movies?action=cancel-preview&id=${escapedMovieId}">Hủy &amp; hoàn tiền</a>
                 <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Ngừng chiếu phim này và hủy các suất tương lai chưa bán?');">
