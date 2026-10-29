@@ -4,6 +4,7 @@ import com.cinema.controller.BaseServlet;
 import com.cinema.model.OnlineBooking;
 import com.cinema.model.PointConfig;
 import com.cinema.service.OnlineBookingService;
+import com.cinema.util.Rows;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -127,6 +128,20 @@ public class BookingExtrasServlet extends BaseServlet {
         int balance = service.getPointBalance(accountId);
 
         req.setAttribute("booking", booking);
+        try {
+            // Loại ghế: gộp theo loại, kèm số lượng, đơn giá và thành tiền
+            req.setAttribute("seatGroups", Rows.query(
+                    "SELECT st.type_name, REPLACE(REPLACE(REPLACE(st.type_name, 'Standard', N'Thường'), 'Couple', N'Đôi'), 'VIP', N'VIP') AS type_vi, COUNT(*) AS qty, MAX(t.price) AS unit_price, SUM(t.price) AS line_total, "
+                  + "STRING_AGG(CONCAT(sc.row_label, sc.seat_number), ', ') AS seats "
+                  + "FROM Ticket t JOIN Seat sc ON sc.seat_id = t.seat_id "
+                  + "JOIN SeatType st ON st.seat_type_id = sc.seat_type_id "
+                  + "WHERE t.booking_id = ? AND t.status IN ('Held','Booked','Used') "
+                  + "GROUP BY st.type_name", booking.getBookingId()));
+            // Thông tin người thanh toán lấy từ tài khoản đặt vé
+            req.setAttribute("payer", new com.cinema.dao.UserDAO().findById(accountId));
+        } catch (Exception e) {
+            req.setAttribute("seatGroups", java.util.Collections.emptyList());
+        }
         req.setAttribute("combos", service.getActiveCombos());
         req.setAttribute("comboQty", comboQty);
         req.setAttribute("pointConfig", pointConfig);

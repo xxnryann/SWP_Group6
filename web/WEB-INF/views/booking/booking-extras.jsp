@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Đặt vé — Combo & ưu đãi"/>
 <%@ include file="../_header.jspf" %>
 <style>
@@ -36,10 +37,20 @@
   .uip-total { display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
                border-top: 2px solid var(--slate-200); margin-top: 8px; padding-top: 14px; }
   .uip-total .uip-amt { color: var(--cta); font-weight: 800; font-size: 25px; }
+  .uip-payer { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 14px; }
+  .uip-payer span { display: block; color: var(--slate-500); font-size: 13px; margin-bottom: 2px; }
+  .uip-payer strong { word-break: break-word; }
+  .uip-hint { margin: 10px 0 0; font-size: 13px; color: var(--slate-500); }
+  .uip-seat-line { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+                   margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--slate-200); }
+  .uip-seat-type { font-weight: 800; text-transform: uppercase; }
+  .uip-seat-type small { font-weight: 500; text-transform: none; color: var(--slate-500); }
+  @media (max-width: 640px) { .uip-payer { grid-template-columns: 1fr; } }
   .uip-next { margin-top: 18px; }
   .uip-nav { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
   @media (max-width: 960px) { .uip-layout { grid-template-columns: 1fr; } .uip-summary { position: static; } }
 </style>
+<fmt:setLocale value="vi_VN"/>
 <main>
   <section class="page">
     <div class="container">
@@ -53,6 +64,26 @@
 
       <div class="uip-layout">
         <div>
+          <div class="card uip-sec">
+            <h2><span class="uip-n">👤</span> Thông tin thanh toán</h2>
+            <div class="uip-payer">
+              <div><span>Họ tên</span><strong><c:out value="${not empty payer.fullName ? payer.fullName : sessionScope.authUser.fullName}"/></strong></div>
+              <div><span>Số điện thoại</span><strong><c:out value="${empty payer.phone ? 'Chưa cập nhật' : payer.phone}"/></strong></div>
+              <div><span>Email</span><strong><c:out value="${not empty payer.email ? payer.email : booking.customerEmail}"/></strong></div>
+            </div>
+            <c:if test="${empty payer.phone}">
+              <p class="uip-hint">Bạn chưa có số điện thoại. <a href="${ctx}/account/profile">Cập nhật trong thông tin cá nhân</a>.</p>
+            </c:if>
+            <c:forEach var="g" items="${seatGroups}">
+              <div class="uip-seat-line">
+                <span class="uip-seat-type">Ghế <c:out value="${g.type_vi}"/>
+                  <small>(<c:out value="${g.seats}"/>)</small></span>
+                <span><c:out value="${g.qty}"/> x <fmt:formatNumber value="${g.unit_price}" pattern="#,##0"/></span>
+                <strong>= <fmt:formatNumber value="${g.line_total}" pattern="#,##0"/> VNĐ</strong>
+              </div>
+            </c:forEach>
+          </div>
+
           <div class="card uip-sec">
             <h2><span class="uip-n">1</span> Combo bắp nước (tùy chọn)</h2>
             <form method="post" action="${ctx}/booking/extras">

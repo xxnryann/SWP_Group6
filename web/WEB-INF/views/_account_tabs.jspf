@@ -1,6 +1,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%-- Thanh tab của khu "Thông tin tài khoản" (đặt accountTab = info | points trước khi include). --%>
+<%-- Thanh tab của khu "Thông tin tài khoản" (đặt accountTab = info | points | vouchers trước khi include). --%>
 <nav class="account-tabs" aria-label="Tài khoản">
   <a class="${accountTab == 'info' ? 'active' : ''}" href="${ctx}/account/profile">Thông tin tài khoản</a>
   <a class="${accountTab == 'points' ? 'active' : ''}" href="${ctx}/account/points">Điểm MyPoint</a>
+  <a class="${accountTab == 'vouchers' ? 'active' : ''}" href="${ctx}/account/vouchers">Voucher</a>
 </nav>

@@ -229,6 +229,18 @@ public class DashboardDAO {
      * Lấy danh sách phim đang chiếu cho dashboard customer.
      */
     public List<DashboardShowtime> getNowShowingMovies() throws SQLException {
+        return queryMovies("m.release_date <= CAST(GETDATE() AS DATE) "
+                + "AND (m.end_date IS NULL OR m.end_date >= CAST(GETDATE() AS DATE)) "
+                + "AND m.status <> 'Stopped'", "m.created_at DESC, m.movie_id DESC");
+    }
+
+    /** Phim sắp chiếu (ngày khởi chiếu còn ở tương lai), phim ra mắt sớm nhất trước. */
+    public List<DashboardShowtime> getUpcomingMovies() throws SQLException {
+        return queryMovies("m.release_date > CAST(GETDATE() AS DATE) AND m.status <> 'Stopped'",
+                "m.release_date ASC, m.movie_id DESC");
+    }
+
+    private List<DashboardShowtime> queryMovies(String where, String orderBy) throws SQLException {
         List<DashboardShowtime> items = new ArrayList<>();
         
         String sql = "SELECT DISTINCT "
@@ -247,10 +259,7 @@ public class DashboardDAO {
                 + "FROM Movie m "
                 + "LEFT JOIN (SELECT movie_id, STRING_AGG(CAST(genre_id AS VARCHAR(10)), ',') as genre_ids "
                 + "           FROM MovieGenre GROUP BY movie_id) mg ON m.movie_id = mg.movie_id "
-                + "WHERE m.release_date <= CAST(GETDATE() AS DATE) "
-                + "AND (m.end_date IS NULL OR m.end_date >= CAST(GETDATE() AS DATE)) "
-                + "AND m.status <> 'Stopped' "
-                + "ORDER BY m.created_at DESC, m.movie_id DESC";
+                + "WHERE " + where + " ORDER BY " + orderBy;
         
         try (Connection connection = DBContext.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);

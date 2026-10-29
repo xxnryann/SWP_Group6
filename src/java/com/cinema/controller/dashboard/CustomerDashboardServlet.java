@@ -25,9 +25,11 @@ public class CustomerDashboardServlet extends DashboardBaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             req.setAttribute("nowShowingMovies", dashboardDAO.getNowShowingMovies());
+            req.setAttribute("upcomingMovies", dashboardDAO.getUpcomingMovies());
         } catch (SQLException e) {
             getServletContext().log("Unable to load customer dashboard movies.", e);
             req.setAttribute("nowShowingMovies", List.of());
+            req.setAttribute("upcomingMovies", List.of());
             flash(req, "error", "Không thể tải danh sách phim: " + e.getMessage());
         }
         try {

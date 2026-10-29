@@ -91,7 +91,7 @@
     var p = a.pathname.replace(/\/$/, '');
     var here = location.pathname.replace(/\/$/, '');
     // Điểm MyPoint là tab trong khu Thông tin tài khoản -> vẫn tô sáng mục Thông tin cá nhân
-    if (/\/account\/points$/.test(here)) here = here.replace(/points$/, 'profile');
+    if (/\/account\/(points|vouchers)$/.test(here)) here = here.replace(/(points|vouchers)$/, 'profile');
     if (here === p) a.classList.add('active');
   });
 

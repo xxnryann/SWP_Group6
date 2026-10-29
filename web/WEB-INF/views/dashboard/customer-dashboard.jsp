@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Tài khoản của tôi"/>
+<c:set var="pageTitle" value="Trang chủ"/>
 <%@ include file="../_header.jspf" %>
 <main class="dashboard">
   <div class="container">
@@ -24,62 +24,61 @@
       </section>
     </c:if>
 
-    <section class="dashboard-section">
-      <h2>Phim đang chiếu</h2>
-      <c:choose>
-        <c:when test="${empty nowShowingMovies}">
-          <div class="dashboard-empty">
-            <p>Không có phim đang chiếu lúc này.</p>
-          </div>
-        </c:when>
-        <c:otherwise>
-          <div class="dashboard-movie-grid">
-            <c:forEach var="item" items="${nowShowingMovies}">
-              <c:set var="movie" value="${item.movie}"/>
-              <c:set var="posterSrc"><c:out value="${movie.posterDisplayUrl}"/></c:set>
-              <c:set var="movieTitle"><c:out value="${movie.title}"/></c:set>
-              <c:url var="detailUrl" value="/movies/detail"><c:param name="id" value="${movie.movieId}"/></c:url>
-              <c:set var="escapedDetailUrl"><c:out value="${detailUrl}"/></c:set>
-              <article class="dashboard-movie-card">
-                <a class="dashboard-movie-card-main" href="${escapedDetailUrl}">
-                  <div class="dashboard-movie-poster">
-                    <c:choose>
-                      <c:when test="${not empty movie.posterDisplayUrl}">
-                        <c:choose>
-                          <c:when test="${movie.uploadedPoster}"><img src="${ctx}${posterSrc}" alt="Poster phim ${movieTitle}" loading="lazy"></c:when>
-                          <c:otherwise><img src="${posterSrc}" alt="Poster phim ${movieTitle}" loading="lazy"></c:otherwise>
-                        </c:choose>
-                      </c:when>
-                      <c:otherwise><div class="poster-placeholder">Chưa có poster</div></c:otherwise>
-                    </c:choose>
-                    <span class="badge"><c:out value="${movie.ageRating}"/></span>
-                  </div>
-                  <div class="dashboard-movie-info">
-                    <h3><c:out value="${movie.title}"/></h3>
-                    <p class="dashboard-movie-meta">
-                      <c:if test="${not empty movie.genres}"><c:out value="${movie.genres}"/></c:if>
-                      <c:if test="${not empty movie.genres}"> · </c:if>
-                      <c:out value="${movie.durationMinutes}"/> phút
-                    </p>
-                    <c:choose>
-                      <c:when test="${not empty item.nextShowtimeLabel}">
-                        <p class="dashboard-movie-showtime">Suất gần nhất: <strong><c:out value="${item.nextShowtimeLabel}"/></strong></p>
-                      </c:when>
-                      <c:otherwise>
-                        <p class="dashboard-movie-showtime is-muted">Chưa có lịch chiếu</p>
-                      </c:otherwise>
-                    </c:choose>
-                  </div>
-                </a>
-                <a class="btn btn-primary dashboard-movie-buy" href="${ctx}/showtimes">Mua vé</a>
-              </article>
-            </c:forEach>
-          </div>
-        </c:otherwise>
-      </c:choose>
+    <section class="dashboard-section dash-movies">
+      <div class="dash-tabs" role="tablist" aria-label="Phim theo trạng thái">
+        <button type="button" class="dash-tab is-active" role="tab" id="dtab-now" aria-controls="dpanel-now" aria-selected="true" data-target="dpanel-now">Phim đang chiếu</button>
+        <button type="button" class="dash-tab" role="tab" id="dtab-soon" aria-controls="dpanel-soon" aria-selected="false" data-target="dpanel-soon">Phim sắp chiếu</button>
+      </div>
+
+      <div class="dash-panel" role="tabpanel" id="dpanel-now" aria-labelledby="dtab-now">
+        <c:choose>
+          <c:when test="${empty nowShowingMovies}">
+            <div class="dashboard-empty"><p>Không có phim đang chiếu lúc này.</p></div>
+          </c:when>
+          <c:otherwise>
+            <div class="dashboard-movie-grid">
+              <c:forEach var="item" items="${nowShowingMovies}">
+                <c:set var="upcoming" value="${false}"/>
+                <%@ include file="_dash_movie_card.jspf" %>
+              </c:forEach>
+            </div>
+          </c:otherwise>
+        </c:choose>
+      </div>
+
+      <div class="dash-panel" role="tabpanel" id="dpanel-soon" aria-labelledby="dtab-soon" hidden>
+        <c:choose>
+          <c:when test="${empty upcomingMovies}">
+            <div class="dashboard-empty"><p>Chưa có phim sắp chiếu.</p></div>
+          </c:when>
+          <c:otherwise>
+            <div class="dashboard-movie-grid">
+              <c:forEach var="item" items="${upcomingMovies}">
+                <c:set var="upcoming" value="${true}"/>
+                <%@ include file="_dash_movie_card.jspf" %>
+              </c:forEach>
+            </div>
+          </c:otherwise>
+        </c:choose>
+      </div>
     </section>
   </div>
 </main>
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.dash-tab');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) {
+        var on = x === t;
+        x.classList.toggle('is-active', on);
+        x.setAttribute('aria-selected', on);
+        document.getElementById(x.dataset.target).hidden = !on;
+      });
+    });
+  });
+})();
+</script>
 <script>
 (function () {
   var root = document.getElementById('news-slider');

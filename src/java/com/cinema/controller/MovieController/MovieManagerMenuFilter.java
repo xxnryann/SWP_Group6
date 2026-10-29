@@ -36,7 +36,7 @@ public class MovieManagerMenuFilter implements Filter {
                 || path.startsWith("/dashboard/manager")
                 || path.startsWith("/dashboard/staff")
                 || path.startsWith("/dashboard/customer");
-        httpRequest.setAttribute("dashboardModule", isDashboard);
+        httpRequest.setAttribute("dashboardModule", isDashboard || isHome);
         // Khu vực nội bộ theo vai trò (quản trị / quản lý / quầy / khách hàng):
         // các trang này dùng sidebar riêng nên không hiện thanh nav công khai.
         // Trang chủ ("/" hoặc "/home") và các trang công khai vẫn giữ nguyên.
@@ -49,10 +49,10 @@ public class MovieManagerMenuFilter implements Filter {
         httpRequest.setAttribute("roleModule", isRolePage);
         // Đã đăng nhập thì menu dọc (rail) hiện ở mọi trang nội bộ, kể cả khi
         // điều hướng sang trang khác -> không mất menu khi đổi trang.
-        // Trang chủ ("/" hoặc "/home") giữ nguyên layout công khai như yêu cầu.
+        // Trang chủ dùng chung giao diện tổng quan customer: khách chưa đăng nhập thấy header công khai.
         boolean signedIn = user != null;
         httpRequest.setAttribute("signedIn", signedIn);
-        httpRequest.setAttribute("railModule", signedIn && !isHome);
+        httpRequest.setAttribute("railModule", signedIn);
         chain.doFilter(request, response);
     }
 }
