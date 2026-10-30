@@ -18,32 +18,32 @@
              background:#fff; border:1px solid var(--slate-200); border-radius:16px; box-shadow:var(--shadow);
              padding:28px 16px 24px; overflow-x:auto; }
   .sm-title { font-size:17px; margin:0 0 10px; }
-  .seat-row { display:flex; gap:6px; align-items:center; }
-  .row-label { width:40px; display:inline-flex; align-items:center; justify-content:center; gap:5px;
-               font-weight:800; color:var(--slate-500); font-size:13px; }
-  .seat { position:relative; width:42px; height:38px; border-radius:10px 10px 4px 4px; border:2px solid var(--slate-300);
-          cursor:pointer; font: 700 11.5px var(--font); background:#fff; color:var(--slate-700);
-          --seat-type-color: transparent;
+  .seat-row { display:flex; gap:10px; align-items:center; }
+  .row-label { width:40px; display:inline-flex; align-items:center; justify-content:center;
+               font-weight:800; color:var(--slate-500); font-size:19px; }
+  .seat { position:relative; width:56px; height:48px; border-radius:14px 14px 6px 6px; border:3px solid var(--slate-300);
+          cursor:pointer; font: 800 14px var(--font); background:#fff; color:var(--slate-700); padding:0;
           transition: transform .08s, background .12s, border-color .12s; }
   .seat:hover:not(:disabled) { transform: translateY(-2px); }
-  .seat.GREEN { background:#ecfdf5; border-color:var(--success); color:#065f46; }
-  .seat.YELLOW { background:#fef3c7; border-color:var(--accent); color:#92400e; cursor:not-allowed; }
+  /* Ghe trong: mau theo LOAI ghe (thuong = xanh la, VIP = cam, doi = hong). Class GREEN/YELLOW/RED/GREY giu nguyen
+     (test script doi khop class). */
+  .seat.GREEN { background:#ecfdf5; border-color:#059669; color:#065f46; }
+  .seat.GREEN[data-type="VIP"] { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+  .seat.GREEN[data-type="Couple"] { background:#fce7f3; border-color:#db2777; color:#9d174d; }
+  .seat.YELLOW { background:#fef3c7; border-color:var(--accent); color:#92400e; cursor:not-allowed; opacity:.65; }
   .seat.RED { background:#fee2e2; border-color:#fca5a5; color:#991b1b; cursor:not-allowed; }
   .seat.GREY { background:var(--slate-100); border-color:var(--slate-200); color:var(--slate-400); cursor:not-allowed; }
-  /* Vach dinh danh loai ghe (Standard / VIP / Couple) o tren moi ghe - khong doi mau nen trang thai.
-     Dung attribute selector de giu nguyen class "seat GREEN/YELLOW/RED/GREY" (test script doi khop class). */
-  .seat[data-type="Standard"] { --seat-type-color: var(--success); }
-  .seat[data-type="VIP"] { --seat-type-color: var(--accent); }
-  .seat[data-type="Couple"] { --seat-type-color: #db2777; }
-  .seat[data-type]:not(.selected) { box-shadow: inset 0 4px 0 var(--seat-type-color); }
-  .seat.selected { background:var(--brand); border-color:var(--brand); color:#fff;
-                   box-shadow: 0 0 0 3px rgba(29,78,216,.30); }
+  .seat.selected, .seat.selected[data-type] { background:var(--brand); border-color:var(--brand); color:#fff;
+                   box-shadow: 0 0 0 3px rgba(29,78,216,.30); opacity:1; }
+  /* Ghe doi: hai ghe cua mot cap ghep thanh mot khoi, o giua co vach ngan */
+  .seat.pair-l { border-radius:14px 0 0 6px; border-right-width:1.5px; margin-right:-10px; }
+  .seat.pair-r { border-radius:0 14px 6px 0; border-left-width:1.5px; }
   .screen { width:62%; min-width:280px; text-align:center; color:#fff; padding:10px; margin-bottom:22px;
             background: linear-gradient(180deg, var(--navy), var(--slate-700)); border-radius:6px 6px 26px 26px;
             letter-spacing:6px; font-weight:700; font-size:13px; box-shadow: 0 14px 18px -10px rgba(15,23,42,.45); }
   .legend { display:flex; gap:18px; flex-wrap:wrap; margin:14px 0 4px; font-size:13.5px; color:var(--slate-600); }
   .legend span { display:inline-flex; align-items:center; gap:7px; }
-  .legend .seat { width:24px; height:22px; cursor:default; font-size:0; }
+  .legend .seat { width:24px; height:22px; cursor:default; font-size:0; border-width:2px; }
   .legend .seat:hover { transform:none; }
 
   /* ---------- panel chu thich loai ghe ---------- */
@@ -56,7 +56,7 @@
                  letter-spacing:.05em; }
   .sg-legend { display:flex; gap:16px 22px; flex-wrap:wrap; font-size:13.5px; color:var(--slate-600); }
   .sg-legend span { display:inline-flex; align-items:center; gap:8px; }
-  .sg-legend .seat { width:24px; height:22px; cursor:default; font-size:0; box-shadow:none; }
+  .sg-legend .seat { width:24px; height:22px; cursor:default; font-size:0; box-shadow:none; border-width:2px; }
   .sg-types { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; }
   .sg-type { border:1px solid var(--slate-200); border-radius:12px; padding:12px 14px; background:var(--slate-50); }
   .sg-type .sg-type-name { display:flex; align-items:center; gap:8px; font-weight:800; color:var(--navy); font-size:14.5px; }
@@ -100,9 +100,8 @@
       <%-- Dat TREN so do ghe: khach doc chu thich truoc, roi moi chon ghe. --%>
       <div class="seat-guide">
         <h2>Chú thích sơ đồ ghế</h2>
-        <p class="sg-sub">Màu nền của ghế cho biết <b>trạng thái</b>, dải màu viền trên đầu ghế và
-           chấm màu cạnh tên hàng cho biết <b>loại ghế</b>. Di chuột lên tên hàng để xem giá vé
-           của hàng đó.</p>
+        <p class="sg-sub">Ghế trống có màu theo <b>loại ghế</b> (xanh lá: thường, cam: VIP, hồng: ghế đôi);
+           các màu khác cho biết <b>trạng thái</b> ghế. Di chuột lên tên hàng để xem giá vé của hàng đó.</p>
 
         <div class="sg-block">
           <h3>Trạng thái ghế</h3>
@@ -153,14 +152,14 @@
             <c:set var="lg" value="${rowLegendMap[row[0].rowLabel]}"/>
             <span class="row-label"
                   title="Hàng ${row[0].rowLabel} · ${row[0].seatType} · ${lg.seatRangeLabel} · ${lg.priceLabel} — ${lg.noteLabel}">
-              ${row[0].rowLabel}<i class="seat-type-dot t-${row[0].seatType}"></i>
+              ${row[0].rowLabel}
             </span>
             <c:forEach var="s" items="${row}">
               <button type="button" class="seat ${s.color}"
                       title="${s.label} · ${s.seatType} · ${s.statusLabel}"
                       data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
                       ${s.available ? '' : 'disabled="disabled"'}
-                      onclick="toggleSeat(this)">${s.seatNumber}</button>
+                      onclick="toggleSeat(this)">${s.label}</button>
             </c:forEach>
           </div>
         </c:forEach>
@@ -188,6 +187,16 @@
   document.querySelectorAll('.seat[data-id]').forEach(b => { byId[b.dataset.id] = b; });
   const selected = new Set();
 
+  /* Ghep hai ghe doi lien ke thanh mot khoi (ghe trai / ghe phai). */
+  document.querySelectorAll('.seat[data-pair]').forEach(b => {
+    if (!b.dataset.pair || b.classList.contains('pair-l') || b.classList.contains('pair-r')) return;
+    const next = b.nextElementSibling;
+    if (next && next.dataset && next.dataset.id === b.dataset.pair) {
+      b.classList.add('pair-l');
+      next.classList.add('pair-r');
+    }
+  });
+
   /* Gia ve theo loai ghe cua suat chien hien tai (doc tu DOM de tranh loi JSON). */
   const seatPrices = {};
   let hasAnyPrice = false;
@@ -196,6 +205,20 @@
     seatPrices[box.dataset.type] = parseInt(box.dataset.price, 10) || 0;
     hasAnyPrice = true;
   });
+
+  /* Cac hang co so nut khac nhau (hang ghe doi ngan hon) -> dua ve cung do rong de chu cai A-E thang cot;
+     ghe cua hang ngan duoc can giua trong phan con lai. */
+  (function alignRows() {
+    const rows = [...document.querySelectorAll('.seat-row')];
+    if (!rows.length) return;
+    const widths = rows.map(r => r.scrollWidth);
+    const max = Math.max(...widths);
+    rows.forEach((r, i) => {
+      r.style.width = max + 'px';
+      const firstSeat = r.querySelector('.seat');
+      if (firstSeat && max > widths[i]) firstSeat.style.marginLeft = ((max - widths[i]) / 2) + 'px';
+    });
+  })();
 
   function formatVnd(value) {
     return value.toLocaleString('vi-VN');
