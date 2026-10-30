@@ -5,7 +5,6 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Soát vé tại cửa phòng chiếu</h2>
-    <p class="sub">Quét mã QR hoặc nhập mã vé. Chỉ cho vào phòng trong khoảng 30 phút trước giờ chiếu đến khi suất kết thúc.</p>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
     <c:if test="${not empty success}"><p class="alert alert-success"><c:out value="${success}"/></p></c:if>

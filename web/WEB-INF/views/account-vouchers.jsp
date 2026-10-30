@@ -9,7 +9,6 @@
   <%@ include file="_account_tabs.jspf" %>
   <section class="panel">
     <h2>Voucher hiện có</h2>
-    <p class="sub">Các mã đang áp dụng. Nhập mã ở bước "Voucher &amp; MyPoint" khi đặt vé để được giảm giá.</p>
     <c:choose>
       <c:when test="${empty vouchers}">
         <p class="sub">Hiện chưa có voucher nào đang áp dụng.</p>

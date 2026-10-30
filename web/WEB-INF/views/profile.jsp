@@ -10,7 +10,6 @@
   <div class="account-grid">
     <div class="panel profile-panel">
       <h2>Thông tin cá nhân</h2>
-      <p class="sub">Cập nhật thông tin liên hệ của bạn.</p>
 
       <form class="avatar-row" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/account/avatar">
         <input type="hidden" name="_csrf" value="${csrf}">
@@ -90,7 +89,6 @@
     </div>
     <form class="panel" id="password" method="post" action="${pageContext.request.contextPath}/account/password" novalidate ${passwordOpen ? '' : 'hidden'}>
       <h2>Đổi mật khẩu</h2>
-      <p class="sub">Dùng mật khẩu mạnh và không trùng với dịch vụ khác.</p>
       <input type="hidden" name="_csrf" value="${csrf}">
 
       <div class="field ${not empty errors.currentPassword ? 'has-error' : ''}">

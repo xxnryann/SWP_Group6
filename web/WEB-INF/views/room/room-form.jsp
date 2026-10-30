@@ -12,12 +12,6 @@
         <div>
       <div class="card rm-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
-        <p class="sub">
-          <c:choose>
-            <c:when test="${room.roomId > 0}">Cập nhật thông tin phòng. Layout ghế được thiết lập ở màn hình “Layout &amp; ghế”.</c:when>
-            <c:otherwise>Sau khi tạo phòng, bạn sẽ được chuyển sang màn hình thiết lập layout ghế.</c:otherwise>
-          </c:choose>
-        </p>
         <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 
         <form method="post" action="${ctx}/admin/rooms">

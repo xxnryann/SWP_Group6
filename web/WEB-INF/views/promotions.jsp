@@ -9,7 +9,6 @@
     <div>
       <p class="eyebrow">CINESTAR CINEMAS</p>
       <h1>Khuyến mãi</h1>
-      <p class="sub">Các mã voucher đang áp dụng. Nhập mã khi thanh toán để được giảm giá.</p>
     </div>
   </section>
 

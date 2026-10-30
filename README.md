@@ -13,10 +13,10 @@ Stack: Java 11/17 · Jakarta Servlet 6.0 · JSP + JSTL 3.0 · SQL Server 2019 (M
 
 ```powershell
 $env:SQLCMDPASSWORD = "<password>"      # mat khau di qua bien moi truong, khong qua -P (tranh lo trong danh sach tien trinh)
-sqlcmd -S "tcp:localhost,1433" -U sa -f 65001 -i sql\new.sql
+sqlcmd -S "tcp:localhost,1433" -U sa -f 65001 -i sql\cinemaweb.sql
 ```
 
-`sql/new.sql` **drop và tạo lại** toàn bộ `CinemaWebDB` (32 bảng, 21 stored procedure, 3 view, trigger, hàm + dữ liệu mẫu). Cần `sqlcmd` và SQL Server 2019+.
+`sql/cinemaweb.sql` **drop và tạo lại** toàn bộ `CinemaWebDB` (32 bảng, 21 stored procedure, 3 view, trigger, hàm + dữ liệu mẫu). Cần `sqlcmd` và SQL Server 2019+.
 
 > `-f 65001` bắt buộc, nếu không chuỗi tiếng Việt trong seed data sẽ bị hỏng.
 
@@ -60,7 +60,7 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 | `scripts/deploy.ps1` | Build rồi deploy `web/` sang `webapps/<context>` của Tomcat |
 | `scripts/ensure-utf8-bom.ps1` | Thêm BOM UTF-8 cho file `.ps1` (PowerShell 5.1 đọc file không BOM theo ANSI → hỏng tiếng Việt) |
 | `scripts/fix_mojibake.py` | Sửa file bị "mojibake" (UTF-8 bị đọc như cp1252 rồi ghi lại) |
-| `scripts/compare-procedures.ps1` | Đối chiếu stored procedure trong `sql/new.sql` với DB đã deploy (thêm `-Sync` để tạo lại procedure lệch) |
+| `scripts/compare-procedures.ps1` | Đối chiếu stored procedure trong `sql/cinemaweb.sql` với DB đã deploy (thêm `-Sync` để tạo lại procedure lệch) |
 | `scripts/test-booking-flow.ps1` | Kiểm thử trọn luồng BF-02 (happy path) — **ghi vào CSDL** (đơn, vé, thanh toán, điểm, email) |
 | `scripts/test-booking-errors.ps1` | Kiểm thử các nhánh lỗi (hủy, webhook sai chữ ký, idempotency) — **ghi vào CSDL** |
 | `scripts/test-smoke.ps1` | Kiểm thử nhanh toàn bộ 5 vai trò: mọi trang chính trả 200, 4 dashboard theo vai trò, `/booking/*` chặn khách chưa đăng nhập |
@@ -170,7 +170,7 @@ Manager tạo lịch theo một trong hai cách:
 | Throttle 2 giây cho `sp_ReleaseExpiredHolds` | `OnlineBookingService.releaseExpiredHolds()` | Không dồn 3 lệnh `UPDATE` thừa mỗi lần bấm chuột |
 | Cấu hình MyPoint đọc `TOP 1 ... ORDER BY effective_from DESC` | `BookingDAO.getPointConfig()` | Luôn lấy cấu hình đang hiệu lực, không cần index phụ |
 | Bỏ `LOWER()` khi so sánh email (`Account.email` đã collation `CI_AS`) | `TicketDAO`, `UserDAO` | So sánh trực tiếp còn **SARGable** → seek index thay vì scan |
-| Index hỗ trợ luồng đặt vé | `sql/new.sql` → `IX_Booking_Customer_Status`, `IX_Booking_Showtime_Status`, `IX_Booking_Expiry`, `IX_Ticket_Booking_Status`, `IX_Payment_GatewayTxn`, `IX_MyPointTxn_Customer` | Tránh scan bảng khi `Ticket`/`Booking` đã lớn; `IX_Payment_GatewayTxn` là khoá idempotency của webhook |
+| Index hỗ trợ luồng đặt vé | `sql/cinemaweb.sql` → `IX_Booking_Customer_Status`, `IX_Booking_Showtime_Status`, `IX_Booking_Expiry`, `IX_Ticket_Booking_Status`, `IX_Payment_GatewayTxn`, `IX_MyPointTxn_Customer` | Tránh scan bảng khi `Ticket`/`Booking` đã lớn; `IX_Payment_GatewayTxn` là khoá idempotency của webhook |
 
 ---
 
@@ -198,7 +198,10 @@ web/
 ├── WEB-INF/web.xml
 └── assets/                # CSS / JS
 
-sql/new.sql                # Full schema + stored procedure + seed
+sql/
+├── cinemaweb.sql          # Full DB: schema + stored procedure + view + trigger + dữ liệu mẫu (drop & tạo lại CinemaWebDB)
+├── upgrade.sql            # Nâng cấp DB ĐÃ CÓ dữ liệu (các thay đổi theo thời gian, chạy lặp lại không hại; sqlcmd -I)
+└── seed_demo.sql                   # Dữ liệu demo tuỳ chọn chạy SAU cinemaweb.sql (poster/tin tức, lịch chiếu xoay vòng)
 scripts/                   # Build, deploy, test (PowerShell)
 ```
 
@@ -295,7 +298,7 @@ Yêu cầu: ứng dụng đã deploy lên Tomcat và CSDL đã seed.
 
 > **Cảnh báo:** `test-booking-flow`, `test-booking-errors` và `test-admin-manager-staff` **ghi dữ liệu thật vào CSDL đang dùng**
 > (đơn, vé, thanh toán, điểm thưởng, email, ghế của một suất chiếu). Chỉ `test-admin-manager-staff` tự dọn phần `ZZTEST` của nó.
-> Hãy chạy trên CSDL riêng cho kiểm thử (khôi phục từ `sql/new.sql`) chứ không chạy trên dữ liệu dùng để demo/review.
+> Hãy chạy trên CSDL riêng cho kiểm thử (khôi phục từ `sql/cinemaweb.sql`) chứ không chạy trên dữ liệu dùng để demo/review.
 
 Biến môi trường dùng chung cho mọi script test (đều tuỳ chọn):
 
@@ -347,4 +350,4 @@ Tài khoản seed: `khach1@gmail.com` / `123456`.
 | Tiếng Việt trong `.ps1` sai | PowerShell 5.1 đọc file không BOM theo ANSI | `powershell -File scripts\ensure-utf8-bom.ps1 scripts` |
 | Chạy code cũ sau khi deploy | Tomcat không reload class | Restart Tomcat hoặc xoá `work/Catalina/localhost/<ctx>` |
 | `javac` báo `illegal character: '\ufeff'` | BOM ở đầu argfile | Script đã ghi file sources bằng encoding ASCII |
-| Lỗi stored procedure khi chạy `new.sql` | Chạy trên SQL Server 2016 | Cần SQL Server 2019+ (script dùng `STRING_AGG`, `DROP IF EXISTS`) |
+| Lỗi stored procedure khi chạy `cinemaweb.sql` | Chạy trên SQL Server 2016 | Cần SQL Server 2019+ (script dùng `STRING_AGG`, `DROP IF EXISTS`) |

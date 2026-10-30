@@ -11,13 +11,36 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Quản lý lịch chiếu</h1>
-      <p class="sub">Tạo, cập nhật hoặc xóa suất chiếu. Giờ bắt đầu tự do theo mốc 15 phút, giờ kết thúc tính bằng giờ bắt đầu cộng thời lượng phim, mỗi phòng cách nhau tối thiểu 15 phút.</p>
     </div>
     <div class="movie-actions movie-actions-row">
       <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
       <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
     </div>
   </section>
+
+  <form class="panel st-search" method="get" action="${ctx}/manage/showtimes">
+    <div class="field">
+      <label for="f-q">Phim</label>
+      <input id="f-q" type="search" name="q" value="${filterQ}" placeholder="Tên phim...">
+    </div>
+    <div class="field">
+      <label for="f-date">Ngày chiếu</label>
+      <input id="f-date" type="date" name="date" value="${filterDate}">
+    </div>
+    <div class="field">
+      <label for="f-from">Giờ từ</label>
+      <input id="f-from" type="time" name="timeFrom" value="${filterTimeFrom}">
+    </div>
+    <div class="field">
+      <label for="f-to">Giờ đến</label>
+      <input id="f-to" type="time" name="timeTo" value="${filterTimeTo}">
+    </div>
+    <div class="st-search-actions">
+      <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+      <c:if test="${isFiltered}"><a class="btn btn-outline" href="${ctx}/manage/showtimes">Xóa lọc</a></c:if>
+    </div>
+  </form>
+  <c:if test="${isFiltered}"><p class="sub">Tìm thấy <strong>${showtimes.size()}</strong> suất chiếu phù hợp.</p></c:if>
 
   <div class="table-wrap">
     <table class="data">
@@ -51,7 +74,7 @@
             </td>
           </tr>
         </c:forEach>
-        <c:if test="${empty showtimes}"><tr><td colspan="6">Chưa có suất chiếu. Hãy thêm suất chiếu đầu tiên.</td></tr></c:if>
+        <c:if test="${empty showtimes}"><tr><td colspan="6"><c:choose><c:when test="${isFiltered}">Không có suất chiếu nào khớp bộ lọc.</c:when><c:otherwise>Chưa có suất chiếu. Hãy thêm suất chiếu đầu tiên.</c:otherwise></c:choose></td></tr></c:if>
       </tbody>
     </table>
   </div>

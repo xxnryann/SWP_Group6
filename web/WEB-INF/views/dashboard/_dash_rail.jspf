@@ -15,7 +15,7 @@
       <a href="${ctx}/manager/news">Quản lý tin tức</a>
       <a href="${ctx}/manager/vouchers">Voucher</a>
       <a href="${ctx}/manager/prices">Giá vé</a>
-      <a href="${ctx}/manager/mypoint">Cấu hình MyPoint</a>
+      <a href="${ctx}/manager/mypoint">MyPoint</a>
     </c:when>
     <c:when test="${railRole == 'STAFF'}">
       <a href="${ctx}/dashboard/staff">Tổng quan</a>

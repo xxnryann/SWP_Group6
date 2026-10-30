@@ -91,7 +91,6 @@
   <div class="account-grid">
     <section class="panel">
       <h2>Lịch sử vé</h2>
-      <p class="sub">Các vé bạn đã đặt. Mỗi vé có một mã QR riêng để check-in tại rạp.</p>
       <nav class="tk-tabs" aria-label="Lịch sử">
         <a class="tk-tab ${tab == 'combos' ? '' : 'is-active'}" href="${pageContext.request.contextPath}/account/tickets">Lịch sử vé</a>
         <a class="tk-tab ${tab == 'combos' ? 'is-active' : ''}" href="${pageContext.request.contextPath}/account/tickets?tab=combos">Combo của tôi</a>

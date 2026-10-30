@@ -20,7 +20,7 @@ function Get-CinemaBaseUrl {
     $candidates = @('http://localhost:9999/CinemaTest', 'http://localhost:8080/CinemaWeb')
     foreach ($url in $candidates) {
         try {
-            $null = Invoke-WebRequest "$url/login" -UseBasicParsing -TimeoutSec 3
+            $null = Invoke-WebRequest "$url/login" -UseBasicParsing -TimeoutSec 15
             return $url
         } catch { }
     }

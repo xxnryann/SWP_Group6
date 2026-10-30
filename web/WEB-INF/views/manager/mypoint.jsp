@@ -1,12 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<c:set var="pageTitle" value="Cấu hình MyPoint"/>
+<c:set var="pageTitle" value="MyPoint"/>
 <%@ include file="../_header.jspf" %>
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Cấu hình điểm thưởng MyPoint</h2>
-    <p class="sub">Quy định tỷ lệ tích điểm trên đơn đã thanh toán, giá trị quy đổi của 1 điểm và tỷ lệ tối đa được dùng điểm để giảm giá. Cấu hình mới có hiệu lực từ hôm nay và thay thế cấu hình cũ.</p>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 

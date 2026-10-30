@@ -8,7 +8,6 @@
     <div>
   <section class="panel">
     <h2>Quản lý tài khoản &amp; phân quyền</h2>
-    <p class="sub">Khóa/mở tài khoản và phân quyền cho khách hàng, nhân viên, quản lý rạp.</p>
 
     <form method="get" action="${ctx}/admin/users" class="row" style="margin-bottom:16px">
       <div class="field">

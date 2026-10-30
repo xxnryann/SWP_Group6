@@ -11,7 +11,6 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Quản lý phim</h1>
-      <p class="sub">Thêm, cập nhật, ngừng chiếu hoặc xóa phim.</p>
     </div>
     <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">Thêm phim</a>
   </section>

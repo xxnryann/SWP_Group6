@@ -5,7 +5,6 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Đổi ghế cho vé đã thanh toán</h2>
-    <p class="sub">Chỉ đổi trong cùng suất chiếu, sang ghế còn trống; giữ nguyên giá vé đã thanh toán. Ghế đôi phải đổi theo cặp nên không hỗ trợ ở đây.</p>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 

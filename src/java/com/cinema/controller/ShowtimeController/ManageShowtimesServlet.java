@@ -37,6 +37,72 @@ public class ManageShowtimesServlet extends BaseServlet {
         this.movieDAO = movieDAO;
     }
 
+    /** Lọc danh sách theo ngày, khoảng giờ bắt đầu và từ khoá tên phim (tham số rỗng/không hợp lệ thì bỏ qua). */
+    private static List<Showtime> filterShowtimes(HttpServletRequest request, List<Showtime> all) {
+        LocalDate date = parseDate(request.getParameter("date"));
+        LocalTime from = parseTime(request.getParameter("timeFrom"));
+        LocalTime to = parseTime(request.getParameter("timeTo"));
+        String keyword = normalize(request.getParameter("q"));
+        request.setAttribute("filterDate", date == null ? "" : date.toString());
+        request.setAttribute("filterTimeFrom", from == null ? "" : from.toString());
+        request.setAttribute("filterTimeTo", to == null ? "" : to.toString());
+        String rawQ = request.getParameter("q");
+        request.setAttribute("filterQ", rawQ == null ? "" : rawQ.trim());
+        boolean filtered = date != null || from != null || to != null || !keyword.isEmpty();
+        request.setAttribute("isFiltered", filtered);
+        if (!filtered) {
+            return all;
+        }
+        List<Showtime> result = new ArrayList<>();
+        for (Showtime s : all) {
+            LocalDateTime start = s.getStartsAt();
+            if (start == null) {
+                continue;
+            }
+            if (date != null && !start.toLocalDate().equals(date)) {
+                continue;
+            }
+            LocalTime t = start.toLocalTime();
+            if (from != null && t.isBefore(from)) {
+                continue;
+            }
+            if (to != null && t.isAfter(to)) {
+                continue;
+            }
+            if (!keyword.isEmpty() && !normalize(s.getMovieTitle()).contains(keyword)) {
+                continue;
+            }
+            result.add(s);
+        }
+        return result;
+    }
+
+    private static LocalDate parseDate(String value) {
+        try {
+            return value == null || value.isBlank() ? null : LocalDate.parse(value.trim());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private static LocalTime parseTime(String value) {
+        try {
+            return value == null || value.isBlank() ? null : LocalTime.parse(value.trim());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /** Chữ thường, bỏ dấu tiếng Việt để tìm "thanh pho" khớp "Thành Phố". */
+    private static String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        String n = java.text.Normalizer.normalize(value.trim().toLowerCase(java.util.Locale.ROOT),
+                java.text.Normalizer.Form.NFD);
+        return n.replaceAll("\\p{M}+", "").replace('đ', 'd');
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -74,7 +140,7 @@ public class ManageShowtimesServlet extends BaseServlet {
                 forward(request, response, "showtime-form");
                 return;
             }
-            request.setAttribute("showtimes", showtimeDAO.findAllForManagement());
+            request.setAttribute("showtimes", filterShowtimes(request, showtimeDAO.findAllForManagement()));
             request.setAttribute("pageTitle", "Quản lý lịch chiếu");
             forward(request, response, "manage-showtimes");
         } catch (IllegalArgumentException e) {

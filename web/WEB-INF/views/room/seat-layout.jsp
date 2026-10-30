@@ -84,7 +84,6 @@
       <%-- ================= Sơ đồ ghế + bảo trì ================= --%>
       <div class="rm-panel">
         <h2>Sơ đồ ghế &amp; bảo trì</h2>
-        <p class="sub">Chọn ghế rồi bấm “Bảo trì” để chặn đặt vé, hoặc “Mở lại” khi bảo trì xong. Ghế đôi luôn được xử lý cả cặp.</p>
         <c:choose>
           <c:when test="${seatTotal == 0}">
             <div class="rm-empty">Phòng chưa có layout ghế. Hãy thiết lập layout ở phần bên dưới.</div>
@@ -145,7 +144,6 @@
       <%-- ================= Thiết lập layout ================= --%>
       <div class="rm-panel">
         <h2>Thiết lập layout ghế</h2>
-        <p class="sub">Nhập số hàng, số ghế mỗi hàng và chọn loại ghế cho từng hàng (hàng A là hàng gần màn hình nhất). Ghế đôi được ghép cặp 1-2, 3-4, … nên số ghế mỗi hàng phải chẵn.</p>
         <c:if test="${seatTotal > 0}">
           <div class="rm-warnbox">
             Phòng đã có ${seatTotal} ghế. Bấm “Áp dụng layout” sẽ <strong>thay thế toàn bộ</strong> layout hiện tại

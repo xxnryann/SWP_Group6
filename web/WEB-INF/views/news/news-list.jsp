@@ -31,7 +31,6 @@
       <div class="uip-head">
         <div>
           <h1>Quản lý tin tức</h1>
-          <p>Đăng, sửa và ẩn các bài tin tức hiển thị ở trang công khai.</p>
         </div>
         <a class="btn btn-cta" href="${ctx}/manager/news?action=add">+ Đăng tin mới</a>
       </div>

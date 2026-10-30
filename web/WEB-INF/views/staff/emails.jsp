@@ -5,7 +5,6 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Hộp thư đi</h2>
-    <p class="sub">Email vé điện tử, nhắc lịch chiếu và thông báo hủy suất. Hệ thống tự gửi mỗi phút; nếu chưa cấu hình <code>mail.host</code> thư chỉ được ghi vào log (chế độ thử nghiệm).</p>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 

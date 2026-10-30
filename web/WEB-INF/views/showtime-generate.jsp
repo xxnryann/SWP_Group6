@@ -10,9 +10,6 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Sinh lịch chiếu tự động</h1>
-      <p class="sub">Chọn ngày, phòng và phim; hệ thống tự xếp suất liên tiếp cho từng phòng (giờ mở cửa
-        <c:out value="${openTime}"/>, suất cuối kết thúc trước <c:out value="${closeTime}"/>, nghỉ
-        <c:out value="${turnoverMinutes}"/> phút giữa các suất). Các suất đã có trong ngày được giữ nguyên.</p>
     </div>
   </section>
 

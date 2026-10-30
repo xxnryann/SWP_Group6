@@ -17,7 +17,6 @@
         <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
-        <p class="sub">Bài ở trạng thái “Xuất bản ngay” sẽ xuất hiện ngay trên trang Tin tức công khai.</p>
         <c:if test="${not empty error}"><p class="alert alert-error">${error}</p></c:if>
         <form method="post" action="${ctx}/manager/news">
           <input type="hidden" name="_csrf" value="${csrf}">

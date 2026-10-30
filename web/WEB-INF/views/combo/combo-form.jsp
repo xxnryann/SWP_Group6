@@ -15,7 +15,6 @@
         <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
-        <p class="sub">Combo ở trạng thái “Đang bán” sẽ xuất hiện ở màn hình bán vé tại quầy và đặt vé online.</p>
         <c:if test="${not empty error}"><p class="alert alert-error">${error}</p></c:if>
         <form method="post" action="${ctx}/staff/combo">
           <input type="hidden" name="_csrf" value="${csrf}">

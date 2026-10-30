@@ -41,7 +41,6 @@
       <div class="uip-head">
         <div>
           <h1>Quản lý combo bắp nước</h1>
-          <p>Cập nhật giá và tồn kho các combo bán kèm vé tại rạp (SRS: Staff cập nhật tồn kho &amp; giá combo).</p>
         </div>
         <a class="btn btn-cta" href="${ctx}/staff/combo?action=add">+ Thêm combo mới</a>
       </div>

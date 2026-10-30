@@ -61,6 +61,10 @@
 .movie-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
 .showtime-filters { display: grid; grid-template-columns: minmax(240px, 1fr) auto; gap: 14px; align-items: end; margin-bottom: 18px; padding: 20px; }
 .showtime-filters .field { margin: 0; }
+.st-search { display: grid; grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(130px, 1fr)) auto; gap: 14px; align-items: end; margin-bottom: 16px; padding: 18px 20px; }
+.st-search .field { margin: 0; }
+.st-search-actions { display: flex; gap: 8px; }
+@media (max-width: 900px) { .st-search { grid-template-columns: 1fr 1fr; } }
 .showtime-rule { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr); gap: 18px; align-items: center; margin-bottom: 18px; padding: 18px 20px; }
 .showtime-rule h2 { margin: 3px 0 0; color: var(--navy); font-size: 17px; }
 .showtime-rule-slots { display: flex; flex-wrap: wrap; gap: 8px; }

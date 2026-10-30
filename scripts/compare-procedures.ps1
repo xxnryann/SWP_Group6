@@ -13,7 +13,7 @@
     khong bi tao voi QUOTED_IDENTIFIER OFF (loi khi cap nhat bang co filtered index).
 
 .PARAMETER SqlFile
-    File .sql chua schema/procedure. Mac dinh "sql/new.sql".
+    File .sql chua schema/procedure. Mac dinh "sql/cinemaweb.sql".
 
 .PARAMETER Server
     Server SQL (mac dinh localhost,1433). Tai khoan/mat khau lay tu CINEMA_DB_USER / CINEMA_DB_PASSWORD, CINEMA_DB_WINAUTH=1, hoac db.user / db.password trong app.properties.
@@ -34,7 +34,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-if (-not $SqlFile) { $SqlFile = Join-Path $root 'sql/new.sql' }
+if (-not $SqlFile) { $SqlFile = Join-Path $root 'sql/cinemaweb.sql' }
 
 . (Join-Path $PSScriptRoot 'lib/test-config.ps1')
 $sqlAuth = Get-SqlCmdAuth   # mat khau SQL di qua SQLCMDPASSWORD, khong qua -P (xem lib/test-config.ps1)

@@ -10,8 +10,8 @@ Ma nguon nam trong thu muc con `SWP_Group6-feature-dev-work/` (Java 17, JSP/Serv
 Chay trong `SWP_Group6-feature-dev-work/` (PowerShell):
 - Build:  `powershell -ExecutionPolicy Bypass -File scripts\build.ps1`
 - Deploy: `powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1 -TomcatHome "<thu muc Tomcat 10.1>" -Context <ten-context>`
-- Tao DB: `$env:SQLCMDPASSWORD='<mat khau>'; sqlcmd -S localhost,1433 -U sa -f 65001 -i sql\new.sql` (DROP + tao lai toan bo `CinemaWebDB`)
-- Doi chieu / cap nhat stored procedure voi `sql/new.sql`: `scripts\compare-procedures.ps1` (them `-Sync` de tao lai)
+- Tao DB: `$env:SQLCMDPASSWORD='<mat khau>'; sqlcmd -S localhost,1433 -U sa -f 65001 -i sql\cinemaweb.sql` (DROP + tao lai toan bo `CinemaWebDB`)
+- Doi chieu / cap nhat stored procedure voi `sql/cinemaweb.sql`: `scripts\compare-procedures.ps1` (them `-Sync` de tao lai)
 - Cau hinh: sao chep `src/java/app.properties.example` -> `src/java/app.properties` (file nay bi .gitignore, KHONG commit)
 
 ## Test (HTTP end-to-end, khong co unit test)
@@ -41,4 +41,4 @@ Cac bai test booking/admin ghi vao CSDL dang dung — chay tren CSDL rieng cho k
 - Khong tu chay git commit/push — nguoi dung se yeu cau ("commit len").
 - `src/java/app.properties` chua bi mat, khong commit; chi sua `app.properties.example` khi them khoa cau hinh moi.
 - Luu log bang `java.util.logging` (khong dung `System.err.println`).
-- Sau khi sua `sql/new.sql` can them file `sql/migrate_*.sql` idempotent cho DB da co du lieu.
+- Sau khi sua `sql/cinemaweb.sql` them mot muc idempotent moi o CUOI `sql/upgrade.sql` cho DB da co du lieu.

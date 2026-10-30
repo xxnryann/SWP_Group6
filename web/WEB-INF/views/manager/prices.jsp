@@ -5,7 +5,6 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Quản lý giá vé</h2>
-    <p class="sub">Giá vé phụ thuộc loại ghế, khung giờ bắt đầu suất chiếu (sáng/chiều/tối) và loại ngày (thường, cuối tuần, lễ). Giá mới áp dụng cho các lượt giữ ghế sau khi lưu; vé đã bán giữ nguyên giá.</p>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 
@@ -32,7 +31,6 @@
 
   <section class="panel" style="margin-top:20px">
     <h2>Ngày lễ</h2>
-    <p class="sub">Những ngày này áp dụng giá "Ngày lễ".</p>
     <form method="post" action="${ctx}/manager/prices" class="holiday-form">
       <input type="hidden" name="_csrf" value="${csrf}">
       <input type="hidden" name="action" value="addHoliday">

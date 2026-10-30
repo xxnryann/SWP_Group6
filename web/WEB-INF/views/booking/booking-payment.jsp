@@ -45,7 +45,6 @@
       <div class="uip-layout">
         <div class="card">
           <h2>Thanh toán đơn vé</h2>
-          <p class="sub">Kiểm tra lại thông tin trước khi thanh toán qua cổng VNPAY.</p>
 
           <div class="uip-countdown">
             <div class="uip-clock" id="clock"><c:out value="${remainingSeconds}"/></div>

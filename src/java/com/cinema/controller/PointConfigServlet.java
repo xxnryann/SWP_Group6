@@ -26,7 +26,7 @@ public class PointConfigServlet extends BaseServlet {
         } catch (SQLException e) {
             req.setAttribute("error", "Không thể tải cấu hình MyPoint: " + e.getMessage());
         }
-        req.setAttribute("pageTitle", "Cấu hình MyPoint");
+        req.setAttribute("pageTitle", "MyPoint");
         forward(req, resp, "manager/mypoint");
     }
 

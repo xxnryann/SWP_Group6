@@ -27,7 +27,6 @@
       <div class="rm-head">
         <div>
           <h1>Quản lý phòng chiếu</h1>
-          <p>Tạo phòng chiếu, thiết lập thông tin phòng (tên, loại phòng, sức chứa) và layout ghế.</p>
         </div>
         <a class="btn btn-cta" href="${ctx}/admin/rooms?action=new">+ Thêm phòng chiếu</a>
       </div>

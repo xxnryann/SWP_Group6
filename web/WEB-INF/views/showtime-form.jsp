@@ -13,7 +13,6 @@
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1><c:out value="${pageTitle}"/></h1>
-      <p class="sub">Giờ bắt đầu tự do theo mốc 15 phút trong ngày. Giờ kết thúc được tính bằng giờ bắt đầu cộng thời lượng phim, và mỗi phòng cách nhau tối thiểu 15 phút để dọn phòng.</p>
     </div>
   </section>
   <form class="panel showtime-form" id="showtime-form" method="post" action="${ctx}/manage/showtimes"

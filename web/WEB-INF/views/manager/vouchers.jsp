@@ -8,7 +8,6 @@
     <div class="uip-head">
       <div>
         <h2>Quản lý voucher</h2>
-        <p class="sub">Tạo mã giảm giá cho khách hàng đặt vé online: giảm theo % hoặc số tiền, điều kiện đơn tối thiểu và chi tiêu tích lũy.</p>
       </div>
       <c:if test="${empty form}"><a class="btn btn-cta" href="${ctx}/manager/vouchers?action=new">+ Thêm voucher</a></c:if>
     </div>
