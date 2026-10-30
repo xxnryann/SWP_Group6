@@ -14,28 +14,31 @@
     `scripts\ensure-utf8-bom.ps1 scripts` sau khi sua file.
 
 .PARAMETER BaseUrl
-    Dia chi goc cua ung dung. Mac dinh http://localhost:8080/CinemaWeb
+    Dia chi goc cua ung dung. Mac dinh: bien moi truong CINEMA_BASE_URL, neu khong co thi tu do cac dia chi mac dinh (9999/CinemaTest, 8080/CinemaWeb)
 
 .PARAMETER Email
     Email khach hang dung de dang nhap. Mac dinh khach1@gmail.com
 
 .PARAMETER Password
-    Mat khau cua khach hang. Mac dinh 123456
+    Mat khau cua khach hang. Mac dinh: bien moi truong CINEMA_TEST_PASSWORD hoac mat khau seed trong README
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts/test-booking-flow.ps1
 #>
 [CmdletBinding()]
 param(
-    [string]$BaseUrl = 'http://localhost:8080/CinemaWeb',
+    [string]$BaseUrl = '',
     [string]$Email = 'khach1@gmail.com',
-    [string]$Password = '123456'
+    [string]$Password = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $script:Failures = @()
 
 . "$PSScriptRoot\lib\booking-test-lib.ps1"
+. (Join-Path $PSScriptRoot 'lib/test-config.ps1')
+if (-not $BaseUrl) { $BaseUrl = Get-CinemaBaseUrl }
+if (-not $Password) { $Password = Get-CinemaTestPassword }
 
 Write-Step '1. DANG NHAP'
 $session = New-BookingSession -BaseUrl $BaseUrl -Email $Email -Password $Password

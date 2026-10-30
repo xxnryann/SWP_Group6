@@ -59,6 +59,25 @@
   .tk-card.is-inactive .tk-right img { opacity: .22; filter: grayscale(1); }
   .tk-card.is-inactive .tk-left { opacity: .78; }
 
+  /* ---------- tab Lịch sử vé / Combo của tôi ---------- */
+  .tk-tabs { display: flex; gap: 8px; margin: 14px 0 18px; border-bottom: 2px solid var(--slate-200, #e2e8f0); }
+  .tk-tab { padding: 10px 20px; font-weight: 700; font-size: 15px; color: var(--slate-500);
+            text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tk-tab:hover { color: var(--navy); }
+  .tk-tab.is-active { color: #00539F; border-bottom-color: #00539F; }
+
+  .cb-card { background: var(--navy); color: #fff; border-radius: 14px; padding: 22px 26px;
+             box-shadow: var(--shadow); }
+  .cb-card.is-inactive { opacity: .78; }
+  .cb-lines { margin: 14px 0 0; padding: 0; list-style: none; }
+  .cb-lines li { display: grid; grid-template-columns: 1fr 70px 110px 120px; gap: 12px;
+                 padding: 10px 0; border-top: 1px solid rgba(148,163,184,.18); font-size: 14.5px; }
+  .cb-lines li:first-child { border-top: 0; }
+  .cb-lines .cb-sub { text-align: right; }
+  .cb-total { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 12px;
+              border-top: 1px dashed rgba(148,163,184,.4); font-weight: 800; font-size: 16px; }
+  @media (max-width: 860px) { .cb-lines li { grid-template-columns: 1fr 50px 90px; } .cb-lines .cb-unit { display: none; } }
+
   .tk-empty { text-align: center; padding: 48px 20px; }
   .tk-empty p { color: var(--slate-500); }
 
@@ -73,7 +92,44 @@
     <section class="panel">
       <h2>Lịch sử vé</h2>
       <p class="sub">Các vé bạn đã đặt. Mỗi vé có một mã QR riêng để check-in tại rạp.</p>
+      <nav class="tk-tabs" aria-label="Lịch sử">
+        <a class="tk-tab ${tab == 'combos' ? '' : 'is-active'}" href="${pageContext.request.contextPath}/account/tickets">Lịch sử vé</a>
+        <a class="tk-tab ${tab == 'combos' ? 'is-active' : ''}" href="${pageContext.request.contextPath}/account/tickets?tab=combos">Combo của tôi</a>
+      </nav>
       <c:choose>
+        <c:when test="${tab == 'combos'}">
+          <c:choose>
+            <c:when test="${empty comboOrders}">
+              <div class="tk-empty"><p>Bạn chưa mua combo nào.</p></div>
+            </c:when>
+            <c:otherwise>
+              <div class="tk-list">
+                <c:forEach var="o" items="${comboOrders}">
+                  <article class="cb-card ${o.cancelled ? 'is-inactive' : ''}">
+                    <div class="tk-head">
+                      <h3><c:out value="${o.movieTitle}"/></h3>
+                      <span class="tk-badge ${o.statusCss}"><c:out value="${o.statusLabel}"/></span>
+                    </div>
+                    <p class="tk-note">Đơn <c:out value="${o.bookingCode}"/> · <c:out value="${o.roomName}"/> — <c:out value="${o.cinemaName}"/>
+                      · Suất <c:out value="${o.showTimeLabel}"/> · Mua lúc <c:out value="${o.purchasedLabel}"/></p>
+                    <ul class="cb-lines">
+                      <c:forEach var="l" items="${o.lines}">
+                        <li>
+                          <span><c:out value="${l.name}"/></span>
+                          <span>x<c:out value="${l.quantity}"/></span>
+                          <span class="cb-unit"><c:out value="${l.unitPriceLabel}"/></span>
+                          <span class="cb-sub"><c:out value="${l.subtotalLabel}"/></span>
+                        </li>
+                      </c:forEach>
+                    </ul>
+                    <div class="cb-total"><span>Tổng combo</span><span><c:out value="${o.totalLabel}"/></span></div>
+                    <c:if test="${o.cancelled}"><p class="tk-note">Đơn đã được huỷ nên combo không còn hiệu lực.</p></c:if>
+                  </article>
+                </c:forEach>
+              </div>
+            </c:otherwise>
+          </c:choose>
+        </c:when>
         <c:when test="${empty tickets}">
           <div class="tk-empty">
             <p>Bạn chưa có vé nào.</p>

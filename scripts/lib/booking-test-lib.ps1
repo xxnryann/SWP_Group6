@@ -98,7 +98,7 @@ function New-BookingSession {
     param(
         [Parameter(Mandatory = $true)] [string]$BaseUrl,
         [string]$Email = 'khach1@gmail.com',
-        [string]$Password = '123456'
+        [string]$Password = $(if ($env:CINEMA_TEST_PASSWORD) { $env:CINEMA_TEST_PASSWORD } else { '123456' })
     )
     $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
     $loginUrl = "$BaseUrl/login"

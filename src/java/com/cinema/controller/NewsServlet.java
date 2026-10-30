@@ -20,10 +20,10 @@ import java.util.Set;
  *  - status IN ('Draft','Published','Hidden')
  *  - created_by NOT NULL REFERENCES Account(account_id) → tra theo email user đăng nhập
  *
- * TODO (Đoàn Mạnh Cường): chuyển kiểm tra quyền sang filter phân quyền
- * tập trung khi xong STT "System Authorization".
- * TODO (nhóm DB): bảng Users (khung đăng nhập) và bảng Account (script DB)
- * đang song song — cần thống nhất để created_by luôn tìm được.
+ * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): phân quyền hiện kiểm tra ngay trong servlet này (đang đúng);
+ * mục tiêu dài hạn là gom về filter phân quyền tập trung.
+ * NỢ KỸ THUẬT: bảng Users (khung đăng nhập) và bảng Account (script DB) vẫn song song;
+ * created_by tra account_id theo email, nếu không có Account trùng email thì báo lỗi (xem doPost).
  */
 @WebServlet("/manager/news")
 public class NewsServlet extends BaseServlet {

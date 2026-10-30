@@ -12,16 +12,19 @@ Stack: Java 11/17 · Jakarta Servlet 6.0 · JSP + JSTL 3.0 · SQL Server 2019 (M
 ### 1.1. Tạo database
 
 ```powershell
-sqlcmd -S "tcp:localhost,1433" -U sa -P <password> -f 65001 -i sql\new.sql
+$env:SQLCMDPASSWORD = "<password>"      # mat khau di qua bien moi truong, khong qua -P (tranh lo trong danh sach tien trinh)
+sqlcmd -S "tcp:localhost,1433" -U sa -f 65001 -i sql\new.sql
 ```
 
-`sql/new.sql` **drop và tạo lại** toàn bộ `CinemaWebDB` (32 bảng, 22 stored procedure, 3 view, trigger, hàm + dữ liệu mẫu). Cần `sqlcmd` và SQL Server 2019+.
+`sql/new.sql` **drop và tạo lại** toàn bộ `CinemaWebDB` (32 bảng, 21 stored procedure, 3 view, trigger, hàm + dữ liệu mẫu). Cần `sqlcmd` và SQL Server 2019+.
 
 > `-f 65001` bắt buộc, nếu không chuỗi tiếng Việt trong seed data sẽ bị hỏng.
 
 ### 1.2. Cấu hình
 
-Sửa `src/java/app.properties`:
+Sao chép `src/java/app.properties.example` thành `src/java/app.properties` rồi điền giá trị thật.
+`app.properties` **bị `.gitignore` chặn** (chứa mật khẩu DB, mật khẩu mail, khoá VNPay) — không commit file này.
+Nếu từng lỡ commit, phải đổi toàn bộ mật khẩu/khoá trong đó và xoá file khỏi lịch sử Git.
 
 | Khoá | Ý nghĩa |
 |---|---|
@@ -45,7 +48,7 @@ powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
 powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1 -TomcatHome "C:\path\to\Tomcat10.1" -Context CinemaWeb
 ```
 
-Mở `http://localhost:8080/CinemaWeb/`.
+Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 và context `CinemaWeb`; cổng thật xem `conf/server.xml`).
 
 > **Lưu ý deploy:** Tomcat không tự reload class. `deploy.ps1` đã xoá `work/Catalina/localhost/<context>` và `temp/work/...`; nếu vẫn chạy code cũ thì restart Tomcat.
 
@@ -58,10 +61,10 @@ Mở `http://localhost:8080/CinemaWeb/`.
 | `scripts/ensure-utf8-bom.ps1` | Thêm BOM UTF-8 cho file `.ps1` (PowerShell 5.1 đọc file không BOM theo ANSI → hỏng tiếng Việt) |
 | `scripts/fix_mojibake.py` | Sửa file bị "mojibake" (UTF-8 bị đọc như cp1252 rồi ghi lại) |
 | `scripts/compare-procedures.ps1` | Đối chiếu stored procedure trong `sql/new.sql` với DB đã deploy (thêm `-Sync` để tạo lại procedure lệch) |
-| `scripts/test-booking-flow.ps1` | Kiểm thử trọn luồng BF-02 (happy path) |
-| `scripts/test-booking-errors.ps1` | Kiểm thử các nhánh lỗi (hủy, webhook sai chữ ký, idempotency) |
+| `scripts/test-booking-flow.ps1` | Kiểm thử trọn luồng BF-02 (happy path) — **ghi vào CSDL** (đơn, vé, thanh toán, điểm, email) |
+| `scripts/test-booking-errors.ps1` | Kiểm thử các nhánh lỗi (hủy, webhook sai chữ ký, idempotency) — **ghi vào CSDL** |
 | `scripts/test-smoke.ps1` | Kiểm thử nhanh toàn bộ 5 vai trò: mọi trang chính trả 200, 4 dashboard theo vai trò, `/booking/*` chặn khách chưa đăng nhập |
-| `scripts/test-rail.py` | Kiểm thử menu dọc (rail): đăng nhập từng vai trò rồi duyệt các trang con, xác nhận rail luôn hiện, đúng link active và không còn thanh nav ngang |
+| `scripts/test-admin-manager-staff.ps1` | Kiểm thử chức năng ADMIN / MANAGER / STAFF bằng thao tác thật (**ghi vào CSDL**, tự dọn dữ liệu `ZZTEST`) |
 
 ---
 
@@ -290,10 +293,25 @@ Menu theo vai trò (mỗi role **chỉ** thấy chức năng của role đó):
 
 Yêu cầu: ứng dụng đã deploy lên Tomcat và CSDL đã seed.
 
+> **Cảnh báo:** `test-booking-flow`, `test-booking-errors` và `test-admin-manager-staff` **ghi dữ liệu thật vào CSDL đang dùng**
+> (đơn, vé, thanh toán, điểm thưởng, email, ghế của một suất chiếu). Chỉ `test-admin-manager-staff` tự dọn phần `ZZTEST` của nó.
+> Hãy chạy trên CSDL riêng cho kiểm thử (khôi phục từ `sql/new.sql`) chứ không chạy trên dữ liệu dùng để demo/review.
+
+Biến môi trường dùng chung cho mọi script test (đều tuỳ chọn):
+
+| Biến | Ý nghĩa |
+|---|---|
+| `CINEMA_BASE_URL` | Địa chỉ gốc ứng dụng, ví dụ `http://localhost:9999/CinemaTest`. Không đặt ⇒ script tự thử `9999/CinemaTest` rồi `8080/CinemaWeb` và lấy địa chỉ đang chạy |
+| `CINEMA_TEST_PASSWORD` | Mật khẩu các tài khoản seed (mặc định là mật khẩu seed ghi ở mục "Tài khoản seed") |
+| `CINEMA_DB_WINAUTH=1` | `sqlcmd` dùng xác thực Windows, không cần mật khẩu SQL |
+| `CINEMA_DB_USER` / `CINEMA_DB_PASSWORD` | Tài khoản SQL (mặc định đọc `db.user` / `db.password` trong `app.properties`). Mật khẩu chỉ đi qua `SQLCMDPASSWORD`, không nằm trên dòng lệnh |
+
 ```powershell
+$env:CINEMA_BASE_URL = 'http://localhost:9999/CinemaTest'   # tuỳ chọn
 powershell -ExecutionPolicy Bypass -File scripts\test-booking-flow.ps1
 powershell -ExecutionPolicy Bypass -File scripts\test-booking-errors.ps1
 powershell -ExecutionPolicy Bypass -File scripts\test-smoke.ps1
+powershell -ExecutionPolicy Bypass -File scripts\test-admin-manager-staff.ps1
 ```
 
 | Script | Phủ | Kết quả mong đợi |
@@ -301,13 +319,27 @@ powershell -ExecutionPolicy Bypass -File scripts\test-smoke.ps1
 | `test-booking-flow.ps1` | Đăng nhập → chọn suất → giữ ghế → combo/voucher → cổng giả lập → lịch sử vé | `TAT CA BUOC PASS` |
 | `test-booking-errors.ps1` | A. Hủy ở cổng ⇒ ghế về GREEN<br>B. Webhook sai chữ ký ⇒ `RspCode 97`, không phát vé<br>C. Gọi lại callback ⇒ vé **không** phát 2 lần<br>D. Thanh toán OK ⇒ ghế chuyển RED | `TAT CA BUOC PASS` |
 | `test-smoke.ps1` | Mọi trang chính của 5 vai trò (guest/customer/staff/manager/admin) trả HTTP 200; 4 URL dashboard trả 200 đúng vai trò; sai vai trò ⇒ 403; đăng nhập ⇒ chuyển đúng dashboard; `/booking/*` chưa đăng nhập ⇒ 302 về `/login` | `SMOKE TEST PASS` |
-| `test-rail.py` | Duyệt 27 trang con của 4 vai trò: rail luôn hiện, số link cố định theo role, đúng mục `active`, không còn thanh nav ngang | `TONG: 27/27 trang OK` |
+| `test-admin-manager-staff.ps1` | ADMIN: người dùng, phòng, sơ đồ ghế · MANAGER: phim, suất chiếu (trùng lịch, sinh tự động), tin tức, voucher, giá vé, MyPoint · STAFF: combo, bán vé tại quầy, soát vé, đổi ghế, hộp thư email · mỗi vai trò vào trang vai trò khác ⇒ 403 | `TAT CA BUOC PASS` |
 
 Tài khoản seed: `khach1@gmail.com` / `123456`.
 
 ---
 
-## 6. Xử lý sự cố
+## 6. Nợ kỹ thuật đã biết
+
+- **Phân quyền nằm rải trong từng servlet** (`ComboServlet`, `CounterSalesServlet`, `NewsServlet`, `AdminBaseServlet`) và một số filter riêng.
+  Hiện đang hoạt động đúng (đã có test 403 ở `test-admin-manager-staff.ps1`); dài hạn nên gom về một filter phân quyền tập trung.
+- **Hai bảng người dùng song song:** `Users` (khung đăng nhập) và `Account` (nghiệp vụ). Nhiều chức năng (tin tức, vé) phải tra `Account` theo email;
+  nếu email không có trong `Account` thì chức năng báo lỗi. Cần thống nhất về một bảng.
+- **Không có unit test:** mọi kiểm tra là HTTP chạy trên server thật (xem mục 5) nên chậm và phụ thuộc dữ liệu. Logic tính tiền / hoàn tiền / điểm nên có JUnit.
+- **Số liệu `Customer.total_spent` của `khach1` chưa đối chiếu được** với tổng đơn đã thanh toán trừ hoàn (nghi do dữ liệu seed hoặc dữ liệu thử cũ).
+  Cần một script đối soát trước khi dùng số liệu này cho báo cáo.
+- **Đơn tại quầy bị huỷ nhưng thanh toán còn `Success`** (từng gặp ở đơn 69 trong lần kiểm thử 29/10/2026) chưa tìm ra nguyên nhân; mọi procedure hiện tại đều hoàn tiền khi huỷ.
+- **CSDL dùng chung giữa bản `CinemaTest` và `CinemaWeb`** và các bài test ghi dữ liệu thật vào đó (xem cảnh báo mục 5).
+
+---
+
+## 7. Xử lý sự cố
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 |---|---|---|

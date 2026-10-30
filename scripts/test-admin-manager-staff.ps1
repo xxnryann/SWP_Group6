@@ -12,27 +12,29 @@
                     hop thu email.
           PHAN QUYEN: moi vai tro bi chan (403) o trang cua vai tro khac.
 
-        Cach chay (mat khau tai khoan thu lay tu ghi chu cua scripts/test-smoke.ps1):
-          $env:CINEMA_BASE_URL='http://localhost:9999/CinemaTest'
+        Cach chay (mat khau tai khoan seed: bien CINEMA_TEST_PASSWORD, mac dinh la mat khau seed trong README):
+          $env:CINEMA_BASE_URL='http://localhost:9999/CinemaTest'   (khong dat thi tu do cong dang chay)
+          $env:CINEMA_DB_USER / CINEMA_DB_PASSWORD, hoac CINEMA_DB_WINAUTH=1, neu khong muon doc tu app.properties
           powershell -ExecutionPolicy Bypass -File scripts/test-admin-manager-staff.ps1
 #>
-param([string]$BaseUrl = $(if ($env:CINEMA_BASE_URL) { $env:CINEMA_BASE_URL } else { 'http://localhost:8080/CinemaWeb' }))
+param([string]$BaseUrl = '')
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib\booking-test-lib.ps1')
+. (Join-Path $PSScriptRoot 'lib/test-config.ps1')
+if (-not $BaseUrl) { $BaseUrl = Get-CinemaBaseUrl }
 
 # ---------- ha tang ----------
 $root = Split-Path -Parent $PSScriptRoot
-$props = Get-Content (Join-Path $root 'src\java\app.properties') -ErrorAction Stop
-$dbPass = (($props | Where-Object { $_ -match '^\s*(db\.)?password\s*=' } | Select-Object -First 1) -split '=', 2)[1].Trim()
 $sqlcmd = (Get-Command sqlcmd -ErrorAction Stop).Source
+$sqlAuth = Get-SqlCmdAuth   # mat khau SQL di qua SQLCMDPASSWORD, khong qua tham so -P
 
 function Invoke-Sql([string]$Query) {
-    $out = & $sqlcmd -S localhost -U sa -P $dbPass -d CinemaWebDB -C -I -h -1 -W -Q "SET NOCOUNT ON; $Query" 2>&1
+    $out = & $sqlcmd -S localhost @sqlAuth -d CinemaWebDB -C -I -h -1 -W -Q "SET NOCOUNT ON; $Query" 2>&1
     return (($out | Where-Object { $_ -and $_ -notmatch '^\s*$' }) -join "`n").Trim()
 }
 
-function New-RoleSession([string]$Email, [string]$Password = '123456') {
+function New-RoleSession([string]$Email, [string]$Password = (Get-CinemaTestPassword)) {
     $s = New-Object Microsoft.PowerShell.Commands.WebRequestSession
     $p = Invoke-WebRequest "$BaseUrl/login" -WebSession $s -UseBasicParsing
     $c = [regex]::Match($p.Content, 'name="_csrf"\s+value="([^"]+)"').Groups[1].Value

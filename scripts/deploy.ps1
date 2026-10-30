@@ -105,4 +105,11 @@ if (Test-Path $deployedXml) {
 }
 
 Write-Host 'DEPLOY OK' -ForegroundColor Green
-Write-Host "Mo: http://localhost:8080/$Context/" -ForegroundColor Green
+# Cong HTTP that su cua Tomcat (doc tu conf/server.xml) - khong gia dinh 8080.
+$httpPort = 8080
+$serverXml = Join-Path $TomcatHome 'conf\server.xml'
+if (Test-Path $serverXml) {
+    $m = [regex]::Match((Get-Content $serverXml -Raw), '<Connector\s+port="(\d+)"\s+protocol="HTTP/1\.1"')
+    if ($m.Success) { $httpPort = $m.Groups[1].Value }
+}
+Write-Host "Mo: http://localhost:$httpPort/$Context/" -ForegroundColor Green

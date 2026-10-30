@@ -20,8 +20,8 @@ import java.util.Set;
  * Khớp bảng Combo trong script database của nhóm:
  *  - combo_name (không phải name), status IN ('Active','Hidden')
  *
- * TODO (Đoàn Mạnh Cường): chuyển kiểm tra quyền sang filter phân quyền
- * tập trung khi xong STT "System Authorization".
+ * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): phân quyền hiện kiểm tra ngay trong servlet này (đang đúng);
+ * mục tiêu dài hạn là gom về filter phân quyền tập trung.
  */
 @WebServlet("/staff/combo")
 public class ComboServlet extends BaseServlet {

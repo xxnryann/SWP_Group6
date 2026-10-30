@@ -936,31 +936,6 @@ END
 GO
 
 /* ----------------------------------------------------------------------------
-   UC: Cancel / Exchange Tickets (huy ca booking truoc gio chien toi thieu)
-   -------------------------------------------------------------------------- */
-CREATE OR ALTER PROCEDURE dbo.sp_CancelBooking @booking_id INT, @account_id INT, @reason NVARCHAR(200) = NULL AS
-BEGIN
-    SET NOCOUNT ON; SET XACT_ABORT ON;
-    DECLARE @status VARCHAR(15), @start DATETIME2;
-    DECLARE @hours INT = (SELECT CAST(config_value AS INT) FROM dbo.SystemConfig WHERE config_key = 'CANCEL_BEFORE_HOURS');
-    SELECT @status = b.status, @start = s.start_time FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id
-    WHERE b.booking_id = @booking_id;
-
-    IF @status IS NULL OR @status <> 'Paid' THROW 50070, N'Chỉ hủy được booking đã thanh toán.', 1;
-    IF DATEADD(HOUR, -@hours, @start) < SYSDATETIME() THROW 50071, N'Đã quá thời hạn cho phép hủy vé.', 1;
-
-    BEGIN TRAN;
-    INSERT INTO dbo.TicketChangeHistory(ticket_id, change_type, old_seat_id, old_showtime_id, changed_by, reason)
-    SELECT ticket_id, 'Cancel', seat_id, showtime_id, @account_id, @reason FROM dbo.Ticket
-    WHERE booking_id = @booking_id AND status = 'Booked';
-    UPDATE dbo.Ticket SET status = 'Cancelled' WHERE booking_id = @booking_id AND status = 'Booked';
-    UPDATE dbo.Booking SET status = 'Cancelled' WHERE booking_id = @booking_id;
-    UPDATE dbo.Payment SET status = 'Refunded' WHERE booking_id = @booking_id AND status = 'Success';
-    COMMIT;
-END
-GO
-
-/* ----------------------------------------------------------------------------
    UC: Now-Showing Movie Cancellation Alert
    @confirm = 0: chi canh bao. @confirm = 1: xac nhan huy, hoan tien, gui email.
    -------------------------------------------------------------------------- */
@@ -983,8 +958,8 @@ BEGIN
 
     -- Cac don da thanh toan thuoc cac suat se bi huy: tinh so tien con phai hoan, diem va voucher can tra.
     SELECT b.booking_id, b.customer_id, b.voucher_id, b.points_used,
-           CAST(b.total_amount - ISNULL((SELECT SUM(p.amount) FROM dbo.Payment p
-                                         WHERE p.booking_id = b.booking_id AND p.status = 'Refunded'), 0) AS DECIMAL(12,0)) AS remaining,
+           CAST(b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) FROM dbo.Payment p
+                                         WHERE p.booking_id = b.booking_id), 0) AS DECIMAL(12,0)) AS remaining,
            ISNULL((SELECT SUM(m.points) FROM dbo.MyPointTransaction m
                    WHERE m.booking_id = b.booking_id AND m.txn_type = 'Earn'), 0) AS earned
     INTO #bk
@@ -998,11 +973,7 @@ BEGIN
     WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME()
       AND b.status = 'Paid' AND b.customer_id IS NOT NULL;
 
-    -- Hoan tien: them dong hoan phan con lai, dong thanh toan goc ghi nhan da hoan het.
-    INSERT INTO dbo.Payment(booking_id, method, amount, refunded_amount, status, paid_at)
-    SELECT k.booking_id, p.method, k.remaining, k.remaining, 'Refunded', SYSDATETIME()
-    FROM #bk k JOIN dbo.Payment p ON p.booking_id = k.booking_id AND p.status = 'Success'
-    WHERE k.remaining > 0;
+    -- Hoan tien chi ghi o MOT cho: dong thanh toan goc ghi nhan da hoan het (khong them dong Payment moi).
     UPDATE p SET p.refunded_amount = p.amount, p.status = 'Refunded'
     FROM dbo.Payment p JOIN #bk k ON k.booking_id = p.booking_id WHERE p.status = 'Success';
 
@@ -1147,7 +1118,7 @@ GO
 
 /* ----------------------------------------------------------------------------
    UC: Huy 1 VE da thanh toan (UC19 / BF-09)
-   Quay ve TUNG VE (moi the 1 ma QR), khac voi sp_CancelBooking (huy ca don).
+   Quay ve TUNG VE (moi the 1 ma QR). Huy ca don khi het ve hieu luc di qua cung procedure nay.
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_CancelTicket
     @ticket_id INT, @account_id INT, @reason NVARCHAR(200) = NULL
@@ -1203,9 +1174,9 @@ BEGIN
     SELECT @active_count = COUNT(*) FROM dbo.Ticket
     WHERE booking_id = @booking_id AND status IN ('Booked', 'Used');
 
-    -- So tien da hoan truoc do cua don nay.
-    SELECT @already_refunded = ISNULL(SUM(amount), 0) FROM dbo.Payment
-    WHERE booking_id = @booking_id AND status = 'Refunded';
+    -- So tien da hoan truoc do cua don nay (cong don tren dong thanh toan goc).
+    SELECT @already_refunded = ISNULL(SUM(refunded_amount), 0) FROM dbo.Payment
+    WHERE booking_id = @booking_id;
 
     -- Tien hoan = phan chia theo ty le gia ve tren gia tri don (da tru voucher/MyPoint),
     -- nen tong hoan KHONG bao gio vuot so tien khach thuc tra.
@@ -1217,11 +1188,8 @@ BEGIN
     IF @refund > @order_total - @already_refunded SET @refund = @order_total - @already_refunded;
     IF @refund < 0 SET @refund = 0;
 
-    INSERT INTO dbo.Payment(booking_id, method, amount, refunded_amount, status, paid_at)
-    SELECT @booking_id, p.method, @refund, @refund, 'Refunded', SYSDATETIME()
-    FROM dbo.Payment p WHERE p.booking_id = @booking_id AND p.status = 'Success';
-
-    -- Ghi nhan tren dong thanh toan goc: so tien da hoan luy ke; hoan het -> 'Refunded'.
+    -- Hoan tien chi ghi o MOT cho: dong thanh toan goc (refunded_amount cong don; hoan het -> 'Refunded').
+    -- KHONG them dong Payment moi cho lan hoan, neu khong tong refunded_amount / amount cua don bi tinh doi.
     UPDATE dbo.Payment
     SET refunded_amount = @already_refunded + @refund,
         status = CASE WHEN @active_count = 0 THEN 'Refunded' ELSE status END

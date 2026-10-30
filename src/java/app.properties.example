@@ -1,10 +1,31 @@
-db.url=
+# Sao chep file nay thanh app.properties (cung thu muc) roi dien gia tri that.
+# app.properties bi .gitignore chan: KHONG commit mat khau / khoa that len Git.
+
+# ---- Database (SQL Server) ----
+# Ten database phai khop voi script sql/new.sql
+db.url=jdbc:sqlserver://localhost:1433;databaseName=CinemaWebDB;encrypt=true;trustServerCertificate=true
 db.user=
 db.password=
+
+# ---- Media upload (poster/trailer). Dung duong dan tuyet doi de khong mat file khi redeploy ----
+media.upload.root=
+
+# ---- Email (OTP). De trong mail.host => OTP in ra console Tomcat (che do dev) ----
 mail.host=
-mail.port=
+mail.port=587
 mail.user=
 mail.password=
-mail.from=
-otp.ttl.minutes=
-otp.max.attempts=
+mail.from=no-reply@cinema.local
+
+# ---- OTP ----
+otp.ttl.minutes=5
+otp.max.attempts=5
+
+# ---- Cong thanh toan (VNPAY 2.1.0) ----
+# Khi chua co vnpay.secretKey (hoac vnpay.mockGateway=true) he thong dung cong gia lap /mock/payment.
+vnpay.partnerCode=
+vnpay.secretKey=
+vnpay.mockGateway=true
+vnpay.paymentUrl=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+vnpay.bankCode=
+vnpay.mockPaymentUrl=/mock/payment

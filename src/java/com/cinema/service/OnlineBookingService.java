@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * STT 25 — Đặt vé online + thanh toán cho khách hàng (BF-02 / UC12–UC18).
@@ -36,6 +38,8 @@ import java.util.Map;
  * thông báo tiếng Việt cho UI.</p>
  */
 public class OnlineBookingService {
+
+    private static final Logger LOG = Logger.getLogger(OnlineBookingService.class.getName());
 
     /** Phương thức thanh toán online (Payment.method chỉ cho phép Cash/BankTransfer). */
     private static final String METHOD_ONLINE = "BankTransfer";
@@ -144,7 +148,7 @@ public class OnlineBookingService {
             bookingDAO.releaseExpiredHolds();
         } catch (SQLException e) {
             // Không chặn luồng: lỗi ở đây chỉ làm chậm việc giải phóng ghế.
-            System.err.println("[OnlineBookingService] releaseExpiredHolds lỗi: " + e.getMessage());
+            LOG.log(Level.WARNING, "releaseExpiredHolds lỗi", e);
         }
     }
 
@@ -169,7 +173,7 @@ public class OnlineBookingService {
         try {
             return bookingDAO.findOnlineBooking(bookingId);
         } catch (SQLException e) {
-            System.err.println("[OnlineBookingService] findBooking lỗi: " + e.getMessage());
+            LOG.log(Level.WARNING, "findBooking lỗi", e);
             return null;
         }
     }
@@ -179,7 +183,7 @@ public class OnlineBookingService {
         try {
             return bookingDAO.findOnlineBookingByCode(bookingCode);
         } catch (SQLException e) {
-            System.err.println("[OnlineBookingService] findBookingByCode lỗi: " + e.getMessage());
+            LOG.log(Level.WARNING, "findBookingByCode lỗi", e);
             return null;
         }
     }
@@ -216,7 +220,7 @@ public class OnlineBookingService {
         try {
             return bookingDAO.findSeatTypesWithPrice(showtimeId);
         } catch (SQLException e) {
-            System.err.println("[OnlineBookingService] findSeatTypesWithPrice lỗi: " + e.getMessage());
+            LOG.log(Level.WARNING, "findSeatTypesWithPrice lỗi", e);
             return List.of();
         }
     }
@@ -273,7 +277,7 @@ public class OnlineBookingService {
         try {
             accountId = accountDAO.findAccountIdByEmail(email);
         } catch (SQLException e) {
-            System.err.println("[OnlineBookingService] createBooking lỗi: " + e.getMessage());
+            LOG.log(Level.WARNING, "createBooking lỗi", e);
             return 0;
         }
         if (accountId <= 0) {
@@ -303,7 +307,7 @@ public class OnlineBookingService {
         try {
             bookingDAO.cancelPendingBooking(bookingId);
         } catch (SQLException e) {
-            System.err.println("[OnlineBookingService] cancelBooking lỗi: " + e.getMessage());
+            LOG.log(Level.WARNING, "cancelBooking lỗi", e);
         }
     }
 
@@ -417,8 +421,8 @@ public class OnlineBookingService {
         if (amount != null && booking.getTotalAmount() != null
                 && amount.compareTo(booking.getTotalAmount()) != 0) {
             // Lệch số tiền → không cấp vé, ghi cảnh báo.
-            System.err.println("[OnlineBookingService] Cảnh báo đối soát tiền lệch cho đơn "
-                    + txnRef + ": cổng=" + amount + ", đơn=" + booking.getTotalAmount());
+            LOG.log(Level.WARNING, "Cảnh báo đối soát tiền lệch cho đơn {0}: cổng={1}, đơn={2}",
+                    new Object[] {txnRef, amount, booking.getTotalAmount()});
             cancelGatewayPayment(txnRef, "Số tiền thanh toán không khớp với đơn hàng.");
             return new StepResult(false,
                     "Số tiền thanh toán không khớp với đơn hàng. Vui lòng liên hệ rạp.", booking);
@@ -451,8 +455,7 @@ public class OnlineBookingService {
         } catch (SQLException e) {
             // sp_ConfirmPayment chỉ chạy khi booking ở trạng thái PendingPayment;
             // nếu đơn đã hết hạn thì ghế đã được sp_ReleaseExpiredHolds nhả.
-            System.err.println("[OnlineBookingService] cancelGatewayPayment(" + reason + ") lỗi: "
-                    + e.getMessage());
+            LOG.log(Level.WARNING, "cancelGatewayPayment(" + reason + ") lỗi", e);
         }
     }
 }

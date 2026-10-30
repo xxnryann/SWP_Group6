@@ -20,7 +20,9 @@
 #>
 $ErrorActionPreference = 'Stop'
 
-$BaseUrl = if ($env:CINEMA_BASE_URL) { $env:CINEMA_BASE_URL } else { 'http://localhost:8080/CinemaWeb' }
+. (Join-Path $PSScriptRoot 'lib/test-config.ps1')
+$BaseUrl = Get-CinemaBaseUrl
+$TestPassword = Get-CinemaTestPassword
 $script:Fail = 0
 
 function New-LoggedSession {
@@ -36,7 +38,7 @@ function New-LoggedSession {
     if (-not $match.Success) { throw 'khong lay duoc CSRF token cua trang dang nhap' }
     Invoke-WebRequest -Uri $loginUrl -Method Post -WebSession $session -UseBasicParsing `
         -MaximumRedirection 5 `
-        -Body @{ _csrf = $match.Groups[1].Value; identifier = $Email; password = '123456' } | Out-Null
+        -Body @{ _csrf = $match.Groups[1].Value; identifier = $Email; password = $TestPassword } | Out-Null
     return $session
 }
 
@@ -183,7 +185,7 @@ foreach ($email in $dashboardByRole.Keys) {
     if (-not $match.Success) { throw 'khong lay duoc CSRF token cua trang dang nhap' }
     $loginResponse = Invoke-WebRequest -Uri $loginUrl -Method Post -WebSession $probe -UseBasicParsing `
         -MaximumRedirection 0 -ErrorAction SilentlyContinue `
-        -Body @{ _csrf = $match.Groups[1].Value; identifier = $email; password = '123456' }
+        -Body @{ _csrf = $match.Groups[1].Value; identifier = $email; password = $TestPassword }
     $redirect = if ($loginResponse.Headers['Location']) { $loginResponse.Headers['Location'] } else { '' }
     if ($redirect -like "*$expectedPath*") {
         Write-Host ("  [OK]   {0,-10} {1,-28} -> {2}" -f 'LOGIN', $email, $expectedPath) -ForegroundColor Green

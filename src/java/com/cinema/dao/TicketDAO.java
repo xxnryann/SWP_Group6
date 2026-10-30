@@ -91,6 +91,62 @@ public class TicketDAO {
     }
 
     /**
+     * Các đơn có combo của khách đã thanh toán ("Đã mua"), hoặc đã bị huỷ
+     * (mọi vé của đơn đã huỷ → "Đã huỷ"). Đơn chưa từng thanh toán không được liệt kê.
+     * Đơn còn hiệu lực lên đầu, trong mỗi nhóm mua gần nhất trước.
+     */
+    public List<com.cinema.model.ComboOrder> findComboOrdersByUser(String email) throws SQLException {
+        String sql = "SELECT b.booking_id, b.booking_code, b.status AS booking_status, "
+                + "COALESCE(b.paid_at, b.created_at) AS purchased_at, "
+                + "m.title, r.room_name, ci.cinema_name, s.start_time, "
+                + "(SELECT COUNT(*) FROM Ticket t WHERE t.booking_id = b.booking_id AND t.status <> 'Cancelled') AS live_tickets, "
+                + "cb.combo_name, bc.quantity, bc.unit_price "
+                + "FROM Booking b "
+                + "JOIN Account a ON a.account_id = b.customer_id "
+                + "JOIN BookingCombo bc ON bc.booking_id = b.booking_id "
+                + "JOIN Combo cb ON cb.combo_id = bc.combo_id "
+                + "JOIN Showtime s ON s.showtime_id = b.showtime_id "
+                + "JOIN Movie m ON m.movie_id = s.movie_id "
+                + "JOIN Room r ON r.room_id = s.room_id "
+                + "JOIN Cinema ci ON ci.cinema_id = r.cinema_id "
+                + "WHERE a.email = ? AND b.paid_at IS NOT NULL "
+                + "ORDER BY b.booking_id, cb.combo_name";
+        java.util.Map<Integer, com.cinema.model.ComboOrder> byId = new java.util.LinkedHashMap<>();
+        try (Connection c = DBContext.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, email == null ? "" : email);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("booking_id");
+                    com.cinema.model.ComboOrder o = byId.get(id);
+                    if (o == null) {
+                        o = new com.cinema.model.ComboOrder();
+                        o.setBookingId(id);
+                        o.setBookingCode(rs.getString("booking_code"));
+                        o.setMovieTitle(rs.getString("title"));
+                        o.setRoomName(rs.getString("room_name"));
+                        o.setCinemaName(rs.getString("cinema_name"));
+                        Timestamp st = rs.getTimestamp("start_time");
+                        o.setStartTime(st == null ? null : st.toLocalDateTime());
+                        Timestamp pu = rs.getTimestamp("purchased_at");
+                        o.setPurchasedAt(pu == null ? null : pu.toLocalDateTime());
+                        o.setCancelled("Cancelled".equalsIgnoreCase(rs.getString("booking_status"))
+                                || rs.getInt("live_tickets") == 0);
+                        byId.put(id, o);
+                    }
+                    o.getLines().add(new com.cinema.model.ComboOrder.Line(
+                            rs.getString("combo_name"), rs.getInt("quantity"), rs.getBigDecimal("unit_price")));
+                }
+            }
+        }
+        List<com.cinema.model.ComboOrder> list = new ArrayList<>(byId.values());
+        list.sort(java.util.Comparator
+                .comparing(com.cinema.model.ComboOrder::isCancelled)
+                .thenComparing(com.cinema.model.ComboOrder::getPurchasedAt,
+                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())));
+        return list;
+    }
+
+    /**
      * Đọc MỘT vé theo id (không kiểm tra ownership — dành cho nhân viên quầy
      * in mã QR lúc bán vé).
      *

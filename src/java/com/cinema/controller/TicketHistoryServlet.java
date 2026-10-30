@@ -24,7 +24,14 @@ public class TicketHistoryServlet extends BaseServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            req.setAttribute("tickets", service.getCustomerTickets(currentUser(req).getEmail()));
+            String email = currentUser(req).getEmail();
+            boolean combos = "combos".equals(req.getParameter("tab"));
+            req.setAttribute("tab", combos ? "combos" : "tickets");
+            if (combos) {
+                req.setAttribute("comboOrders", service.getCustomerCombos(email));
+            } else {
+                req.setAttribute("tickets", service.getCustomerTickets(email));
+            }
             forward(req, resp, "tickets");
         } catch (SQLException e) {
             throw new ServletException(e);

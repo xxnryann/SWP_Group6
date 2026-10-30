@@ -9,13 +9,14 @@
     nhau (DB chua duoc cap nhat sau khi sua file .sql).
 
     Che do -Sync se tu doi chieu va tao lai procedure dang KHAC trong DB.
-    Luu y: -Sync chi dung khi file .sql la nguon su that moi nhat.
+    Luu y: -Sync chi dung khi file .sql la nguon su that moi nhat. sqlcmd chay voi -I (QUOTED_IDENTIFIER ON) de procedure
+    khong bi tao voi QUOTED_IDENTIFIER OFF (loi khi cap nhat bang co filtered index).
 
 .PARAMETER SqlFile
     File .sql chua schema/procedure. Mac dinh "sql/new.sql".
 
 .PARAMETER Server
-    Chuoi ket noi sqlcmd (mac dinh doc tu app.properties).
+    Server SQL (mac dinh localhost,1433). Tai khoan/mat khau lay tu CINEMA_DB_USER / CINEMA_DB_PASSWORD, CINEMA_DB_WINAUTH=1, hoac db.user / db.password trong app.properties.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts/compare-procedures.ps1
@@ -28,8 +29,6 @@ param(
     [string]$SqlFile,
     [string]$Server = 'localhost,1433',
     [string]$Database = 'CinemaWebDB',
-    [string]$User = 'sa',
-    [string]$Password = '123',
     [switch]$Sync
 )
 
@@ -37,6 +36,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 if (-not $SqlFile) { $SqlFile = Join-Path $root 'sql/new.sql' }
 
+. (Join-Path $PSScriptRoot 'lib/test-config.ps1')
+$sqlAuth = Get-SqlCmdAuth   # mat khau SQL di qua SQLCMDPASSWORD, khong qua -P (xem lib/test-config.ps1)
 $sqlcmd = 'C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\SQLCMD.EXE'
 if (-not (Test-Path $sqlcmd)) {
     $found = Get-Command sqlcmd -ErrorAction SilentlyContinue
@@ -86,7 +87,7 @@ $same = @()
 
 foreach ($name in $defs.Keys) {
     $query = "SET NOCOUNT ON; SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.$name')) AS def;"
-    $out = & $sqlcmd -S $Server -U $User -P $Password -d $Database -C -Q $query -y 0 -Y 0 2>&1 | Out-String
+    $out = & $sqlcmd -S $Server @sqlAuth -d $Database -C -I -Q $query -y 0 -Y 0 2>&1 | Out-String
     $dbDef = $out.Trim()
     $idx = $dbDef.IndexOf('CREATE')
     if ($idx -lt 0) {
@@ -137,7 +138,7 @@ foreach ($name in $targets) {
     $tmp = Join-Path $env:TEMP ("sync_{0}.sql" -f $name)
     # File phai la UTF-8 co BOM de sqlcmd doc dung tieng Viet
     [System.IO.File]::WriteAllText($tmp, $body, (New-Object System.Text.UTF8Encoding($true)))
-    $out = & $sqlcmd -S $Server -U $User -P $Password -d $Database -C -i $tmp 2>&1 | Out-String
+    $out = & $sqlcmd -S $Server @sqlAuth -d $Database -C -I -i $tmp 2>&1 | Out-String
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  [OK]   $name" -ForegroundColor Green
     } else {

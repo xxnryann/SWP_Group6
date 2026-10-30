@@ -17,15 +17,18 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$BaseUrl = 'http://localhost:8080/CinemaWeb',
+    [string]$BaseUrl = '',
     [string]$Email = 'khach1@gmail.com',
-    [string]$Password = '123456'
+    [string]$Password = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $script:Failures = @()
 
 . "$PSScriptRoot\lib\booking-test-lib.ps1"
+. (Join-Path $PSScriptRoot 'lib/test-config.ps1')
+if (-not $BaseUrl) { $BaseUrl = Get-CinemaBaseUrl }
+if (-not $Password) { $Password = Get-CinemaTestPassword }
 
 # =====================================================================
 Write-Step 'A. HUY TREN CONG THANH TOAN'
@@ -147,7 +150,7 @@ Assert-Test ($paidAfterSecond.paid -eq $paidAfterFirst.paid) `
     "ve KHONG duoc cap phat 2 lan (truoc: $($paidAfterFirst.paid), sau: $($paidAfterSecond.paid))"
 
 # =====================================================================
-Write-Step 'D. GHE DUOC TRA LAI SAU KHI THANH TOAN THAT BAI'
+Write-Step 'D. GHE CHUYEN RED SAU KHI THANH TOAN THANH CONG'
 # Don da thanh toan -> ghe phai chuyen RED (da ban), khong phai GREEN.
 $seatPage2 = Invoke-WebRequest -Uri $seat.url -WebSession $session -UseBasicParsing
 $seatAfterPay = ($seat.ids -split ',')[0]

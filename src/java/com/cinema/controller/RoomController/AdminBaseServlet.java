@@ -11,7 +11,7 @@ import java.io.IOException;
  * Nền chung cho các màn hình Admin của module Phòng chiếu / Ghế.
  * Chỉ tài khoản có role ADMIN được truy cập.
  *
- * TODO (Đoàn Mạnh Cường): chuyển sang filter phân quyền tập trung khi xong "System Authorization".
+ * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): quyền ADMIN đang kiểm tra trong servlet; dài hạn gom về filter tập trung.
  */
 abstract class AdminBaseServlet extends BaseServlet {
 

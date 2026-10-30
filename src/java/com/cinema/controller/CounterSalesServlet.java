@@ -37,8 +37,8 @@ import java.util.Map;
  * Lưu ý: phiên giữ ghế chỉ tồn tại 15 phút (SystemConfig BOOKING_SESSION_MINUTES).
  * Nếu hết hạn giữa chừng, servlet tự tạo booking mới khi giữ ghế lại.
  *
- * TODO (Đoàn Mạnh Cường): chuyển kiểm tra quyền sang filter phân quyền
- * tập trung khi xong STT "System Authorization".
+ * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): phân quyền hiện kiểm tra ngay trong servlet này (đang đúng);
+ * mục tiêu dài hạn là gom về filter phân quyền tập trung.
  */
 @WebServlet("/staff/counter")
 public class CounterSalesServlet extends BaseServlet {

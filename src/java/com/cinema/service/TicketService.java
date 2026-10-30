@@ -48,6 +48,10 @@ public class TicketService {
         return ticketDAO.findByUser(email);
     }
 
+    public List<com.cinema.model.ComboOrder> getCustomerCombos(String email) throws SQLException {
+        return ticketDAO.findComboOrdersByUser(email);
+    }
+
     /**
      * Huỷ MỘT vé của khách đang đăng nhập.
      *

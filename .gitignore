@@ -27,3 +27,7 @@ Thumbs.db
 
 # ---- WAR / JAR sinh ra ----
 *.war
+
+# ---- Bi mat / cau hinh rieng cua may (db.password, mail.password, vnpay.secretKey...) ----
+# Sao chep src/java/app.properties.example -> src/java/app.properties roi dien gia tri that.
+/src/java/app.properties
