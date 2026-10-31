@@ -36,6 +36,14 @@
                 <c:set var="itemClass" value="is-danger"/>
                 <c:set var="itemTitle" value="Phim bị hủy, bạn sẽ được hoàn tiền"/>
               </c:when>
+              <c:when test="${n.notif_type == 'ReviewReminder'}">
+                <c:set var="itemClass" value="is-success"/>
+                <c:set var="itemTitle" value="${n.subject}"/>
+              </c:when>
+              <c:when test="${n.notif_type == 'NewMovie' or n.notif_type == 'Voucher'}">
+                <c:set var="itemClass" value=""/>
+                <c:set var="itemTitle" value="${n.subject}"/>
+              </c:when>
               <c:otherwise>
                 <c:set var="itemClass" value="is-reminder"/>
                 <c:set var="itemTitle" value="Sắp đến giờ chiếu"/>
@@ -47,6 +55,14 @@
                 <span class="inbox-time"><c:out value="${n.created_at}"/></span>
               </div>
               <c:choose>
+                <c:when test="${n.notif_type == 'Voucher'}">
+                  <p><c:out value="${n.body}"/></p>
+                  <p><a class="btn btn-primary btn-small" href="${ctx}/promotions">Xem khuyến mãi</a></p>
+                </c:when>
+                <c:when test="${n.notif_type == 'NewMovie'}">
+                  <p><c:out value="${n.body}"/></p>
+                  <c:if test="${n.movie_active == 1}"><p><a class="btn btn-primary btn-small" href="${ctx}/movies/detail?id=${n.movie_id}">Xem phim</a></p></c:if>
+                </c:when>
                 <c:when test="${empty n.title}"><p><c:out value="${n.body}"/></p></c:when>
                 <c:when test="${n.notif_type == 'TicketCancelled'}">
                   <p><c:out value="${n.body}"/> Phim: <strong><c:out value="${n.title}"/></strong>.</p>
@@ -56,6 +72,13 @@
                 </c:when>
                 <c:when test="${n.notif_type == 'MovieCancelled'}">
                   <p>Phim <strong><c:out value="${n.title}"/></strong> bạn đã đặt bị hủy. Tiền vé sẽ được hoàn lại cho bạn.</p>
+                </c:when>
+                <c:when test="${n.notif_type == 'ReviewReminder'}">
+                  <p>Bạn vừa xem xong phim <strong><c:out value="${n.title}"/></strong>.</p>
+                  <c:choose>
+                    <c:when test="${n.can_review == 1}"><p><a class="btn btn-primary btn-small" href="${ctx}/movies/detail?id=${n.movie_id}#reviews">Đánh giá ngay</a></p></c:when>
+                    <c:otherwise><p class="inbox-meta">Bạn đã đánh giá phim này hoặc phim không còn nhận đánh giá.</p></c:otherwise>
+                  </c:choose>
                 </c:when>
                 <c:otherwise>
                   <p>Phim <strong><c:out value="${n.title}"/></strong> sắp chiếu. Vui lòng đến trước giờ chiếu để soát vé.</p>

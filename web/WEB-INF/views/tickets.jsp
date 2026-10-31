@@ -192,6 +192,9 @@
                     </c:when>
                     <c:when test="${t.used}">
                       <p class="tk-note">Vé đã được soát vé tại rạp.</p>
+                      <c:if test="${t.canReview}">
+                        <a class="btn btn-cta btn-small" href="${pageContext.request.contextPath}/movies/detail?id=${t.movieId}#reviews">Viết đánh giá</a>
+                      </c:if>
                     </c:when>
                     <c:otherwise>
                       <p class="tk-note">Vé đã được huỷ.</p>

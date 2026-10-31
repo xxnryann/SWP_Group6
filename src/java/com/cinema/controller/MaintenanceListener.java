@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 /**
  * Các job nền của hệ thống:
  * <ul>
- *   <li>mỗi phút: nhả ghế giữ quá hạn, chuyển vé đã qua giờ chiếu sang Expired, gửi email đang chờ;</li>
+ *   <li>mỗi phút: nhả ghế giữ quá hạn, chuyển vé đã qua giờ chiếu sang Expired, nhắc đánh giá phim, gửi email đang chờ;</li>
  *   <li>mỗi 15 phút: xếp thư nhắc lịch chiếu cho các suất bắt đầu trong 3 giờ tới.</li>
  * </ul>
  */
@@ -39,6 +39,7 @@ public class MaintenanceListener implements ServletContextListener {
         scheduler.scheduleWithFixedDelay(() -> safely("minute job", () -> {
             outbox.releaseExpiredHolds();
             outbox.expirePastTickets();
+            outbox.queueReviewReminders();
             dispatcher.dispatchPending(20);
         }), 30, 60, TimeUnit.SECONDS);
         scheduler.scheduleWithFixedDelay(() -> safely("reminder job", () -> outbox.queueReminders(REMINDER_HOURS)),

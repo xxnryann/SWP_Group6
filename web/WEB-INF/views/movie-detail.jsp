@@ -91,7 +91,7 @@
         <c:otherwise><p>Chưa có trailer</p></c:otherwise>
       </c:choose>
     </section>
-    <section class="movie-reviews">
+    <section class="movie-reviews" id="reviews">
       <h2>Đánh giá từ khán giả
         <c:if test="${reviewStats.review_count > 0}">
           <span class="review-avg">★ <c:out value="${reviewStats.avg_rating}"/>/5 · <c:out value="${reviewStats.review_count}"/> lượt</span>
@@ -119,7 +119,7 @@
       </c:if>
       <c:if test="${hasReviewed}"><p class="alert alert-info">Bạn đã đánh giá phim này.</p></c:if>
       <c:if test="${not canReview and not hasReviewed and sessionScope.authUser.role == 'CUSTOMER'}">
-        <p class="review-note">Bạn có thể đánh giá sau khi xem phim (vé đã được soát tại rạp).</p>
+        <p class="review-note">Bạn có thể đánh giá sau khi xem xong phim (vé đã được soát tại rạp và suất chiếu đã kết thúc).</p>
       </c:if>
 
       <c:choose>

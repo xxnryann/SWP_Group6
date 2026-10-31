@@ -159,3 +159,27 @@ FROM dbo.Movie m
 LEFT JOIN dbo.Account a ON a.account_id = m.created_by
 WHERE m.is_deleted = 0;
 GO
+
+/* ============================================================================
+   8. Danh gia phim chi sau khi suat chieu ket thuc (01/11/2026)
+   ============================================================================ */
+-- Chi doi sp_AddReview, sp_GetCustomerTickets:  scripts\compare-procedures.ps1 -Sync
+
+/* ============================================================================
+   9. Nhac danh gia sau khi xem phim, thuong 5 diem MyPoint (01/11/2026)
+   ============================================================================ */
+-- Sau khi chay, tao sp_QueueReviewReminders va cap nhat sp_AddReview:  scripts\compare-procedures.ps1 -Sync
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_EmailNotification_Type'
+               AND parent_object_id = OBJECT_ID('dbo.EmailNotification') AND definition LIKE '%ReviewReminder%')
+BEGIN
+    ALTER TABLE dbo.EmailNotification DROP CONSTRAINT CK_EmailNotification_Type;
+    ALTER TABLE dbo.EmailNotification ADD CONSTRAINT CK_EmailNotification_Type
+        CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ReviewReminder'));
+END
+GO
+
+/* ============================================================================
+   10. Email phim moi / voucher, chan soat ve trung (01/11/2026)
+   ============================================================================ */
+-- Chi doi procedure (sp_QueueNewMovieEmail, sp_QueueVoucherEmail, sp_CheckInTicket, sp_DeleteMovie):
+--     scripts\compare-procedures.ps1 -Sync

@@ -29,6 +29,7 @@ public class VoucherServlet extends BaseServlet {
     private static final Set<String> STATUSES = Set.of("Allowed", "Disabled");
     private final PromoDAO dao = new PromoDAO();
     private final AccountDAO accountDAO = new AccountDAO();
+    private final com.cinema.dao.EmailOutboxDAO outbox = new com.cinema.dao.EmailOutboxDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -65,7 +66,10 @@ public class VoucherServlet extends BaseServlet {
                 case "toggle" -> {
                     String status = Validator.trim(req.getParameter("status"));
                     if (!STATUSES.contains(status)) throw new IllegalArgumentException("Trạng thái không hợp lệ.");
-                    dao.setVoucherStatus(safeId(req.getParameter("id")), status);
+                    int id = safeId(req.getParameter("id"));
+                    dao.setVoucherStatus(id, status);
+                    Map<String, Object> toggled = dao.voucher(id);
+                    if (toggled != null) queueVoucherEmail((String) toggled.get("code"));
                     flash(req, "success", "Đã cập nhật trạng thái voucher.");
                 }
                 case "delete" -> {
@@ -135,7 +139,17 @@ public class VoucherServlet extends BaseServlet {
         int creator = accountDAO.findAccountIdByEmail(currentUser(req).getEmail());
         dao.saveVoucher(id, code, description, type, value, maxDiscount, minOrder, minSpent, usageLimit,
                 perCustomer, from, to, status, creator == 0 ? 2 : creator);
+        queueVoucherEmail(code);
         flash(req, "success", id == 0 ? "Đã thêm voucher " + code + "." : "Đã cập nhật voucher " + code + ".");
+    }
+
+    /** Voucher đã lưu xong thì lỗi xếp email không được làm hỏng thao tác lưu. */
+    private void queueVoucherEmail(String code) {
+        try {
+            outbox.queueVoucher(code);
+        } catch (SQLException e) {
+            getServletContext().log("Cannot queue voucher email for " + code, e);
+        }
     }
 
     private static String orZero(String s) {

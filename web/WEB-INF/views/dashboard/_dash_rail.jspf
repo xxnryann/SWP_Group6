@@ -7,6 +7,7 @@
       <a href="${ctx}/dashboard/admin">Tổng quan</a>
       <a href="${ctx}/admin/users">Người dùng</a>
       <a href="${ctx}/admin/rooms">Phòng chiếu</a>
+      <a href="${ctx}/admin/system">Quản lý hệ thống</a>
     </c:when>
     <c:when test="${railRole == 'MANAGER'}">
       <a href="${ctx}/dashboard/manager">Tổng quan</a>

@@ -44,21 +44,41 @@ public class EmailOutboxDAO {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
-    /** Hộp thư của khách: đặt vé thành công, hủy vé, phim bị hủy, nhắc lịch chiếu (không phụ thuộc email đã gửi được hay chưa). */
+    /** Hộp thư của khách: mọi loại thông báo (không phụ thuộc email đã gửi được hay chưa). */
     public List<Map<String, Object>> customerInbox(int customerId, int limit) throws SQLException {
-        return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.created_at, m.title, r.room_name, "
-                + "s.start_time, b.booking_code FROM EmailNotification e "
+        return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.created_at, m.movie_id, m.title, r.room_name, "
+                + "s.start_time, b.booking_code, CASE WHEN m.is_deleted = 0 THEN 1 ELSE 0 END AS movie_active, "
+                + "CASE WHEN m.is_deleted = 0 AND NOT EXISTS (SELECT 1 FROM Review rv WHERE rv.movie_id = m.movie_id "
+                + "AND rv.customer_id = e.customer_id) THEN 1 ELSE 0 END AS can_review FROM EmailNotification e "
                 + "LEFT JOIN Booking b ON b.booking_id = e.booking_id "
                 + "LEFT JOIN Showtime s ON s.showtime_id = COALESCE(e.showtime_id, b.showtime_id) "
                 + "LEFT JOIN Movie m ON m.movie_id = COALESCE(e.movie_id, s.movie_id) "
                 + "LEFT JOIN Room r ON r.room_id = s.room_id "
-                + "WHERE e.customer_id = ? AND e.notif_type IN ('ETicket','TicketCancelled','MovieCancelled','ShowtimeReminder') "
-                + "ORDER BY e.notif_id DESC", limit, customerId);
+                + "WHERE e.customer_id = ? "
+                +"ORDER BY e.notif_id DESC", limit, customerId);
     }
 
     /** Job định kỳ: nhắc lịch chiếu cho các suất bắt đầu trong {@code hoursBefore} giờ tới. */
     public void queueReminders(int hoursBefore) throws SQLException {
         runProc("{call dbo.sp_QueueShowtimeReminders(?)}", hoursBefore);
+    }
+
+    /** Xếp email báo phim mới cho mọi khách đang hoạt động. */
+    public void queueNewMovie(int movieId) throws SQLException {
+        runProc("{call dbo.sp_QueueNewMovieEmail(?)}", movieId);
+    }
+
+    /** Xếp email ưu đãi cho khách đủ điều kiện của voucher (voucher đang bật, còn hạn). */
+    public void queueVoucher(String code) throws SQLException {
+        try (Connection c = DBContext.getConnection(); CallableStatement cs = c.prepareCall("{call dbo.sp_QueueVoucherEmail(?)}")) {
+            cs.setString(1, code);
+            cs.execute();
+        }
+    }
+
+    /** Job định kỳ: nhắc đánh giá cho khách vừa xem xong phim. */
+    public void queueReviewReminders() throws SQLException {
+        runProc("{call dbo.sp_QueueReviewReminders}", null);
     }
 
     /** Job định kỳ: nhả ghế giữ quá hạn. */

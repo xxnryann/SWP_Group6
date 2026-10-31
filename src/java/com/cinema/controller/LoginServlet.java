@@ -2,6 +2,7 @@ package com.cinema.controller;
 
 import com.cinema.dao.UserDAO;
 import com.cinema.model.User;
+import com.cinema.util.AuditLog;
 import com.cinema.util.RoleDashboard;
 import com.cinema.util.SecurityUtil;
 import com.cinema.util.Validator;
@@ -83,6 +84,9 @@ public class LoginServlet extends BaseServlet {
             req.changeSessionId(); // prevent session fixation
             var session = req.getSession();
             session.setAttribute(SESSION_USER, sessionCopy(u));
+            if (!"CUSTOMER".equals(u.getRole())) {
+                AuditLog.write(u.getEmail(), "LOGIN", "Thành công · IP=" + req.getRemoteAddr());
+            }
             String next = (String) session.getAttribute("afterLogin");
             session.removeAttribute("afterLogin");
             // Deep-link hợp lệ (vd /account/tickets) vẫn được tôn trọng;
@@ -98,6 +102,7 @@ public class LoginServlet extends BaseServlet {
 
     private void fail(HttpServletRequest req, HttpServletResponse resp, String msg)
             throws ServletException, IOException {
+        AuditLog.write(null, "LOGIN", "Thất bại · tài khoản=" + req.getAttribute("identifier") + " · IP=" + req.getRemoteAddr());
         req.setAttribute("error", msg);
         forward(req, resp, "login");
     }

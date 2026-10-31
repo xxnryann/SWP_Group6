@@ -9,7 +9,7 @@
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
     <c:if test="${not empty success}"><p class="alert alert-success"><c:out value="${success}"/></p></c:if>
 
-    <form method="post" action="${ctx}/staff/checkin" class="checkin-form">
+    <form method="post" action="${ctx}/staff/checkin" class="checkin-form" id="checkinForm">
       <input type="hidden" name="_csrf" value="${csrf}">
       <div class="field">
         <label for="ticketCode">MÃ VÉ</label>
@@ -18,6 +18,16 @@
       </div>
       <button class="btn btn-primary" type="submit">Soát vé</button>
     </form>
+
+    <div class="qr-scan">
+      <div class="qr-scan-actions">
+        <button class="btn btn-outline" type="button" id="qrCameraBtn">Quét bằng camera</button>
+        <label class="btn btn-outline" for="qrImage">Chọn ảnh mã QR</label>
+        <input id="qrImage" type="file" accept="image/*" hidden>
+      </div>
+      <p class="qr-scan-status" id="qrStatus" role="status" aria-live="polite"></p>
+      <video id="qrVideo" class="qr-scan-video" playsinline muted hidden></video>
+    </div>
 
     <c:if test="${not empty ticket}">
       <div class="checkin-ticket">
@@ -64,4 +74,13 @@
     </c:choose>
   </section>
 </div></main>
+<style>
+  .qr-scan { margin-top: 14px; }
+  .qr-scan-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .qr-scan-status { margin: 10px 0 0; color: #64748b; font-size: 14px; min-height: 20px; }
+  .qr-scan-video { display: block; width: 100%; max-width: 420px; margin-top: 10px; border-radius: 12px; background: #0f172a; }
+  .qr-scan-video[hidden] { display: none; }
+</style>
+<script src="${ctx}/assets/js/vendor/jsQR.js"></script>
+<script src="${ctx}/assets/js/checkin-scan.js"></script>
 <%@ include file="../_footer.jspf" %>

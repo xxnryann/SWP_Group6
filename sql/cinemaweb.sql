@@ -509,7 +509,7 @@ CREATE TABLE dbo.EmailNotification (
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_EmailNotification_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
-    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled')),
+    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ReviewReminder')),
     CONSTRAINT CK_EmailNotification_Status CHECK (status IN ('Pending','Sent','Failed'))
 );
 GO
@@ -933,7 +933,9 @@ BEGIN
     IF SYSDATETIME() < DATEADD(MINUTE, -@early, @start) OR SYSDATETIME() > @end
         THROW 50063, N'Ngoài thời gian cho phép vào phòng chiếu.', 1;
 
-    UPDATE dbo.Ticket SET status = 'Used', checked_in_at = SYSDATETIME(), checked_in_by = @staff_id WHERE ticket_id = @tid;
+    -- Dieu kien status: hai may quet cung luc thi chi mot may soat duoc ve.
+    UPDATE dbo.Ticket SET status = 'Used', checked_in_at = SYSDATETIME(), checked_in_by = @staff_id WHERE ticket_id = @tid AND status = 'Booked';
+    IF @@ROWCOUNT = 0 THROW 50061, N'Vé đã được sử dụng.', 1;
 END
 GO
 
@@ -1058,12 +1060,89 @@ GO
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_AddReview @customer_id INT, @movie_id INT, @rating TINYINT, @comment NVARCHAR(1000) = NULL AS
 BEGIN
-    SET NOCOUNT ON;
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    DECLARE @bonus INT = 5;   -- khop voi noi dung thong bao ReviewReminder
     IF NOT EXISTS (SELECT 1 FROM dbo.Ticket t JOIN dbo.Booking b ON b.booking_id = t.booking_id
                    JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
-                   WHERE b.customer_id = @customer_id AND s.movie_id = @movie_id AND t.status = 'Used')
-        THROW 50090, N'Chỉ được đánh giá phim bạn đã xem.', 1;
+                   JOIN dbo.Movie m ON m.movie_id = s.movie_id
+                   WHERE b.customer_id = @customer_id AND s.movie_id = @movie_id AND t.status = 'Used'
+                     AND s.end_time < SYSDATETIME() AND m.is_deleted = 0)
+        THROW 50090, N'Chỉ được đánh giá phim bạn đã xem xong.', 1;
+
+    -- UQ_Review_Movie_Customer dam bao moi phim chi thuong diem mot lan.
+    BEGIN TRAN;
     INSERT INTO dbo.Review(movie_id, customer_id, rating, comment) VALUES (@movie_id, @customer_id, @rating, @comment);
+    INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points) VALUES (@customer_id, NULL, 'Earn', @bonus);
+    UPDATE dbo.Customer SET my_point_balance = my_point_balance + @bonus WHERE customer_id = @customer_id;
+    COMMIT;
+END
+GO
+
+/* ----------------------------------------------------------------------------
+   UC: Receive Email Notifications - bao phim moi cho moi khach dang hoat dong.
+   Goi lai nhieu lan khong gui trung.
+   -------------------------------------------------------------------------- */
+CREATE OR ALTER PROCEDURE dbo.sp_QueueNewMovieEmail @movie_id INT AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, movie_id)
+    SELECT c.customer_id, 'NewMovie', LEFT(N'Phim mới: ' + m.title, 200),
+           N'Phim "' + m.title + N'" sắp có mặt tại CineStar Cinemas, khởi chiếu ngày '
+               + CONVERT(NVARCHAR(10), m.release_date, 103) + N'.',
+           m.movie_id
+    FROM dbo.Movie m
+    CROSS JOIN dbo.Customer c
+    JOIN dbo.Account a ON a.account_id = c.customer_id
+    WHERE m.movie_id = @movie_id AND m.is_deleted = 0 AND m.status <> 'Stopped' AND a.status = 'Active'
+      AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'NewMovie'
+                      AND e.movie_id = m.movie_id AND e.customer_id = c.customer_id);
+END
+GO
+
+/* ----------------------------------------------------------------------------
+   UC: Receive Email Notifications - bao uu dai voucher cho khach du dieu kien chi tieu.
+   Chi voucher dang bat va con han; goi lai nhieu lan khong gui trung.
+   -------------------------------------------------------------------------- */
+CREATE OR ALTER PROCEDURE dbo.sp_QueueVoucherEmail @code VARCHAR(30) AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body)
+    SELECT c.customer_id, 'Voucher', N'Ưu đãi voucher ' + v.code,
+           N'Dùng mã ' + v.code + N' khi đặt vé: '
+               + COALESCE(NULLIF(v.description, N''),
+                          CASE WHEN v.discount_type = 'Percent'
+                               THEN N'giảm ' + FORMAT(v.discount_value, '0.##') + N'%'
+                               ELSE N'giảm ' + FORMAT(v.discount_value, 'N0', 'vi-VN') + N' đ' END)
+               + N'. Hạn dùng đến ' + CONVERT(NVARCHAR(10), v.valid_to, 103) + N'.'
+    FROM dbo.Voucher v
+    CROSS JOIN dbo.Customer c
+    JOIN dbo.Account a ON a.account_id = c.customer_id
+    WHERE v.code = @code AND v.status = 'Allowed' AND v.valid_to >= CAST(SYSDATETIME() AS DATE)
+      AND a.status = 'Active' AND c.total_spent >= v.min_cumulative_spending
+      AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'Voucher'
+                      AND e.customer_id = c.customer_id AND e.subject = N'Ưu đãi voucher ' + v.code);
+END
+GO
+
+/* ----------------------------------------------------------------------------
+   Job: moi khach xem xong phim (ve da soat, suat vua ket thuc) -> nhac danh gia.
+   Chi xet suat ket thuc trong 24 gio qua; moi khach mot thong bao cho moi phim.
+   -------------------------------------------------------------------------- */
+CREATE OR ALTER PROCEDURE dbo.sp_QueueReviewReminders AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, movie_id, booking_id)
+    SELECT b.customer_id, 'ReviewReminder', N'Hãy đánh giá phim để nhận 5 điểm MyPoint',
+           N'Hãy đánh giá phim để nhận 5 điểm MyPoint', MAX(s.showtime_id), s.movie_id, MAX(b.booking_id)
+    FROM dbo.Ticket t JOIN dbo.Booking b ON b.booking_id = t.booking_id
+    JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
+    JOIN dbo.Movie m ON m.movie_id = s.movie_id
+    WHERE t.status = 'Used' AND b.customer_id IS NOT NULL AND m.is_deleted = 0
+      AND s.end_time < SYSDATETIME() AND s.end_time >= DATEADD(HOUR, -24, SYSDATETIME())
+      AND NOT EXISTS (SELECT 1 FROM dbo.Review r WHERE r.movie_id = s.movie_id AND r.customer_id = b.customer_id)
+      AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'ReviewReminder'
+                      AND e.movie_id = s.movie_id AND e.customer_id = b.customer_id)
+    GROUP BY b.customer_id, s.movie_id;
 END
 GO
 
@@ -1282,7 +1361,11 @@ BEGIN
            s.start_time, s.end_time,
            CASE WHEN t.status = 'Booked'
                  AND DATEADD(HOUR, -@cancel_hours, s.start_time) >= SYSDATETIME()
-                THEN 1 ELSE 0 END AS can_cancel
+                THEN 1 ELSE 0 END AS can_cancel,
+           m.movie_id,
+           CASE WHEN t.status = 'Used' AND s.end_time < SYSDATETIME() AND m.is_deleted = 0
+                 AND NOT EXISTS (SELECT 1 FROM dbo.Review rv WHERE rv.movie_id = m.movie_id AND rv.customer_id = b.customer_id)
+                THEN 1 ELSE 0 END AS can_review
     FROM dbo.Ticket t
     JOIN dbo.Booking b   ON b.booking_id = t.booking_id
     JOIN dbo.Account a   ON a.account_id = b.customer_id
@@ -1409,6 +1492,9 @@ BEGIN
         THROW 51020, N'Không tìm thấy phim cần xóa.', 1;
     IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id AND status = 'Scheduled' AND end_time > SYSDATETIME())
         THROW 51021, N'Phim còn suất chưa chiếu xong nên chưa thể xóa. Hãy dùng "Hủy & hoàn tiền" rồi xóa lại; suất đang chiếu cần đợi kết thúc.', 1;
+
+    -- Phim vua them nham: thu hoi email bao phim moi chua gui.
+    DELETE FROM dbo.EmailNotification WHERE movie_id = @movie_id AND notif_type = 'NewMovie' AND status = 'Pending';
 
     -- Phim da co lich su (suat chieu, ve, doanh thu, danh gia, thong bao): chi an di, khong xoa du lieu.
     IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id)

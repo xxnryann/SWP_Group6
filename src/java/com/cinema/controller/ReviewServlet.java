@@ -54,7 +54,7 @@ public class ReviewServlet extends BaseServlet {
                     flash(req, "error", "Bạn đã đánh giá phim này rồi.");
                 } else {
                     dao.add(customerId, movieId, rating, comment);
-                    flash(req, "success", "Cảm ơn bạn đã đánh giá phim!");
+                    flash(req, "success", "Cảm ơn bạn đã đánh giá phim! Bạn nhận được 5 điểm MyPoint.");
                 }
             } catch (SQLException e) {
                 flash(req, "error", e.getMessage());

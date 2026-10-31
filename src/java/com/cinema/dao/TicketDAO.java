@@ -30,6 +30,15 @@ public class TicketDAO {
     /** Số giờ tối thiểu trước giờ chiếu để còn huỷ được vé (đồng bộ CANCEL_BEFORE_HOURS). */
     private static final int DEFAULT_CANCEL_HOURS = 2;
 
+    /** Số giờ trước giờ chiếu còn huỷ được vé, theo cấu hình hệ thống để khớp với sp_CancelTicket. */
+    private static int cancelHours(Connection c) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT CAST(config_value AS INT) FROM SystemConfig WHERE config_key = 'CANCEL_BEFORE_HOURS'");
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : DEFAULT_CANCEL_HOURS;
+        }
+    }
+
     /**
      * Lịch sử vé của khách — mỗi phần tử là MỘT vé (1 thẻ, 1 mã QR).
      *
@@ -43,7 +52,7 @@ public class TicketDAO {
         try (Connection c = DBContext.getConnection();
              CallableStatement cs = c.prepareCall(sql)) {
             cs.setString(1, email == null ? "" : email);
-            cs.setInt(2, DEFAULT_CANCEL_HOURS);
+            cs.setInt(2, cancelHours(c));
             try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     Ticket t = new Ticket();
@@ -59,6 +68,8 @@ public class TicketDAO {
                     t.setPrice(rs.getBigDecimal("price"));
                     t.setStatus(rs.getString("ticket_status"));
                     t.setCanCancel(rs.getInt("can_cancel") == 1);
+                    t.setMovieId(rs.getInt("movie_id"));
+                    t.setCanReview(rs.getInt("can_review") == 1);
                     Timestamp start = rs.getTimestamp("start_time");
                     t.setStartTime(start == null ? null : start.toLocalDateTime());
                     Timestamp end = rs.getTimestamp("end_time");
@@ -227,7 +238,7 @@ public class TicketDAO {
                 + "WHERE t.ticket_id = ? AND a.email = ?";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, DEFAULT_CANCEL_HOURS);
+            ps.setInt(1, cancelHours(c));
             ps.setInt(2, ticketId);
             ps.setString(3, email == null ? "" : email);
             try (ResultSet rs = ps.executeQuery()) {
@@ -288,7 +299,8 @@ public class TicketDAO {
     public List<PointTransaction> findPointHistory(String email) throws SQLException {
         // Account.email dùng collation CI_AS → so sánh trực tiếp để giữ index seek.
         String sql = "SELECT p.txn_id, p.points, p.created_at, "
-                + "CASE p.txn_type WHEN 'Earn' THEN N'Tích điểm đơn ' WHEN 'Redeem' THEN N'Dùng điểm cho đơn ' "
+                + "CASE WHEN p.txn_type = 'Earn' AND p.booking_id IS NULL THEN N'Thưởng đánh giá phim' "
+                + "WHEN p.txn_type = 'Earn' THEN N'Tích điểm đơn ' WHEN p.txn_type = 'Redeem' THEN N'Dùng điểm cho đơn ' "
                 + "ELSE N'Điều chỉnh điểm' END + COALESCE(b.booking_code, '') AS reason "
                 + "FROM MyPointTransaction p "
                 + "JOIN Account a ON a.account_id = p.customer_id "

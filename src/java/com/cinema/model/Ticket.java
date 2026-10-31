@@ -39,6 +39,8 @@ public class Ticket {
 
     /** Vé còn hiệu lực và còn trong thời hạn huỷ được không. */
     private boolean canCancel;
+    private int movieId;
+    private boolean canReview;
     private LocalDateTime purchasedAt;
 
     public int getTicketId() { return ticketId; }
@@ -116,6 +118,12 @@ public class Ticket {
 
     public boolean isCanCancel() { return canCancel; }
     public void setCanCancel(boolean canCancel) { this.canCancel = canCancel; }
+
+    public int getMovieId() { return movieId; }
+    public void setMovieId(int movieId) { this.movieId = movieId; }
+
+    public boolean isCanReview() { return canReview; }
+    public void setCanReview(boolean canReview) { this.canReview = canReview; }
 
     /* ---------- tiện ích hiển thị ---------- */
 

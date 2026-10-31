@@ -65,6 +65,7 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 | `scripts/test-booking-errors.ps1` | Kiểm thử các nhánh lỗi (hủy, webhook sai chữ ký, idempotency) — **ghi vào CSDL** |
 | `scripts/test-smoke.ps1` | Kiểm thử nhanh toàn bộ 5 vai trò: mọi trang chính trả 200, 4 dashboard theo vai trò, `/booking/*` chặn khách chưa đăng nhập |
 | `scripts/test-admin-manager-staff.ps1` | Kiểm thử chức năng ADMIN / MANAGER / STAFF bằng thao tác thật (**ghi vào CSDL**, tự dọn dữ liệu `ZZTEST`) |
+| `scripts/test-system-features.ps1` | Kiểm thử email phim mới/voucher, nhắc lịch chiếu, soát vé QR, Quản lý hệ thống (**ghi vào CSDL rồi tự khôi phục**, mỗi lần chạy tạo 1 file `.bak`; cần Node.js) |
 
 ---
 

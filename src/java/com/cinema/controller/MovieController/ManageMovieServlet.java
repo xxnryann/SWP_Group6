@@ -288,10 +288,20 @@ public class ManageMovieServlet extends BaseServlet {
                 : join(parseGenreIds(request.getParameterValues("genreIds")));
         String savedPoster = movie.getPosterUrl();
         String savedTrailer = movie.getTrailerFile();
-        movieDAO.save(movie, genreIds, currentUser(request).getUserId());
+        int savedId = movieDAO.save(movie, genreIds, currentUser(request).getUserId());
+        if (id == 0) queueNewMovieEmail(savedId);
         request.setAttribute("savedPoster", savedPoster);
         request.setAttribute("savedTrailer", savedTrailer);
         return oldMovie;
+    }
+
+    /** Phim đã lưu xong thì lỗi xếp email không được làm hỏng thao tác lưu. */
+    private void queueNewMovieEmail(int movieId) {
+        try {
+            new com.cinema.dao.EmailOutboxDAO().queueNewMovie(movieId);
+        } catch (SQLException e) {
+            getServletContext().log("Cannot queue new movie email for movie " + movieId, e);
+        }
     }
 
     private void deleteMovie(HttpServletRequest request) throws SQLException, IOException {
