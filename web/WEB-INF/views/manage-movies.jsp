@@ -44,7 +44,7 @@
             <td><c:out value="${movie.status}"/></td>
             <td class="movie-actions">
               <a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sửa</a>
-              <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Bạn có chắc muốn xóa phim này? Phim có suất chiếu sẽ không thể xóa.');">
+              <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Bạn có chắc muốn xóa phim này? Phim còn suất chưa chiếu xong sẽ không thể xóa.');">
                 <input type="hidden" name="_csrf" value="${escapedCsrf}">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="id" value="${escapedMovieId}">
@@ -53,8 +53,9 @@
               <c:if test="${movie.status == 'Stopped'}">
                 <a class="btn btn-cta btn-small" href="${ctx}/manage/movies?action=rerun&id=${escapedMovieId}">Chiếu lại</a>
               </c:if>
+              <%-- Phim đã ngừng chiếu vẫn có thể còn suất đã bán vé, nên luôn cho phép hủy & hoàn tiền. --%>
+              <a class="btn btn-danger btn-small" href="${ctx}/manage/movies?action=cancel-preview&id=${escapedMovieId}">Hủy &amp; hoàn tiền</a>
               <c:if test="${movie.status != 'Stopped'}">
-                <a class="btn btn-danger btn-small" href="${ctx}/manage/movies?action=cancel-preview&id=${escapedMovieId}">Hủy &amp; hoàn tiền</a>
                 <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Ngừng chiếu phim này và hủy các suất tương lai chưa bán?');">
                   <input type="hidden" name="_csrf" value="${escapedCsrf}">
                   <input type="hidden" name="action" value="stop">

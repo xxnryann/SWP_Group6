@@ -298,7 +298,11 @@ public class ManageMovieServlet extends BaseServlet {
         int id = parseId(request.getParameter("id"));
         Movie movie = movieDAO.findById(id);
         if (movie == null) throw new IllegalArgumentException("Không tìm thấy phim cần xóa.");
-        movieDAO.delete(id);
+        if (!movieDAO.delete(id)) {
+            // Giữ poster/trailer vì lịch sử vé của khách vẫn tham chiếu tới phim này.
+            flash(request, "success", "Đã xóa phim khỏi danh sách. Lịch sử vé và doanh thu vẫn được giữ lại.");
+            return;
+        }
         String failure = cleanupNewFiles(movie.getPosterUrl(), movie.getTrailerFile());
         if (failure.isEmpty()) flash(request, "success", "Đã xóa phim và các tệp poster, trailer.");
         else flash(request, "info", "Đã xóa phim nhưng không dọn được một số tệp media: " + failure);

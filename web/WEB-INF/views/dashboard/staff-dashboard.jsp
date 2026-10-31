@@ -31,8 +31,8 @@
         </div>
         <div class="admin-kpi">
           <span>Cần chú ý</span>
-          <strong><c:out value="${stats.combos_low + stats.emails_pending}"/></strong>
-          <small><c:out value="${stats.combos_low}"/> combo sắp hết · <c:out value="${stats.emails_pending}"/> thư chờ gửi</small>
+          <strong><c:out value="${stats.combos_low}"/></strong>
+          <small><c:out value="${stats.combos_low}"/> combo sắp hết</small>
         </div>
       </section>
 

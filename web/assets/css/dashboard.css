@@ -205,8 +205,7 @@
 .promo-form h3 { margin: 0 0 14px; }
 .promo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0 18px; }
 .promo-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.promo-actions form, .outbox-actions form { margin: 0; }
-.outbox-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 18px 0; }
+.promo-actions form { margin: 0; }
 .price-table input { width: 120px; padding: 7px 10px; border: 1px solid var(--slate-300); border-radius: 8px; font: 14px var(--font); }
 .holiday-form { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px; }
 .holiday-form .field { margin: 0; }

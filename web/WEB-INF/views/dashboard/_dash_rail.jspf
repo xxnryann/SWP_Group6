@@ -23,13 +23,13 @@
       <a href="${ctx}/staff/combo">Quản lý combo</a>
       <a href="${ctx}/staff/checkin">Soát vé</a>
       <a href="${ctx}/staff/seat-change">Đổi ghế</a>
-      <a href="${ctx}/staff/emails">Hộp thư đi</a>
     </c:when>
     <c:otherwise>
       <a href="${ctx}/showtimes">Lịch chiếu</a>
       <a href="${ctx}/movies">Danh sách phim</a>
       <a href="${ctx}/pricing">Giá vé</a>
       <a href="${ctx}/account/tickets">Lịch sử vé</a>
+      <a href="${ctx}/account/inbox">Hộp thư</a>
       <a href="${ctx}/account/profile">Thông tin cá nhân</a>
       <a href="${ctx}/news">Tin tức</a>
     </c:otherwise>

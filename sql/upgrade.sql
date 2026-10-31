@@ -112,3 +112,50 @@ GO
 UPDATE dbo.News SET thumbnail_url = REPLACE(thumbnail_url, '.png', '.jpg')
 WHERE thumbnail_url LIKE '/assets/img/news/news-[1-4].png';
 GO
+
+/* ============================================================================
+   6. Thong bao huy ve cho hop thu khach hang: them loai 'TicketCancelled' (31/10/2026)
+   ============================================================================ */
+-- Sau khi chay, cap nhat sp_CancelTicket:  scripts\compare-procedures.ps1 -Sync
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_EmailNotification_Type'
+               AND parent_object_id = OBJECT_ID('dbo.EmailNotification') AND definition LIKE '%TicketCancelled%')
+BEGIN
+    ALTER TABLE dbo.EmailNotification DROP CONSTRAINT CK_EmailNotification_Type;
+    ALTER TABLE dbo.EmailNotification ADD CONSTRAINT CK_EmailNotification_Type
+        CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled'));
+END
+GO
+
+/* ============================================================================
+   7. Xoa mem phim da co lich su: Movie.is_deleted (31/10/2026)
+   ============================================================================ */
+-- Sau khi chay, cap nhat sp_DeleteMovie:  scripts\compare-procedures.ps1 -Sync
+IF COL_LENGTH('dbo.Movie', 'is_deleted') IS NULL
+    ALTER TABLE dbo.Movie ADD is_deleted BIT NOT NULL CONSTRAINT DF_Movie_IsDeleted DEFAULT 0;
+GO
+-- Phim da xoa mem khong giu ten: co the them lai phim cung ten.
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_Movie_Title' AND object_id = OBJECT_ID('dbo.Movie') AND has_filter = 0)
+    DROP INDEX UX_Movie_Title ON dbo.Movie;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_Movie_Title' AND object_id = OBJECT_ID('dbo.Movie'))
+    CREATE UNIQUE NONCLUSTERED INDEX UX_Movie_Title ON dbo.Movie(title) WHERE is_deleted = 0;
+GO
+CREATE OR ALTER VIEW dbo.vw_MovieDetail
+AS
+SELECT m.movie_id, m.title, m.original_title, m.synopsis, m.director, m.main_cast,
+       m.duration_minutes, m.spoken_language, m.country, m.age_rating, m.trailer_url,
+       m.trailer_file, m.poster_url, m.release_date, m.end_date, m.status,
+       m.created_at, m.updated_at, m.created_by, a.full_name AS created_by_name,
+       (SELECT STRING_AGG(g.genre_name, N', ')
+        FROM dbo.MovieGenre mg JOIN dbo.Genre g ON g.genre_id = mg.genre_id
+        WHERE mg.movie_id = m.movie_id) AS genres,
+       (SELECT STRING_AGG(CONVERT(VARCHAR(11), mg.genre_id), ',')
+                WITHIN GROUP (ORDER BY mg.genre_id)
+        FROM dbo.MovieGenre mg WHERE mg.movie_id = m.movie_id) AS genre_ids,
+       (SELECT AVG(CAST(r.rating AS DECIMAL(3,2)))
+        FROM dbo.Review r WHERE r.movie_id = m.movie_id) AS avg_rating,
+       (SELECT COUNT(*) FROM dbo.Review r WHERE r.movie_id = m.movie_id) AS review_count
+FROM dbo.Movie m
+LEFT JOIN dbo.Account a ON a.account_id = m.created_by
+WHERE m.is_deleted = 0;
+GO

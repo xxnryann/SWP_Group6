@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-/** Hộp thư đi: bảng EmailNotification (vé điện tử, nhắc lịch chiếu, hủy suất, voucher...). */
+/** Hàng đợi email và hộp thư của khách: bảng EmailNotification (vé điện tử, nhắc lịch chiếu, hủy suất, voucher...). */
 public class EmailOutboxDAO {
 
     /** Thư đang chờ gửi (kèm email người nhận). */
@@ -25,14 +25,6 @@ public class EmailOutboxDAO {
 
     public void markFailed(int id) throws SQLException {
         update("UPDATE EmailNotification SET status = 'Failed' WHERE notif_id = ?", id);
-    }
-
-    /** Đưa thư lỗi về hàng đợi để gửi lại. */
-    public int retryFailed() throws SQLException {
-        try (Connection c = DBContext.getConnection();
-             PreparedStatement ps = c.prepareStatement("UPDATE EmailNotification SET status = 'Pending' WHERE status = 'Failed'")) {
-            return ps.executeUpdate();
-        }
     }
 
     /** Nội dung chi tiết các vé của một đơn (dùng cho email vé điện tử). */
@@ -52,18 +44,16 @@ public class EmailOutboxDAO {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
-    public List<Map<String, Object>> recent(String status, int limit) throws SQLException {
-        String where = status == null || status.isEmpty() ? "" : "WHERE e.status = ? ";
-        String sql = "SELECT TOP (" + Math.max(1, Math.min(limit, 200)) + ") e.notif_id, e.notif_type, e.subject, e.status, "
-                + "e.created_at, e.sent_at, a.email FROM EmailNotification e "
-                + "JOIN Account a ON a.account_id = e.customer_id " + where + "ORDER BY e.notif_id DESC";
-        return status == null || status.isEmpty() ? Rows.query(sql) : Rows.query(sql, status);
-    }
-
-    public Map<String, Object> counts() throws SQLException {
-        return Rows.query("SELECT SUM(CASE WHEN status='Pending' THEN 1 ELSE 0 END) AS pending, "
-                + "SUM(CASE WHEN status='Sent' THEN 1 ELSE 0 END) AS sent, "
-                + "SUM(CASE WHEN status='Failed' THEN 1 ELSE 0 END) AS failed FROM EmailNotification").get(0);
+    /** Hộp thư của khách: đặt vé thành công, hủy vé, phim bị hủy, nhắc lịch chiếu (không phụ thuộc email đã gửi được hay chưa). */
+    public List<Map<String, Object>> customerInbox(int customerId, int limit) throws SQLException {
+        return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.created_at, m.title, r.room_name, "
+                + "s.start_time, b.booking_code FROM EmailNotification e "
+                + "LEFT JOIN Booking b ON b.booking_id = e.booking_id "
+                + "LEFT JOIN Showtime s ON s.showtime_id = COALESCE(e.showtime_id, b.showtime_id) "
+                + "LEFT JOIN Movie m ON m.movie_id = COALESCE(e.movie_id, s.movie_id) "
+                + "LEFT JOIN Room r ON r.room_id = s.room_id "
+                + "WHERE e.customer_id = ? AND e.notif_type IN ('ETicket','TicketCancelled','MovieCancelled','ShowtimeReminder') "
+                + "ORDER BY e.notif_id DESC", limit, customerId);
     }
 
     /** Job định kỳ: nhắc lịch chiếu cho các suất bắt đầu trong {@code hoursBefore} giờ tới. */

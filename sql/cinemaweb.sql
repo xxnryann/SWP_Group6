@@ -189,6 +189,7 @@ CREATE TABLE dbo.Movie (
     created_at DATETIME2(7) NOT NULL CONSTRAINT DF_Movie_Created DEFAULT SYSDATETIME(),
     updated_at DATETIME2(7) NULL,
     created_by INT NULL,
+    is_deleted BIT NOT NULL CONSTRAINT DF_Movie_IsDeleted DEFAULT 0,   -- xoa mem: phim da co lich su ve/doanh thu
     CONSTRAINT FK_Movie_Creator FOREIGN KEY (created_by) REFERENCES dbo.Account(account_id),
     CONSTRAINT CK_Movie_Duration CHECK (duration_minutes BETWEEN 1 AND 150),
     CONSTRAINT CK_Movie_Dates CHECK (end_date IS NULL OR end_date >= release_date),
@@ -508,7 +509,7 @@ CREATE TABLE dbo.EmailNotification (
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_EmailNotification_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
-    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled')),
+    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled')),
     CONSTRAINT CK_EmailNotification_Status CHECK (status IN ('Pending','Sent','Failed'))
 );
 GO
@@ -538,7 +539,7 @@ GO
    3. INDEX
    ===================================================================== */
 
-CREATE UNIQUE NONCLUSTERED INDEX UX_Movie_Title ON dbo.Movie(title);
+CREATE UNIQUE NONCLUSTERED INDEX UX_Movie_Title ON dbo.Movie(title) WHERE is_deleted = 0;
 GO
 CREATE INDEX IX_Movie_Status_Release ON dbo.Movie(status, release_date, end_date);
 GO
@@ -592,7 +593,8 @@ SELECT m.movie_id, m.title, m.original_title, m.synopsis, m.director, m.main_cas
         FROM dbo.Review r WHERE r.movie_id = m.movie_id) AS avg_rating,
        (SELECT COUNT(*) FROM dbo.Review r WHERE r.movie_id = m.movie_id) AS review_count
 FROM dbo.Movie m
-LEFT JOIN dbo.Account a ON a.account_id = m.created_by;
+LEFT JOIN dbo.Account a ON a.account_id = m.created_by
+WHERE m.is_deleted = 0;
 GO
 
 CREATE VIEW dbo.vw_SeatMap AS
@@ -1238,6 +1240,15 @@ BEGIN
                status = CASE WHEN status = 'Used' THEN 'Allowed' ELSE status END
         WHERE voucher_id = @voucher_id;
     END
+
+    -- Thong bao cho khach: chi hua hoan tien khi so tien hoan > 0 (don tra het bang MyPoint/voucher thi khong co).
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, booking_id)
+    VALUES (@customer_id, 'TicketCancelled',
+            CASE WHEN @refund > 0 THEN N'Hủy vé thành công, bạn sẽ được hoàn tiền' ELSE N'Hủy vé thành công' END,
+            CASE WHEN @refund > 0
+                 THEN N'Vé ' + @tcode + N' đã được hủy. Số tiền hoàn lại: ' + FORMAT(@refund, 'N0', 'vi-VN') + N' đ.'
+                 ELSE N'Vé ' + @tcode + N' đã được hủy. Vé này không có khoản tiền cần hoàn.' END,
+            @showtime_id, @booking_id);
     COMMIT;
 END
 GO
@@ -1388,19 +1399,27 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_DeleteMovie @movie_id INT AS
+CREATE OR ALTER PROCEDURE dbo.sp_DeleteMovie @movie_id INT, @hard_deleted BIT = 0 OUTPUT AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+    SET @hard_deleted = 0;
 
-    IF NOT EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id)
+    IF NOT EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id AND is_deleted = 0)
         THROW 51020, N'Không tìm thấy phim cần xóa.', 1;
+    IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id AND status = 'Scheduled' AND end_time > SYSDATETIME())
+        THROW 51021, N'Phim còn suất chưa chiếu xong nên chưa thể xóa. Hãy dùng "Hủy & hoàn tiền" rồi xóa lại; suất đang chiếu cần đợi kết thúc.', 1;
+
+    -- Phim da co lich su (suat chieu, ve, doanh thu, danh gia, thong bao): chi an di, khong xoa du lieu.
     IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id)
        OR EXISTS (SELECT 1 FROM dbo.Review WHERE movie_id = @movie_id)
        OR EXISTS (SELECT 1 FROM dbo.EmailNotification WHERE movie_id = @movie_id)
-        THROW 51021, N'Phim đã có lịch chiếu, đánh giá hoặc thông báo nên không thể xóa.', 1;
-
-    DELETE FROM dbo.Movie WHERE movie_id = @movie_id;
+        UPDATE dbo.Movie SET is_deleted = 1, status = 'Stopped', updated_at = SYSDATETIME() WHERE movie_id = @movie_id;
+    ELSE
+    BEGIN
+        DELETE FROM dbo.Movie WHERE movie_id = @movie_id;
+        SET @hard_deleted = 1;
+    END
 END
 GO
 

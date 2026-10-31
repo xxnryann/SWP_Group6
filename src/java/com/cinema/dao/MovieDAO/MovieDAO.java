@@ -178,11 +178,14 @@ public class MovieDAO {
         }
     }
 
-    public void delete(int id) throws SQLException {
+    /** Xóa phim; phim đã có lịch sử chỉ bị ẩn. @return true nếu dòng phim thực sự bị xóa khỏi CSDL. */
+    public boolean delete(int id) throws SQLException {
         try (Connection connection = DBContext.getConnection();
-                CallableStatement statement = connection.prepareCall("{CALL dbo.sp_DeleteMovie(?)}")) {
+                CallableStatement statement = connection.prepareCall("{CALL dbo.sp_DeleteMovie(?, ?)}")) {
             statement.setInt(1, id);
+            statement.registerOutParameter(2, Types.BIT);
             statement.execute();
+            return statement.getBoolean(2);
         }
     }
 

@@ -425,14 +425,6 @@ if (-not ($cSt -match '^\d+$')) {
     $null = Invoke-Sql "UPDATE Ticket SET status='Cancelled' WHERE booking_id=$bk; UPDATE Booking SET status='Cancelled' WHERE booking_id=$bk"
 }
 
-Write-Step "STAFF - hop thu email"
-Assert-Test ((Get-Page $staff '/staff/emails').StatusCode -eq 200) 'hop thu di mo duoc'
-foreach ($st in 'Pending', 'Sent', 'Failed') {
-    Assert-Test ((Get-Page $staff "/staff/emails?status=$st").StatusCode -eq 200) "loc hop thu theo trang thai $st"
-}
-$r = Send-Form $staff '/staff/emails' @{ action = 'dispatch' } '/staff/emails'
-Assert-Test ($r.status -eq 200 -and $r.html -notmatch 'Exception') 'bam gui email dang cho khong gay loi'
-
 Write-Step "DASHBOARD"
 $dm = (Get-Page $manager '/dashboard/manager').Content
 $da = (Get-Page $admin '/dashboard/admin').Content
