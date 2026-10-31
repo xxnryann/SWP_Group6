@@ -5,8 +5,6 @@
 <%@ include file="_header.jspf" %>
 
 <main class="page"><div class="container">
-  <div class="dash-layout">
-    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
@@ -17,6 +15,8 @@
       <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
     </div>
   </section>
+  <div class="dash-layout">
+    <div>
 
   <form class="panel st-search" method="get" action="${ctx}/manage/showtimes">
     <div class="field">

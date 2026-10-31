@@ -23,8 +23,6 @@
 <%@ include file="_header.jspf" %>
 
 <main class="page"><div class="container">
-  <div class="dash-layout">
-    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
@@ -35,6 +33,8 @@
       </c:choose></p>
     </div>
   </section>
+  <div class="dash-layout">
+    <div>
   <form id="movie-form" class="panel movie-form" action="${ctx}/manage/movies" method="post" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="${escapedCsrf}">
     <input type="hidden" name="action" value="save">

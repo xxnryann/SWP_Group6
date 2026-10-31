@@ -11,35 +11,35 @@
 
   .tk-card {
     display: grid; grid-template-columns: 1fr 260px;
-    background: var(--navy); color: #fff;
-    border-radius: 14px; overflow: hidden;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
     box-shadow: var(--shadow);
   }
   .tk-left { padding: 22px 26px; }
 
   .tk-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
-  .tk-head h3 { color: #fff; font-size: 19px; margin: 0; }
+  .tk-head h3 { color: var(--ink); font-size: 19px; margin: 0; }
   .tk-badge { padding: 3px 11px; border-radius: 99px; font-size: 12px; font-weight: 700; }
-  .tk-badge.st-active { background: rgba(16,185,129,.22); color: #34d399; }
-  .tk-badge.st-used { background: rgba(56,189,248,.22); color: #7dd3fc; }
-  .tk-badge.st-expired { background: rgba(148,163,184,.22); color: #cbd5e1; }
-  .tk-badge.st-cancelled { background: rgba(220,38,38,.22); color: #fca5a5; }
+  .tk-badge.st-active { background: rgba(16,185,129,.22); color: var(--success); }
+  .tk-badge.st-used { background: rgba(56,189,248,.22); color: var(--brand); }
+  .tk-badge.st-expired { background: rgba(148,163,184,.22); color: var(--muted); }
+  .tk-badge.st-cancelled { background: rgba(220,38,38,.22); color: var(--danger); }
 
   .tk-rows { margin-top: 14px; }
   .tk-row { display: grid; grid-template-columns: 132px 1fr; gap: 14px;
-            padding: 11px 0; border-top: 1px solid rgba(148,163,184,.18); }
+            padding: 11px 0; border-top: 1px solid var(--line); }
   .tk-row:first-child { border-top: 0; }
-  .tk-row .tk-label { color: var(--slate-400); font-size: 14px; font-weight: 600; }
-  .tk-row .tk-value { color: #fff; font-size: 14.5px; }
-  .tk-row .tk-value.muted { color: var(--slate-300); }
+  .tk-row .tk-label { color: var(--muted); font-size: 14px; font-weight: 600; }
+  .tk-row .tk-value { color: var(--ink); font-size: 14.5px; }
+  .tk-row .tk-value.muted { color: var(--muted); }
   .tk-seat { font-weight: 800; font-size: 16px; }
 
   .tk-actions { margin-top: 18px; }
-  .tk-cancel { background: #ef4444; color: #fff; border: 0; border-radius: 999px;
+  .tk-cancel { background: var(--danger); color: #fff; border: 0; border-radius: 999px;
                padding: 9px 22px; font: 700 14px var(--font); cursor: pointer; }
-  .tk-cancel:hover { background: #dc2626; }
+  .tk-cancel:hover { background: #991b1b; }
   .tk-cancel[disabled] { opacity: .45; cursor: not-allowed; }
-  .tk-note { margin-top: 10px; color: var(--slate-400); font-size: 13px; }
+  .tk-note { margin-top: 10px; color: var(--muted); font-size: 13px; }
 
   /* ---------- cột QR ---------- */
   .tk-right { background: #fff; color: var(--navy);
@@ -64,14 +64,14 @@
   .tk-tab { padding: 10px 20px; font-weight: 700; font-size: 15px; color: var(--slate-500);
             text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -2px; }
   .tk-tab:hover { color: var(--navy); }
-  .tk-tab.is-active { color: #00539F; border-bottom-color: #00539F; }
+  .tk-tab.is-active { color: var(--brand); border-bottom-color: var(--brand); }
 
-  .cb-card { background: var(--navy); color: #fff; border-radius: 14px; padding: 22px 26px;
+  .cb-card { background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px;
              box-shadow: var(--shadow); }
   .cb-card.is-inactive { opacity: .78; }
   .cb-lines { margin: 14px 0 0; padding: 0; list-style: none; }
   .cb-lines li { display: grid; grid-template-columns: 1fr 70px 110px 120px; gap: 12px;
-                 padding: 10px 0; border-top: 1px solid rgba(148,163,184,.18); font-size: 14.5px; }
+                 padding: 10px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
   .cb-lines li:first-child { border-top: 0; }
   .cb-lines .cb-sub { text-align: right; }
   .cb-total { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 12px;

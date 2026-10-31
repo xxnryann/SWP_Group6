@@ -12,7 +12,7 @@
   .uip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
   .uip-ccard { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; overflow: hidden;
                box-shadow: var(--shadow); display: flex; flex-direction: column; }
-  .uip-ccard .uip-top { background: linear-gradient(135deg, #fff7ed, #ffedd5); padding: 22px; text-align: center;
+  .uip-ccard .uip-top { background: linear-gradient(135deg, var(--brand-soft), var(--brand-tint)); padding: 22px; text-align: center;
                         font-size: 46px; position: relative; }
   .uip-ccard .uip-status { position: absolute; top: 12px; right: 12px; }
   .uip-ccard .uip-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }

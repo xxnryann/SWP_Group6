@@ -5,8 +5,6 @@
 <%@ include file="_header.jspf" %>
 
 <main class="page"><div class="container">
-  <div class="dash-layout">
-    <div>
   <section class="movie-page-heading">
     <div>
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
@@ -14,6 +12,8 @@
     </div>
     <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">Thêm phim</a>
   </section>
+  <div class="dash-layout">
+    <div>
   <div class="table-wrap">
     <table class="data movie-manage-table">
       <thead>

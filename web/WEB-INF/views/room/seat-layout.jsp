@@ -14,7 +14,7 @@
 
   .seatmap { display: flex; flex-direction: column; gap: 8px; align-items: center; overflow-x: auto; padding: 8px 4px 16px; }
   .screen { width: 62%; min-width: 260px; text-align: center; color: #fff; padding: 9px; margin-bottom: 18px;
-            background: linear-gradient(180deg, var(--navy), var(--slate-700)); border-radius: 6px 6px 26px 26px;
+            background: linear-gradient(180deg, var(--brand), var(--beta)); border-radius: 6px 6px 26px 26px;
             letter-spacing: 6px; font-weight: 700; font-size: 12.5px; }
   .seat-row { display: flex; gap: 6px; align-items: center; }
   .row-label { width: 24px; font-weight: 800; text-align: center; color: var(--slate-500); font-size: 13px; }

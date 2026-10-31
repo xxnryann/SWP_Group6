@@ -2,18 +2,14 @@
 <c:set var="pageTitle" value="Tin tức"/>
 <%@ include file="../_header.jspf" %>
 <style>
-  .uip-hero { background: linear-gradient(120deg, var(--navy) 10%, var(--brand) 100%); color: #fff;
-              padding: 56px 0 64px; position: relative; overflow: hidden; }
-  .uip-hero::after { content: ""; position: absolute; right: -110px; bottom: -150px; width: 420px; height: 420px;
-                     border-radius: 50%; background: rgba(249,115,22,.28); }
-  .uip-hero .container { position: relative; z-index: 1; }
-  .uip-eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .14em; font-size: 12px;
+  .uip-hero { padding: 36px 0 40px; color: #fff; background: linear-gradient(135deg, var(--brand), var(--beta)); }
+  .uip-eyebrow { color: var(--brand-tint-2); font-weight: 700; letter-spacing: .14em; font-size: 12px;
                  text-transform: uppercase; margin-bottom: 10px; }
-  .uip-hero h1 { color: #fff; font-size: 40px; margin: 0 0 12px; }
-  .uip-hero p { color: var(--slate-200); max-width: 560px; font-size: 16px; margin: 0; }
+  .uip-hero h1 { color: #fff; font-size: clamp(28px, 3.8vw, 38px); margin: 0 0 12px; }
+  .uip-hero p:not(.uip-eyebrow) { color: var(--brand-tint); max-width: 560px; font-size: 16px; margin: 0; }
   .uip-feat { display: grid; grid-template-columns: 1.15fr 1fr; background: #fff; border: 1px solid var(--slate-200);
               border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 28px; }
-  .uip-feat .uip-img { min-height: 280px; background: linear-gradient(135deg, var(--brand), var(--navy));
+  .uip-feat .uip-img { min-height: 280px; background: var(--brand-tint);
                        display: grid; place-items: center; font-size: 72px; }
   .uip-feat .uip-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .uip-feat .uip-body { padding: 30px; display: flex; flex-direction: column; gap: 12px; }
@@ -27,7 +23,7 @@
   .uip-ncard { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; overflow: hidden;
                box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s; }
   .uip-ncard:hover { transform: translateY(-3px); }
-  .uip-ncard .uip-img { aspect-ratio: 16/9; background: linear-gradient(135deg, var(--brand), var(--navy));
+  .uip-ncard .uip-img { aspect-ratio: 16/9; background: var(--brand-tint);
                         display: grid; place-items: center; font-size: 44px; }
   .uip-ncard .uip-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .uip-ncard .uip-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }

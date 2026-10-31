@@ -1,0 +1,5 @@
+<%-- Logo CineStar: tam ve xem phim co ngoi sao. Mau va kich thuoc dat trong cinema.css theo vi tri. --%>
+<svg class="logo-mark" viewBox="0 0 34 34" aria-hidden="true">
+  <path class="logo-mark-ticket" d="M7 5h20a4 4 0 0 1 4 4v4.5a3.5 3.5 0 0 0 0 7V25a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-4.5a3.5 3.5 0 0 0 0-7V9a4 4 0 0 1 4-4z"/>
+  <path class="logo-mark-star" d="M17 9.6l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z"/>
+</svg>

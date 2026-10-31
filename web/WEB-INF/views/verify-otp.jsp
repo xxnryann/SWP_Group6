@@ -4,9 +4,13 @@
 <main class="page"><div class="container">
 <div class="auth-wrap">
   <section class="auth-hero">
-    <div class="eyebrow">Bước cuối cùng</div>
-    <h1>Xác thực<br>tài khoản</h1>
-    <p>Mã gồm 6 chữ số đã được gửi tới email của bạn và có hiệu lực trong vài phút.</p>
+    <a class="logo auth-logo" href="${pageContext.request.contextPath}/home"><%@ include file="_logo-mark.jspf" %><span>Cine<b>Star</b> Cinemas</span></a>
+    <div class="auth-hero-body">
+      <div class="eyebrow">Bước cuối cùng</div>
+      <h1>Xác thực<br>tài khoản</h1>
+      <p>Mã gồm 6 chữ số đã được gửi tới email của bạn và có hiệu lực trong vài phút.</p>
+    </div>
+    <div class="auth-hero-art"><%@ include file="_logo-mark.jspf" %></div>
   </section>
       <div class="card">
       <h2>Nhập mã OTP</h2>

@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
   <link rel="stylesheet" href="${ctx}/assets/css/cinema.css">
   <c:if test="${movieModule}">
     <link rel="stylesheet" href="${ctx}/assets/css/movie.css">
@@ -35,10 +36,7 @@
     <div class="topbar-left">
       <c:if test="${roleModule and not railModule}">
         <a class="topbar-brand" href="${ctx}<c:out value='${roleDashboardPath}'/>" aria-label="CineStar Cinemas">
-          <svg width="24" height="24" viewBox="0 0 34 34" aria-hidden="true">
-            <rect width="34" height="34" rx="9" fill="#1d4ed8"/>
-            <path d="M17 6l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2L17 22.4l-6.5 3.5 1.3-7.2-5.3-5.1 7.3-1z" fill="#f59e0b"/>
-          </svg>
+          <%@ include file="_logo-mark.jspf" %>
           <span>Cine<b>Star</b> Cinemas</span>
         </a>
       </c:if>
@@ -82,10 +80,7 @@
 <header class="site-header role-header">
   <div class="container">
     <a class="logo" href="${ctx}/home" aria-label="CineStar Cinemas">
-      <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true">
-        <rect width="34" height="34" rx="9" fill="#1d4ed8"/>
-        <path d="M17 6l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2L17 22.4l-6.5 3.5 1.3-7.2-5.3-5.1 7.3-1z" fill="#f59e0b"/>
-      </svg>
+      <%@ include file="_logo-mark.jspf" %>
       <span>Cine<b>Star</b></span>
     </a>
     <%@ include file="dashboard/_dash_rail.jspf" %>
@@ -98,10 +93,7 @@
 <header class="site-header role-header guest-header">
   <div class="container">
     <a class="logo" href="${ctx}<c:out value='${roleDashboardPath}'/>" aria-label="CineStar Cinemas">
-      <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true">
-        <rect width="34" height="34" rx="9" fill="#1d4ed8"/>
-        <path d="M17 6l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2L17 22.4l-6.5 3.5 1.3-7.2-5.3-5.1 7.3-1z" fill="#f59e0b"/>
-      </svg>
+      <%@ include file="_logo-mark.jspf" %>
       <span>Cine<b>Star</b> Cinemas</span>
     </a>
     <nav class="topbar-nav" aria-label="Điều hướng chính">

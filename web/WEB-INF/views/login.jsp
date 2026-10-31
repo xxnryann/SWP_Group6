@@ -4,9 +4,18 @@
 <main class="page"><div class="container">
 <div class="auth-wrap">
   <section class="auth-hero">
-    <div class="eyebrow">Thành viên CineStar</div>
-    <h1>Chào mừng<br>trở lại</h1>
-    <p>Đăng nhập để quản lý vé, ghế yêu thích và đặc quyền hội viên của bạn.</p>
+    <a class="logo auth-logo" href="${pageContext.request.contextPath}/home"><%@ include file="_logo-mark.jspf" %><span>Cine<b>Star</b> Cinemas</span></a>
+    <div class="auth-hero-body">
+      <div class="eyebrow">Thành viên CineStar</div>
+      <h1>Chào mừng<br>trở lại</h1>
+      <p>Đăng nhập để xem vé, nhận thông báo và dùng ưu đãi của bạn.</p>
+    </div>
+    <ul class="auth-perks">
+      <li>Vé điện tử có mã QR, đưa ra là vào rạp</li>
+      <li>Hộp thư nhắc lịch chiếu và báo hoàn tiền</li>
+      <li>Điểm MyPoint và voucher trong một nơi</li>
+    </ul>
+    <div class="auth-hero-art"><%@ include file="_logo-mark.jspf" %></div>
   </section>
       <form class="card" method="post" action="${pageContext.request.contextPath}/login" novalidate>
       <h2>Đăng nhập</h2>

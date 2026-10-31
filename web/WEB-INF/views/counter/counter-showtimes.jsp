@@ -16,10 +16,10 @@
   .uip-show { display: grid; grid-template-columns: 128px 1fr auto; gap: 18px; align-items: center;
               background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
               box-shadow: var(--shadow); padding: 16px 20px; }
-  .uip-time { text-align: center; background: linear-gradient(150deg, var(--brand), var(--navy)); color: #fff;
+  .uip-time { text-align: center; background: var(--brand-soft); color: var(--brand); border: 1px solid var(--brand-tint);
               border-radius: 12px; padding: 12px 8px; }
   .uip-time .uip-hhmm { font-size: 21px; font-weight: 800; line-height: 1.15; }
-  .uip-time .uip-dd { font-size: 12px; color: var(--slate-200); }
+  .uip-time .uip-dd { font-size: 12px; color: var(--muted); }
   .uip-show h3 { margin: 0 0 6px; font-size: 18px; }
   .uip-facts { display: flex; gap: 8px; flex-wrap: wrap; }
   .uip-seats-ok { background: #d1fae5; color: var(--success); }

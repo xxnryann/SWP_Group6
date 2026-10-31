@@ -10,15 +10,15 @@
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: 1px solid var(--line);
 }
 
 .dashboard-empty {
     padding: 2rem;
     text-align: center;
-    background: #f9f9f9;
+    background: var(--slate-50);
     border-radius: 8px;
-    color: #666;
+    color: var(--muted);
 }
 
 .dashboard-movie-grid {
@@ -29,8 +29,8 @@
 }
 
 .dashboard-movie-card {
-    background: white;
-    border: 1px solid #e0e0e0;
+    background: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 8px;
     overflow: hidden;
     transition: box-shadow 0.3s ease;
@@ -39,7 +39,7 @@
 }
 
 .dashboard-movie-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-lift);
 }
 
 .dashboard-movie-card-main {
@@ -53,7 +53,7 @@
     position: relative;
     width: 100%;
     padding-top: 150%;
-    background: #f0f0f0;
+    background: var(--slate-100);
     overflow: hidden;
 }
 
@@ -78,7 +78,7 @@
     font-weight: bold;
 }
 
-.poster-placeholder {
+.dashboard-movie-poster .poster-placeholder {
     position: absolute;
     top: 0;
     left: 0;
@@ -87,8 +87,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0f0f0;
-    color: #999;
+    background: var(--slate-100);
+    color: var(--slate-500);
     font-size: 0.875rem;
     text-align: center;
     padding: 1rem;
@@ -111,17 +111,17 @@
 
 .dashboard-movie-meta {
     font-size: 0.875rem;
-    color: #666;
+    color: var(--muted);
     margin-bottom: 0.75rem;
 }
 
 .dashboard-movie-showtime {
     font-size: 0.875rem;
-    color: #2196F3;
+    color: var(--brand);
 }
 
 .dashboard-movie-showtime.is-muted {
-    color: #ccc;
+    color: var(--slate-500);
 }
 
 .dashboard-movie-buy {
@@ -140,7 +140,7 @@
 .dashboard-links a {
     display: inline-block;
     padding: 0.75rem 1.5rem;
-    background: #2196F3;
+    background: var(--brand);
     color: white;
     border-radius: 4px;
     text-decoration: none;
@@ -148,7 +148,7 @@
 }
 
 .dashboard-links a:hover {
-    background: #1976D2;
+    background: var(--brand-hover);
 }
 
 @media (max-width: 768px) {
@@ -164,7 +164,7 @@
 .admin-kpi span { color: var(--slate-500); font-size: 13px; font-weight: 600; }
 .admin-kpi strong { color: var(--slate-800); font-size: 28px; line-height: 1.2; }
 .admin-kpi small { color: var(--slate-500); font-size: 12px; }
-.admin-kpi-main { background: linear-gradient(135deg, var(--brand), #1e3a8a); border-color: transparent; }
+.admin-kpi-main { background: var(--brand); border-color: transparent; }
 .admin-kpi-main span, .admin-kpi-main small { color: rgba(255,255,255,.8); }
 .admin-kpi-main strong { color: #fff; font-size: 32px; }
 .admin-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
@@ -211,12 +211,12 @@
 .holiday-form .field { margin: 0; }
 .movie-cancel-actions { display: flex; gap: 10px; margin-top: 20px; }
 .btn-small { padding: 6px 12px; font-size: 13px; }
-.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger { background: #fff; color: var(--danger); border-color: var(--danger); }
 
 /* ---- Danh gia phim ---- */
 .movie-reviews { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--slate-200); }
 .movie-reviews h2 { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.review-avg { color: #b45309; font-size: 15px; font-weight: 700; }
+.review-avg { color: var(--brand); font-size: 15px; font-weight: 700; }
 .review-form { margin: 14px 0 20px; max-width: 560px; }
 .review-form textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--slate-300); border-radius: var(--radius); font: 14px var(--font); }
 .review-note { color: var(--slate-500); font-size: 14px; }
@@ -230,13 +230,13 @@
 .bar-chart-stock .bar-chart-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Slider tin tức nổi bật (trang tổng quan khách hàng): ảnh hiển thị đủ khung, nền mờ lấp hai bên, tiêu đề nằm dưới ảnh */
-.news-slider { position: relative; overflow: hidden; margin: 8px 0 32px; border-radius: 14px; background: var(--beta); box-shadow: 0 6px 24px rgba(15,23,42,.18); }
+.news-slider { position: relative; overflow: hidden; margin: 8px 0 32px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .news-slider-track { display: flex; transition: transform .45s ease; }
-.news-slide { flex: 0 0 100%; display: block; color: #fff; text-decoration: none; }
+.news-slide { flex: 0 0 100%; display: block; color: var(--ink); text-decoration: none; }
 .news-slide-media { position: relative; display: block; aspect-ratio: 2.4 / 1; max-height: 440px; width: 100%; overflow: hidden; background: var(--beta); }
 .news-slide-bg { position: absolute; inset: -20px; background-size: cover; background-position: center; filter: blur(22px) brightness(.55); }
 .news-slide-media img { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; }
-.news-slide-title { display: block; padding: 14px 120px 16px 24px; font-size: 18px; font-weight: 700; line-height: 1.3; background: var(--beta); }
+.news-slide-title { display: block; padding: 14px 120px 16px 24px; font-size: 18px; font-weight: 700; line-height: 1.3; background: var(--surface); }
 .news-slider-nav { position: absolute; z-index: 2; top: 0; margin-top: min(calc(100% / 4.8 - 28px), 192px); width: 40px; height: 56px; border: 0; background: rgba(0,0,0,.4); color: #fff; font-size: 22px; cursor: pointer; }
 .news-slider-nav:hover { background: rgba(0,0,0,.7); }
 .news-slider-nav.is-prev { left: 0; border-radius: 0 8px 8px 0; }
