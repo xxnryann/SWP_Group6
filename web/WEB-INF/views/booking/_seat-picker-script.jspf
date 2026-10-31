@@ -1,0 +1,79 @@
+<script>
+  const byId = {};
+  document.querySelectorAll('.seat[data-id]').forEach(b => { byId[b.dataset.id] = b; });
+  const selected = new Set();
+
+  /* Ghep hai ghe doi lien ke thanh mot khoi (ghe trai / ghe phai). */
+  document.querySelectorAll('.seat[data-pair]').forEach(b => {
+    if (!b.dataset.pair || b.classList.contains('pair-l') || b.classList.contains('pair-r')) return;
+    const next = b.nextElementSibling;
+    if (next && next.dataset && next.dataset.id === b.dataset.pair) {
+      b.classList.add('pair-l');
+      next.classList.add('pair-r');
+    }
+  });
+
+  /* Gia ve theo loai ghe cua suat chien hien tai (doc tu DOM de tranh loi JSON). */
+  const seatPrices = {};
+  let hasAnyPrice = false;
+  document.querySelectorAll('.sg-type[data-type]').forEach(box => {
+    if (box.dataset.hasPrice !== 'true') return;
+    seatPrices[box.dataset.type] = parseInt(box.dataset.price, 10) || 0;
+    hasAnyPrice = true;
+  });
+
+  /* Cac hang co so nut khac nhau (hang ghe doi ngan hon) -> dua ve cung do rong de chu cai A-E thang cot;
+     ghe cua hang ngan duoc can giua trong phan con lai. */
+  (function alignRows() {
+    const rows = [...document.querySelectorAll('.seat-row')];
+    if (!rows.length) return;
+    const widths = rows.map(r => r.scrollWidth);
+    const max = Math.max(...widths);
+    rows.forEach((r, i) => {
+      r.style.width = max + 'px';
+      const firstSeat = r.querySelector('.seat');
+      if (firstSeat && max > widths[i]) firstSeat.style.marginLeft = ((max - widths[i]) / 2) + 'px';
+    });
+  })();
+
+  function formatVnd(value) {
+    return value.toLocaleString('vi-VN');
+  }
+
+  function refreshSummary() {
+    document.getElementById('seatIds').value = [...selected].join(',');
+    document.getElementById('selCount').textContent = selected.size;
+
+    let total = 0;
+    let hasMissingPrice = false;
+    selected.forEach(id => {
+      const b = byId[id];
+      const price = b ? seatPrices[b.dataset.type] : null;
+      if (price === undefined || price === null) hasMissingPrice = true;
+      else total += price;
+    });
+    const el = document.getElementById('selTotal');
+    if (!hasAnyPrice) { el.textContent = '—'; return; }
+    el.textContent = hasMissingPrice ? '—' : formatVnd(total);
+  }
+
+  function toggleSeat(btn) {
+    const ids = [btn.dataset.id];
+    if (btn.dataset.pair) ids.push(btn.dataset.pair);
+    const allSelected = ids.every(id => selected.has(id));
+    ids.forEach(id => {
+      const b = byId[id];
+      if (!b || b.disabled) return;
+      if (allSelected) { selected.delete(id); b.classList.remove('selected'); }
+      else { selected.add(id); b.classList.add('selected'); }
+    });
+    refreshSummary();
+  }
+
+  function checkSeats() {
+    if (selected.size === 0) { alert('Vui lòng chọn ít nhất một ghế.'); return false; }
+    return true;
+  }
+
+  refreshSummary();
+</script>

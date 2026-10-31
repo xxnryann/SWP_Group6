@@ -1,12 +1,13 @@
 package com.cinema.controller;
 
+import com.cinema.controller.booking.BookingSession;
 import com.cinema.dao.CounterSaleDAO;
 import com.cinema.model.BookingSummary;
-import com.cinema.model.SeatCell;
 import com.cinema.model.ShowtimeInfo;
 import com.cinema.model.User;
 import com.cinema.service.DiscountResult;
 import com.cinema.service.DiscountService;
+import com.cinema.service.OnlineBookingService;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,7 +17,6 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +48,7 @@ public class CounterSalesServlet extends BaseServlet {
 
     private final CounterSaleDAO dao = new CounterSaleDAO();
     private final DiscountService discountService = new DiscountService();
+    private final OnlineBookingService bookingService = new OnlineBookingService();
 
     private boolean requireStaff(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User u = currentUser(req);
@@ -135,11 +136,8 @@ public class CounterSalesServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/staff/counter");
             return;
         }
-        // Gom ghế theo hàng để vẽ sơ đồ
-        Map<String, List<SeatCell>> rows = new LinkedHashMap<>();
-        for (SeatCell s : dao.getSeatMap(showtimeId)) {
-            rows.computeIfAbsent(s.getRowLabel(), k -> new ArrayList<>()).add(s);
-        }
+        // Sơ đồ ghế + chú thích loại ghế, giá vé: dùng chung với đặt vé online
+        BookingSession.applySeatGuide(req, bookingService, showtimeId, dao.getSeatMap(showtimeId));
         // Cảnh báo nếu đơn hiện tại đã giữ ghế của suất này (chọn lại = tạo đơn mới)
         boolean reselectWarning = false;
         HttpSession session = req.getSession(false);
@@ -152,7 +150,6 @@ public class CounterSalesServlet extends BaseServlet {
             }
         }
         req.setAttribute("showtime", show);
-        req.setAttribute("seatRows", new ArrayList<>(rows.values()));
         req.setAttribute("reselectWarning", reselectWarning);
         req.setAttribute("pageTitle", "Bán vé tại quầy — Chọn ghế");
         forward(req, resp, "counter/counter-seats");

@@ -2,8 +2,6 @@ package com.cinema.controller.booking;
 
 import com.cinema.controller.BaseServlet;
 import com.cinema.model.SeatCell;
-import com.cinema.model.SeatRowLegend;
-import com.cinema.model.SeatTypeInfo;
 import com.cinema.model.ShowtimeInfo;
 import com.cinema.service.OnlineBookingService;
 import com.cinema.util.Validator;
@@ -13,9 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Bước 1 của luồng đặt vé online: chọn suất chiếu + chọn ghế.
@@ -44,7 +40,7 @@ public class BookingSeatsServlet extends BaseServlet {
         }
         List<SeatCell> seats = service.getSeatMap(showtimeId);
         req.setAttribute("showtime", show);
-        applySeatGuide(req, showtimeId, seats);
+        BookingSession.applySeatGuide(req, service, showtimeId, seats);
         req.setAttribute("pageTitle", "Đặt vé — Chọn ghế");
         forward(req, resp, "booking/booking-seats");
     }
@@ -78,7 +74,7 @@ public class BookingSeatsServlet extends BaseServlet {
             service.cancelBooking(bookingId);
             req.setAttribute("error", e.getMessage());
             req.setAttribute("showtime", service.getShowtime(showtimeId));
-            applySeatGuide(req, showtimeId, service.getSeatMap(showtimeId));
+            BookingSession.applySeatGuide(req, service, showtimeId, service.getSeatMap(showtimeId));
             req.setAttribute("pageTitle", "Đặt vé — Chọn ghế");
             forward(req, resp, "booking/booking-seats");
             return;
@@ -93,42 +89,5 @@ public class BookingSeatsServlet extends BaseServlet {
         } catch (Exception e) {
             return dflt;
         }
-    }
-
-    /**
-     * Gắn dữ liệu sơ đồ ghế + chú thích loại ghế vào request.
-     *
-     * <p>Chú thích gồm: danh sách loại ghế kèm giá vé của suất chiếu, và map
-     * chú thích theo hàng dùng để gắn tooltip lên nhãn hàng trong sơ đồ ghế.</p>
-     */
-    private void applySeatGuide(HttpServletRequest req, int showtimeId, List<SeatCell> seats) {
-        List<SeatTypeInfo> seatTypes = service.getSeatTypesWithPrice(showtimeId);
-        List<List<SeatCell>> rows = BookingSession.groupByRow(seats);
-        req.setAttribute("seatRows", rows);
-        req.setAttribute("seatTypes", seatTypes);
-        req.setAttribute("rowLegendMap",
-                legendByRow(BookingSession.buildRowLegends(rows, typesByName(seatTypes))));
-    }
-
-    /** Map chú thích theo nhãn hàng (key = {@code row_label}) để JSP gắn tooltip. */
-    private Map<String, SeatRowLegend> legendByRow(List<SeatRowLegend> legends) {
-        Map<String, SeatRowLegend> map = new LinkedHashMap<>();
-        for (SeatRowLegend lg : legends) {
-            if (lg.getRowLabel() != null) {
-                map.put(lg.getRowLabel(), lg);
-            }
-        }
-        return map;
-    }
-
-    /** Map loại ghế theo tên (key = {@code SeatType.type_name}). */
-    private Map<String, SeatTypeInfo> typesByName(List<SeatTypeInfo> seatTypes) {
-        Map<String, SeatTypeInfo> map = new LinkedHashMap<>();
-        for (SeatTypeInfo t : seatTypes) {
-            if (t.getTypeName() != null) {
-                map.put(t.getTypeName(), t);
-            }
-        }
-        return map;
     }
 }

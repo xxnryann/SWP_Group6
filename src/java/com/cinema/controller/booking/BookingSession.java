@@ -104,6 +104,34 @@ public final class BookingSession {
     }
 
     /**
+     * Gắn dữ liệu sơ đồ ghế + chú thích loại ghế vào request (dùng chung cho
+     * đặt vé online và bán vé tại quầy).
+     *
+     * <p>Chú thích gồm: danh sách loại ghế kèm giá vé của suất chiếu, và map
+     * chú thích theo hàng dùng để gắn tooltip lên nhãn hàng trong sơ đồ ghế.</p>
+     */
+    public static void applySeatGuide(HttpServletRequest req, OnlineBookingService service,
+            int showtimeId, List<SeatCell> seats) {
+        List<SeatTypeInfo> seatTypes = service.getSeatTypesWithPrice(showtimeId);
+        Map<String, SeatTypeInfo> typesByName = new LinkedHashMap<>();
+        for (SeatTypeInfo t : seatTypes) {
+            if (t.getTypeName() != null) {
+                typesByName.put(t.getTypeName(), t);
+            }
+        }
+        List<List<SeatCell>> rows = groupByRow(seats);
+        Map<String, SeatRowLegend> legendByRow = new LinkedHashMap<>();
+        for (SeatRowLegend lg : buildRowLegends(rows, typesByName)) {
+            if (lg.getRowLabel() != null) {
+                legendByRow.put(lg.getRowLabel(), lg);
+            }
+        }
+        req.setAttribute("seatRows", rows);
+        req.setAttribute("seatTypes", seatTypes);
+        req.setAttribute("rowLegendMap", legendByRow);
+    }
+
+    /**
      * Chuẩn hoá danh sách id ghế do client gửi lên: "41, 42,abc" → "41,42".
      */
     public static String cleanSeatIds(String raw) {

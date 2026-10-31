@@ -1,0 +1,96 @@
+<%-- So do ghe dung chung: dat ve online (booking-seats) va ban ve tai quay (counter-seats). --%>
+<style>
+  .seatmap { display:flex; flex-direction:column; gap:8px; align-items:center; margin:0 0 20px;
+             background:#fff; border:1px solid var(--slate-200); border-radius:16px; box-shadow:var(--shadow);
+             padding:28px 16px 24px; overflow-x:auto; }
+  .sm-title { font-size:17px; margin:0 0 10px; }
+  .seat-row { display:flex; gap:10px; align-items:center; }
+  .row-label { width:40px; display:inline-flex; align-items:center; justify-content:center;
+               font-weight:800; color:var(--slate-500); font-size:19px; }
+  .seat { position:relative; width:56px; height:48px; border-radius:14px 14px 6px 6px; border:3px solid var(--slate-300);
+          cursor:pointer; font: 800 14px var(--font); background:#fff; color:var(--slate-700); padding:0;
+          transition: transform .08s, background .12s, border-color .12s; }
+  .seat:hover:not(:disabled) { transform: translateY(-2px); }
+  /* Ghe trong: mau theo LOAI ghe (thuong = xanh la, VIP = cam, doi = hong). Class GREEN/YELLOW/RED/GREY giu nguyen
+     (test script doi khop class). */
+  .seat.GREEN { background:#ecfdf5; border-color:#059669; color:#065f46; }
+  .seat.GREEN[data-type="VIP"] { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+  .seat.GREEN[data-type="Couple"] { background:#fce7f3; border-color:#db2777; color:#9d174d; }
+  .seat.YELLOW { background:#fef3c7; border-color:var(--accent); color:#92400e; cursor:not-allowed; opacity:.65; }
+  .seat.RED { background:#fee2e2; border-color:#fca5a5; color:#991b1b; cursor:not-allowed; }
+  .seat.GREY { background:var(--slate-100); border-color:var(--slate-200); color:var(--slate-400); cursor:not-allowed; }
+  .seat.selected, .seat.selected[data-type] { background:var(--brand); border-color:var(--brand); color:#fff;
+                   box-shadow: 0 0 0 3px rgba(29,78,216,.30); opacity:1; }
+  /* Ghe doi: hai ghe cua mot cap ghep thanh mot khoi rong dung bang 2 ghe thuong + khe giua (56+10+56 = 2 x 61),
+     nen moi cap thang cot voi hai ghe o hang tren va ca hang dai bang cac hang khac. */
+  .seat.pair-l { width:61px; border-radius:14px 0 0 6px; border-right-width:1.5px; margin-right:-10px; }
+  .seat.pair-r { width:61px; border-radius:0 14px 6px 0; border-left-width:1.5px; }
+  .screen { width:62%; min-width:280px; text-align:center; color:#fff; padding:10px; margin-bottom:22px;
+            background: linear-gradient(180deg, var(--navy), var(--slate-700)); border-radius:6px 6px 26px 26px;
+            letter-spacing:6px; font-weight:700; font-size:13px; box-shadow: 0 14px 18px -10px rgba(15,23,42,.45); }
+  /* ---------- chu thich loai ghe ---------- */
+  .sg-types { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin:0 0 22px; }
+  .sg-type { border:1px solid var(--slate-200); border-radius:12px; padding:12px 14px; background:#fff; }
+  .sg-type .sg-type-name { display:flex; align-items:center; gap:8px; font-weight:800; color:var(--navy); font-size:14.5px; }
+  .sg-type .sg-type-desc { color:var(--slate-500); font-size:12.5px; margin-top:4px; }
+  .sg-type .sg-type-price { margin-top:8px; font-size:13px; color:var(--slate-700); }
+  .sg-type .sg-type-price b { color:var(--brand); font-size:15px; }
+  .seat-type-dot { width:10px; height:10px; border-radius:50%; flex:none; display:inline-block;
+                    border:2px solid var(--slate-300); background:#fff; }
+  .seat-type-dot.t-Standard { background:#ecfdf5; border-color:#059669; }
+  .seat-type-dot.t-VIP { background:#fef3c7; border-color:#f59e0b; }
+  .seat-type-dot.t-Couple { background:#fce7f3; border-color:#db2777; }
+  .sg-empty { color:var(--slate-500); font-size:13.5px; margin:0 0 22px; }
+  .uip-note { color: var(--slate-500); font-size: 13.5px; text-align: center; margin: 0 0 6px; }
+</style>
+      <%-- Chu thich loai ghe kem gia ve; script cung doc gia o day de tinh tam tinh. --%>
+      <h2 class="sm-title">Loại ghế &amp; giá vé</h2>
+      <c:choose>
+        <c:when test="${empty seatTypes}">
+          <p class="sg-empty">Chưa có cấu hình giá vé theo loại ghế cho suất chiếu này.</p>
+        </c:when>
+        <c:otherwise>
+          <div class="sg-types">
+            <c:forEach var="t" items="${seatTypes}">
+              <div class="sg-type" data-type="<c:out value="${t.typeName}"/>"
+                   data-has-price="${t.priceConfigured}" data-price="${t.priceInt}">
+                <div class="sg-type-name">
+                  <i class="seat-type-dot t-${t.typeName}"></i>
+                  <c:out value="${t.typeLabel}"/>
+                </div>
+                <div class="sg-type-desc"><c:out value="${t.descriptionLabel}"/></div>
+                <div class="sg-type-price">
+                  <c:choose>
+                    <c:when test="${t.priceConfigured}">Giá: <b><c:out value="${t.priceLabel}"/></b> / ghế</c:when>
+                    <c:otherwise>Giá: <b>—</b> (chưa cấu hình)</c:otherwise>
+                  </c:choose>
+                </div>
+              </div>
+            </c:forEach>
+          </div>
+        </c:otherwise>
+      </c:choose>
+
+      <h2 class="sm-title">Sơ đồ ghế</h2>
+      <div class="seatmap">
+        <div class="screen">MÀN HÌNH</div>
+        <c:forEach var="row" items="${seatRows}">
+          <div class="seat-row">
+            <c:set var="lg" value="${rowLegendMap[row[0].rowLabel]}"/>
+            <span class="row-label"
+                  title="Hàng ${row[0].rowLabel} · ${row[0].seatType} · ${lg.seatRangeLabel} · ${lg.priceLabel} — ${lg.noteLabel}">
+              ${row[0].rowLabel}
+            </span>
+            <c:forEach var="s" items="${row}">
+              <button type="button" class="seat ${s.color}"
+                      title="${s.label} · ${s.seatType} · ${s.statusLabel}"
+                      data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
+                      ${s.available ? '' : 'disabled="disabled"'}
+                      onclick="toggleSeat(this)">${s.label}</button>
+            </c:forEach>
+          </div>
+        </c:forEach>
+      </div>
+
+      <p class="uip-note">Ghế đôi luôn phải chọn cả cặp — bấm một ghế sẽ tự chọn luôn ghế còn lại.
+         Ghế đã giữ bởi người khác sẽ tự trở lại khi hết thời gian chờ thanh toán.</p>

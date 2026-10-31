@@ -298,7 +298,9 @@ if ([int]$genMovies -gt 0) {
 
 Write-Step "MANAGER - xoa phim thu"
 $r = Send-Form $manager '/manage/movies' @{ action = 'delete'; id = $movieId } '/manage/movies'
-Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Movie WHERE movie_id=$movieId") -eq '0') "xoa phim thu (flash: $($r.flash))"
+# Job nen co the da gui email phim moi truoc luc xoa -> phim co lich su, chi bi xoa mem: ca hai deu hop le.
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Movie WHERE movie_id=$movieId AND is_deleted=0") -eq '0') "xoa phim thu (flash: $($r.flash))"
+$null = Invoke-Sql "DELETE FROM EmailNotification WHERE movie_id=$movieId; DELETE FROM Movie WHERE movie_id=$movieId"
 
 Write-Step "MANAGER - tin tuc"
 $newsTitle = "$tag News"
@@ -378,6 +380,8 @@ if (-not ($cSt -match '^\d+$')) {
 } else {
     $sp = Get-Page $staff "/staff/counter?action=seats&showtimeId=$cSt"
     Assert-Test ($sp.StatusCode -eq 200) "so do ghe tai quay cho suat $cSt mo duoc"
+    Assert-Test ($sp.Content -notmatch 'seat-guide' -and $sp.Content -match 'class="sg-type"' -and $sp.Content -match 'id="selTotal"') 'so do ghe tai quay co chu thich loai ghe, gia ve va tam tinh'
+    Assert-Test ($sp.Content -match 'class="seat GREEN"[^>]*data-type="(Standard|VIP|Couple)"') 'ghe tai quay co mau theo loai ghe'
     $free = [regex]::Matches($sp.Content, 'data-seat-id="(\d+)"[^>]*data-status="(?:GREEN|Green|green)"|data-status="(?:GREEN|Green|green)"[^>]*data-seat-id="(\d+)"') | ForEach-Object { $_.Groups[1].Value + $_.Groups[2].Value }
     if (-not $free) { $free = Invoke-Sql "SELECT TOP 3 seat_id FROM Seat WHERE room_id=(SELECT room_id FROM Showtime WHERE showtime_id=$cSt) AND status='Active' AND seat_type_id IN (SELECT seat_type_id FROM SeatType WHERE is_couple=0) ORDER BY seat_id" | ForEach-Object { $_ -split "`n" } }
     $seat1 = @($free)[0]; $seat2 = @($free)[1]
