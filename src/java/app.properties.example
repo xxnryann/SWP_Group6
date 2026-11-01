@@ -2,7 +2,7 @@
 # app.properties bi .gitignore chan: KHONG commit mat khau / khoa that len Git.
 
 # ---- Database (SQL Server) ----
-# Ten database phai khop voi script sql/new.sql
+# Ten database phai khop voi script database/schema.sql
 db.url=jdbc:sqlserver://localhost:1433;databaseName=CinemaWebDB;encrypt=true;trustServerCertificate=true
 db.user=
 db.password=
