@@ -1,7 +1,6 @@
 package com.cinema.service;
 
 import com.cinema.util.DBContext;
-import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -56,9 +55,6 @@ public class DiscountService {
                 ps.setInt(1, bookingId);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        BigDecimal subtotal = rs.getBigDecimal("ticket_total")
-                                .add(rs.getBigDecimal("combo_total"));
-                        r.setSubtotal(subtotal);
                         r.setVoucherDiscount(rs.getBigDecimal("voucher_discount"));
                         r.setPointsDiscount(rs.getBigDecimal("points_discount"));
                         r.setTotal(rs.getBigDecimal("total_amount"));

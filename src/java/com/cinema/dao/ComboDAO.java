@@ -6,7 +6,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,18 +40,6 @@ public class ComboDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        }
-        return list;
-    }
-
-    /** Combo đang bán và còn hàng (khách chọn lúc đặt vé — STT 20 của Phạm Nam dùng chung). */
-    public List<Combo> findActive() throws SQLException {
-        List<Combo> list = new ArrayList<>();
-        try (Connection c = DBContext.getConnection();
-             Statement st = c.createStatement();
-             ResultSet rs = st.executeQuery(
-                     "SELECT * FROM Combo WHERE status = 'Active' AND stock > 0 ORDER BY combo_id")) {
-            while (rs.next()) list.add(map(rs));
         }
         return list;
     }
@@ -101,23 +88,6 @@ public class ComboDAO {
              PreparedStatement ps = c.prepareStatement("DELETE FROM Combo WHERE combo_id = ?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
-        }
-    }
-
-    /**
-     * Trừ tồn kho khi bán được. Chỉ trừ khi đủ hàng
-     * (tránh âm kho khi 2 giao dịch bán đồng thời).
-     * Lưu ý: sp_ConfirmPayment trong DB đã tự trừ kho khi thanh toán thành công,
-     * hàm này dùng cho luồng bán tại quầy (STT 21) nếu nhóm không dùng procedure.
-     */
-    public boolean decreaseStock(int comboId, int quantity) throws SQLException {
-        String sql = "UPDATE Combo SET stock = stock - ? WHERE combo_id = ? AND stock >= ?";
-        try (Connection c = DBContext.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, quantity);
-            ps.setInt(2, comboId);
-            ps.setInt(3, quantity);
-            return ps.executeUpdate() > 0;
         }
     }
 }

@@ -15,6 +15,11 @@ public final class Validator {
         return s != null && s.length() <= 150 && EMAIL.matcher(s).matches();
     }
 
+    /** CMND (9 số), CCCD (12 số) hoặc hộ chiếu (1 chữ cái + 7 chữ số). */
+    public static boolean isIdNumber(String s) {
+        return s != null && s.matches("^(\\d{9}|\\d{12}|[A-Za-z]\\d{7})$");
+    }
+
     public static boolean isPhone(String s) {
         return s != null && PHONE.matcher(s).matches();
     }

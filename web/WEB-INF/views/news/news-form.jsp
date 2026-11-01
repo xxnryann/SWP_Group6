@@ -13,9 +13,10 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
-        <p class="sub">Bài ở trạng thái “Xuất bản ngay” sẽ xuất hiện ngay trên trang Tin tức công khai.</p>
         <c:if test="${not empty error}"><p class="alert alert-error">${error}</p></c:if>
         <form method="post" action="${ctx}/manager/news">
           <input type="hidden" name="_csrf" value="${csrf}">
@@ -40,7 +41,7 @@
                    placeholder="https://... (để trống sẽ dùng ảnh mặc định)"
                    value="<c:out value='${news.thumbnailUrl}'/>">
             <c:if test="${not empty news.thumbnailUrl}">
-              <div class="uip-preview"><img src="<c:out value='${news.thumbnailUrl}'/>" alt="Ảnh thumbnail hiện tại"></div>
+              <div class="uip-preview"><img src="${news.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${news.thumbnailUrl}'/>" alt="Ảnh thumbnail hiện tại"></div>
             </c:if>
           </div>
 
@@ -59,7 +60,12 @@
           </div>
         </form>
       </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+

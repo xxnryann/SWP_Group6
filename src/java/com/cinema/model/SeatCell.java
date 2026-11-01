@@ -11,7 +11,6 @@ public class SeatCell {
     private int seatNumber;
     private String seatType;    // Standard / VIP / Couple
     private Integer pairSeatId; // id ghế còn lại của cặp (null nếu không phải ghế đôi)
-    private String displayLabel;
     private String color;       // GREEN / YELLOW / RED / GREY
 
     public int getSeatId() { return seatId; }
@@ -29,14 +28,23 @@ public class SeatCell {
     public Integer getPairSeatId() { return pairSeatId; }
     public void setPairSeatId(Integer pairSeatId) { this.pairSeatId = pairSeatId; }
 
-    public String getDisplayLabel() { return displayLabel == null ? getLabel() : displayLabel; }
-    public void setDisplayLabel(String displayLabel) { this.displayLabel = displayLabel; }
-
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
 
     /** Chỉ ghế GREEN mới được chọn. */
     public boolean isAvailable() { return "GREEN".equals(color); }
+
+    /** Nhãn tiếng Việt của màu trạng thái ghế (dùng cho tooltip/chú thích). */
+    public String getStatusLabel() {
+        if (color == null) return "Không rõ";
+        switch (color) {
+            case "GREEN": return "Trống";
+            case "YELLOW": return "Đang giữ";
+            case "RED": return "Đã bán";
+            case "GREY": return "Bảo trì";
+            default: return color;
+        }
+    }
 
     /** Ghế đôi luôn phải chọn cả cặp (sp_HoldSeats kiểm tra ở DB). */
     public boolean isCouple() { return pairSeatId != null; }

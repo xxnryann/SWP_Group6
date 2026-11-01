@@ -16,10 +16,10 @@
   .uip-show { display: grid; grid-template-columns: 128px 1fr auto; gap: 18px; align-items: center;
               background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
               box-shadow: var(--shadow); padding: 16px 20px; }
-  .uip-time { text-align: center; background: linear-gradient(150deg, var(--brand), var(--navy)); color: #fff;
+  .uip-time { text-align: center; background: var(--brand-soft); color: var(--brand); border: 1px solid var(--brand-tint);
               border-radius: 12px; padding: 12px 8px; }
   .uip-time .uip-hhmm { font-size: 21px; font-weight: 800; line-height: 1.15; }
-  .uip-time .uip-dd { font-size: 12px; color: var(--slate-200); }
+  .uip-time .uip-dd { font-size: 12px; color: var(--muted); }
   .uip-show h3 { margin: 0 0 6px; font-size: 18px; }
   .uip-facts { display: flex; gap: 8px; flex-wrap: wrap; }
   .uip-seats-ok { background: #d1fae5; color: var(--success); }
@@ -32,6 +32,8 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <h1>Bán vé tại quầy</h1>
       <div class="uip-steps">
         <span class="uip-step active"><span class="uip-num">1</span> Chọn suất chiếu</span>
@@ -52,7 +54,7 @@
               <h3><c:out value="${s.title}"/></h3>
               <div class="uip-facts">
                 <span class="chip">🎬 <c:out value="${s.roomName}"/></span>
-                <span class="chip">🕒 <c:out value="${s.slotName}"/></span>
+                <span class="chip">🕒 <c:out value="${s.timeRangeLabel}"/></span>
                 <c:choose>
                   <c:when test="${s.availableSeats == 0}"><span class="chip uip-seats-out">Hết ghế</span></c:when>
                   <c:when test="${s.availableSeats <= 10}"><span class="chip uip-seats-low">Sắp hết · còn ${s.availableSeats} ghế</span></c:when>
@@ -72,7 +74,11 @@
         </c:forEach>
       </div>
       <c:if test="${empty showtimeList}"><div class="uip-empty">🎬<br>Không có suất chiếu nào sắp diễn ra.</div></c:if>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+

@@ -12,6 +12,17 @@ public abstract class BaseServlet extends HttpServlet {
 
     public static final String SESSION_USER = "authUser";
 
+    /** Đọc id số nguyên dương từ tham số; trả -1 nếu thiếu hoặc không hợp lệ (thay cho Integer.parseInt gây 500). */
+    protected static int safeId(String value) {
+        if (value == null) return -1;
+        try {
+            int id = Integer.parseInt(value.trim());
+            return id > 0 ? id : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     protected void forward(HttpServletRequest req, HttpServletResponse resp, String view)
             throws ServletException, IOException {
         req.setAttribute("csrf", SecurityUtil.csrfToken(req.getSession()));
@@ -27,6 +38,24 @@ public abstract class BaseServlet extends HttpServlet {
         return false;
     }
 
+    /**
+     * Chặn truy cập theo vai trò: chưa đăng nhập -> chuyển về /login, sai vai trò -> 403.
+     * @return true nếu người dùng có một trong các vai trò cho phép.
+     */
+    protected boolean requireRole(HttpServletRequest req, HttpServletResponse resp, String... roles)
+            throws IOException {
+        User u = currentUser(req);
+        if (u == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return false;
+        }
+        for (String role : roles) {
+            if (role.equals(u.getRole())) return true;
+        }
+        resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang này.");
+        return false;
+    }
+
     protected User currentUser(HttpServletRequest req) {
         var s = req.getSession(false);
         return s == null ? null : (User) s.getAttribute(SESSION_USER);
@@ -38,8 +67,9 @@ public abstract class BaseServlet extends HttpServlet {
         c.setUserId(u.getUserId());
         c.setFullName(u.getFullName());
         c.setEmail(u.getEmail());
-        c.setRole(u.getRole() == null ? null : u.getRole().trim().toUpperCase(java.util.Locale.ROOT));
+        c.setRole(u.getRole());
         c.setStatus(u.getStatus());
+        c.setMyPoint(u.getMyPoint());
         return c;
     }
 

@@ -12,7 +12,6 @@ public class Showtime {
     private int movieDurationMinutes;
     private String roomName;
     private LocalDateTime startsAt;
-    private LocalDateTime endsAt;
     private String status = "Scheduled";
 
     public int getShowtimeId() {
@@ -63,14 +62,6 @@ public class Showtime {
         this.startsAt = startsAt;
     }
 
-    public LocalDateTime getEndsAt() {
-        return endsAt == null && startsAt != null ? startsAt.plusMinutes(movieDurationMinutes) : endsAt;
-    }
-
-    public void setEndsAt(LocalDateTime endsAt) {
-        this.endsAt = endsAt;
-    }
-
     public String getStatus() {
         return status;
     }
@@ -103,15 +94,12 @@ public class Showtime {
     }
 
     public String getEndDisplay() {
-        return getEndsAt() == null ? "" : getEndsAt().format(DISPLAY_FORMAT);
+        return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes).format(DISPLAY_FORMAT);
     }
 
     public String getEndTimeOnly() {
-        if (getEndsAt() == null) return "";
-        if (startsAt != null && getEndsAt().equals(startsAt.toLocalDate().plusDays(1).atStartOfDay())) {
-            return "24:00";
-        }
-        return getEndsAt().format(DateTimeFormatter.ofPattern("HH:mm"));
+        return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes)
+                .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
     public String getInputDateTime() {
@@ -124,9 +112,5 @@ public class Showtime {
 
     public String getInputTime() {
         return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("HH:mm"));
-    }
-
-    public String getInputEndTime() {
-        return getEndTimeOnly();
     }
 }

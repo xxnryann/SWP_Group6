@@ -2,8 +2,9 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="logo" href="${ctx}/home"><span>Cine<b>Star</b> Cinemas</span></a>
+        <a class="logo" href="${ctx}/home"><%@ include file="_logo-mark.jspf" %><span>Cine<b>Star</b> Cinemas</span></a>
         <p>Hệ thống rạp chiếu phim hiện đại với âm thanh Dolby Atmos và hình ảnh sắc nét, mang đến trải nghiệm điện ảnh trọn vẹn cho mọi khán giả.</p>
+        <p class="footer-contact">Hotline hỗ trợ: <strong>1900 636807</strong> <span class="sep">|</span> <a href="#" data-toast="Ứng dụng CineStar sắp ra mắt!">Tải ứng dụng</a></p>
       </div>
       <div>
         <h4>Dịch vụ</h4>
@@ -76,11 +77,23 @@
   });
   document.addEventListener('click', function () { $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); }); });
 
-  /* Mobile drawer */
+  /* Mobile drawer (chỉ có trên trang công khai; trang nội bộ bỏ thanh nav) */
   function drawer(open) { document.body.classList.toggle('drawer-open', open); }
-  $('#menuBtn').addEventListener('click', function () { drawer(true); });
-  $('#drawerClose').addEventListener('click', function () { drawer(false); });
-  $('#drawerBackdrop').addEventListener('click', function () { drawer(false); });
+  var menuBtn = $('#menuBtn');
+  if (menuBtn) menuBtn.addEventListener('click', function () { drawer(true); });
+  var drawerClose = $('#drawerClose');
+  if (drawerClose) drawerClose.addEventListener('click', function () { drawer(false); });
+  var drawerBackdrop = $('#drawerBackdrop');
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { drawer(false); });
+
+  /* Đánh dấu mục menu đang mở */
+  $$('.topbar-nav a').forEach(function (a) {
+    var p = a.pathname.replace(/\/$/, '');
+    var here = location.pathname.replace(/\/$/, '');
+    // Điểm MyPoint là tab trong khu Thông tin tài khoản -> vẫn tô sáng mục Thông tin cá nhân
+    if (/\/account\/(points|vouchers)$/.test(here)) here = here.replace(/(points|vouchers)$/, 'profile');
+    if (here === p) a.classList.add('active');
+  });
 
   /* Tài khoản hiện tại -> localStorage.currentUser (nguồn thật vẫn là session phía server) */
   var user = document.body.dataset.user;
@@ -114,5 +127,7 @@
   });
 })();
 </script>
+<script src="${ctx}/assets/js/motion.js" defer></script>
 </body>
 </html>
+

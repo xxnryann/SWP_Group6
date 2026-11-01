@@ -11,9 +11,10 @@
 <main>
   <section class="page">
     <div class="container">
+      <div class="dash-layout">
+        <div>
       <div class="card uip-form-card">
         <h2><c:out value="${pageTitle}"/></h2>
-        <p class="sub">Combo ở trạng thái “Đang bán” sẽ xuất hiện ở màn hình bán vé tại quầy và đặt vé online. Tồn kho được trừ khi thanh toán thành công.</p>
         <c:if test="${not empty error}"><p class="alert alert-error">${error}</p></c:if>
         <form method="post" action="${ctx}/staff/combo">
           <input type="hidden" name="_csrf" value="${csrf}">
@@ -41,7 +42,7 @@
             <div class="field">
               <label for="f-stock">Tồn kho</label>
               <input id="f-stock" type="number" name="stock" min="0" required
-                     value="${empty combo ? 0 : combo.stock}">
+                     value="${combo.stock}">
             </div>
           </div>
 
@@ -59,7 +60,12 @@
           </div>
         </form>
       </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
+
+
+
