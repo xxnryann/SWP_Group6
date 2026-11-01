@@ -17,21 +17,28 @@ public class SeatChangeDAO {
                 "SELECT t.ticket_id, t.ticket_code, t.status, t.price, t.showtime_id, "
                 + "m.title AS movie_title, r.room_name, s.start_time, "
                 + "CONCAT(sc.row_label, sc.seat_number) AS seat_label, sc.seat_id, sty.type_name AS seat_type, "
-                + "a.full_name AS customer_name "
+                + "CONCAT(ps.row_label, ps.seat_number) AS pair_label, a.full_name AS customer_name, "
+                + "CASE WHEN s.status = 'Scheduled' AND s.start_time > SYSDATETIME() THEN 1 ELSE 0 END AS changeable "
                 + "FROM Ticket t JOIN Showtime s ON s.showtime_id = t.showtime_id "
                 + "JOIN Movie m ON m.movie_id = s.movie_id JOIN Room r ON r.room_id = s.room_id "
                 + "JOIN Seat sc ON sc.seat_id = t.seat_id JOIN SeatType sty ON sty.seat_type_id = sc.seat_type_id "
+                + "LEFT JOIN Seat ps ON ps.seat_id = sc.pair_seat_id "
                 + "JOIN Booking b ON b.booking_id = t.booking_id LEFT JOIN Account a ON a.account_id = b.customer_id "
                 + "WHERE t.ticket_code = ?", ticketCode);
         return rows.isEmpty() ? null : rows.get(0);
     }
 
-    /** Ghế còn trống (GREEN) của suất, bỏ ghế đôi vì phải đổi theo cặp. */
-    public List<Map<String, Object>> freeSeats(int showtimeId) throws SQLException {
+    /** Ghế trống (GREEN) cùng loại với ghế hiện tại; ghế đôi chỉ liệt kê mỗi cặp một lần khi cả cặp còn trống. */
+    public List<Map<String, Object>> freeSeats(int showtimeId, int currentSeatId) throws SQLException {
         return Rows.query(
-                "SELECT v.seat_id, v.row_label, v.seat_number, v.seat_type "
-                + "FROM vw_SeatMap v WHERE v.showtime_id = ? AND v.color = 'GREEN' AND v.pair_seat_id IS NULL "
-                + "ORDER BY v.row_label, v.seat_number", showtimeId);
+                "SELECT v.seat_id, v.row_label, v.seat_number, v.seat_type, "
+                + "CONCAT(p.row_label, p.seat_number) AS pair_label "
+                + "FROM vw_SeatMap v JOIN Seat st ON st.seat_id = v.seat_id JOIN Seat cur ON cur.seat_id = ? "
+                + "LEFT JOIN vw_SeatMap p ON p.showtime_id = v.showtime_id AND p.seat_id = v.pair_seat_id "
+                + "WHERE v.showtime_id = ? AND v.color = 'GREEN' AND st.seat_type_id = cur.seat_type_id "
+                + "AND ((cur.pair_seat_id IS NULL AND v.pair_seat_id IS NULL) "
+                + "OR (cur.pair_seat_id IS NOT NULL AND p.color = 'GREEN' AND v.seat_id < v.pair_seat_id)) "
+                + "ORDER BY v.row_label, v.seat_number", currentSeatId, showtimeId);
     }
 
     /** Lịch sử đổi ghế gần đây. */

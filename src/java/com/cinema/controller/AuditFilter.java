@@ -23,7 +23,7 @@ public class AuditFilter implements Filter {
 
     public static final String DETAIL_ATTR = "auditDetail";
     private static final String[] LOGGED_PARAMS = {"id", "userId", "movieId", "showtimeId", "roomId", "ticketId",
-        "ticketCode", "code", "status", "role"};
+        "ticketCode", "code", "status", "role", "newSeatId"};
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

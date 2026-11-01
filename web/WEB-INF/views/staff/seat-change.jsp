@@ -23,17 +23,28 @@
         <dl>
           <dt>Mã vé</dt><dd><c:out value="${ticket.ticket_code}"/></dd>
           <dt>Phòng / Suất</dt><dd><c:out value="${ticket.room_name}"/> · <c:out value="${ticket.start_time}"/></dd>
-          <dt>Ghế hiện tại</dt><dd><strong><c:out value="${ticket.seat_label}"/></strong> (<c:out value="${ticket.seat_type}"/>)</dd>
+          <dt>Ghế hiện tại</dt><dd><strong><c:out value="${ticket.seat_label}"/><c:if test="${not empty ticket.pair_label}"> và <c:out value="${ticket.pair_label}"/></c:if></strong> (<c:out value="${ticket.seat_type}"/>)</dd>
           <dt>Khách hàng</dt><dd><c:out value="${empty ticket.customer_name ? 'Khách mua tại quầy' : ticket.customer_name}"/></dd>
-          <dt>Trạng thái</dt><dd><c:out value="${ticket.status}"/></dd>
+          <dt>Trạng thái</dt><dd>
+            <c:choose>
+              <c:when test="${ticket.status == 'Booked'}">Đã thanh toán</c:when>
+              <c:when test="${ticket.status == 'Used'}">Đã sử dụng</c:when>
+              <c:when test="${ticket.status == 'Cancelled'}">Đã hủy</c:when>
+              <c:when test="${ticket.status == 'Expired'}">Đã hết hạn</c:when>
+              <c:otherwise>Đang giữ chỗ, chưa thanh toán</c:otherwise>
+            </c:choose>
+          </dd>
         </dl>
 
         <c:choose>
           <c:when test="${ticket.status != 'Booked'}">
             <p class="alert alert-info">Chỉ đổi ghế được cho vé đã thanh toán và chưa sử dụng.</p>
           </c:when>
+          <c:when test="${ticket.changeable != 1}">
+            <p class="alert alert-info">Suất chiếu đã bắt đầu hoặc đã bị hủy nên không thể đổi ghế.</p>
+          </c:when>
           <c:when test="${empty freeSeats}">
-            <p class="alert alert-info">Suất chiếu này không còn ghế đơn trống để đổi.</p>
+            <p class="alert alert-info">Suất chiếu này không còn <c:out value="${empty ticket.pair_label ? 'ghế' : 'cặp ghế'}"/> <c:out value="${ticket.seat_type}"/> trống để đổi.</p>
           </c:when>
           <c:otherwise>
             <form method="post" action="${ctx}/staff/seat-change">
@@ -41,11 +52,11 @@
               <input type="hidden" name="code" value="<c:out value='${ticket.ticket_code}'/>">
               <input type="hidden" name="ticketId" value="${ticket.ticket_id}">
               <div class="field">
-                <label for="newSeatId">GHẾ MỚI</label>
+                <label for="newSeatId">GHẾ MỚI (CÙNG LOẠI, GIỮ NGUYÊN GIÁ VÉ)</label>
                 <select id="newSeatId" name="newSeatId" required>
                   <option value="">-- Chọn ghế trống --</option>
                   <c:forEach var="s" items="${freeSeats}">
-                    <option value="${s.seat_id}"><c:out value="${s.row_label}${s.seat_number}"/> — <c:out value="${s.seat_type}"/></option>
+                    <option value="${s.seat_id}"><c:out value="${s.row_label}${s.seat_number}"/><c:if test="${not empty s.pair_label}"> và <c:out value="${s.pair_label}"/></c:if> — <c:out value="${s.seat_type}"/></option>
                   </c:forEach>
                 </select>
               </div>

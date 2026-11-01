@@ -138,7 +138,7 @@ foreach ($name in $targets) {
     $tmp = Join-Path $env:TEMP ("sync_{0}.sql" -f $name)
     # File phai la UTF-8 co BOM de sqlcmd doc dung tieng Viet
     [System.IO.File]::WriteAllText($tmp, $body, (New-Object System.Text.UTF8Encoding($true)))
-    $out = & $sqlcmd -S $Server @sqlAuth -d $Database -C -I -i $tmp 2>&1 | Out-String
+    $out = & $sqlcmd -S $Server @sqlAuth -d $Database -C -I -b -i $tmp 2>&1 | Out-String
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  [OK]   $name" -ForegroundColor Green
     } else {

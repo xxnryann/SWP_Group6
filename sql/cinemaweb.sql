@@ -509,8 +509,8 @@ CREATE TABLE dbo.EmailNotification (
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_EmailNotification_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
-    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ReviewReminder')),
-    CONSTRAINT CK_EmailNotification_Status CHECK (status IN ('Pending','Sent','Failed'))
+    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ReviewReminder','SeatChanged')),
+    CONSTRAINT CK_EmailNotification_Status CHECK (status IN ('Pending','Sent','Failed','InApp'))
 );
 GO
 
@@ -1025,33 +1025,85 @@ END
 GO
 
 /* ----------------------------------------------------------------------------
-   UC: Seat Change (Staff) - doi ghe trong cung suat.
-   Ghe doi can doi ca cap -> xu ly rieng o tang ung dung.
+   UC: Seat Change (Staff) - doi ghe trong cung suat, truoc gio chieu.
+   Chi doi sang ghe cung loai nen gia ve khong doi. Ghe doi doi ca cap (ve cung don).
+   Khoa theo suat de hai nhan vien thao tac cung luc khong lam sai lich su.
+   Khach co tai khoan duoc bao qua hop thu va email vi ve dien tu da gui ghi ghe cu.
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_ChangeSeat @ticket_id INT, @new_seat_id INT, @staff_id INT, @reason NVARCHAR(200) = NULL AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     EXEC dbo.sp_ReleaseExpiredHolds;
-    DECLARE @showtime_id INT, @old_seat INT, @tstatus VARCHAR(10), @room INT,
-            @new_room INT, @new_pair INT, @new_status VARCHAR(12);
+    DECLARE @showtime_id INT = (SELECT showtime_id FROM dbo.Ticket WHERE ticket_id = @ticket_id);
+    IF @showtime_id IS NULL THROW 50080, N'Chỉ đổi ghế cho vé đã thanh toán và chưa sử dụng.', 1;
+    DECLARE @lock NVARCHAR(60) = CONCAT(N'seat-change-', @showtime_id);
 
-    SELECT @showtime_id = t.showtime_id, @old_seat = t.seat_id, @tstatus = t.status, @room = s.room_id
-    FROM dbo.Ticket t JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id WHERE t.ticket_id = @ticket_id;
-    SELECT @new_room = room_id, @new_pair = pair_seat_id, @new_status = status FROM dbo.Seat WHERE seat_id = @new_seat_id;
+    DECLARE @old_seat INT, @tstatus VARCHAR(10), @room INT, @booking_id INT, @customer_id INT,
+            @start DATETIME2, @sstatus VARCHAR(10), @old_pair INT, @old_type INT,
+            @new_room INT, @new_pair INT, @new_status VARCHAR(12), @new_type INT,
+            @partner INT, @partner_status VARCHAR(10), @partner_booking INT;
 
-    IF @tstatus IS NULL OR @tstatus <> 'Booked' THROW 50080, N'Chỉ đổi ghế cho vé đã thanh toán và chưa sử dụng.', 1;
-    IF @new_room IS NULL OR @new_room <> @room THROW 50081, N'Ghế mới phải thuộc cùng phòng của suất chiếu.', 1;
-    IF @new_status = 'Maintenance' THROW 50082, N'Ghế mới đang bảo trì.', 1;
-    IF @new_pair IS NOT NULL OR EXISTS (SELECT 1 FROM dbo.Seat WHERE seat_id = @old_seat AND pair_seat_id IS NOT NULL)
-        THROW 50083, N'Ghế đôi phải đổi theo cặp, không hỗ trợ đổi từng ghế.', 1;
-    IF NOT EXISTS (SELECT 1 FROM dbo.vw_SeatMap WHERE showtime_id = @showtime_id AND seat_id = @new_seat_id AND color = 'GREEN')
-        THROW 50084, N'Ghế mới không còn trống.', 1;
+    BEGIN TRY
+        BEGIN TRAN;
+        EXEC sp_getapplock @Resource = @lock, @LockMode = 'Exclusive', @LockOwner = 'Transaction';
 
-    BEGIN TRAN;
-    UPDATE dbo.Ticket SET seat_id = @new_seat_id WHERE ticket_id = @ticket_id;      -- giu nguyen gia ve da thanh toan
-    INSERT INTO dbo.TicketChangeHistory(ticket_id, change_type, old_seat_id, new_seat_id, old_showtime_id, new_showtime_id, changed_by, reason)
-    VALUES (@ticket_id, 'SeatChange', @old_seat, @new_seat_id, @showtime_id, @showtime_id, @staff_id, @reason);
-    COMMIT;
+        SELECT @old_seat = t.seat_id, @tstatus = t.status, @room = s.room_id, @booking_id = t.booking_id,
+               @customer_id = b.customer_id, @start = s.start_time, @sstatus = s.status,
+               @old_pair = sc.pair_seat_id, @old_type = sc.seat_type_id
+        FROM dbo.Ticket t JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
+        JOIN dbo.Booking b ON b.booking_id = t.booking_id JOIN dbo.Seat sc ON sc.seat_id = t.seat_id
+        WHERE t.ticket_id = @ticket_id;
+        SELECT @new_room = room_id, @new_pair = pair_seat_id, @new_status = status, @new_type = seat_type_id
+        FROM dbo.Seat WHERE seat_id = @new_seat_id;
+
+        IF @tstatus <> 'Booked' THROW 50080, N'Chỉ đổi ghế cho vé đã thanh toán và chưa sử dụng.', 1;
+        IF @sstatus <> 'Scheduled' THROW 50085, N'Suất chiếu đã bị hủy nên không thể đổi ghế.', 1;
+        IF @start <= SYSDATETIME() THROW 50086, N'Suất chiếu đã bắt đầu nên không thể đổi ghế.', 1;
+        IF @new_room IS NULL OR @new_room <> @room THROW 50081, N'Ghế mới phải thuộc cùng phòng của suất chiếu.', 1;
+        IF @new_status = 'Maintenance' THROW 50082, N'Ghế mới đang bảo trì.', 1;
+        IF @new_type <> @old_type THROW 50087, N'Chỉ đổi sang ghế cùng loại để giữ nguyên giá vé.', 1;
+        IF (@old_pair IS NULL AND @new_pair IS NOT NULL) OR (@old_pair IS NOT NULL AND @new_pair IS NULL)
+            THROW 50083, N'Ghế đơn chỉ đổi sang ghế đơn, ghế đôi chỉ đổi sang ghế đôi.', 1;
+        IF NOT EXISTS (SELECT 1 FROM dbo.vw_SeatMap WHERE showtime_id = @showtime_id AND seat_id = @new_seat_id AND color = 'GREEN')
+           OR (@new_pair IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.vw_SeatMap WHERE showtime_id = @showtime_id AND seat_id = @new_pair AND color = 'GREEN'))
+            THROW 50084, N'Ghế mới không còn trống.', 1;
+
+        -- Ve con lai cua cap ghe (co the khong con neu khach da huy mot ghe).
+        IF @old_pair IS NOT NULL
+            SELECT @partner = ticket_id, @partner_status = status, @partner_booking = booking_id
+            FROM dbo.Ticket WHERE showtime_id = @showtime_id AND seat_id = @old_pair AND status IN ('Held','Booked','Used');
+        IF @partner IS NOT NULL AND (@partner_status <> 'Booked' OR @partner_booking <> @booking_id)
+            THROW 50088, N'Không thể đổi vì ghế còn lại của cặp đã sử dụng hoặc thuộc đơn khác.', 1;
+
+        UPDATE dbo.Ticket SET seat_id = @new_seat_id WHERE ticket_id = @ticket_id;      -- giu nguyen gia ve da thanh toan
+        INSERT INTO dbo.TicketChangeHistory(ticket_id, change_type, old_seat_id, new_seat_id, old_showtime_id, new_showtime_id, changed_by, reason)
+        VALUES (@ticket_id, 'SeatChange', @old_seat, @new_seat_id, @showtime_id, @showtime_id, @staff_id, @reason);
+        IF @partner IS NOT NULL
+        BEGIN
+            UPDATE dbo.Ticket SET seat_id = @new_pair WHERE ticket_id = @partner;
+            INSERT INTO dbo.TicketChangeHistory(ticket_id, change_type, old_seat_id, new_seat_id, old_showtime_id, new_showtime_id, changed_by, reason)
+            VALUES (@partner, 'SeatChange', @old_pair, @new_pair, @showtime_id, @showtime_id, @staff_id, @reason);
+        END
+
+        IF @customer_id IS NOT NULL
+        BEGIN
+            DECLARE @old_label NVARCHAR(40) = (SELECT CONCAT(row_label, seat_number) FROM dbo.Seat WHERE seat_id = @old_seat),
+                    @new_label NVARCHAR(40) = (SELECT CONCAT(row_label, seat_number) FROM dbo.Seat WHERE seat_id = @new_seat_id);
+            IF @partner IS NOT NULL
+                SELECT @old_label += N', ' + (SELECT CONCAT(row_label, seat_number) FROM dbo.Seat WHERE seat_id = @old_pair),
+                       @new_label += N', ' + (SELECT CONCAT(row_label, seat_number) FROM dbo.Seat WHERE seat_id = @new_pair);
+            INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, booking_id)
+            VALUES (@customer_id, 'SeatChanged', N'Vé của bạn đã được đổi ghế',
+                    N'Ghế của bạn được đổi từ ' + @old_label + N' sang ' + @new_label + N'. Mã vé của bạn không thay đổi.',
+                    @showtime_id, @booking_id);
+        END
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        IF ERROR_NUMBER() IN (2601, 2627) THROW 50084, N'Ghế mới không còn trống.', 1;
+        THROW;
+    END CATCH
 END
 GO
 
@@ -1121,6 +1173,48 @@ BEGIN
       AND a.status = 'Active' AND c.total_spent >= v.min_cumulative_spending
       AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'Voucher'
                       AND e.customer_id = c.customer_id AND e.subject = N'Ưu đãi voucher ' + v.code);
+END
+GO
+
+/* ----------------------------------------------------------------------------
+   Hop thu: khi khach mo hop thu, bo sung thong bao phim moi (khoi chieu trong 14 ngay
+   qua hoac sap chieu) va voucher khach dang dung duoc ma chua tung nhan.
+   Status InApp: chi hien trong hop thu, job gui email khong lay cac dong nay.
+   -------------------------------------------------------------------------- */
+CREATE OR ALTER PROCEDURE dbo.sp_SyncInboxPromotions @customer_id INT AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    DECLARE @today DATE = CAST(SYSDATETIME() AS DATE);
+    DECLARE @lock NVARCHAR(60) = CONCAT(N'inbox-promotions-', @customer_id);
+    BEGIN TRANSACTION;
+    -- Hai tab mo cung luc khong duoc tao trung thong bao.
+    EXEC sp_getapplock @Resource = @lock, @LockMode = 'Exclusive', @LockOwner = 'Transaction';
+
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, movie_id, status)
+    SELECT @customer_id, 'NewMovie', LEFT(N'Phim mới: ' + m.title, 200), N'Phim "' + m.title + N'" tại CineStar Cinemas.', m.movie_id, 'InApp'
+    FROM dbo.Movie m
+    WHERE m.is_deleted = 0 AND m.status IN ('Upcoming','NowShowing') AND m.release_date >= DATEADD(DAY, -14, @today)
+      AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'NewMovie'
+                      AND e.movie_id = m.movie_id AND e.customer_id = @customer_id)
+    ORDER BY m.release_date, m.movie_id;
+
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, status)
+    SELECT @customer_id, 'Voucher', N'Ưu đãi voucher ' + v.code,
+           N'Dùng mã ' + v.code + N' khi đặt vé: '
+               + COALESCE(NULLIF(v.description, N''),
+                          CASE WHEN v.discount_type = 'Percent'
+                               THEN N'giảm ' + FORMAT(v.discount_value, '0.##') + N'%'
+                               ELSE N'giảm ' + FORMAT(v.discount_value, 'N0', 'vi-VN') + N' đ' END)
+               + N'. Hạn dùng đến ' + CONVERT(NVARCHAR(10), v.valid_to, 103) + N'.', 'InApp'
+    FROM dbo.Voucher v
+    JOIN dbo.Customer c ON c.customer_id = @customer_id
+    WHERE v.status = 'Allowed' AND @today BETWEEN v.valid_from AND v.valid_to AND v.used_count < v.usage_limit
+      AND c.total_spent >= v.min_cumulative_spending
+      AND (SELECT COUNT(*) FROM dbo.VoucherUsage u WHERE u.voucher_id = v.voucher_id AND u.customer_id = @customer_id) < v.per_customer_limit
+      AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'Voucher'
+                      AND e.customer_id = @customer_id AND e.subject = N'Ưu đãi voucher ' + v.code);
+    COMMIT;
 END
 GO
 
@@ -1493,8 +1587,8 @@ BEGIN
     IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id AND status = 'Scheduled' AND end_time > SYSDATETIME())
         THROW 51021, N'Phim còn suất chưa chiếu xong nên chưa thể xóa. Hãy dùng "Hủy & hoàn tiền" rồi xóa lại; suất đang chiếu cần đợi kết thúc.', 1;
 
-    -- Phim vua them nham: thu hoi email bao phim moi chua gui.
-    DELETE FROM dbo.EmailNotification WHERE movie_id = @movie_id AND notif_type = 'NewMovie' AND status = 'Pending';
+    -- Phim vua them nham: thu hoi email bao phim moi chua gui va thong bao chi nam trong hop thu.
+    DELETE FROM dbo.EmailNotification WHERE movie_id = @movie_id AND notif_type = 'NewMovie' AND status IN ('Pending','InApp');
 
     -- Phim da co lich su (suat chieu, ve, doanh thu, danh gia, thong bao): chi an di, khong xoa du lieu.
     IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id)

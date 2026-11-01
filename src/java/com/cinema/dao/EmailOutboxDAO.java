@@ -44,9 +44,27 @@ public class EmailOutboxDAO {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
-    /** Hộp thư của khách: mọi loại thông báo (không phụ thuộc email đã gửi được hay chưa). */
-    public List<Map<String, Object>> customerInbox(int customerId, int limit) throws SQLException {
-        return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.created_at, m.movie_id, m.title, r.room_name, "
+    /** Bổ sung thông báo phim mới và voucher khách đang dùng được vào hộp thư (không gửi email). */
+    public void syncInboxPromotions(int customerId) throws SQLException {
+        runProc("{call dbo.sp_SyncInboxPromotions(?)}", customerId);
+    }
+
+    /**
+     * Hộp thư của khách: mọi loại thông báo (không phụ thuộc email đã gửi được hay chưa).
+     * Phim mới đã ngừng chiếu và voucher đã bị xóa không còn hiện.
+     *
+     * @param type chỉ lấy một loại thông báo; null để lấy tất cả
+     */
+    public List<Map<String, Object>> customerInbox(int customerId, int limit, String type) throws SQLException {
+        String sql = "SELECT TOP (?) e.notif_id, e.notif_type, e.subject, "
+                + "CASE WHEN e.notif_type = 'NewMovie' THEN N'Phim \"' + m.title + N'\"' "
+                + "+ CASE WHEN m.release_date > CAST(SYSDATETIME() AS DATE) THEN N' sắp có mặt tại CineStar Cinemas, khởi chiếu ngày ' "
+                + "ELSE N' đang chiếu tại CineStar Cinemas từ ngày ' END + CONVERT(NVARCHAR(10), m.release_date, 103) + N'.' "
+                + "ELSE e.body END AS body, e.created_at, m.movie_id, m.title, r.room_name, "
+                + "v.code AS voucher_code, CASE WHEN v.status = 'Allowed' "
+                + "AND CAST(SYSDATETIME() AS DATE) BETWEEN v.valid_from AND v.valid_to AND v.used_count < v.usage_limit "
+                + "AND (SELECT COUNT(*) FROM VoucherUsage u WHERE u.voucher_id = v.voucher_id AND u.customer_id = e.customer_id) < v.per_customer_limit "
+                + "THEN 1 ELSE 0 END AS voucher_usable, "
                 + "s.start_time, b.booking_code, CASE WHEN m.is_deleted = 0 THEN 1 ELSE 0 END AS movie_active, "
                 + "CASE WHEN m.is_deleted = 0 AND NOT EXISTS (SELECT 1 FROM Review rv WHERE rv.movie_id = m.movie_id "
                 + "AND rv.customer_id = e.customer_id) THEN 1 ELSE 0 END AS can_review FROM EmailNotification e "
@@ -54,8 +72,13 @@ public class EmailOutboxDAO {
                 + "LEFT JOIN Showtime s ON s.showtime_id = COALESCE(e.showtime_id, b.showtime_id) "
                 + "LEFT JOIN Movie m ON m.movie_id = COALESCE(e.movie_id, s.movie_id) "
                 + "LEFT JOIN Room r ON r.room_id = s.room_id "
+                + "LEFT JOIN Voucher v ON e.notif_type = 'Voucher' AND e.subject = N'Ưu đãi voucher ' + v.code "
                 + "WHERE e.customer_id = ? "
-                +"ORDER BY e.notif_id DESC", limit, customerId);
+                + "AND (e.notif_type <> 'Voucher' OR v.voucher_id IS NOT NULL) "
+                + "AND (e.notif_type <> 'NewMovie' OR (m.is_deleted = 0 AND m.status <> 'Stopped')) "
+                + (type == null ? "" : "AND e.notif_type = ? ")
+                + "ORDER BY e.notif_id DESC";
+        return type == null ? Rows.query(sql, limit, customerId) : Rows.query(sql, limit, customerId, type);
     }
 
     /** Job định kỳ: nhắc lịch chiếu cho các suất bắt đầu trong {@code hoursBefore} giờ tới. */

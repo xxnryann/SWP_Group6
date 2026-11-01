@@ -183,3 +183,29 @@ GO
    ============================================================================ */
 -- Chi doi procedure (sp_QueueNewMovieEmail, sp_QueueVoucherEmail, sp_CheckInTicket, sp_DeleteMovie):
 --     scripts\compare-procedures.ps1 -Sync
+
+/* ============================================================================
+   11. Hop thu: thong bao phim moi / voucher chi hien trong app (01/11/2026)
+   ============================================================================ */
+-- Sau khi chay, tao sp_SyncInboxPromotions va cap nhat sp_DeleteMovie:  scripts\compare-procedures.ps1 -Sync
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_EmailNotification_Status'
+               AND parent_object_id = OBJECT_ID('dbo.EmailNotification') AND definition LIKE '%InApp%')
+BEGIN
+    ALTER TABLE dbo.EmailNotification DROP CONSTRAINT CK_EmailNotification_Status;
+    ALTER TABLE dbo.EmailNotification ADD CONSTRAINT CK_EmailNotification_Status
+        CHECK (status IN ('Pending','Sent','Failed','InApp'));
+END
+GO
+
+/* ============================================================================
+   12. Doi ghe: cung loai ghe, doi ca cap ghe doi, bao cho khach (02/11/2026)
+   ============================================================================ */
+-- Sau khi chay, cap nhat sp_ChangeSeat:  scripts\compare-procedures.ps1 -Sync
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_EmailNotification_Type'
+               AND parent_object_id = OBJECT_ID('dbo.EmailNotification') AND definition LIKE '%SeatChanged%')
+BEGIN
+    ALTER TABLE dbo.EmailNotification DROP CONSTRAINT CK_EmailNotification_Type;
+    ALTER TABLE dbo.EmailNotification ADD CONSTRAINT CK_EmailNotification_Type
+        CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ReviewReminder','SeatChanged'));
+END
+GO

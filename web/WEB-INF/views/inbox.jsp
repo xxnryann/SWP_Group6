@@ -8,6 +8,9 @@
   .inbox-item.is-success { border-left-color: #059669; }
   .inbox-item.is-danger { border-left-color: #dc2626; }
   .inbox-item.is-reminder { border-left-color: #f59e0b; }
+  .inbox-item.is-voucher { border-left-color: #0891b2; }
+  .inbox-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .inbox-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .inbox-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .inbox-head h3 { margin: 0; font-size: 16px; }
   .inbox-time { color: #64748b; font-size: 13px; }
@@ -17,9 +20,22 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Hộp thư</h2>
+    <nav class="inbox-tabs" aria-label="Lọc thông báo">
+      <a class="btn btn-small ${empty inboxType ? 'btn-primary' : 'btn-soft'}" href="${ctx}/account/inbox">Tất cả</a>
+      <a class="btn btn-small ${inboxType == 'NewMovie' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/account/inbox?type=NewMovie">Phim mới</a>
+      <a class="btn btn-small ${inboxType == 'Voucher' ? 'btn-primary' : 'btn-soft'}" href="${ctx}/account/inbox?type=Voucher">Ưu đãi voucher</a>
+    </nav>
 
     <c:choose>
-      <c:when test="${empty notifications}"><p class="sub">Bạn chưa có thông báo nào.</p></c:when>
+      <c:when test="${empty notifications}">
+        <p class="sub">
+          <c:choose>
+            <c:when test="${inboxType == 'NewMovie'}">Hiện chưa có phim mới.</c:when>
+            <c:when test="${inboxType == 'Voucher'}">Hiện chưa có ưu đãi voucher dành cho bạn.</c:when>
+            <c:otherwise>Bạn chưa có thông báo nào.</c:otherwise>
+          </c:choose>
+        </p>
+      </c:when>
       <c:otherwise>
         <div class="inbox-list">
           <c:forEach var="n" items="${notifications}">
@@ -36,13 +52,21 @@
                 <c:set var="itemClass" value="is-danger"/>
                 <c:set var="itemTitle" value="Phim bị hủy, bạn sẽ được hoàn tiền"/>
               </c:when>
+              <c:when test="${n.notif_type == 'SeatChanged'}">
+                <c:set var="itemClass" value="is-reminder"/>
+                <c:set var="itemTitle" value="${n.subject}"/>
+              </c:when>
               <c:when test="${n.notif_type == 'ReviewReminder'}">
                 <c:set var="itemClass" value="is-success"/>
                 <c:set var="itemTitle" value="${n.subject}"/>
               </c:when>
-              <c:when test="${n.notif_type == 'NewMovie' or n.notif_type == 'Voucher'}">
+              <c:when test="${n.notif_type == 'NewMovie'}">
                 <c:set var="itemClass" value=""/>
-                <c:set var="itemTitle" value="${n.subject}"/>
+                <c:set var="itemTitle" value="${n.title}"/>
+              </c:when>
+              <c:when test="${n.notif_type == 'Voucher'}">
+                <c:set var="itemClass" value="is-voucher"/>
+                <c:set var="itemTitle" value="Mã ${n.voucher_code}"/>
               </c:when>
               <c:otherwise>
                 <c:set var="itemClass" value="is-reminder"/>
@@ -51,19 +75,29 @@
             </c:choose>
             <article class="inbox-item ${itemClass}">
               <div class="inbox-head">
-                <h3><c:out value="${itemTitle}"/></h3>
+                <h3 class="inbox-title">
+                  <c:if test="${n.notif_type == 'NewMovie'}"><span class="chip">Phim mới</span></c:if>
+                  <c:if test="${n.notif_type == 'Voucher'}"><span class="chip">Ưu đãi</span></c:if>
+                  <c:out value="${itemTitle}"/>
+                </h3>
                 <span class="inbox-time"><c:out value="${n.created_at}"/></span>
               </div>
               <c:choose>
                 <c:when test="${n.notif_type == 'Voucher'}">
                   <p><c:out value="${n.body}"/></p>
-                  <p><a class="btn btn-primary btn-small" href="${ctx}/promotions">Xem khuyến mãi</a></p>
+                  <c:choose>
+                    <c:when test="${n.voucher_usable == 1}"><p><a class="btn btn-primary btn-small" href="${ctx}/promotions">Xem khuyến mãi</a></p></c:when>
+                    <c:otherwise><p class="inbox-meta">Mã này hiện không áp dụng được.</p></c:otherwise>
+                  </c:choose>
                 </c:when>
                 <c:when test="${n.notif_type == 'NewMovie'}">
                   <p><c:out value="${n.body}"/></p>
                   <c:if test="${n.movie_active == 1}"><p><a class="btn btn-primary btn-small" href="${ctx}/movies/detail?id=${n.movie_id}">Xem phim</a></p></c:if>
                 </c:when>
                 <c:when test="${empty n.title}"><p><c:out value="${n.body}"/></p></c:when>
+                <c:when test="${n.notif_type == 'SeatChanged'}">
+                  <p>Phim <strong><c:out value="${n.title}"/></strong>: <c:out value="${n.body}"/></p>
+                </c:when>
                 <c:when test="${n.notif_type == 'TicketCancelled'}">
                   <p><c:out value="${n.body}"/> Phim: <strong><c:out value="${n.title}"/></strong>.</p>
                 </c:when>

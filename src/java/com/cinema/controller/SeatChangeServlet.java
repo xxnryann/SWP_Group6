@@ -65,8 +65,9 @@ public class SeatChangeServlet extends BaseServlet {
                     req.setAttribute("error", "Không tìm thấy vé có mã \"" + code + "\".");
                 } else {
                     req.setAttribute("ticket", ticket);
-                    if ("Booked".equals(ticket.get("status"))) {
-                        req.setAttribute("freeSeats", dao.freeSeats(((Number) ticket.get("showtime_id")).intValue()));
+                    if ("Booked".equals(ticket.get("status")) && ((Number) ticket.get("changeable")).intValue() == 1) {
+                        req.setAttribute("freeSeats", dao.freeSeats(((Number) ticket.get("showtime_id")).intValue(),
+                                ((Number) ticket.get("seat_id")).intValue()));
                     }
                 }
             }
