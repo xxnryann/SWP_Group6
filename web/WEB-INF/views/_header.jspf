@@ -26,6 +26,7 @@
   <c:if test="${dashboardModule or railModule}">
     <link rel="stylesheet" href="${ctx}/assets/css/dashboard.css">
   </c:if>
+  <link rel="stylesheet" href="${ctx}/assets/css/modern.css?v=20261103">
 </head>
 <%-- Trang nội bộ theo vai trò (admin/manager/staff/customer) dùng sidebar riêng nên
      không hiện thanh nav công khai. Trang chủ "/" và các trang công khai giữ nguyên. --%>
@@ -34,6 +35,9 @@
 <div class="topbar">
   <div class="container">
     <div class="topbar-left">
+      <c:if test="${not roleModule and not railModule}">
+        <span class="topbar-message">Cùng CineStar, tận hưởng từng thước phim.</span>
+      </c:if>
       <c:if test="${roleModule and not railModule}">
         <a class="topbar-brand" href="${ctx}<c:out value='${roleDashboardPath}'/>" aria-label="CineStar Cinemas">
           <%@ include file="_logo-mark.jspf" %>
@@ -103,7 +107,8 @@
       <a href="${ctx}/promotions">Khuyến Mãi</a>
       <a href="${ctx}/news">Tin Tức</a>
     </nav>
-    <button class="menu-btn" type="button" aria-label="Mở menu" id="menuBtn">
+    <a class="btn btn-primary header-book" href="${ctx}/showtimes">Đặt vé ngay <span aria-hidden="true">↗</span></a>
+    <button class="menu-btn" type="button" aria-label="Mở menu" aria-controls="drawer" aria-expanded="false" id="menuBtn">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
   </div>
@@ -113,7 +118,7 @@
 <%-- Trang nội bộ: drawer cũng bỏ các mục nav công khai (sidebar đã lo). --%>
 <c:if test="${not roleModule and not railModule}">
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
-  <aside class="drawer" id="drawer" aria-label="Menu di động">
+  <aside class="drawer" id="drawer" aria-label="Menu di động" aria-hidden="true" inert>
     <div class="drawer-head">
       <strong>Menu</strong>
       <button class="drawer-close" type="button" id="drawerClose" aria-label="Đóng">&times;</button>

@@ -350,7 +350,8 @@ INSERT dbo.SystemConfig(config_key, config_value, description) VALUES
     ('BOOKING_SESSION_MINUTES', N'15', N'Thời gian tối đa của một phiên đặt vé'),
     ('CANCEL_BEFORE_HOURS', N'2', N'Chỉ được hủy vé trước giờ chiếu tối thiểu (giờ)'),
     ('CHECKIN_EARLY_MINUTES', N'30', N'Cho phép check-in sớm trước giờ chiếu (phút)'),
-    ('PAYMENT_WINDOW_MINUTES', N'5', N'Thời gian giữ ghế chờ chuyển khoản');
+    ('PAYMENT_WINDOW_MINUTES', N'5', N'Thời gian giữ ghế chờ chuyển khoản'),
+    ('REMINDER_HOURS_BEFORE', N'3', N'Gửi email nhắc lịch trước giờ chiếu (giờ)');
 GO
 
 /* ============================================================================

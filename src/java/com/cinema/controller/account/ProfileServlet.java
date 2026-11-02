@@ -1,6 +1,7 @@
 package com.cinema.controller.account;
 
 import com.cinema.controller.BaseServlet;
+import com.cinema.dao.AccountDAO;
 import com.cinema.dao.UserDAO;
 import com.cinema.model.User;
 import com.cinema.util.Validator;
@@ -21,6 +22,7 @@ public class ProfileServlet extends BaseServlet {
 
     private static final Set<String> GENDERS = Set.of("MALE", "FEMALE", "OTHER");
     private final UserDAO dao = new UserDAO();
+    private final AccountDAO accountDao = new AccountDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -31,6 +33,7 @@ public class ProfileServlet extends BaseServlet {
                 return;
             }
             req.setAttribute("profile", u);
+            req.setAttribute("receivePromo", accountDao.receivesPromoEmail(u.getEmail()));
             forward(req, resp, "account/profile");
         } catch (SQLException e) {
             throw new ServletException(e);
@@ -52,6 +55,8 @@ public class ProfileServlet extends BaseServlet {
         String province = Validator.trim(req.getParameter("province"));
         String district = Validator.trim(req.getParameter("district"));
         String address = Validator.trim(req.getParameter("address"));
+        // Chỉ form của khách hàng có ô này; checkbox bỏ chọn thì không gửi giá trị nên dựa vào trường đánh dấu.
+        Boolean receivePromo = req.getParameter("promoField") == null ? null : req.getParameter("receivePromo") != null;
 
         Map<String, String> errors = new LinkedHashMap<>();
         if (!Validator.isFullName(fullName)) {
@@ -95,13 +100,14 @@ public class ProfileServlet extends BaseServlet {
                 u.setDistrict(district);
                 u.setAddress(address);
                 req.setAttribute("profile", u);
+                req.setAttribute("receivePromo", receivePromo);
                 req.setAttribute("errors", errors);
                 forward(req, resp, "account/profile");
                 return;
             }
             dao.updateProfile(id, fullName, phone, dob, GENDERS.contains(gender) ? gender : null,
                     idNumber, province.isEmpty() ? null : province, district.isEmpty() ? null : district,
-                    address.isEmpty() ? null : address);
+                    address.isEmpty() ? null : address, receivePromo);
             User fresh = dao.findById(id);
             req.getSession().setAttribute(SESSION_USER, sessionCopy(fresh));
             flash(req, "success", "Đã cập nhật thông tin cá nhân.");

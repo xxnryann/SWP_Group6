@@ -38,6 +38,18 @@ public class AccountDAO {
         }
     }
 
+    /** Khách có nhận email phim mới / ưu đãi không; không phải khách hàng thì trả về null. */
+    public Boolean receivesPromoEmail(String email) throws SQLException {
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement("SELECT cu.receive_promo_email FROM Customer cu "
+                     + "JOIN Account a ON a.account_id = cu.customer_id WHERE a.email = ?")) {
+            ps.setString(1, email == null ? "" : email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getBoolean(1) : null;
+            }
+        }
+    }
+
     /**
      * Bảo đảm khách đăng nhập có {@code Account} (role Customer) và {@code Customer}
      * tương ứng trong hệ thống nghiệp vụ. Nếu đã có thì trả về account_id cũ.

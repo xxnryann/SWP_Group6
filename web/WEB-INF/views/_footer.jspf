@@ -1,3 +1,4 @@
+<%@ page pageEncoding="UTF-8" %>
 <footer class="site-footer">
   <div class="container">
     <div class="footer-grid">
@@ -64,7 +65,11 @@
   window.closeModal = function () { modal.classList.remove('open'); };
   modal.addEventListener('click', function (e) { if (e.target === modal || e.target.hasAttribute('data-modal-close')) closeModal(); });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeModal(); document.body.classList.remove('drawer-open'); $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); }); }
+    if (e.key === 'Escape') {
+      closeModal();
+      if (document.body.classList.contains('drawer-open')) drawer(false);
+      $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+    }
   });
 
   /* Dropdown "Khác" mở bằng click */
@@ -78,13 +83,27 @@
   document.addEventListener('click', function () { $$('.dropdown.open').forEach(function (d) { d.classList.remove('open'); }); });
 
   /* Mobile drawer (chỉ có trên trang công khai; trang nội bộ bỏ thanh nav) */
-  function drawer(open) { document.body.classList.toggle('drawer-open', open); }
+  function drawer(open) {
+    document.body.classList.toggle('drawer-open', open);
+    var panel = $('#drawer');
+    if (panel) { panel.inert = !open; panel.setAttribute('aria-hidden', String(!open)); }
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', String(open));
+    if (open && drawerClose) drawerClose.focus();
+    if (!open && menuBtn) menuBtn.focus();
+  }
   var menuBtn = $('#menuBtn');
   if (menuBtn) menuBtn.addEventListener('click', function () { drawer(true); });
   var drawerClose = $('#drawerClose');
   if (drawerClose) drawerClose.addEventListener('click', function () { drawer(false); });
   var drawerBackdrop = $('#drawerBackdrop');
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { drawer(false); });
+  var drawerPanel = $('#drawer');
+  if (drawerPanel) drawerPanel.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var links = $$('a, button', drawerPanel), first = links[0], last = links[links.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 
   /* Đánh dấu mục menu đang mở */
   $$('.topbar-nav a').forEach(function (a) {

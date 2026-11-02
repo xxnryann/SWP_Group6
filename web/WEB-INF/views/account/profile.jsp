@@ -83,6 +83,14 @@
           <textarea id="address" name="address" rows="3" maxlength="255" placeholder="Địa chỉ"><c:out value="${profile.address}"/></textarea>
           <c:if test="${not empty errors.address}"><div class="error-text"><c:out value="${errors.address}"/></div></c:if>
         </div>
+        <c:if test="${receivePromo != null}">
+          <div class="field">
+            <input type="hidden" name="promoField" value="1">
+            <label class="check-row"><input type="checkbox" name="receivePromo" value="1" ${receivePromo ? 'checked' : ''}>
+              Nhận email thông báo phim mới và ưu đãi voucher</label>
+            <p class="sub">Email vé điện tử, huỷ vé và nhắc lịch chiếu vẫn luôn được gửi.</p>
+          </div>
+        </c:if>
         <p class="pw-link"><a href="#password" id="pwOpenLink">Đổi mật khẩu?</a></p>
         <div class="profile-actions"><button class="btn btn-primary btn-update" type="submit">CẬP NHẬT</button></div>
       </form>

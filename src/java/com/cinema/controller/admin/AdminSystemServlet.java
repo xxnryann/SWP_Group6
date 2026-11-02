@@ -30,7 +30,8 @@ public class AdminSystemServlet extends BaseServlet {
             "BOOKING_SESSION_MINUTES", new int[] {5, 60},
             "CANCEL_BEFORE_HOURS", new int[] {0, 72},
             "CHECKIN_EARLY_MINUTES", new int[] {0, 180},
-            "PAYMENT_WINDOW_MINUTES", new int[] {1, 30});
+            "PAYMENT_WINDOW_MINUTES", new int[] {1, 30},
+            "REMINDER_HOURS_BEFORE", new int[] {1, 24});
     private static final int LOG_LIMIT = 200;
 
     private final SystemDAO dao = new SystemDAO();

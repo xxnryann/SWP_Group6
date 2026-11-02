@@ -1,6 +1,7 @@
 package com.cinema.controller;
 
 import com.cinema.dao.EmailOutboxDAO;
+import com.cinema.dao.SystemDAO;
 import com.cinema.service.EmailDispatcher;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -16,14 +17,14 @@ import java.util.logging.Logger;
  * Các job nền của hệ thống:
  * <ul>
  *   <li>mỗi phút: nhả ghế giữ quá hạn, chuyển vé đã qua giờ chiếu sang Expired, nhắc đánh giá phim, gửi email đang chờ;</li>
- *   <li>mỗi 15 phút: xếp thư nhắc lịch chiếu cho các suất bắt đầu trong 3 giờ tới.</li>
+ *   <li>mỗi 15 phút: xếp thư nhắc lịch chiếu cho các suất bắt đầu trong REMINDER_HOURS_BEFORE giờ tới (Admin chỉnh trong Quản lý hệ thống).</li>
  * </ul>
  */
 @WebListener
 public class MaintenanceListener implements ServletContextListener {
 
     private static final Logger LOG = Logger.getLogger(MaintenanceListener.class.getName());
-    private static final int REMINDER_HOURS = 3;
+    private static final int DEFAULT_REMINDER_HOURS = 3;
 
     private ScheduledExecutorService scheduler;
 
@@ -42,7 +43,8 @@ public class MaintenanceListener implements ServletContextListener {
             outbox.queueReviewReminders();
             dispatcher.dispatchPending(20);
         }), 30, 60, TimeUnit.SECONDS);
-        scheduler.scheduleWithFixedDelay(() -> safely("reminder job", () -> outbox.queueReminders(REMINDER_HOURS)),
+        scheduler.scheduleWithFixedDelay(() -> safely("reminder job", () -> outbox.queueReminders(
+                new SystemDAO().configInt("REMINDER_HOURS_BEFORE", DEFAULT_REMINDER_HOURS))),
                 60, 15 * 60L, TimeUnit.SECONDS);
     }
 

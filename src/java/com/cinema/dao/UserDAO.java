@@ -128,7 +128,8 @@ public class UserDAO {
     }
 
     public void updateProfile(int userId, String fullName, String phone, LocalDate dob, String gender,
-            String idNumber, String province, String district, String address) throws SQLException {
+            String idNumber, String province, String district, String address, Boolean receivePromo)
+            throws SQLException {
         // Đơn vé, nhật ký và danh sách khách đọc tên từ Account nên phải đổi cùng lúc với Users.
         try (Connection c = DBContext.getConnection();
              PreparedStatement user = c.prepareStatement("UPDATE Users SET FullName = ?, Phone = ?, DateOfBirth = ?, "
@@ -147,6 +148,15 @@ public class UserDAO {
                 account.setString(2, phone);
                 account.setInt(3, userId);
                 account.executeUpdate();
+                if (receivePromo != null) {
+                    try (PreparedStatement promo = c.prepareStatement("UPDATE Customer SET receive_promo_email = ? "
+                            + "WHERE customer_id = (SELECT a.account_id FROM Account a JOIN Users u ON u.Email = a.email "
+                            + "WHERE u.UserId = ?)")) {
+                        promo.setBoolean(1, receivePromo);
+                        promo.setInt(2, userId);
+                        promo.executeUpdate();
+                    }
+                }
                 c.commit();
             } catch (SQLException e) {
                 c.rollback();

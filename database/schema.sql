@@ -160,6 +160,8 @@ CREATE TABLE dbo.Customer (
     customer_id INT NOT NULL CONSTRAINT PK_Customer PRIMARY KEY,
     my_point_balance INT NOT NULL CONSTRAINT DF_Customer_Points DEFAULT 0,
     total_spent DECIMAL(14,0) NOT NULL CONSTRAINT DF_Customer_Spent DEFAULT 0,
+    -- Khach tu chon nhan email phim moi / uu dai voucher; email ve, huy ve, nhac lich van luon gui
+    receive_promo_email BIT NOT NULL CONSTRAINT DF_Customer_PromoEmail DEFAULT 1,
     CONSTRAINT FK_Customer_User FOREIGN KEY (customer_id) REFERENCES dbo.Account(account_id),
     CONSTRAINT CK_Customer_Points CHECK (my_point_balance >= 0),
     CONSTRAINT CK_Customer_Spent CHECK (total_spent >= 0)
@@ -1805,13 +1807,17 @@ BEGIN
     SET NOCOUNT ON;
     INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, movie_id)
     SELECT c.customer_id, 'NewMovie', LEFT(N'Phim mới: ' + m.title, 200),
-           N'Phim "' + m.title + N'" sắp có mặt tại CineStar Cinemas, khởi chiếu ngày '
+           N'Phim "' + m.title + N'"'
+               + CASE WHEN m.release_date > CAST(SYSDATETIME() AS DATE)
+                      THEN N' sắp có mặt tại CineStar Cinemas, khởi chiếu ngày '
+                      ELSE N' đang chiếu tại CineStar Cinemas từ ngày ' END
                + CONVERT(NVARCHAR(10), m.release_date, 103) + N'.',
            m.movie_id
     FROM dbo.Movie m
     CROSS JOIN dbo.Customer c
     JOIN dbo.Account a ON a.account_id = c.customer_id
     WHERE m.movie_id = @movie_id AND m.is_deleted = 0 AND m.status <> 'Stopped' AND a.status = 'Active'
+      AND c.receive_promo_email = 1
       AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'NewMovie'
                       AND e.movie_id = m.movie_id AND e.customer_id = c.customer_id);
 END
@@ -1831,12 +1837,15 @@ BEGIN
                           CASE WHEN v.discount_type = 'Percent'
                                THEN N'giảm ' + FORMAT(v.discount_value, '0.##') + N'%'
                                ELSE N'giảm ' + FORMAT(v.discount_value, 'N0', 'vi-VN') + N' đ' END)
-               + N'. Hạn dùng đến ' + CONVERT(NVARCHAR(10), v.valid_to, 103) + N'.'
+               + N'. Áp dụng từ ' + CONVERT(NVARCHAR(10), v.valid_from, 103)
+               + N' đến ' + CONVERT(NVARCHAR(10), v.valid_to, 103) + N'.'
     FROM dbo.Voucher v
     CROSS JOIN dbo.Customer c
     JOIN dbo.Account a ON a.account_id = c.customer_id
     WHERE v.code = @code AND v.status = 'Allowed' AND v.valid_to >= CAST(SYSDATETIME() AS DATE)
-      AND a.status = 'Active' AND c.total_spent >= v.min_cumulative_spending
+      AND v.used_count < v.usage_limit
+      AND a.status = 'Active' AND c.total_spent >= v.min_cumulative_spending AND c.receive_promo_email = 1
+      AND (SELECT COUNT(*) FROM dbo.VoucherUsage u WHERE u.voucher_id = v.voucher_id AND u.customer_id = c.customer_id) < v.per_customer_limit
       AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'Voucher'
                       AND e.customer_id = c.customer_id AND e.subject = N'Ưu đãi voucher ' + v.code);
 END
@@ -2002,6 +2011,7 @@ GO
    01/11/2026  EmailNotification: thêm trạng thái InApp cho Hộp thư
    02/11/2026  Đổi ghế: cùng loại ghế, đổi cả cặp ghế đôi, báo cho khách (SeatChanged)
 02/11/2026  Hủy combo: BookingCombo.cancelled_at, sp_CancelCombo, thông báo ComboCancelled
+03/11/2026  Email: Customer.receive_promo_email (khách tắt/bật email phim mới, ưu đãi); REMINDER_HOURS_BEFORE
    
    Script nâng cấp DB cũ giữ nguyên dữ liệu nằm trong lịch sử git: git show 6fe0e9e:sql/upgrade.sql
    ===================================================================== */
