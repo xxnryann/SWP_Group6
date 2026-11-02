@@ -64,8 +64,10 @@ public class EmailOutboxDAO {
                 + "v.code AS voucher_code, CASE WHEN v.status = 'Allowed' "
                 + "AND CAST(SYSDATETIME() AS DATE) BETWEEN v.valid_from AND v.valid_to AND v.used_count < v.usage_limit "
                 + "AND (SELECT COUNT(*) FROM VoucherUsage u WHERE u.voucher_id = v.voucher_id AND u.customer_id = e.customer_id) < v.per_customer_limit "
+                + "AND (SELECT c.total_spent FROM Customer c WHERE c.customer_id = e.customer_id) >= v.min_cumulative_spending "
                 + "THEN 1 ELSE 0 END AS voucher_usable, "
-                + "s.start_time, b.booking_code, CASE WHEN m.is_deleted = 0 THEN 1 ELSE 0 END AS movie_active, "
+                + "s.start_time, CASE WHEN s.start_time <= SYSDATETIME() THEN 1 ELSE 0 END AS has_started, "
+                + "b.booking_code, CASE WHEN m.is_deleted = 0 THEN 1 ELSE 0 END AS movie_active, "
                 + "CASE WHEN m.is_deleted = 0 AND NOT EXISTS (SELECT 1 FROM Review rv WHERE rv.movie_id = m.movie_id "
                 + "AND rv.customer_id = e.customer_id) THEN 1 ELSE 0 END AS can_review FROM EmailNotification e "
                 + "LEFT JOIN Booking b ON b.booking_id = e.booking_id "
@@ -76,6 +78,9 @@ public class EmailOutboxDAO {
                 + "WHERE e.customer_id = ? "
                 + "AND (e.notif_type <> 'Voucher' OR v.voucher_id IS NOT NULL) "
                 + "AND (e.notif_type <> 'NewMovie' OR (m.is_deleted = 0 AND m.status <> 'Stopped')) "
+                // Vé đã hủy hết thì nhắc lịch không còn ý nghĩa.
+                + "AND (e.notif_type <> 'ShowtimeReminder' OR EXISTS (SELECT 1 FROM Ticket t WHERE t.booking_id = e.booking_id "
+                + "AND t.status IN ('Booked','Used','Expired'))) "
                 + (type == null ? "" : "AND e.notif_type = ? ")
                 + "ORDER BY e.notif_id DESC";
         return type == null ? Rows.query(sql, limit, customerId) : Rows.query(sql, limit, customerId, type);

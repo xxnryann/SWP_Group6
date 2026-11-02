@@ -354,8 +354,10 @@ public class OnlineBookingService {
     public String buildPaymentUrl(OnlineBooking booking, String clientIp,
             String contextPath, String returnUrl) {
         String orderInfo = "Thanh toan ve " + booking.getBookingCode();
+        // Làm tròn lên để cổng không đóng trước khi hết thời gian giữ ghế; hết giữ ghế thì đơn đã bị chặn ở servlet.
+        int expireMinutes = (int) Math.max(1, (booking.getRemainingSeconds() + 59) / 60);
         return gateway.buildPaymentUrl(booking.getBookingCode(),
-                booking.getTotalAmount(), orderInfo, clientIp, returnUrl, contextPath);
+                booking.getTotalAmount(), orderInfo, clientIp, returnUrl, contextPath, expireMinutes);
     }
 
     /**

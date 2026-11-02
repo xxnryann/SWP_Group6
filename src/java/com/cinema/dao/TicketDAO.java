@@ -68,6 +68,7 @@ public class TicketDAO {
                     t.setPrice(rs.getBigDecimal("price"));
                     t.setStatus(rs.getString("ticket_status"));
                     t.setCanCancel(rs.getInt("can_cancel") == 1);
+                    t.setPairLabel(rs.getString("pair_label"));
                     t.setMovieId(rs.getInt("movie_id"));
                     t.setCanReview(rs.getInt("can_review") == 1);
                     Timestamp start = rs.getTimestamp("start_time");
@@ -111,7 +112,8 @@ public class TicketDAO {
                 + "COALESCE(b.paid_at, b.created_at) AS purchased_at, "
                 + "m.title, r.room_name, ci.cinema_name, s.start_time, "
                 + "(SELECT COUNT(*) FROM Ticket t WHERE t.booking_id = b.booking_id AND t.status <> 'Cancelled') AS live_tickets, "
-                + "cb.combo_name, bc.quantity, bc.unit_price "
+                + "cb.combo_name, bc.quantity, bc.unit_price, bc.cancelled_at, "
+                + "CASE WHEN DATEADD(HOUR, -?, s.start_time) >= SYSDATETIME() THEN 1 ELSE 0 END AS in_time "
                 + "FROM Booking b "
                 + "JOIN Account a ON a.account_id = b.customer_id "
                 + "JOIN BookingCombo bc ON bc.booking_id = b.booking_id "
@@ -124,7 +126,8 @@ public class TicketDAO {
                 + "ORDER BY b.booking_id, cb.combo_name";
         java.util.Map<Integer, com.cinema.model.ComboOrder> byId = new java.util.LinkedHashMap<>();
         try (Connection c = DBContext.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, email == null ? "" : email);
+            ps.setInt(1, cancelHours(c));
+            ps.setString(2, email == null ? "" : email);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     int id = rs.getInt("booking_id");
@@ -140,8 +143,11 @@ public class TicketDAO {
                         o.setStartTime(st == null ? null : st.toLocalDateTime());
                         Timestamp pu = rs.getTimestamp("purchased_at");
                         o.setPurchasedAt(pu == null ? null : pu.toLocalDateTime());
-                        o.setCancelled("Cancelled".equalsIgnoreCase(rs.getString("booking_status"))
-                                || rs.getInt("live_tickets") == 0);
+                        boolean orderGone = "Cancelled".equalsIgnoreCase(rs.getString("booking_status"))
+                                || rs.getInt("live_tickets") == 0;
+                        o.setCancelled(orderGone || rs.getTimestamp("cancelled_at") != null);
+                        o.setComboCancelledOnly(!orderGone && rs.getTimestamp("cancelled_at") != null);
+                        o.setCanCancel(!o.isCancelled() && rs.getInt("in_time") == 1);
                         byId.put(id, o);
                     }
                     o.getLines().add(new com.cinema.model.ComboOrder.Line(
@@ -226,7 +232,9 @@ public class TicketDAO {
                 + "s.start_time, s.end_time, "
                 + "CASE WHEN t.status = 'Booked' "
                 + "     AND DATEADD(HOUR, -?, s.start_time) >= SYSDATETIME() "
-                + "    THEN 1 ELSE 0 END AS can_cancel "
+                + "    THEN 1 ELSE 0 END AS can_cancel, "
+                + "(SELECT COUNT(*) FROM Ticket pt WHERE pt.seat_id = sc.pair_seat_id AND pt.booking_id = t.booking_id "
+                + "    AND pt.showtime_id = t.showtime_id AND pt.status = 'Booked') AS pair_count "
                 + "FROM Ticket t "
                 + "JOIN Booking b  ON b.booking_id = t.booking_id "
                 + "JOIN Account a  ON a.account_id = b.customer_id "
@@ -258,6 +266,7 @@ public class TicketDAO {
                 t.setPrice(rs.getBigDecimal("price"));
                 t.setStatus(rs.getString("ticket_status"));
                 t.setCanCancel(rs.getInt("can_cancel") == 1);
+                t.setPairLabel(rs.getInt("pair_count") > 0 ? "pair" : null);
                 Timestamp start = rs.getTimestamp("start_time");
                 t.setStartTime(start == null ? null : start.toLocalDateTime());
                 Timestamp end = rs.getTimestamp("end_time");
@@ -287,6 +296,16 @@ public class TicketDAO {
             cs.setInt(1, ticketId);
             cs.setInt(2, accountId);
             cs.setString(3, reason == null ? null : reason);
+            cs.execute();
+        }
+    }
+
+    /** Huỷ toàn bộ combo của một đơn; {@code sp_CancelCombo} kiểm tra chủ đơn, thời hạn và hoàn tiền. */
+    public void cancelCombo(int bookingId, int accountId) throws SQLException {
+        try (Connection c = DBContext.getConnection();
+             CallableStatement cs = c.prepareCall("{call sp_CancelCombo(?, ?)}")) {
+            cs.setInt(1, bookingId);
+            cs.setInt(2, accountId);
             cs.execute();
         }
     }

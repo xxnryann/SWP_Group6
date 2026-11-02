@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Dong goi va trien khai project CinemaWeb len Tomcat (khong dung Maven).
 
@@ -44,7 +44,8 @@ Write-Host "Tomcat   : $TomcatHome"
 
 # --- Build truoc ---
 Write-Host '--- Build ---' -ForegroundColor Cyan
-& (Join-Path $PSScriptRoot 'build.ps1')
+# -Clean: class cu con sot sau khi doi package se gay trung URL servlet khi Tomcat khoi dong.
+& (Join-Path $PSScriptRoot 'build.ps1') -Clean
 if ($LASTEXITCODE -ne 0) { throw 'Build that bai.' }
 
 # --- Deploy ---

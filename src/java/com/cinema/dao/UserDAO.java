@@ -129,10 +129,30 @@ public class UserDAO {
 
     public void updateProfile(int userId, String fullName, String phone, LocalDate dob, String gender,
             String idNumber, String province, String district, String address) throws SQLException {
-        update("UPDATE Users SET FullName = ?, Phone = ?, DateOfBirth = ?, Gender = ?, "
-                + "IdNumber = ?, Province = ?, District = ?, Address = ? WHERE UserId = ?",
-                fullName, phone, dob == null ? null : Date.valueOf(dob), gender,
-                idNumber, province, district, address, userId);
+        // Đơn vé, nhật ký và danh sách khách đọc tên từ Account nên phải đổi cùng lúc với Users.
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement user = c.prepareStatement("UPDATE Users SET FullName = ?, Phone = ?, DateOfBirth = ?, "
+                     + "Gender = ?, IdNumber = ?, Province = ?, District = ?, Address = ? WHERE UserId = ?");
+             PreparedStatement account = c.prepareStatement("UPDATE Account SET full_name = ?, phone = ? "
+                     + "WHERE email = (SELECT Email FROM Users WHERE UserId = ?)")) {
+            c.setAutoCommit(false);
+            try {
+                Object[] args = {fullName, phone, dob == null ? null : Date.valueOf(dob), gender,
+                    idNumber, province, district, address, userId};
+                for (int i = 0; i < args.length; i++) {
+                    user.setObject(i + 1, args[i]);
+                }
+                user.executeUpdate();
+                account.setString(1, fullName);
+                account.setString(2, phone);
+                account.setInt(3, userId);
+                account.executeUpdate();
+                c.commit();
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            }
+        }
     }
 
     public void updateAvatar(int userId, String avatarUrl) throws SQLException {

@@ -85,17 +85,46 @@ public class TicketService {
         }
         if (!ticket.isCanCancel()) {
             return CancelResult.fail(
-                    "Đã quá thời hạn cho phép huỷ vé. Vui lòng liên hệ rạp để được hỗ trợ.");
+                    "Đã quá thời hạn huỷ vé: phải huỷ trước giờ chiếu ít nhất "
+                    + new com.cinema.dao.SystemDAO().configInt("CANCEL_BEFORE_HOURS", 2)
+                    + " giờ. Vui lòng liên hệ rạp để được hỗ trợ.");
         }
 
         try {
             ticketDAO.cancelTicket(ticketId, accountId, reason);
-            return CancelResult.ok("Đã huỷ vé. Tiền vé đã được hoàn lại.");
+            return CancelResult.ok(ticket.getPairLabel() != null
+                    ? "Đã huỷ cả cặp ghế đôi. Tiền vé đã được hoàn lại."
+                    : "Đã huỷ vé. Tiền vé đã được hoàn lại.");
         } catch (SQLException e) {
             // Message từ THROW trong procedure đã là tiếng Việt → trả về UI.
             String message = e.getMessage();
             return CancelResult.fail(message == null || message.trim().isEmpty()
                     ? "Không huỷ được vé. Vui lòng thử lại." : message);
+        }
+    }
+
+    /**
+     * Huỷ toàn bộ combo của một đơn của khách đang đăng nhập.
+     *
+     * @param bookingId id đơn (từ form, procedure kiểm tra chủ đơn)
+     * @param email     email khách đang đăng nhập
+     * @return kết quả kèm thông báo tiếng Việt
+     */
+    public CancelResult cancelCombo(int bookingId, String email) {
+        if (bookingId <= 0) {
+            return CancelResult.fail("Đơn không hợp lệ.");
+        }
+        try {
+            int accountId = accountDAO.findAccountIdByEmail(email);
+            if (accountId <= 0) {
+                return CancelResult.fail("Không tìm thấy tài khoản của bạn.");
+            }
+            ticketDAO.cancelCombo(bookingId, accountId);
+            return CancelResult.ok("Đã huỷ combo. Chi tiết hoàn tiền có trong Hộp thư.");
+        } catch (SQLException e) {
+            String message = e.getMessage();
+            return CancelResult.fail(message == null || message.trim().isEmpty()
+                    ? "Không huỷ được combo. Vui lòng thử lại." : message);
         }
     }
 

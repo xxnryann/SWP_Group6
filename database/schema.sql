@@ -4,7 +4,7 @@
     ============================================================================
     Target      : SQL Server 2019+ (verified on SQL Server 2019 Express)
     Database    : CinemaWebDB  (matches src/java/app.properties -> db.url)
-    Content     : 32 tables, 25 stored procedures, 3 views, 1 trigger,
+    Content     : 32 tables, 26 stored procedures, 3 views, 1 trigger,
                   1 scalar function. Dữ liệu mẫu nằm ở seed.sql.
 
     HOW TO RUN
@@ -35,7 +35,8 @@
                                          vw_SeatMap, sp_RecalcBooking, sp_ReleaseExpiredHolds, sp_CreateBooking,
                                          sp_HoldSeats, sp_AddCombo, sp_ApplyVoucher, sp_ApplyMyPoint, sp_ConfirmPayment
       Luồng  7. Soát vé & đổi ghế      : TicketChangeHistory, sp_CheckInTicket, sp_ChangeSeat
-      Luồng  8. Vé của tôi, hủy & hoàn : sp_ExpirePastTickets, sp_GetCustomerTickets, sp_CancelTicket, sp_CancelMovie
+      Luồng  8. Vé của tôi, hủy & hoàn : sp_ExpirePastTickets, sp_GetCustomerTickets, sp_CancelTicket, sp_CancelCombo,
+                                         sp_CancelMovie
       Luồng  9. Đánh giá phim          : Review, vw_MovieDetail, sp_AddReview
       Luồng 10. Thông báo & Hộp thư    : EmailNotification, sp_QueueNewMovieEmail, sp_QueueVoucherEmail,
                                          sp_SyncInboxPromotions, sp_QueueReviewReminders, sp_QueueShowtimeReminders
@@ -795,6 +796,7 @@ CREATE TABLE dbo.BookingCombo (
     combo_id INT NOT NULL,
     quantity INT NOT NULL,
     unit_price DECIMAL(10,0) NOT NULL,
+    cancelled_at DATETIME2(7) NULL,   -- da huy thi tra lai ton kho; combo_total cua don giu nguyen de ty le hoan tien khong doi
     CONSTRAINT PK_BookingCombo PRIMARY KEY (booking_id, combo_id),
     CONSTRAINT FK_BookingCombo_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
     CONSTRAINT FK_BookingCombo_Combo FOREIGN KEY (combo_id) REFERENCES dbo.Combo(combo_id),
@@ -1339,6 +1341,11 @@ BEGIN
            CASE WHEN t.status = 'Booked'
                  AND DATEADD(HOUR, -@cancel_hours, s.start_time) >= SYSDATETIME()
                 THEN 1 ELSE 0 END AS can_cancel,
+           -- Ghe con lai cua cap ghe doi trong cung don: huy mot ve se huy ca cap.
+           (SELECT CONCAT(ps.row_label, ps.seat_number) FROM dbo.Seat ps
+            JOIN dbo.Ticket pt ON pt.seat_id = ps.seat_id
+            WHERE ps.seat_id = sc.pair_seat_id AND pt.booking_id = t.booking_id
+              AND pt.showtime_id = t.showtime_id AND pt.status = 'Booked') AS pair_label,
            m.movie_id,
            CASE WHEN t.status = 'Used' AND s.end_time < SYSDATETIME() AND m.is_deleted = 0
                  AND NOT EXISTS (SELECT 1 FROM dbo.Review rv WHERE rv.movie_id = m.movie_id AND rv.customer_id = b.customer_id)
@@ -1361,6 +1368,8 @@ GO
 /* ----------------------------------------------------------------------------
    UC: Huy 1 VE da thanh toan (UC19 / BF-09)
    Quay ve TUNG VE (moi the 1 ma QR). Huy ca don khi het ve hieu luc di qua cung procedure nay.
+   Ghe doi ban theo cap nen huy mot ve se huy ca cap trong cung don.
+   Ve tra tien mat van huy duoc tren web: thong bao huong dan khach ra quay nhan lai tien.
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_CancelTicket
     @ticket_id INT, @account_id INT, @reason NVARCHAR(200) = NULL
@@ -1376,6 +1385,8 @@ BEGIN
     DECLARE @order_total DECIMAL(12,0), @gross DECIMAL(12,0);
     DECLARE @active_count INT, @refund_points INT, @booking_id INT;
     DECLARE @refund DECIMAL(12,0), @already_refunded DECIMAL(12,0), @earned INT, @new_balance INT;
+    DECLARE @codes NVARCHAR(100);
+    DECLARE @pair_ticket INT, @pair_status VARCHAR(10), @pair_code VARCHAR(30), @pair_price DECIMAL(10,0), @pair_seat INT;
 
     SELECT @booking_id = booking_id FROM dbo.Ticket WHERE ticket_id = @ticket_id;
 
@@ -1405,12 +1416,33 @@ BEGIN
 
     -- Qua thoi han huy ve -> khong huy duoc.
     IF DATEADD(HOUR, -@hours, @start) < SYSDATETIME()
-        THROW 50086, N'Đã quá thời hạn cho phép huỷ vé.', 1;
+    BEGIN
+        DECLARE @late_msg NVARCHAR(200) = CONCAT(N'Đã quá thời hạn huỷ vé: phải huỷ trước giờ chiếu ít nhất ', @hours, N' giờ.');
+        THROW 50086, @late_msg, 1;
+    END
 
+    SELECT @pair_ticket = pt.ticket_id, @pair_status = pt.status, @pair_code = pt.ticket_code,
+           @pair_price = pt.price, @pair_seat = pt.seat_id
+    FROM dbo.Seat sc JOIN dbo.Ticket pt ON pt.seat_id = sc.pair_seat_id
+    WHERE sc.seat_id = @seat_id AND pt.booking_id = @booking_id AND pt.showtime_id = @showtime_id
+      AND pt.status IN ('Booked', 'Used');
+    IF @pair_status = 'Used'
+        THROW 50088, N'Cặp ghế đôi này đã có một ghế được soát vé, không thể huỷ.', 1;
+
+    SET @codes = @tcode;
     BEGIN TRAN;
     INSERT INTO dbo.TicketChangeHistory(ticket_id, change_type, old_seat_id, old_showtime_id, changed_by, reason)
     VALUES (@ticket_id, 'Cancel', @seat_id, @showtime_id, @account_id, @reason);
     UPDATE dbo.Ticket SET status = 'Cancelled' WHERE ticket_id = @ticket_id AND status = 'Booked';
+
+    IF @pair_ticket IS NOT NULL
+    BEGIN
+        INSERT INTO dbo.TicketChangeHistory(ticket_id, change_type, old_seat_id, old_showtime_id, changed_by, reason)
+        VALUES (@pair_ticket, 'Cancel', @pair_seat, @showtime_id, @account_id, @reason);
+        UPDATE dbo.Ticket SET status = 'Cancelled' WHERE ticket_id = @pair_ticket AND status = 'Booked';
+        SET @tprice = @tprice + @pair_price;
+        SET @codes = @tcode + N', ' + @pair_code;
+    END
 
     -- Dem so ve con hieu luc cua don sau khi huy ve nay.
     SELECT @active_count = COUNT(*) FROM dbo.Ticket
@@ -1481,13 +1513,88 @@ BEGIN
         WHERE voucher_id = @voucher_id;
     END
 
+    -- Ca don bi huy: combo con lai cung huy theo va tra ton kho.
+    IF @active_count = 0
+    BEGIN
+        UPDATE c SET c.stock = c.stock + bc.quantity
+        FROM dbo.Combo c JOIN dbo.BookingCombo bc ON bc.combo_id = c.combo_id
+        WHERE bc.booking_id = @booking_id AND bc.cancelled_at IS NULL;
+        UPDATE dbo.BookingCombo SET cancelled_at = SYSDATETIME()
+        WHERE booking_id = @booking_id AND cancelled_at IS NULL;
+    END
+
     -- Thong bao cho khach: chi hua hoan tien khi so tien hoan > 0 (don tra het bang MyPoint/voucher thi khong co).
     INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, booking_id)
     VALUES (@customer_id, 'TicketCancelled',
-            CASE WHEN @refund > 0 THEN N'Hủy vé thành công, bạn sẽ được hoàn tiền' ELSE N'Hủy vé thành công' END,
+            N'Hủy vé thành công',
             CASE WHEN @refund > 0
-                 THEN N'Vé ' + @tcode + N' đã được hủy. Số tiền hoàn lại: ' + FORMAT(@refund, 'N0', 'vi-VN') + N' đ.'
-                 ELSE N'Vé ' + @tcode + N' đã được hủy. Vé này không có khoản tiền cần hoàn.' END,
+                 THEN N'Vé ' + @codes + N' đã được hủy. Số tiền hoàn lại: ' + FORMAT(@refund, 'N0', 'vi-VN') + N' đ.'
+                      + CASE WHEN EXISTS (SELECT 1 FROM dbo.Payment WHERE booking_id = @booking_id AND method = 'Cash')
+                             THEN N' Vui lòng đến quầy vé để nhận lại tiền mặt.' ELSE N'' END
+                 ELSE N'Vé ' + @codes + N' đã được hủy. Vé này không có khoản tiền cần hoàn.' END,
+            @showtime_id, @booking_id);
+    COMMIT;
+END
+GO
+
+/* ----------------------------------------------------------------------------
+   UC: Huy toan bo combo cua mot don da thanh toan; ve cua don van giu nguyen.
+   Cung thoi han huy voi ve. Tien hoan chia theo ty le nhu sp_CancelTicket (da tru voucher/MyPoint).
+   -------------------------------------------------------------------------- */
+CREATE OR ALTER PROCEDURE dbo.sp_CancelCombo @booking_id INT, @account_id INT AS
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    DECLARE @customer_id INT, @bstatus VARCHAR(15), @bcode VARCHAR(20), @showtime_id INT;
+    DECLARE @order_total DECIMAL(12,0), @gross DECIMAL(12,0), @start DATETIME2;
+    DECLARE @hours INT = (SELECT CAST(config_value AS INT) FROM dbo.SystemConfig WHERE config_key = 'CANCEL_BEFORE_HOURS');
+    DECLARE @combo DECIMAL(12,0), @already DECIMAL(12,0), @refund DECIMAL(12,0);
+
+    SELECT @customer_id = b.customer_id, @bstatus = b.status, @bcode = b.booking_code,
+           @showtime_id = b.showtime_id, @order_total = b.total_amount, @gross = b.ticket_total + b.combo_total,
+           @start = s.start_time
+    FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id WHERE b.booking_id = @booking_id;
+
+    IF @customer_id IS NULL OR @customer_id <> @account_id
+        THROW 50091, N'Bạn không có quyền huỷ combo này.', 1;
+    IF @bstatus <> 'Paid' THROW 50092, N'Đơn này không còn hiệu lực nên không thể huỷ combo.', 1;
+    IF DATEADD(HOUR, -@hours, @start) < SYSDATETIME()
+    BEGIN
+        DECLARE @late_msg NVARCHAR(200) = CONCAT(N'Đã quá thời hạn huỷ combo: phải huỷ trước giờ chiếu ít nhất ', @hours, N' giờ.');
+        THROW 50094, @late_msg, 1;
+    END
+
+    BEGIN TRAN;
+    -- Khoa dong combo truoc khi tinh tien: hai yeu cau cung luc chi mot yeu cau duoc hoan.
+    DECLARE @lines TABLE (combo_id INT, quantity INT, unit_price DECIMAL(10,0));
+    UPDATE dbo.BookingCombo SET cancelled_at = SYSDATETIME()
+    OUTPUT inserted.combo_id, inserted.quantity, inserted.unit_price INTO @lines
+    WHERE booking_id = @booking_id AND cancelled_at IS NULL;
+    IF NOT EXISTS (SELECT 1 FROM @lines)
+    BEGIN
+        ROLLBACK;
+        THROW 50095, N'Đơn này không còn combo để huỷ.', 1;
+    END
+
+    UPDATE c SET c.stock = c.stock + l.quantity FROM dbo.Combo c JOIN @lines l ON l.combo_id = c.combo_id;
+
+    SET @combo = (SELECT SUM(quantity * unit_price) FROM @lines);
+    SELECT @already = ISNULL(SUM(refunded_amount), 0) FROM dbo.Payment WHERE booking_id = @booking_id;
+    SET @refund = ROUND(@combo * @order_total / NULLIF(@gross, 0), 0);
+    IF @refund > @order_total - @already SET @refund = @order_total - @already;
+    IF @refund IS NULL OR @refund < 0 SET @refund = 0;
+
+    UPDATE dbo.Payment SET refunded_amount = @already + @refund WHERE booking_id = @booking_id AND status = 'Success';
+    IF @refund > 0
+        UPDATE dbo.Customer SET total_spent = CASE WHEN total_spent > @refund THEN total_spent - @refund ELSE 0 END
+        WHERE customer_id = @customer_id;
+
+    INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, booking_id)
+    VALUES (@customer_id, 'ComboCancelled', N'Hủy combo thành công',
+            CASE WHEN @refund > 0
+                 THEN N'Combo của đơn ' + @bcode + N' đã được hủy. Số tiền hoàn lại: ' + FORMAT(@refund, 'N0', 'vi-VN') + N' đ.'
+                      + CASE WHEN EXISTS (SELECT 1 FROM dbo.Payment WHERE booking_id = @booking_id AND method = 'Cash')
+                             THEN N' Vui lòng đến quầy vé để nhận lại tiền mặt.' ELSE N'' END
+                 ELSE N'Combo của đơn ' + @bcode + N' đã được hủy. Đơn này không có khoản tiền cần hoàn cho combo.' END,
             @showtime_id, @booking_id);
     COMMIT;
 END
@@ -1555,6 +1662,14 @@ BEGIN
     JOIN (SELECT voucher_id, COUNT(*) AS n FROM #bk WHERE voucher_id IS NOT NULL GROUP BY voucher_id) x
          ON x.voucher_id = v.voucher_id;
     DELETE u FROM dbo.VoucherUsage u JOIN #bk k ON k.booking_id = u.booking_id;
+
+    -- Combo cua cac don da thanh toan: huy theo va tra ton kho (don chua thanh toan chua tru ton).
+    UPDATE c SET c.stock = c.stock + x.qty
+    FROM dbo.Combo c
+    JOIN (SELECT bc.combo_id, SUM(bc.quantity) AS qty FROM dbo.BookingCombo bc JOIN #bk k ON k.booking_id = bc.booking_id
+          WHERE bc.cancelled_at IS NULL GROUP BY bc.combo_id) x ON x.combo_id = c.combo_id;
+    UPDATE bc SET bc.cancelled_at = SYSDATETIME()
+    FROM dbo.BookingCombo bc JOIN #bk k ON k.booking_id = bc.booking_id WHERE bc.cancelled_at IS NULL;
 
     UPDATE t SET t.status = 'Cancelled'
     FROM dbo.Ticket t JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
@@ -1673,7 +1788,7 @@ CREATE TABLE dbo.EmailNotification (
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_EmailNotification_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
-    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ReviewReminder','SeatChanged')),
+    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ComboCancelled','ReviewReminder','SeatChanged')),
     CONSTRAINT CK_EmailNotification_Status CHECK (status IN ('Pending','Sent','Failed','InApp'))
 );
 GO
@@ -1886,9 +2001,10 @@ GO
    01/11/2026  Email phim mới / voucher; chặn soát vé trùng
    01/11/2026  EmailNotification: thêm trạng thái InApp cho Hộp thư
    02/11/2026  Đổi ghế: cùng loại ghế, đổi cả cặp ghế đôi, báo cho khách (SeatChanged)
+02/11/2026  Hủy combo: BookingCombo.cancelled_at, sp_CancelCombo, thông báo ComboCancelled
    
    Script nâng cấp DB cũ giữ nguyên dữ liệu nằm trong lịch sử git: git show 6fe0e9e:sql/upgrade.sql
    ===================================================================== */
 
-PRINT N'[OK] Da tao cau truc CinemaWebDB (32 bang, 25 procedure, 3 view, 1 trigger, 1 function). Chay tiep database/seed.sql.';
+PRINT N'[OK] Da tao cau truc CinemaWebDB (32 bang, 26 procedure, 3 view, 1 trigger, 1 function). Chay tiep database/seed.sql.';
 GO

@@ -22,6 +22,16 @@ public class SystemDAO {
         return Rows.query("SELECT config_key, config_value, description FROM SystemConfig ORDER BY config_key");
     }
 
+    /** Đọc một tham số số nguyên; thiếu hoặc lỗi thì dùng giá trị mặc định. */
+    public int configInt(String key, int def) {
+        try {
+            List<Map<String, Object>> rows = Rows.query("SELECT config_value FROM SystemConfig WHERE config_key = ?", key);
+            return rows.isEmpty() ? def : Integer.parseInt(String.valueOf(rows.get(0).get("config_value")).trim());
+        } catch (SQLException | NumberFormatException e) {
+            return def;
+        }
+    }
+
     /** Lưu nhiều khóa cấu hình trong một transaction. */
     public void updateConfigs(Map<String, String> values) throws SQLException {
         try (Connection c = DBContext.getConnection();
@@ -57,7 +67,8 @@ public class SystemDAO {
                 throw new SQLException("SQL Server chưa cấu hình thư mục sao lưu mặc định.");
             }
             String path = folder + (folder.endsWith("\\") ? "" : "\\")
-                    + db + "_" + LocalDateTime.now().format(BACKUP_STAMP) + ".bak";
+                    + db + "_" + LocalDateTime.now().format(BACKUP_STAMP) + "_"
+                + java.util.UUID.randomUUID().toString().substring(0, 8) + ".bak";
             st.execute("BACKUP DATABASE [" + db.replace("]", "]]") + "] TO DISK = N'" + path.replace("'", "''")
                     + "' WITH COPY_ONLY, INIT, CHECKSUM");
             // Đọc hết kết quả để driver ném lỗi nếu BACKUP thất bại giữa chừng.

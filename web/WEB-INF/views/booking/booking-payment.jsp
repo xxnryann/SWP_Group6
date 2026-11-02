@@ -48,7 +48,7 @@
 
           <div class="uip-countdown">
             <div class="uip-clock" id="clock"><c:out value="${remainingSeconds}"/></div>
-            <div class="uip-label">giây còn lại để thanh toán (ghế được giữ tối đa 5 phút)</div>
+            <div class="uip-label">giây còn lại để thanh toán (ghế được giữ tối đa ${paymentWindowMinutes} phút)</div>
           </div>
 
           <div class="uip-line"><span>Phim</span><span><strong><c:out value="${booking.movieTitle}"/></strong></span></div>

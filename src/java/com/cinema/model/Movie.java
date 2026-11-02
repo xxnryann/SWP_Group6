@@ -3,9 +3,12 @@ package com.cinema.model;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
 public class Movie {
+    private static final DateTimeFormatter DATE_LABEL = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_TIME_LABEL = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final Pattern MEDIA_POSTER = Pattern.compile("^/media/posters/[0-9a-fA-F-]{36}\\.(jpg|jpeg|png|webp)$");
     private static final Pattern MEDIA_TRAILER = Pattern.compile("^/media/trailers/[0-9a-fA-F-]{36}\\.(mp4|webm)$");
     private int movieId;
@@ -69,6 +72,14 @@ public class Movie {
     public void setGenres(String genres) { this.genres = genres; }
     public String getGenreIds() { return genreIds; }
     public void setGenreIds(String genreIds) { this.genreIds = genreIds; }
+
+    public String getReleaseDateLabel() { return releaseDate == null ? "—" : releaseDate.format(DATE_LABEL); }
+
+    public String getEndDateLabel() { return endDate == null ? "—" : endDate.format(DATE_LABEL); }
+
+    public String getCreatedAtLabel() { return createdAt == null ? "—" : createdAt.format(DATE_TIME_LABEL); }
+
+    public String getUpdatedAtLabel() { return updatedAt == null ? "—" : updatedAt.format(DATE_TIME_LABEL); }
 
     public String getPosterDisplayUrl() {
         if (posterUrl == null || posterUrl.isBlank()) return null;

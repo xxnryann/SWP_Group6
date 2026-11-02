@@ -10,7 +10,10 @@ db.password=
 # ---- Media upload (poster/trailer). Dung duong dan tuyet doi de khong mat file khi redeploy ----
 media.upload.root=
 
-# ---- Email (OTP). De trong mail.host => OTP in ra console Tomcat (che do dev) ----
+# ---- Email (OTP, thong bao). Uu tien: mail.api.key (API Brevo) -> mail.host (SMTP) -> de trong ca hai: chi ghi log (che do dev) ----
+mail.api.key=
+mail.api.url=https://api.brevo.com/v3/smtp/email
+mail.from.name=CineStar Cinemas
 mail.host=
 mail.port=587
 mail.user=

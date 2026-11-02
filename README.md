@@ -18,7 +18,7 @@ sqlcmd -S "tcp:localhost,1433" -U sa -b -f 65001 -i database\schema.sql
 sqlcmd -S "tcp:localhost,1433" -U sa -b -f 65001 -i database\seed.sql
 ```
 
-`database/schema.sql` tạo cấu trúc `CinemaWebDB` (32 bảng, 25 stored procedure, 3 view, trigger, hàm), `database/seed.sql` nạp dữ liệu mẫu. Nếu DB đã tồn tại phải chạy `database/drop.sql` trước. Cần `sqlcmd` và SQL Server 2019+.
+`database/schema.sql` tạo cấu trúc `CinemaWebDB` (32 bảng, 26 stored procedure, 3 view, trigger, hàm), `database/seed.sql` nạp dữ liệu mẫu. Nếu DB đã tồn tại phải chạy `database/drop.sql` trước. Cần `sqlcmd` và SQL Server 2019+.
 
 > `-f 65001` bắt buộc, nếu không chuỗi tiếng Việt trong seed data sẽ bị hỏng.
 
@@ -31,7 +31,7 @@ Nếu từng lỡ commit, phải đổi toàn bộ mật khẩu/khoá trong đó
 | Khoá | Ý nghĩa |
 |---|---|
 | `db.url` / `db.user` / `db.password` | Kết nối SQL Server (mặc định `CinemaWebDB`) |
-| `mail.*` | Gửi email OTP. Để trống `mail.host` ⇒ OTP in ra log Tomcat (chế độ dev) |
+| `mail.*` | Gửi email OTP và thông báo. Có `mail.api.key` ⇒ gọi API Brevo (`mail.from` phải là người gửi đã xác minh); nếu không, có `mail.host` ⇒ SMTP; để trống cả hai ⇒ chỉ ghi log Tomcat (chế độ dev) |
 | `vnpay.partnerCode` / `vnpay.secretKey` | Thông tin cổng VNPAY thật |
 | `vnpay.mockGateway` | `true` ⇒ tự dùng cổng giả lập nội bộ `/mock/payment` |
 | `vnpay.paymentUrl` | URL trang thanh toán VNPAY (mặc định sandbox) |
@@ -181,26 +181,33 @@ Manager tạo lịch theo một trong hai cách:
 
 ```
 src/java/com/cinema/
-├── controller/            # Servlet + Filter (@WebServlet / @WebFilter)
+├── controller/            # Servlet + Filter (@WebServlet / @WebFilter); gốc chỉ có BaseServlet, MaintenanceListener
+│   ├── account/           # Đăng nhập, đăng ký, hồ sơ, vé của tôi, điểm, Hộp thư
+│   ├── admin/             # Quản lý người dùng, Quản lý hệ thống
 │   ├── booking/           # Luồng đặt vé online (BF-02)
 │   ├── dashboard/         # 4 servlet dashboard + DashboardAuthFilter
-│   ├── MovieController/   # Quản lý phim
-│   ├── RoomController/    # Quản lý phòng + sơ đồ ghế
-│   └── ShowtimeController/# Lịch chiếu
+│   ├── filter/            # Filter dùng chung: phân quyền admin, nhật ký, flash
+│   ├── manager/           # Giá vé, voucher, MyPoint, tin tức
+│   ├── movie/             # Phim, đánh giá phim
+│   ├── room/              # Quản lý phòng + sơ đồ ghế
+│   ├── showtime/          # Lịch chiếu
+│   ├── site/              # Trang công khai: trang chủ, bảng giá, khuyến mãi, tin tức
+│   └── staff/             # Bán vé tại quầy, soát vé, đổi ghế, combo
 ├── service/               # Business logic (không import jakarta.servlet)
 ├── dao/                   # SQL thuần, PreparedStatement
 ├── model/                 # POJO (field + getter/setter)
 ├── integration/vnpay/     # Adapter VNPAY + MockPaymentGateway
 └── util/                  # DBContext, EmailService, Validator, RequestParams…
-    └── ShowtimeUtil/      # ShowtimeRules (15 phút) + ShowtimePlanner (sinh lịch)
+    ├── movie/             # Upload media, kiểm tra dữ liệu phim
+    ├── room/              # Quy tắc phòng chiếu
+    └── showtime/          # ShowtimeRules (15 phút) + ShowtimePlanner (sinh lịch)
 
 web/
-├── WEB-INF/views/         # JSP + JSTL (không scriptlet)
-│   ├── booking/           # 5 màn hình của luồng đặt vé
-│   └── dashboard/         # 4 trang dashboard + menu dọc dùng chung (_dash_rail.jspf)
+├── WEB-INF/views/         # JSP + JSTL (không scriptlet); gốc chỉ có phần dùng chung (_header, _footer, error...)
+│   ├── account/  admin/  booking/  combo/  counter/  dashboard/
+│   └── manager/  movie/  news/  room/  showtime/  site/  staff/
 ├── WEB-INF/web.xml
 └── assets/                # CSS / JS
-
 database/
 ├── schema.sql             # Bảng, khóa ngoại, index, view, function, procedure, trigger; xếp theo 13 luồng, mục lục ở đầu file
 ├── seed.sql               # Dữ liệu mẫu (tài khoản, phim, giá vé, đơn mẫu, lịch chiếu 30 ngày từ ngày chạy)

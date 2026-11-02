@@ -24,8 +24,8 @@ public class VNPayGateway {
     private static final DateTimeFormatter VNPAY_TIME
             = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
-    /** Thời hạn thanh toán trên cổng, khớp với TTL giữ ghế 5 phút. */
-    private static final int EXPIRE_MINUTES = 5;
+    /** Thời hạn mặc định khi nơi gọi không truyền thời gian giữ ghế còn lại. */
+    private static final int DEFAULT_EXPIRE_MINUTES = 5;
 
     private final VNPayProperties properties;
 
@@ -77,9 +77,22 @@ public class VNPayGateway {
     public String buildPaymentUrl(String txnRef, BigDecimal amount,
             String orderInfo, String clientIp, String returnUrl,
             String contextPath) {
+        return buildPaymentUrl(txnRef, amount, orderInfo, clientIp, returnUrl,
+                contextPath, DEFAULT_EXPIRE_MINUTES);
+    }
+
+    /**
+     * Dựng URL thanh toán với thời hạn trên cổng khớp thời gian giữ ghế còn lại.
+     *
+     * @param expireMinutes số phút cho phép thanh toán trên cổng
+     * @return URL thanh toán đầy đủ đã ký
+     */
+    public String buildPaymentUrl(String txnRef, BigDecimal amount,
+            String orderInfo, String clientIp, String returnUrl,
+            String contextPath, int expireMinutes) {
         if (properties.isGatewayMock()) {
             return buildMockPaymentUrl(txnRef, amount, orderInfo,
-                    clientIp, returnUrl, contextPath);
+                    clientIp, returnUrl, contextPath, expireMinutes);
         }
 
         Map<String, String> params = new LinkedHashMap<String, String>();
@@ -97,7 +110,7 @@ public class VNPayGateway {
 
         LocalDateTime now = LocalDateTime.now(VNPAY_ZONE);
         params.put("vnp_CreateDate", now.format(VNPAY_TIME));
-        params.put("vnp_ExpireDate", now.plusMinutes(EXPIRE_MINUTES)
+        params.put("vnp_ExpireDate", now.plusMinutes(expireMinutes)
                 .format(VNPAY_TIME));
 
         String bankCode = properties.getBankCode();
@@ -124,10 +137,10 @@ public class VNPayGateway {
      */
     private String buildMockPaymentUrl(String txnRef, BigDecimal amount,
             String orderInfo, String clientIp, String returnUrl,
-            String contextPath) {
+            String contextPath, int expireMinutes) {
         Map<String, String> params = MockPaymentGateway.buildSignedParams(
                 txnRef, amount, orderInfo, clientIp, returnUrl,
-                EXPIRE_MINUTES);
+                expireMinutes);
         String base = properties.getMockPaymentUrl();
         if (!base.startsWith("/")) {
             base = "/" + base;

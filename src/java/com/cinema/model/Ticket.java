@@ -39,6 +39,7 @@ public class Ticket {
 
     /** Vé còn hiệu lực và còn trong thời hạn huỷ được không. */
     private boolean canCancel;
+    private String pairLabel;
     private int movieId;
     private boolean canReview;
     private LocalDateTime purchasedAt;
@@ -118,6 +119,10 @@ public class Ticket {
 
     public boolean isCanCancel() { return canCancel; }
     public void setCanCancel(boolean canCancel) { this.canCancel = canCancel; }
+
+    /** Ghế còn lại của cặp ghế đôi trong cùng đơn (huỷ một vé sẽ huỷ cả cặp), null nếu không có. */
+    public String getPairLabel() { return pairLabel; }
+    public void setPairLabel(String pairLabel) { this.pairLabel = pairLabel; }
 
     public int getMovieId() { return movieId; }
     public void setMovieId(int movieId) { this.movieId = movieId; }

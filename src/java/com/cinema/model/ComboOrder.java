@@ -19,6 +19,8 @@ public class ComboOrder {
     private LocalDateTime startTime;
     private LocalDateTime purchasedAt;
     private boolean cancelled;
+    private boolean canCancel;
+    private boolean comboCancelledOnly;
     private final List<Line> lines = new ArrayList<>();
 
     /** Một dòng combo trong đơn. */
@@ -59,6 +61,13 @@ public class ComboOrder {
     public boolean isCancelled() { return cancelled; }
     public void setCancelled(boolean cancelled) { this.cancelled = cancelled; }
     public List<Line> getLines() { return lines; }
+
+    /** Combo còn hiệu lực và còn trong thời hạn huỷ. */
+    public boolean isCanCancel() { return canCancel; }
+    public void setCanCancel(boolean canCancel) { this.canCancel = canCancel; }
+    /** Khách đã huỷ riêng combo, vé của đơn vẫn còn. */
+    public boolean isComboCancelledOnly() { return comboCancelledOnly; }
+    public void setComboCancelledOnly(boolean comboCancelledOnly) { this.comboCancelledOnly = comboCancelledOnly; }
 
     public String getShowTimeLabel() { return startTime == null ? "" : startTime.format(FMT); }
     public String getPurchasedLabel() { return purchasedAt == null ? "" : purchasedAt.format(FMT); }

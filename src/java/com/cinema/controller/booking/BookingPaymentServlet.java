@@ -74,7 +74,7 @@ public class BookingPaymentServlet extends BaseServlet {
             service.releaseExpiredHolds();
             BookingSession.clear(req);
             flash(req, "error",
-                    "Đơn đặt vé đã hết thời gian chờ thanh toán (tối đa 5 phút). Vui lòng đặt vé lại.");
+                    "Đơn đặt vé đã hết thời gian chờ thanh toán. Vui lòng đặt vé lại.");
             resp.sendRedirect(req.getContextPath() + "/showtimes");
             return;
         }
@@ -88,6 +88,7 @@ public class BookingPaymentServlet extends BaseServlet {
             throws ServletException, IOException {
         req.setAttribute("booking", booking);
         req.setAttribute("remainingSeconds", booking.getRemainingSeconds());
+        req.setAttribute("paymentWindowMinutes", new com.cinema.dao.SystemDAO().configInt("PAYMENT_WINDOW_MINUTES", 5));
         req.setAttribute("pageTitle", "Đặt vé — Thanh toán");
         forward(req, resp, "booking/booking-payment");
     }
