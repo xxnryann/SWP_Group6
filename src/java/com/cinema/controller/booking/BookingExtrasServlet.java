@@ -4,6 +4,7 @@ import com.cinema.controller.BaseServlet;
 import com.cinema.model.OnlineBooking;
 import com.cinema.model.PointConfig;
 import com.cinema.service.OnlineBookingService;
+import com.cinema.controller.site.PromotionsServlet;
 import com.cinema.util.Rows;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
@@ -63,8 +64,11 @@ public class BookingExtrasServlet extends BaseServlet {
                 case "updateCombos":
                     updateCombos(req, booking);
                     break;
-                case "applyDiscount":
-                    applyDiscount(req, booking);
+                case "applyVoucher":
+                    applyVoucher(req, booking);
+                    break;
+                case "applyPoints":
+                    applyPoints(req, booking);
                     break;
                 case "back":
                     // Quay lại chọn ghế: huỷ đơn đang giữ để nhả ghế, tránh tự chặn chính mình khi chọn lại.
@@ -108,12 +112,17 @@ public class BookingExtrasServlet extends BaseServlet {
         flash(req, "success", "Đã cập nhật combo.");
     }
 
-    /** Áp voucher rồi MyPoint. */
-    private void applyDiscount(HttpServletRequest req, OnlineBooking booking) {
+    private void applyVoucher(HttpServletRequest req, OnlineBooking booking) {
         String code = Validator.trim(req.getParameter("voucherCode"));
+        OnlineBookingService.StepResult result = service.applyExtras(
+                booking.getBookingId(), code, 0);
+        flash(req, result.isSuccess() ? "success" : "error", result.getMessage());
+    }
+
+    private void applyPoints(HttpServletRequest req, OnlineBooking booking) {
         int points = Math.max(0, parseInt(req.getParameter("points")));
         OnlineBookingService.StepResult result = service.applyExtras(
-                booking.getBookingId(), code, points);
+                booking.getBookingId(), null, points);
         flash(req, result.isSuccess() ? "success" : "error", result.getMessage());
     }
 
@@ -146,6 +155,11 @@ public class BookingExtrasServlet extends BaseServlet {
         req.setAttribute("comboQty", comboQty);
         req.setAttribute("pointConfig", pointConfig);
         req.setAttribute("pointBalance", balance);
+        try {
+            req.setAttribute("vouchers", PromotionsServlet.activeVouchers());
+        } catch (java.sql.SQLException e) {
+            req.setAttribute("vouchers", java.util.Collections.emptyList());
+        }
         req.setAttribute("pageTitle", "Đặt vé — Combo & ưu đãi");
         forward(req, resp, "booking/booking-extras");
     }
