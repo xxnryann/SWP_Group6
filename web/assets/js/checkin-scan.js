@@ -25,7 +25,10 @@
   function decode(width, height) {
     var image = context.getImageData(0, 0, width, height);
     var result = window.jsQR(image.data, width, height, { inversionAttempts: 'attemptBoth' });
-    return result && result.data ? result.data.trim() : '';
+    if (!result || !result.data) return '';
+    // QR vé là link trang thông tin vé; chỉ lấy mã vé "TK..." trong link để soát.
+    var match = result.data.match(/\bTK[0-9A-Z]{6,28}\b/i);
+    return (match ? match[0] : result.data).trim().toUpperCase();
   }
 
   function submitCode(code) {

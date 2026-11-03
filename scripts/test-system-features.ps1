@@ -199,7 +199,10 @@ for (let y = 0; y < h; y++) {
 }
 const r = jsQR(rgba, w, h); process.stdout.write(r ? r.data : '');
 "@ | Set-Content -Path $node -Encoding ASCII
-    $decoded = "$(& node $node 2>&1)".Trim()
+    $raw = "$(& node $node 2>&1)".Trim()
+    # QR chua ca thong tin ve; trang soat ve (checkin-scan.js) chi lay ma ve "TK..." trong do.
+    $decoded = [regex]::Match($raw, '\bTK[0-9A-Z]{6,28}\b', 'IgnoreCase').Value.ToUpper()
+    Assert-Test ($raw -match '/ticket/view\?code=TK') 'QR cua ve la link trang thong tin ve'
     Assert-Test ($decoded -eq $tcode) "jsQR doc dung ma ve tu anh QR that ($decoded)"
 
     $page = (Html $staff '/staff/checkin').Text

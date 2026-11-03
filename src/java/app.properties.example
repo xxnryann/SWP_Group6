@@ -20,6 +20,15 @@ mail.user=
 mail.password=
 mail.from=no-reply@cinema.local
 
+# ---- Link trong ma QR cua ve ----
+# Dien thoai khong mo duoc "localhost": dat dia chi may chu trong mang, vd http://192.168.1.10:9999/CinemaTest
+# De trong => dung dia chi trinh duyet dang mo trang (chi quet duoc khi dien thoai mo cung dia chi do).
+app.public.url=
+# File chua dia chi tunnel cong khai (https://xxx.trycloudflare.com) do scripts/public-qr.ps1 ghi khi dang chay;
+# co file thi QR dung dia chi trong file, khong can deploy lai. Dung dau / trong duong dan,
+# vd C:/Users/<ten-may>/tools/cloudflared/public-url.txt (de trong => khong dung tunnel).
+app.public.url.file=
+
 # ---- OTP ----
 otp.ttl.minutes=5
 otp.max.attempts=5

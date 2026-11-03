@@ -18,8 +18,8 @@ import java.sql.SQLException;
  *
  * <p>URL: {@code GET /account/tickets/qr?ticketId=N} → ảnh PNG.</p>
  *
- * <p>QR chứa mã vé — đúng chuỗi {@code sp_CheckInTicket} tra cứu — nên nhân
- * viên quét mã này ở quầy là soát vé được (UC39).</p>
+ * <p>QR chứa link trang thông tin vé ({@code /ticket/view?code=...}): điện thoại quét sẽ mở trang trắng
+ * hiện phim, ngày giờ chiếu, thời lượng, rạp, phòng, ghế. Màn hình soát vé tách mã vé trong link để check-in (UC39).</p>
  *
  * <p><b>Bảo mật:</b> chỉ chủ vé mới xem được mã QR của vé mình. Servlet nằm
  * dưới {@code /account/*} nên {@code AuthFilter} đã bắt buộc đăng nhập; thêm
@@ -70,7 +70,7 @@ public class TicketQrServlet extends BaseServlet {
 
         byte[] png;
         try {
-            png = QrCodeUtil.toPngBytes(ticket.getTicketCode(), QR_SIZE);
+            png = QrCodeUtil.toPngBytes(com.cinema.util.TicketLinks.viewUrl(req, ticket.getTicketCode()), QR_SIZE);
         } catch (IOException | IllegalArgumentException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Không tạo được mã QR.");

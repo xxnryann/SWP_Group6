@@ -28,6 +28,8 @@ public class Ticket {
     private String cinemaName;
     private String roomName;
     private String seatLabel;
+    private int durationMinutes;
+    private String cinemaAddress;
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -187,6 +189,23 @@ public class Ticket {
     }
 
     /** Suất chiếu dạng "20:45 - 22/10/2026". */
+    public int getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
+    public String getCinemaAddress() { return cinemaAddress; }
+    public void setCinemaAddress(String cinemaAddress) { this.cinemaAddress = cinemaAddress; }
+
+    /** Ngày chiếu dạng "03/11/2026" (trang thông tin vé). */
+    public String getShowDateLabel() {
+        return startTime == null ? "" : startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    /** Giờ chiếu dạng "09:00 - 10:21" (trang thông tin vé). */
+    public String getShowHourLabel() {
+        if (startTime == null) return "";
+        java.time.format.DateTimeFormatter hour = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+        return startTime.format(hour) + (endTime == null ? "" : " - " + endTime.format(hour));
+    }
+
     public String getShowTimeLabel() {
         if (startTime == null) {
             return "";

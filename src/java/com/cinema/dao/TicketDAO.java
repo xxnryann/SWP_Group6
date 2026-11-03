@@ -171,9 +171,23 @@ public class TicketDAO {
      * @return vé, hoặc null nếu không tồn tại
      */
     public Ticket findById(int ticketId) throws SQLException {
+        return findOne("t.ticket_id = ?", ticketId);
+    }
+
+    /**
+     * Đọc MỘT vé theo mã vé (trang thông tin vé mà QR trỏ tới, không cần đăng nhập).
+     *
+     * @param ticketCode mã vé, vd TK4C537F9A2BD3
+     * @return vé, hoặc null nếu không tồn tại
+     */
+    public Ticket findByCode(String ticketCode) throws SQLException {
+        return findOne("t.ticket_code = ?", ticketCode);
+    }
+
+    private Ticket findOne(String where, Object param) throws SQLException {
         String sql = "SELECT t.ticket_id, t.ticket_code, t.status AS ticket_status, t.price, "
                 + "b.booking_id, b.booking_code, b.status AS booking_status, b.customer_id, "
-                + "m.title AS movie_title, ci.cinema_name, r.room_name, "
+                + "m.title AS movie_title, ci.cinema_name, r.room_name, m.duration_minutes, ci.address AS cinema_address, "
                 + "CONCAT(sc.row_label, sc.seat_number) AS seat_label, "
                 + "s.start_time, s.end_time, 0 AS can_cancel "
                 + "FROM Ticket t "
@@ -183,10 +197,10 @@ public class TicketDAO {
                 + "JOIN Room r     ON r.room_id = s.room_id "
                 + "JOIN Cinema ci  ON ci.cinema_id = r.cinema_id "
                 + "JOIN Seat sc    ON sc.seat_id = t.seat_id "
-                + "WHERE t.ticket_id = ?";
+                + "WHERE " + where;
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, ticketId);
+            ps.setObject(1, param);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
                     return null;
@@ -204,6 +218,8 @@ public class TicketDAO {
                 t.setPrice(rs.getBigDecimal("price"));
                 t.setStatus(rs.getString("ticket_status"));
                 t.setCanCancel(false);
+                t.setDurationMinutes(rs.getInt("duration_minutes"));
+                t.setCinemaAddress(rs.getString("cinema_address"));
                 Timestamp start = rs.getTimestamp("start_time");
                 t.setStartTime(start == null ? null : start.toLocalDateTime());
                 Timestamp end = rs.getTimestamp("end_time");
@@ -227,7 +243,7 @@ public class TicketDAO {
     public Ticket findOneByUser(int ticketId, String email) throws SQLException {
         String sql = "SELECT t.ticket_id, t.ticket_code, t.status AS ticket_status, t.price, "
                 + "b.booking_id, b.booking_code, b.status AS booking_status, b.customer_id, "
-                + "m.title AS movie_title, ci.cinema_name, r.room_name, "
+                + "m.title AS movie_title, ci.cinema_name, r.room_name, m.duration_minutes, ci.address AS cinema_address, "
                 + "CONCAT(sc.row_label, sc.seat_number) AS seat_label, "
                 + "s.start_time, s.end_time, "
                 + "CASE WHEN t.status = 'Booked' "
@@ -267,6 +283,8 @@ public class TicketDAO {
                 t.setStatus(rs.getString("ticket_status"));
                 t.setCanCancel(rs.getInt("can_cancel") == 1);
                 t.setPairLabel(rs.getInt("pair_count") > 0 ? "pair" : null);
+                t.setDurationMinutes(rs.getInt("duration_minutes"));
+                t.setCinemaAddress(rs.getString("cinema_address"));
                 Timestamp start = rs.getTimestamp("start_time");
                 t.setStartTime(start == null ? null : start.toLocalDateTime());
                 Timestamp end = rs.getTimestamp("end_time");
