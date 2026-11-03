@@ -13,6 +13,7 @@ public class Showtime {
     private String roomName;
     private LocalDateTime startsAt;
     private String status = "Scheduled";
+    private int purchasedTicketCount;
 
     public int getShowtimeId() {
         return showtimeId;
@@ -68,6 +69,18 @@ public class Showtime {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public int getPurchasedTicketCount() {
+        return purchasedTicketCount;
+    }
+
+    public void setPurchasedTicketCount(int purchasedTicketCount) {
+        this.purchasedTicketCount = purchasedTicketCount;
+    }
+
+    public boolean isLockedByPurchasedTickets() {
+        return purchasedTicketCount > 0;
     }
 
     public String getStartDisplay() {
