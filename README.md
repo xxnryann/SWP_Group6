@@ -33,13 +33,34 @@ Nếu từng lỡ commit, phải đổi toàn bộ mật khẩu/khoá trong đó
 | `db.url` / `db.user` / `db.password` | Kết nối SQL Server (mặc định `CinemaWebDB`) |
 | `mail.*` | Gửi email OTP và thông báo. Có `mail.api.key` ⇒ gọi API Brevo (`mail.from` phải là người gửi đã xác minh); nếu không, có `mail.host` ⇒ SMTP; để trống cả hai ⇒ chỉ ghi log Tomcat (chế độ dev) |
 | `app.public.url`, `app.public.url.file` | Link mà mã QR của vé trỏ tới (`/ticket/view?code=...`). Điện thoại không mở được `localhost`, nên đặt địa chỉ máy trong mạng LAN, vd `http://192.168.1.10:9999/CinemaTest`. Có file `app.public.url.file` (do `scripts/public-qr.ps1` ghi khi đang chạy tunnel) ⇒ dùng địa chỉ công khai trong file, không cần deploy lại |
-| `vnpay.partnerCode` / `vnpay.secretKey` | Thông tin cổng VNPAY thật |
-| `vnpay.mockGateway` | `true` ⇒ tự dùng cổng giả lập nội bộ `/mock/payment` |
+| `vnpay.partnerCode` / `vnpay.secretKey` | Thông tin cổng VNPAY thật (Sandbox: `vnp_TmnCode` + `vnp_HashSecret`) |
+| `vnpay.mockGateway` | `true` ⇒ dùng cổng giả lập nội bộ `/mock/payment` (test tự động, không tốn phí). Mặc định `false` ⇒ dùng cổng VNPAY thật. Cũng tự bật cổng giả lập nếu `vnpay.secretKey` rỗng |
 | `vnpay.paymentUrl` | URL trang thanh toán VNPAY (mặc định sandbox) |
 | `vnpay.bankCode` | Mã ngân hàng/phương thức thanh toán, rỗng để khách tự chọn |
 | `vnpay.mockPaymentUrl` | Đường dẫn cổng giả lập nội bộ (mặc định `/mock/payment`) |
+| `vnpay.publicBaseUrl` | Địa chỉ **công khai** của ứng dụng, vd `http://192.168.1.10:9999/CinemaWeb` hoặc `https://xxx.trycloudflare.com`. Dùng để dựng `vnp_ReturnUrl` (VNPAY bắt buộc URL tuyệt đối) và để VNPAY gọi IPN server-to-server. Rỗng ⇒ tự suy ra từ địa chỉ request hiện tại (chỉ chạy được khi truy cập qua đúng địa chỉ đó) |
 
-### 1.3. Build & deploy
+Mọi khoá trong `app.properties` đều có thể **ghi đè lúc chạy** mà không cần sửa file:
+`-Dvnpay.publicBaseUrl=...` (system property) hoặc biến môi trường `VNPAY_PUBLICBASEURL=...`
+(tương tự cho các khoá khác: `vnpay.partnerCode` ⇒ `VNPAY_PARTNERCODE`, ...).
+
+### 1.3. Thanh toán VNPAY Sandbox — thông tin test
+
+| Mục | Giá trị |
+|---|---|
+| URL cổng (TEST) | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` |
+| Ngân hàng | NCB |
+| Số thẻ | `9704198526191432198` |
+| Tên chủ thẻ | `NGUYEN VAN A` |
+| Ngày phát hành | `07/15` |
+| OTP | `123456` |
+
+> Lưu ý: số thẻ phải khớp **BIN của ngân hàng được chọn** (NCB dùng BIN `970419`).
+> Nếu chọn sai ngân hàng, cổng trả lỗi *"Thông tin số thẻ chưa hợp lệ"*. Cổng cũng giới hạn
+> số lần nhập sai trên mỗi thiết bị (mã `74`) — hãy tạo đơn mới thay vì thử lại nhiều lần.
+
+
+### 1.4. Build & deploy
 
 ```powershell
 # Build (javac → web/WEB-INF/classes)
@@ -55,7 +76,7 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 
 > **Lưu ý deploy:** Tomcat không tự reload class. `deploy.ps1` đã xoá `work/Catalina/localhost/<context>` và `temp/work/...`; nếu vẫn chạy code cũ thì restart Tomcat.
 
-### 1.4. Script hỗ trợ
+### 1.5. Script hỗ trợ
 
 | Script | Công dụng |
 |---|---|
@@ -99,7 +120,7 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 | `/booking/payment` | GET/POST | Customer | Tóm tắt đơn + đếm ngược + bấm thanh toán / hủy |
 | `/booking/payment/return` | GET | Cổng thanh toán | Xác nhận kết quả (có HMAC-SHA512) |
 | `/booking/cancel-result` | GET | Customer | Trang kết quả hủy / thất bại |
-| `/mock/payment` | GET/POST | Dev | Cổng thanh toán giả lập (chỉ khi `vnpay.mockGateway=true`) |
+| `/mock/payment` | GET/POST | Dev | Cổng thanh toán giả lập — **chỉ hoạt động khi `vnpay.mockGateway=true`** (hoặc thiếu `vnpay.secretKey`). Xem §2.3 |
 | `/api/v1/commerce/payment/webhook/vnpay` | POST | VNPAY (server-to-server) | IPN — trả JSON `RspCode` |
 
 `/booking/*` được bảo vệ bởi `BookingAuthFilter`: chưa đăng nhập → redirect `/login`; sai vai trò → **403**. Chỉ role `CUSTOMER` được đặt vé online.
@@ -109,10 +130,21 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 ### 2.3. Thanh toán
 
 - **VNPAY 2.1.0** — HMAC-SHA512, so sánh hash constant-time, `vnp_Amount` ×100, `vnp_OrderInfo` không dấu.
-- **Cổng giả lập nội bộ** — dùng khi thiếu `vnpay.secretKey`; trả về đúng tập tham số + chữ ký hợp lệ nên luồng test được y hệt cổng thật.
+- **Cổng thật (mặc định)** — `vnpay.paymentUrl` trỏ tới `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`. Dùng khoá Sandbox do VNPAY cấp ở `vnpay.partnerCode` (mã TmnCode) và `vnpay.secretKey` (chuỗi bí mật tạo checksum).
+- **Cổng giả lập nội bộ (fallback)** — bật bằng `vnpay.mockGateway=true`, hoặc tự động khi `vnpay.secretKey` rỗng. Trả về đúng tập tham số + chữ ký hợp lệ nên luồng test tự động được y hệt cổng thật, không tốn phí Sandbox.
 - **Idempotency** — Return URL và webhook cùng gọi `OnlineBookingService.confirmGatewayPayment`. Đơn đã `Paid` trả về thành công nhưng **không phát vé lần 2**.
 - **Đối soát** — số tiền cổng báo lệch tổng tiền đơn ⇒ không cấp vé, ghi cảnh báo.
 - **Webhook trả** `RspCode`: `00` đã cập nhật · `97` chữ ký sai (không retry) · `99` lỗi hệ thống (VNPAY retry tối đa 10 lần).
+
+> **Lưu ý khi dùng cổng VNPAY thật**
+>
+> - `vnp_ReturnUrl` **phải là URL tuyệt đối**. Ứng dụng dựng nó từ `vnpay.publicBaseUrl` (nếu cấu hình) hoặc từ địa chỉ request hiện tại (có tính `X-Forwarded-Proto`/`X-Forwarded-Host` khi chạy sau reverse-proxy) — xem `util/WebUrls`.
+> - **IPN (webhook) là server-to-server**: VNPAY gọi `vnpay.publicBaseUrl + /api/v1/commerce/payment/webhook/vnpay`. Chạy trên `localhost` thì VNPAY không gọi được ⇒ phải khai báo URL công khai (vd Cloudflare tunnel trong `scripts/public-qr.ps1`) **và** khai báo cùng URL đó trong portal VNPAY Sandbox. Nếu không, đơn vẫn được xác nhận qua Return URL (trình duyệt khách), nhưng thiếu IPN.
+> - `vnp_IpAddr` phải là IPv4. `util/WebUrls.clientIp` ưu tiên header `X-Forwarded-For`; `VNPayGateway.normalizeIp` quy IPv6 loopback (`::1`) về `127.0.0.1`.
+> - Cấu hình VNPAY được cache trong bộ nhớ (`VNPayProperties.load()`) ⇒ **phải restart Tomcat** sau khi đổi `app.properties`.
+> - Thanh toán Sandbox dùng tiền thật (tiền demo của VNPAY). Muốn chạy test tự động thì bật `vnpay.mockGateway=true`.
+> - Script `scripts/test-booking-flow.ps1` và `scripts/test-booking-errors.ps1` tự nhận diện cổng đang dùng: với cổng giả lập thì thanh toán tự động; với cổng VNPAY thật thì **bỏ qua** bước thanh toán tự động (cần thao tác tay trên trình duyệt VNPAY).
+> - Thẻ test Sandbox phải khớp BIN của ngân hàng được chọn (xem §1.3). Chọn sai ngân hàng ⇒ cổng trả *"Thông tin số thẻ chưa hợp lệ"*; quá 3 lần sai ⇒ mã `74`, phải tạo đơn mới.
 
 ### 2.4. Quy tắc nghiệp vụ được enforce
 
