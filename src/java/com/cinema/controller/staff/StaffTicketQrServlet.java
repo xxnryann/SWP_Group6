@@ -67,7 +67,7 @@ public class StaffTicketQrServlet extends BaseServlet {
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy vé.");
                 return;
             }
-            png = QrCodeUtil.toPngBytes(ticket.getTicketCode(), QR_SIZE);
+            png = QrCodeUtil.toPngBytes(com.cinema.util.TicketLinks.viewUrl(req, ticket.getTicketCode()), QR_SIZE);
         } catch (SQLException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không tạo được mã QR.");
             return;

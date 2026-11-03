@@ -33,7 +33,7 @@ public class CheckInServlet extends BaseServlet {
         if (!requireRole(req, resp, "STAFF")) return;
         if (!csrfOk(req, resp)) return;
         req.setCharacterEncoding("UTF-8");
-        String code = Validator.trim(req.getParameter("ticketCode")).toUpperCase();
+        String code = ticketCodeOf(Validator.trim(req.getParameter("ticketCode")));
         if (code.isEmpty() || code.length() > 30) {
             req.setAttribute("error", "Vui lòng nhập hoặc quét mã vé hợp lệ.");
             render(req, resp);
@@ -68,5 +68,14 @@ public class CheckInServlet extends BaseServlet {
         }
         req.setAttribute("pageTitle", "Soát vé");
         forward(req, resp, "staff/checkin");
+    }
+
+    private static final java.util.regex.Pattern TICKET_CODE = java.util.regex.Pattern.compile("\\bTK[0-9A-Z]{6,28}\\b");
+
+    /** QR chứa link trang thông tin vé: tách mã vé "TK..." trong link ra; nhập tay mã vé thì giữ nguyên. */
+    static String ticketCodeOf(String input) {
+        String upper = input.toUpperCase();
+        java.util.regex.Matcher m = TICKET_CODE.matcher(upper);
+        return m.find() ? m.group() : upper;
     }
 }

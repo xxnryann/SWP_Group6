@@ -32,6 +32,7 @@ Nếu từng lỡ commit, phải đổi toàn bộ mật khẩu/khoá trong đó
 |---|---|
 | `db.url` / `db.user` / `db.password` | Kết nối SQL Server (mặc định `CinemaWebDB`) |
 | `mail.*` | Gửi email OTP và thông báo. Có `mail.api.key` ⇒ gọi API Brevo (`mail.from` phải là người gửi đã xác minh); nếu không, có `mail.host` ⇒ SMTP; để trống cả hai ⇒ chỉ ghi log Tomcat (chế độ dev) |
+| `app.public.url`, `app.public.url.file` | Link mà mã QR của vé trỏ tới (`/ticket/view?code=...`). Điện thoại không mở được `localhost`, nên đặt địa chỉ máy trong mạng LAN, vd `http://192.168.1.10:9999/CinemaTest`. Có file `app.public.url.file` (do `scripts/public-qr.ps1` ghi khi đang chạy tunnel) ⇒ dùng địa chỉ công khai trong file, không cần deploy lại |
 | `vnpay.partnerCode` / `vnpay.secretKey` | Thông tin cổng VNPAY thật |
 | `vnpay.mockGateway` | `true` ⇒ tự dùng cổng giả lập nội bộ `/mock/payment` |
 | `vnpay.paymentUrl` | URL trang thanh toán VNPAY (mặc định sandbox) |
@@ -63,6 +64,8 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 | `scripts/ensure-utf8-bom.ps1` | Thêm BOM UTF-8 cho file `.ps1` (PowerShell 5.1 đọc file không BOM theo ANSI → hỏng tiếng Việt) |
 | `scripts/fix_mojibake.py` | Sửa file bị "mojibake" (UTF-8 bị đọc như cp1252 rồi ghi lại) |
 | `scripts/compare-procedures.ps1` | Đối chiếu stored procedure trong `database/schema.sql` với DB đã deploy (thêm `-Sync` để tạo lại procedure lệch) |
+| `scripts/public-qr.ps1` | Mở trang thông tin vé ra Internet bằng Cloudflare Quick Tunnel (`https://xxx.trycloudflare.com`) để điện thoại ở mạng bất kỳ quét QR được; chỉ `/ticket/view` đi qua, trang khác trả 404. Cần `cloudflared.exe` (mặc định `%USERPROFILE%\tools\cloudflared\`) và Node.js; địa chỉ đổi mỗi lần bật. `-Stop` để tắt |
+| `scripts/ticket-proxy.js` | Proxy dùng bởi `public-qr.ps1`: chỉ chuyển tiếp `GET /ticket/view?code=TK...` tới Tomcat, bỏ cookie |
 | `scripts/test-booking-flow.ps1` | Kiểm thử trọn luồng BF-02 (happy path) — **ghi vào CSDL** (đơn, vé, thanh toán, điểm, email) |
 | `scripts/test-booking-errors.ps1` | Kiểm thử các nhánh lỗi (hủy, webhook sai chữ ký, idempotency) — **ghi vào CSDL** |
 | `scripts/test-smoke.ps1` | Kiểm thử nhanh toàn bộ 5 vai trò: mọi trang chính trả 200, 4 dashboard theo vai trò, `/booking/*` chặn khách chưa đăng nhập |

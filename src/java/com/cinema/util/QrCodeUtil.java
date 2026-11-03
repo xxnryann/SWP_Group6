@@ -16,9 +16,8 @@ import javax.imageio.ImageIO;
 /**
  * Sinh mã QR cho vé điện tử (UC18 — vé điện tử QR).
  *
- * <p>QR chứa <b>mã vé</b> ({@code Ticket.ticket_code}) — đúng chuỗi mà
- * {@code sp_CheckInTicket} tra cứu — nên nhân viên quét mã này ở quầy là
- * soát vé được (UC39).</p>
+ * <p>QR của vé chứa link trang thông tin vé ({@code TicketLinks.viewUrl}), trong link có mã vé
+ * — chuỗi mà {@code sp_CheckInTicket} tra cứu. Màn hình soát vé tách mã này ra (UC39).</p>
  *
  * <p>Dùng ZXing ({@code com.google.zxing}) ở tầng tiện ích để cả màn hình
  * lịch sử vé và màn hình hóa đơn tại quầy dùng chung <b>một</b> cách dựng
