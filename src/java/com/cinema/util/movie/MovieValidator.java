@@ -17,12 +17,20 @@ public final class MovieValidator {
 
     public static String validate(Movie movie, boolean newMovie) {
         if (movie.getTitle() == null || movie.getTitle().isBlank()) return "Tên phim không được để trống.";
+        if (movie.getTitle().trim().length() < 2) return "Tên phim phải có ít nhất 2 ký tự.";
         if (movie.getTitle().length() > 200) return "Tên phim tối đa 200 ký tự.";
+        if (!validText(movie.getTitle(), 200)) return "Tên phim chứa ký tự không hợp lệ.";
         if (lengthExceeded(movie.getOriginalTitle(), 200)) return "Tên gốc tối đa 200 ký tự.";
+        if (!validOptionalText(movie.getOriginalTitle(), 200)) return "Tên gốc chứa ký tự không hợp lệ.";
+        if (lengthExceeded(movie.getSynopsis(), 2000)) return "Tóm tắt nội dung tối đa 2.000 ký tự.";
         if (lengthExceeded(movie.getDirector(), 100)) return "Tên đạo diễn tối đa 100 ký tự.";
+        if (!validOptionalText(movie.getDirector(), 100)) return "Tên đạo diễn chứa ký tự không hợp lệ.";
         if (lengthExceeded(movie.getMainCast(), 500)) return "Danh sách diễn viên tối đa 500 ký tự.";
+        if (!validOptionalText(movie.getMainCast(), 500)) return "Danh sách diễn viên chứa ký tự không hợp lệ.";
         if (lengthExceeded(movie.getSpokenLanguage(), 50)) return "Ngôn ngữ tối đa 50 ký tự.";
+        if (!validRequiredText(movie.getSpokenLanguage(), 50)) return "Ngôn ngữ phải được nhập và chỉ chứa chữ, số hoặc dấu câu cơ bản.";
         if (lengthExceeded(movie.getCountry(), 50)) return "Quốc gia tối đa 50 ký tự.";
+        if (!validRequiredText(movie.getCountry(), 50)) return "Quốc gia phải được nhập và chỉ chứa chữ, số hoặc dấu câu cơ bản.";
         if (movie.getDurationMinutes() <= 0 || movie.getDurationMinutes() > 150) {
             return "Thời lượng phim phải từ 1 đến 150 phút (tối đa 2 giờ 30 phút).";
         }
@@ -52,6 +60,19 @@ public final class MovieValidator {
 
     private static boolean lengthExceeded(String value, int maximum) {
         return value != null && value.length() > maximum;
+    }
+
+    private static boolean validRequiredText(String value, int maximum) {
+        return value != null && !value.isBlank() && validText(value, maximum);
+    }
+
+    private static boolean validOptionalText(String value, int maximum) {
+        return value == null || value.isBlank() || validText(value, maximum);
+    }
+
+    private static boolean validText(String value, int maximum) {
+        return value != null && value.length() <= maximum
+                && value.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} ,.&'()/+\\-]*");
     }
 
     private static boolean validOptionalPosterUrl(String value) {
