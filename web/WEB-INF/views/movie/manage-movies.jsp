@@ -12,12 +12,32 @@
     </div>
     <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">Thêm phim</a>
   </section>
+  <form class="panel movie-manage-filters" method="get" action="${ctx}/manage/movies">
+    <label>Trạng thái
+      <select name="status">
+        <option value="">Tất cả</option>
+        <option value="NowShowing" ${selectedStatus == 'NowShowing' ? 'selected' : ''}>Đang chiếu</option>
+        <option value="Upcoming" ${selectedStatus == 'Upcoming' ? 'selected' : ''}>Sắp chiếu</option>
+        <option value="Stopped" ${selectedStatus == 'Stopped' ? 'selected' : ''}>Ngừng chiếu</option>
+      </select>
+    </label>
+    <label>Thể loại
+      <select name="genre">
+        <option value="">Tất cả</option>
+        <c:forEach var="genre" items="${genres}">
+          <option value="${genre.genreId}" ${selectedGenre == genre.genreId ? 'selected' : ''}><c:out value="${genre.genreName}"/></option>
+        </c:forEach>
+      </select>
+    </label>
+    <button class="btn btn-primary btn-small" type="submit">Lọc</button>
+    <a class="btn btn-outline btn-small" href="${ctx}/manage/movies">Xóa lọc</a>
+  </form>
   <div class="dash-layout">
     <div>
   <div class="table-wrap">
     <table class="data movie-manage-table">
       <thead>
-        <tr><th>Poster</th><th>Phim</th><th>Thời lượng</th><th>Khởi chiếu</th><th>Trạng thái</th><th>Thao tác</th></tr>
+        <tr><th>Poster</th><th>Phim</th><th>Thời lượng</th><th>Khởi chiếu</th><th>Kết thúc</th><th>Trạng thái</th><th>Thao tác</th></tr>
       </thead>
       <tbody>
         <c:forEach var="movie" items="${movies}">
@@ -40,21 +60,30 @@
             </td>
             <td><strong><c:out value="${movie.title}"/></strong><br><span class="muted"><c:out value="${movie.genres}"/></span></td>
             <td><c:out value="${movie.durationMinutes}"/> phút</td>
-            <td><c:out value="${movie.releaseDate}"/></td>
-            <td><c:out value="${movie.status}"/></td>
+            <td class="movie-date"><c:out value="${movie.releaseDateLabel}"/></td>
+            <td class="movie-date"><c:out value="${movie.endDateLabel}"/></td>
+            <td>
+              <c:choose>
+                <c:when test="${movie.status == 'NowShowing'}"><span class="movie-status movie-status-now">Đang chiếu</span></c:when>
+                <c:when test="${movie.status == 'Upcoming'}"><span class="movie-status movie-status-soon">Sắp chiếu</span></c:when>
+                <c:otherwise><span class="movie-status movie-status-stopped">Ngừng chiếu</span></c:otherwise>
+              </c:choose>
+            </td>
             <td class="movie-actions">
-              <a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sửa</a>
-              <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Bạn có chắc muốn xóa phim này? Phim còn suất chưa chiếu xong sẽ không thể xóa.');">
-                <input type="hidden" name="_csrf" value="${escapedCsrf}">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="id" value="${escapedMovieId}">
-                <button class="btn btn-danger btn-small" type="submit">Xóa</button>
-              </form>
+              <c:if test="${movie.status == 'Stopped'}">
+                <a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sửa</a>
+              </c:if>
               <c:if test="${movie.status == 'Stopped'}">
                 <a class="btn btn-cta btn-small" href="${ctx}/manage/movies?action=rerun&id=${escapedMovieId}">Chiếu lại</a>
               </c:if>
-              <%-- Phim đã ngừng chiếu vẫn có thể còn suất đã bán vé, nên luôn cho phép hủy & hoàn tiền. --%>
-              <a class="btn btn-danger btn-small" href="${ctx}/manage/movies?action=cancel-preview&id=${escapedMovieId}">Hủy &amp; hoàn tiền</a>
+              <c:if test="${movie.status == 'Stopped'}">
+                <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Xóa phim này? Chỉ xóa được khi không còn suất chiếu hoặc vé liên quan.');">
+                  <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="id" value="${escapedMovieId}">
+                  <button class="btn btn-danger btn-small" type="submit">Xóa</button>
+                </form>
+              </c:if>
               <c:if test="${movie.status != 'Stopped'}">
                 <form method="post" action="${ctx}/manage/movies" onsubmit="return confirm('Ngừng chiếu phim này và hủy các suất tương lai chưa bán?');">
                   <input type="hidden" name="_csrf" value="${escapedCsrf}">
@@ -63,17 +92,20 @@
                   <button class="btn btn-outline btn-small" type="submit">Ngừng chiếu</button>
                 </form>
               </c:if>
+              <c:if test="${movie.activeTicketCount gt 0}">
+                <a class="btn btn-danger btn-small" href="${ctx}/manage/movies?action=cancel-preview&id=${escapedMovieId}">Hủy &amp; hoàn tiền</a>
+              </c:if>
             </td>
           </tr>
         </c:forEach>
-        <c:if test="${empty movies}"><tr><td colspan="6">Chưa có dữ liệu phim.</td></tr></c:if>
+        <c:if test="${empty movies}"><tr><td colspan="7">Chưa có dữ liệu phim.</td></tr></c:if>
       </tbody>
     </table>
   </div>
   <c:if test="${moviePage.totalPages > 1}">
     <nav class="movie-pagination" aria-label="Phân trang phim quản lý">
       <c:forEach var="pageNumber" begin="1" end="${moviePage.totalPages}">
-        <c:url var="managePageUrl" value="/manage/movies"><c:param name="page" value="${pageNumber}"/></c:url>
+        <c:url var="managePageUrl" value="/manage/movies"><c:param name="page" value="${pageNumber}"/><c:if test="${not empty selectedStatus}"><c:param name="status" value="${selectedStatus}"/></c:if><c:if test="${not empty selectedGenre}"><c:param name="genre" value="${selectedGenre}"/></c:if></c:url>
         <c:set var="escapedManagePageUrl"><c:out value="${managePageUrl}"/></c:set>
         <a class="page-number ${pageNumber == moviePage.page ? 'active' : ''}" href="${escapedManagePageUrl}"><c:out value="${pageNumber}"/></a>
       </c:forEach>
@@ -84,5 +116,3 @@
 </div></main>
 
 <%@ include file="../_footer.jspf" %>
-
-

@@ -14,7 +14,10 @@ import java.util.HashSet;
 public class GenreDAO {
     public List<Genre> findAll() throws SQLException {
         List<Genre> genres = new ArrayList<>();
-        String sql = "SELECT genre_id, genre_name, description FROM dbo.Genre ORDER BY genre_name";
+        String sql = "SELECT g.genre_id, g.genre_name, g.description, "
+                + "COUNT(mg.movie_id) AS movie_count "
+                + "FROM dbo.Genre g LEFT JOIN dbo.MovieGenre mg ON mg.genre_id = g.genre_id "
+                + "GROUP BY g.genre_id, g.genre_name, g.description ORDER BY g.genre_name";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql);
                 ResultSet result = statement.executeQuery()) {
@@ -23,6 +26,7 @@ public class GenreDAO {
                 genre.setGenreId(result.getInt("genre_id"));
                 genre.setGenreName(result.getString("genre_name"));
                 genre.setDescription(result.getString("description"));
+                genre.setMovieCount(result.getInt("movie_count"));
                 genres.add(genre);
             }
         }
@@ -30,6 +34,7 @@ public class GenreDAO {
     }
 
     public int create(String name, String description) throws SQLException {
+        ensureUniqueName(name, 0);
         String sql = "INSERT INTO dbo.Genre (genre_name, description) VALUES (?, ?)";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql,
@@ -45,6 +50,7 @@ public class GenreDAO {
     }
 
     public void update(int id, String name, String description) throws SQLException {
+        ensureUniqueName(name, id);
         String sql = "UPDATE dbo.Genre SET genre_name = ?, description = ? WHERE genre_id = ?";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -52,6 +58,19 @@ public class GenreDAO {
             statement.setString(2, description);
             statement.setInt(3, id);
             if (statement.executeUpdate() == 0) throw new SQLException("Không tìm thấy thể loại.");
+        }
+    }
+
+    private void ensureUniqueName(String name, int excludedId) throws SQLException {
+            String sql = "SELECT 1 FROM dbo.Genre WHERE LOWER(LTRIM(RTRIM(genre_name))) = LOWER(LTRIM(RTRIM(?))) "
+                    + "AND genre_id <> ?";
+            try (Connection connection = DBContext.getConnection();
+                    PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, name);
+                statement.setInt(2, excludedId);
+                try (ResultSet result = statement.executeQuery()) {
+                    if (result.next()) throw new IllegalStateException("Tên thể loại đã tồn tại.");
+            }
         }
     }
 
