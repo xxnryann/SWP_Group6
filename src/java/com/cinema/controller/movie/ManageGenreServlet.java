@@ -60,15 +60,19 @@ public class ManageGenreServlet extends BaseServlet {
             String action = request.getParameter("action");
             if ("delete".equals(action)) {
                 genreDAO.delete(safeId(request.getParameter("id")));
-                flash(request, "success", "Đã xóa thể loại.");
+                flash(request, "success", "Đã xóa thể loại thành công.");
             } else if ("save".equals(action)) {
                 String name = trimToNull(request.getParameter("genreName"));
                 String description = trimToNull(request.getParameter("description"));
                 validate(name, description);
                 int id = safeId(request.getParameter("id"));
-                if (id > 0) genreDAO.update(id, name, description);
-                else genreDAO.create(name, description);
-                flash(request, "success", "Đã lưu thể loại.");
+                if (id > 0) {
+                    genreDAO.update(id, name, description);
+                    flash(request, "success", "Đã cập nhật thể loại thành công.");
+                } else {
+                    genreDAO.create(name, description);
+                    flash(request, "success", "Đã thêm thể loại thành công.");
+                }
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;

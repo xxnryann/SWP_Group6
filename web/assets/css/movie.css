@@ -38,7 +38,19 @@
 .movie-embed { position: relative; padding-top: 56.25%; overflow: hidden; border-radius: 12px; background: #000; }
 .movie-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .movie-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-.movie-manage-table { min-width: 800px; }
+.movie-manage-table { min-width: 1080px; }
+.movie-manage-table .movie-date { white-space: nowrap; min-width: 105px; }
+.movie-status { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.movie-status-now { background: #d1fae5; color: #047857; }
+.movie-status-soon { background: #ffedd5; color: #c2410c; }
+.movie-status-stopped { background: #e5e7eb; color: #4b5563; }
+.movie-manage-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 18px; }
+.movie-manage-filters label { display: grid; gap: 5px; font-weight: 700; font-size: 13px; }
+.movie-manage-filters select { min-width: 160px; }
+.movie-more { display: inline-block; position: relative; }
+.movie-more summary { list-style: none; }
+.movie-more summary::-webkit-details-marker { display: none; }
+.movie-more[open] { display: inline-flex; gap: 6px; align-items: center; }
 .movie-table-poster { width: 52px; height: 74px; object-fit: cover; border-radius: 5px; }
 .muted { color: var(--slate-500); font-size: 12px; }
 .field-hint { display: block; margin-top: 5px; color: var(--slate-500); font-size: 12px; line-height: 1.45; }

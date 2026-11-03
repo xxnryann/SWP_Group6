@@ -31,6 +31,7 @@ public class Movie {
     private LocalDateTime updatedAt;
     private String genres;
     private String genreIds;
+    private int activeTicketCount;
 
     public int getMovieId() { return movieId; }
     public void setMovieId(int movieId) { this.movieId = movieId; }
@@ -72,6 +73,8 @@ public class Movie {
     public void setGenres(String genres) { this.genres = genres; }
     public String getGenreIds() { return genreIds; }
     public void setGenreIds(String genreIds) { this.genreIds = genreIds; }
+    public int getActiveTicketCount() { return activeTicketCount; }
+    public void setActiveTicketCount(int activeTicketCount) { this.activeTicketCount = activeTicketCount; }
 
     public String getReleaseDateLabel() { return releaseDate == null ? "—" : releaseDate.format(DATE_LABEL); }
 

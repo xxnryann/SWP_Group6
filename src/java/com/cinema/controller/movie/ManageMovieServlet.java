@@ -39,6 +39,12 @@ public class ManageMovieServlet extends BaseServlet {
         this(new MovieDAO(), new GenreDAO());
     }
 
+    private Integer optionalPositiveInt(String value) {
+        if (value == null || value.isBlank()) return null;
+        int parsed = positiveInt(value, 0);
+        return parsed > 0 ? parsed : null;
+    }
+
     ManageMovieServlet(MovieDAO movieDAO, GenreDAO genreDAO) {
         this.movieDAO = movieDAO;
         this.genreDAO = genreDAO;
@@ -72,8 +78,8 @@ public class ManageMovieServlet extends BaseServlet {
                     }
                 }
                 boolean reschedule = "rerun".equals(request.getParameter("action"));
-                if (!reschedule && movie != null && "NowShowing".equals(movie.getStatus())) {
-                    flash(request, "error", "Phim đang chiếu đã được cố định. Chỉ có thể ngừng chiếu hoặc xóa phim.");
+                if (!reschedule && movie != null && !"Stopped".equals(movie.getStatus())) {
+                    flash(request, "error", "Chỉ có thể sửa phim đã ngừng chiếu.");
                     response.sendRedirect(request.getContextPath() + "/manage/movies");
                     return;
                 }
@@ -91,9 +97,17 @@ public class ManageMovieServlet extends BaseServlet {
                 return;
             }
             int page = positiveInt(request.getParameter("page"), 1);
-            MovieDAO.MoviePage result = movieDAO.filter(null, null, page, PAGE_SIZE);
+            Integer genreId = optionalPositiveInt(request.getParameter("genre"));
+            String status = request.getParameter("status");
+            if (!"Upcoming".equals(status) && !"NowShowing".equals(status) && !"Stopped".equals(status)) {
+                status = null;
+            }
+            MovieDAO.MoviePage result = movieDAO.filter(genreId, status, page, PAGE_SIZE);
             request.setAttribute("movies", result.movies());
             request.setAttribute("moviePage", result);
+            request.setAttribute("genres", genreDAO.findAll());
+            request.setAttribute("selectedGenre", genreId);
+            request.setAttribute("selectedStatus", status);
             request.setAttribute("pageTitle", "Quản lý phim");
             forward(request, response, "movie/manage-movies");
         } catch (SQLException e) {
@@ -135,11 +149,16 @@ public class ManageMovieServlet extends BaseServlet {
             } else if ("delete".equals(action)) {
                 deleteMovie(request);
             } else if ("cancelMovie".equals(action)) {
+                String reason = trimToNull(request.getParameter("reason"));
+                if (reason == null || reason.length() > 200) {
+                    throw new IllegalArgumentException("Vui lòng nhập lý do hủy phim (tối đa 200 ký tự).");
+                }
                 int managerId = new com.cinema.dao.AccountDAO().findAccountIdByEmail(currentUser(request).getEmail());
                 if (managerId == 0) {
                     throw new IllegalArgumentException("Tài khoản của bạn chưa có trong bảng Account.");
                 }
                 movieDAO.cancelMovie(parseId(request.getParameter("id")), managerId);
+                movieDAO.recordCancellationReason(parseId(request.getParameter("id")), managerId, reason);
                 flash(request, "success", "Đã hủy phim: các suất sắp chiếu bị hủy, vé đã bán được hoàn tiền "
                         + "và khách hàng sẽ nhận email thông báo.");
             } else if ("stop".equals(action)) {
@@ -160,7 +179,7 @@ public class ManageMovieServlet extends BaseServlet {
                 getServletContext().log("Movie save failed", e);
                 message = "Không thể lưu phim do dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường.";
             }
-            if (e.getErrorCode() == 50200 && (message == null || !message.contains("Ngừng chiếu"))) {
+            if (e.getErrorCode() == 50200 && (message == null || !message.contains("Hủy & hoàn tiền"))) {
                 message = (message == null ? "" : message + " ") + "Hãy dùng chức năng Ngừng chiếu.";
             }
             flash(request, "error", appendCleanupMessage(message, extra));
@@ -172,8 +191,11 @@ public class ManageMovieServlet extends BaseServlet {
             flash(request, "error", appendCleanupMessage("Ngày phim không hợp lệ.", extra));
         } catch (IllegalStateException e) {
             String extra = cleanupNewFilesFromRequest(request, newPoster, newTrailer);
-            flash(request, "error", appendCleanupMessage(
-                    "Tệp tải lên vượt giới hạn cho phép (poster tối đa 5 MB, video tối đa 100 MB).", extra));
+            String message = e.getMessage() != null && (e.getMessage().contains("suất chiếu đã bán vé")
+                    || e.getMessage().contains("suất chiếu hoặc vé liên quan"))
+                    ? e.getMessage()
+                    : "Tệp tải lên vượt giới hạn cho phép (poster tối đa 5 MB, video tối đa 100 MB).";
+            flash(request, "error", appendCleanupMessage(message, extra));
         } catch (IOException e) {
             String extra = cleanupNewFilesFromRequest(request, newPoster, newTrailer);
             flash(request, "error", appendCleanupMessage("Không thể lưu hoặc dọn tệp media: " + e.getMessage(), extra));
@@ -205,6 +227,7 @@ public class ManageMovieServlet extends BaseServlet {
         request.setAttribute("movie", movie);
         request.setAttribute("cancelShowtimes", showtimes);
         request.setAttribute("cancelTickets", tickets);
+        request.setAttribute("cancelSummary", movieDAO.cancelSummary(id));
         request.setAttribute("pageTitle", "Hủy phim " + movie.getTitle());
         forward(request, response, "movie/movie-cancel");
     }
@@ -317,6 +340,9 @@ public class ManageMovieServlet extends BaseServlet {
         int id = parseId(request.getParameter("id"));
         Movie movie = movieDAO.findById(id);
         if (movie == null) throw new IllegalArgumentException("Không tìm thấy phim cần xóa.");
+        if (!"Stopped".equals(movie.getStatus())) {
+            throw new IllegalArgumentException("Chỉ có thể xóa phim đã ngừng chiếu.");
+        }
         if (!movieDAO.delete(id)) {
             // Giữ poster/trailer vì lịch sử vé của khách vẫn tham chiếu tới phim này.
             flash(request, "success", "Đã xóa phim khỏi danh sách. Lịch sử vé và doanh thu vẫn được giữ lại.");

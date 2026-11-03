@@ -407,6 +407,17 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id)
         THROW 51022, N'Không tìm thấy phim cần ngừng chiếu.', 1;
+    DECLARE @booked_showtimes INT = (
+        SELECT COUNT(DISTINCT s.showtime_id)
+        FROM dbo.Showtime s
+        JOIN dbo.Ticket t ON t.showtime_id = s.showtime_id
+        WHERE s.movie_id = @movie_id
+          AND s.start_time > SYSDATETIME()
+          AND s.status = 'Scheduled'
+          AND t.status = 'Booked'
+    );
+    IF @booked_showtimes > 0
+        THROW 50200, N'Phim còn suất chiếu đã bán vé, hãy dùng Hủy & hoàn tiền.', 1;
 
     BEGIN TRANSACTION;
     UPDATE dbo.Movie SET status = 'Stopped', updated_at = SYSDATETIME()
@@ -433,6 +444,10 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id AND is_deleted = 0)
         THROW 51020, N'Không tìm thấy phim cần xóa.', 1;
+    IF EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id AND status <> 'Stopped')
+        THROW 51023, N'Chỉ có thể xóa phim đã ngừng chiếu.', 1;
+    IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id)
+        THROW 51024, N'Không thể xóa phim vì vẫn còn suất chiếu hoặc vé liên quan.', 1;
     IF EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = @movie_id AND status = 'Scheduled' AND end_time > SYSDATETIME())
         THROW 51021, N'Phim còn suất chưa chiếu xong nên chưa thể xóa. Hãy dùng "Hủy & hoàn tiền" rồi xóa lại; suất đang chiếu cần đợi kết thúc.', 1;
 
