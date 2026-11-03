@@ -286,6 +286,15 @@ public class ManageMovieServlet extends BaseServlet {
         if (trailerPath != null) movie.setTrailerFile(trailerPath);
         String genreIds = reschedule ? oldMovie.getGenreIds()
                 : join(parseGenreIds(request.getParameterValues("genreIds")));
+        if (!reschedule) {
+            int[] selectedGenreIds = parseGenreIds(request.getParameterValues("genreIds"));
+            if (selectedGenreIds.length == 0) {
+                throw new IllegalArgumentException("Phim phải có ít nhất một thể loại. Hãy tạo/chọn thể loại trước.");
+            }
+            if (genreDAO.findExistingIds(selectedGenreIds).size() != selectedGenreIds.length) {
+                throw new IllegalArgumentException("Một hoặc nhiều thể loại không còn tồn tại. Vui lòng tải lại trang.");
+            }
+        }
         String savedPoster = movie.getPosterUrl();
         String savedTrailer = movie.getTrailerFile();
         int savedId = movieDAO.save(movie, genreIds, currentUser(request).getUserId());

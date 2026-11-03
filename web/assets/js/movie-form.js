@@ -91,5 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
       endDate.setCustomValidity("");
       event.preventDefault();
     }
+    const genres = form.querySelectorAll('input[name="genreIds"]');
+    if (genres.length > 0 && !Array.from(genres).some((input) => input.checked)) {
+      event.preventDefault();
+      genres[0].setCustomValidity("Hãy chọn ít nhất một thể loại phim.");
+      genres[0].reportValidity();
+      genres[0].setCustomValidity("");
+    }
   });
 });

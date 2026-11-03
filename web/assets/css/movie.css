@@ -41,6 +41,7 @@
 .movie-manage-table { min-width: 800px; }
 .movie-table-poster { width: 52px; height: 74px; object-fit: cover; border-radius: 5px; }
 .muted { color: var(--slate-500); font-size: 12px; }
+.field-hint { display: block; margin-top: 5px; color: var(--slate-500); font-size: 12px; line-height: 1.45; }
 .movie-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .movie-actions form { display: inline-flex; }
 .btn-small { min-height: 36px; padding: 6px 12px; border-width: 1px; font-size: 13px; }
