@@ -92,12 +92,11 @@
               </tr>
             </c:forEach>
             <c:if test="${empty rooms}">
-              <tr><td colspan="8" class="rm-empty">Chưa có phòng chiếu nào.</td></tr>
             </c:if>
           </tbody>
         </table>
       </div>
-      <p class="rm-muted" style="margin-top:12px">
+      <p class=”rm-muted” style=”margin-top:12px”>
         Phòng đã có suất chiếu hoặc vé không thể xóa — hãy dùng “Đóng phòng” (chỉ đóng được khi không còn suất chiếu sắp tới).
       </p>
         </div>

@@ -200,18 +200,28 @@ public class ManageSeatsServlet extends AdminBaseServlet {
         return room;
     }
 
-    /** Mặc định: các hàng đầu Standard, gần cuối VIP, hàng cuối Couple (nếu có đủ các loại). */
+    /**
+     * Mặc định: tất cả các ghế sẽ là Unassigned (chưa chọn loại) khi tạo rạp mới.
+     * Yêu cầu 2: Khi tạo rạp sẽ là 1 rạp có các ghế chưa được cố định loại và để màu xám,
+     * sẽ set loại ghế thường ở phần chức năng sau.
+     */
     private int defaultTypeIdForRow(List<SeatType> types, int index, int totalRows) {
-        Integer standard = null, vip = null, couple = null;
+        Integer unassigned = null;
         for (SeatType t : types) {
-            if ("Standard".equalsIgnoreCase(t.getTypeName())) standard = t.getSeatTypeId();
-            else if ("VIP".equalsIgnoreCase(t.getTypeName())) vip = t.getSeatTypeId();
-            else if (t.isCouple()) couple = t.getSeatTypeId();
+            if ("Unassigned".equalsIgnoreCase(t.getTypeName())) {
+                unassigned = t.getSeatTypeId();
+                break;
+            }
+        }
+        // Fallback to Standard, then first type if Unassigned not found
+        if (unassigned == null) {
+            for (SeatType t : types) {
+                if ("Standard".equalsIgnoreCase(t.getTypeName())) {
+                    return t.getSeatTypeId();
+                }
+            }
         }
         int fallback = types.isEmpty() ? 1 : types.get(0).getSeatTypeId();
-        if (standard == null) standard = fallback;
-        if (index == totalRows - 1 && couple != null && totalRows >= 3) return couple;
-        if (index == totalRows - 2 && vip != null && totalRows >= 4) return vip;
-        return standard;
+        return unassigned != null ? unassigned : fallback;
     }
 }
