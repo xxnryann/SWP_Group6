@@ -563,6 +563,7 @@ CREATE TABLE dbo.Combo (
     combo_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Combo PRIMARY KEY,
     combo_name NVARCHAR(100) NOT NULL,
     description NVARCHAR(300) NULL,
+    image_url NVARCHAR(500) NULL,
     price DECIMAL(10,0) NOT NULL,
     stock INT NOT NULL CONSTRAINT DF_Combo_Stock DEFAULT 0,
     status VARCHAR(10) NOT NULL CONSTRAINT DF_Combo_Status DEFAULT 'Active',
@@ -1036,8 +1037,8 @@ BEGIN
         DELETE FROM dbo.BookingCombo WHERE booking_id = @booking_id AND combo_id = @combo_id;
     ELSE
     BEGIN
-        IF NOT EXISTS (SELECT 1 FROM dbo.Combo WHERE combo_id = @combo_id AND status = 'Active' AND stock >= @quantity)
-            THROW 50021, N'Combo không tồn tại hoặc không đủ số lượng.', 1;
+        IF NOT EXISTS (SELECT 1 FROM dbo.Combo WHERE combo_id = @combo_id AND status = 'Active')
+            THROW 50021, N'Combo không tồn tại hoặc không còn bán.', 1;
         IF EXISTS (SELECT 1 FROM dbo.BookingCombo WHERE booking_id = @booking_id AND combo_id = @combo_id)
             UPDATE dbo.BookingCombo SET quantity = @quantity WHERE booking_id = @booking_id AND combo_id = @combo_id;
         ELSE
@@ -1095,10 +1096,10 @@ GO
 CREATE OR ALTER PROCEDURE dbo.sp_ApplyMyPoint @booking_id INT, @points INT AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @customer_id INT, @status VARCHAR(15), @base DECIMAL(12,0), @pt_value INT, @max_pct DECIMAL(5,2), @disc DECIMAL(12,0);
+    DECLARE @customer_id INT, @status VARCHAR(15), @base DECIMAL(12,0), @pt_value INT, @disc DECIMAL(12,0);
     SELECT @customer_id = customer_id, @status = status, @base = ticket_total + combo_total - voucher_discount
     FROM dbo.Booking WHERE booking_id = @booking_id;
-    SELECT TOP 1 @pt_value = point_value_vnd, @max_pct = max_redeem_percent
+    SELECT TOP 1 @pt_value = point_value_vnd
     FROM dbo.MyPointConfig WHERE is_active = 1 ORDER BY effective_from DESC, config_id DESC;
 
     IF @status IS NULL OR @status <> 'PendingPayment' THROW 50040, N'Chỉ dùng MyPoint ở bước thanh toán.', 1;
@@ -1107,8 +1108,9 @@ BEGIN
     IF @points > (SELECT my_point_balance FROM dbo.Customer WHERE customer_id = @customer_id)
         THROW 50043, N'Số dư MyPoint không đủ.', 1;
 
+    IF @points > FLOOR(@base / @pt_value)
+        SET @points = FLOOR(@base / @pt_value);
     SET @disc = @points * @pt_value;
-    IF @disc > @base * @max_pct / 100 THROW 50044, N'Vượt quá tỷ lệ tối đa được dùng MyPoint trên giá trị đơn.', 1;
 
     UPDATE dbo.Booking SET points_used = @points, points_discount = @disc WHERE booking_id = @booking_id;
     EXEC dbo.sp_RecalcBooking @booking_id;
@@ -1139,9 +1141,6 @@ BEGIN
         UPDATE dbo.Ticket SET status = 'Booked' WHERE booking_id = @booking_id AND status = 'Held';   -- YELLOW -> RED
         INSERT INTO dbo.Payment(booking_id, method, amount, gateway_txn_id, status, paid_at)
         VALUES (@booking_id, @method, @total, @gateway_txn_id, 'Success', SYSDATETIME());
-
-        UPDATE c SET c.stock = c.stock - bc.quantity
-        FROM dbo.Combo c JOIN dbo.BookingCombo bc ON bc.combo_id = c.combo_id WHERE bc.booking_id = @booking_id;
 
         IF @voucher_id IS NOT NULL
         BEGIN
@@ -1533,9 +1532,6 @@ BEGIN
     -- Ca don bi huy: combo con lai cung huy theo va tra ton kho.
     IF @active_count = 0
     BEGIN
-        UPDATE c SET c.stock = c.stock + bc.quantity
-        FROM dbo.Combo c JOIN dbo.BookingCombo bc ON bc.combo_id = c.combo_id
-        WHERE bc.booking_id = @booking_id AND bc.cancelled_at IS NULL;
         UPDATE dbo.BookingCombo SET cancelled_at = SYSDATETIME()
         WHERE booking_id = @booking_id AND cancelled_at IS NULL;
     END
@@ -1591,8 +1587,6 @@ BEGIN
         ROLLBACK;
         THROW 50095, N'Đơn này không còn combo để huỷ.', 1;
     END
-
-    UPDATE c SET c.stock = c.stock + l.quantity FROM dbo.Combo c JOIN @lines l ON l.combo_id = c.combo_id;
 
     SET @combo = (SELECT SUM(quantity * unit_price) FROM @lines);
     SELECT @already = ISNULL(SUM(refunded_amount), 0) FROM dbo.Payment WHERE booking_id = @booking_id;
@@ -1680,11 +1674,6 @@ BEGIN
          ON x.voucher_id = v.voucher_id;
     DELETE u FROM dbo.VoucherUsage u JOIN #bk k ON k.booking_id = u.booking_id;
 
-    -- Combo cua cac don da thanh toan: huy theo va tra ton kho (don chua thanh toan chua tru ton).
-    UPDATE c SET c.stock = c.stock + x.qty
-    FROM dbo.Combo c
-    JOIN (SELECT bc.combo_id, SUM(bc.quantity) AS qty FROM dbo.BookingCombo bc JOIN #bk k ON k.booking_id = bc.booking_id
-          WHERE bc.cancelled_at IS NULL GROUP BY bc.combo_id) x ON x.combo_id = c.combo_id;
     UPDATE bc SET bc.cancelled_at = SYSDATETIME()
     FROM dbo.BookingCombo bc JOIN #bk k ON k.booking_id = bc.booking_id WHERE bc.cancelled_at IS NULL;
 
@@ -2025,10 +2014,12 @@ GO
    01/11/2026  Email phim mới / voucher; chặn soát vé trùng
    01/11/2026  EmailNotification: thêm trạng thái InApp cho Hộp thư
    02/11/2026  Đổi ghế: cùng loại ghế, đổi cả cặp ghế đôi, báo cho khách (SeatChanged)
-02/11/2026  Hủy combo: BookingCombo.cancelled_at, sp_CancelCombo, thông báo ComboCancelled
-03/11/2026  Email: Customer.receive_promo_email (khách tắt/bật email phim mới, ưu đãi); REMINDER_HOURS_BEFORE
+   02/11/2026  Hủy combo: BookingCombo.cancelled_at, sp_CancelCombo, thông báo ComboCancelled
+   03/11/2026  Email: Customer.receive_promo_email (khách tắt/bật email phim mới, ưu đãi); REMINDER_HOURS_BEFORE
+   04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    
    Script nâng cấp DB cũ giữ nguyên dữ liệu nằm trong lịch sử git: git show 6fe0e9e:sql/upgrade.sql
+   Nâng cấp DB cũ cho thay đổi 04/11/2026: git show 8a4aeb0:database/update_combo_image_points.sql
    ===================================================================== */
 
 PRINT N'[OK] Da tao cau truc CinemaWebDB (32 bang, 26 procedure, 3 view, 1 trigger, 1 function). Chay tiep database/seed.sql.';

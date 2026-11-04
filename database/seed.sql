@@ -198,7 +198,7 @@ INSERT dbo.Voucher(code, description, discount_type, discount_value, max_discoun
 GO
 
 INSERT dbo.MyPointConfig(earn_rate_percent, point_value_vnd, max_redeem_percent, effective_from, is_active, updated_by) VALUES
-    (5.00, 1000, 20.00, '2026-10-18', 1, 2);
+    (5.00, 1000, 100.00, '2026-10-18', 1, 2);
 GO
 
 -- ---------- Luồng 5. Lịch chiếu ----------

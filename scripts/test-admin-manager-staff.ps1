@@ -297,6 +297,9 @@ if ([int]$genMovies -gt 0) {
 } else { Write-Host "  [INFO] khong co phim phat hanh ngay $genDate de thu sinh lich" }
 
 Write-Step "MANAGER - xoa phim thu"
+# Chi xoa duoc phim da ngung chieu (sp_DeleteMovie) -> ngung chieu truoc roi moi xoa.
+$null = Send-Form $manager '/manage/movies' @{ action = 'stop'; id = $movieId } '/manage/movies'
+Assert-Test ((Invoke-Sql "SELECT status FROM Movie WHERE movie_id=$movieId") -eq 'Stopped') 'ngung chieu phim thu'
 $r = Send-Form $manager '/manage/movies' @{ action = 'delete'; id = $movieId } '/manage/movies'
 # Job nen co the da gui email phim moi truoc luc xoa -> phim co lich su, chi bi xoa mem: ca hai deu hop le.
 Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Movie WHERE movie_id=$movieId AND is_deleted=0") -eq '0') "xoa phim thu (flash: $($r.flash))"
