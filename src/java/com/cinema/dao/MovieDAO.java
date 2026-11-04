@@ -82,7 +82,11 @@ public class MovieDAO {
         int totalPages = Math.max(1, (int) Math.ceil((double) count / pageSize));
         int page = Math.max(1, Math.min(requestedPage, totalPages));
         List<Movie> movies = new ArrayList<>();
-        String sql = "SELECT d.*" + FROM_VIEW + visible
+        String sql = "SELECT d.*, (SELECT COUNT(*) FROM dbo.Ticket t "
+                + "JOIN dbo.Showtime sx ON sx.showtime_id = t.showtime_id "
+                + "WHERE sx.movie_id = d.movie_id AND t.status = 'Booked' "
+                + "AND sx.start_time > SYSDATETIME()) AS active_ticket_count "
+                + FROM_VIEW + visible
                 + order + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -97,7 +101,11 @@ public class MovieDAO {
     }
 
     public Movie findById(int id) throws SQLException {
-        String sql = "SELECT * FROM dbo.vw_MovieDetail WHERE movie_id = ?";
+        String sql = "SELECT d.*, (SELECT COUNT(*) FROM dbo.Ticket t "
+                + "JOIN dbo.Showtime sx ON sx.showtime_id = t.showtime_id "
+                + "WHERE sx.movie_id = d.movie_id AND t.status = 'Booked' "
+                + "AND sx.start_time > SYSDATETIME()) AS active_ticket_count "
+                + "FROM dbo.vw_MovieDetail d WHERE d.movie_id = ?";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
@@ -109,7 +117,7 @@ public class MovieDAO {
 
     public List<Movie> findAllForShowtime() throws SQLException {
         List<Movie> movies = new ArrayList<>();
-        String sql = "SELECT * FROM dbo.vw_MovieDetail "
+        String sql = "SELECT d.*, 0 AS active_ticket_count FROM dbo.vw_MovieDetail d "
                 + "WHERE status <> 'Stopped' "
                 + "AND (end_date IS NULL OR end_date >= CAST(GETDATE() AS DATE)) "
                 + "ORDER BY title";
@@ -130,7 +138,7 @@ public class MovieDAO {
      */
     public List<Movie> findAllForDate(LocalDate date) throws SQLException {
         List<Movie> movies = new ArrayList<>();
-        String sql = "SELECT * FROM dbo.vw_MovieDetail "
+        String sql = "SELECT d.*, 0 AS active_ticket_count FROM dbo.vw_MovieDetail d "
                 + "WHERE status <> 'Stopped' "
                 + "AND release_date <= ? "
                 + "AND (end_date IS NULL OR end_date >= ?) "
@@ -180,6 +188,20 @@ public class MovieDAO {
 
     /** Xóa phim; phim đã có lịch sử chỉ bị ẩn. @return true nếu dòng phim thực sự bị xóa khỏi CSDL. */
     public boolean delete(int id) throws SQLException {
+        String relatedSql = "SELECT CASE WHEN EXISTS (SELECT 1 FROM dbo.Showtime WHERE movie_id = ?) "
+                + "OR EXISTS (SELECT 1 FROM dbo.Ticket t JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id "
+                + "WHERE s.movie_id = ?) THEN 1 ELSE 0 END";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement related = connection.prepareStatement(relatedSql)) {
+            related.setInt(1, id);
+            related.setInt(2, id);
+            try (ResultSet result = related.executeQuery()) {
+                result.next();
+                if (result.getInt(1) == 1) {
+                    throw new IllegalStateException("Không thể xóa phim vì vẫn còn suất chiếu hoặc vé liên quan.");
+                }
+            }
+        }
         try (Connection connection = DBContext.getConnection();
                 CallableStatement statement = connection.prepareCall("{CALL dbo.sp_DeleteMovie(?, ?)}")) {
             statement.setInt(1, id);
@@ -190,10 +212,30 @@ public class MovieDAO {
     }
 
     public void stop(int id) throws SQLException {
+        int bookedShowtimes = countFutureBookedShowtimes(id);
+        if (bookedShowtimes > 0) {
+            throw new IllegalStateException("Phim còn " + bookedShowtimes
+                    + " suất chiếu đã bán vé, hãy dùng Hủy & hoàn tiền.");
+        }
         try (Connection connection = DBContext.getConnection();
                 CallableStatement statement = connection.prepareCall("{CALL dbo.sp_StopMovie(?)}")) {
             statement.setInt(1, id);
             statement.execute();
+        }
+    }
+
+    public int countFutureBookedShowtimes(int movieId) throws SQLException {
+            String sql = "SELECT COUNT(DISTINCT s.showtime_id) FROM dbo.Showtime s "
+                    + "JOIN dbo.Ticket t ON t.showtime_id = s.showtime_id "
+                    + "WHERE s.movie_id = ? AND s.start_time > SYSDATETIME() "
+                    + "AND s.status = 'Scheduled' AND t.status = 'Booked'";
+            try (Connection connection = DBContext.getConnection();
+                    PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, movieId);
+                try (ResultSet result = statement.executeQuery()) {
+                    result.next();
+                    return result.getInt(1);
+            }
         }
     }
 
@@ -208,12 +250,36 @@ public class MovieDAO {
             while (!hasResult && statement.getUpdateCount() != -1) {
                 hasResult = statement.getMoreResults();
             }
+
             if (!hasResult) return new ArrayList<>();
             try (ResultSet result = statement.getResultSet()) {
                 return com.cinema.util.Rows.read(result);
             }
         }
     }
+
+    public java.util.Map<String, Object> cancelSummary(int movieId) throws SQLException {
+            String sql = "SELECT COUNT(DISTINCT t.ticket_id) AS ticket_count, "
+                    + "COALESCE(SUM(DISTINCT b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) "
+                    + "FROM dbo.Payment p WHERE p.booking_id = b.booking_id), 0)), 0) AS refund_amount, "
+                    + "COUNT(DISTINCT b.customer_id) AS customer_count "
+                    + "FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id "
+                    + "JOIN dbo.Ticket t ON t.booking_id = b.booking_id "
+                    + "WHERE s.movie_id = ? AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME() "
+                    + "AND b.status = 'Paid' AND t.status = 'Booked'";
+            try (Connection connection = DBContext.getConnection();
+                    PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, movieId);
+                try (ResultSet result = statement.executeQuery()) {
+                    result.next();
+                    java.util.Map<String, Object> summary = new java.util.HashMap<>();
+                    summary.put("ticketCount", result.getInt("ticket_count"));
+                    summary.put("refundAmount", result.getBigDecimal("refund_amount"));
+                    summary.put("customerCount", result.getInt("customer_count"));
+                    return summary;
+                }
+            }
+        }
 
     /** Hủy phim đang chiếu: hủy mọi suất sắp chiếu, hoàn tiền/điểm/voucher và gửi email báo khách ({@code sp_CancelMovie} @confirm=1). */
     public void cancelMovie(int movieId, int managerAccountId) throws SQLException {
@@ -230,6 +296,16 @@ public class MovieDAO {
             }
         }
     }
+
+    public void recordCancellationReason(int movieId, int managerAccountId, String reason) throws SQLException {
+            String sql = "INSERT INTO dbo.SystemLog(account_id, action, detail) VALUES (?, N'CANCEL_MOVIE_REASON', ?)";
+            try (Connection connection = DBContext.getConnection();
+                    PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, managerAccountId);
+                statement.setString(2, "movie_id=" + movieId + "; reason=" + reason);
+                statement.executeUpdate();
+            }
+        }
 
     private int bindFilters(PreparedStatement statement, Integer genreId, String status)
             throws SQLException {
@@ -272,6 +348,7 @@ public class MovieDAO {
         movie.setUpdatedAt(updated == null ? null : updated.toLocalDateTime());
         movie.setGenres(result.getString("genres"));
         movie.setGenreIds(result.getString("genre_ids"));
+        movie.setActiveTicketCount(result.getInt("active_ticket_count"));
         return movie;
     }
 }

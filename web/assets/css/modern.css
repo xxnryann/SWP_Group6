@@ -39,6 +39,99 @@ body:has(.cinema-home) > .breadcrumb { display: none; }
 .card, .panel, .admin-card, .admin-kpi { box-shadow: var(--shadow); }
 .field input, .field select, .profile-panel textarea { border-color: #b4bfd1; }
 .field input:hover, .field select:hover { border-color: #8b9fbe; }
+.account-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.account-tabs a {
+  padding: 11px 18px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+}
+.account-tabs a:hover { color: var(--brand); }
+.account-tabs a.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+.account-grid > .panel:only-child,
+.account-grid > section.panel:only-child {
+  grid-column: 1 / -1;
+}
+.account-grid:has(.profile-panel) {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+.account-grid:has(.tk-list),
+.account-grid:has(.tk-tabs) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Public pricing table. */
+.pr-page {
+  max-width: 1160px;
+  font-size: 16px;
+}
+.pr-title {
+  margin-bottom: 28px;
+  font-size: 30px;
+}
+.pr-board {
+  display: grid;
+  gap: 22px;
+}
+.pr-block {
+  padding: 26px 28px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.pr-block-title {
+  margin-bottom: 18px;
+  font-size: 22px;
+}
+.pr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+.pr-table th {
+  padding: 13px 16px;
+  background: var(--brand-soft);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+.pr-table td {
+  padding: 15px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+}
+.pr-table td:not(.pr-slot) {
+  white-space: nowrap;
+  font-weight: 600;
+}
+.pr-slot strong,
+.pr-slot small {
+  display: block;
+}
+.pr-slot small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.pr-notes {
+  margin-top: 22px;
+  padding-left: 22px;
+  color: var(--muted);
+  font-size: 15px;
+}
+.pr-notes li + li { margin-top: 8px; }
 .auth-wrap { margin-top: 20px; margin-bottom: 20px; border-radius: 24px; box-shadow: 0 20px 60px rgba(16,35,75,.08); }
 .auth-hero { background: radial-gradient(ellipse at 0 100%, #376de7, transparent 70%), #132d69; }
 .site-footer { background: #10234b; border-top: 0; }

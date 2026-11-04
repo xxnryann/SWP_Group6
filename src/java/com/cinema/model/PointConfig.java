@@ -8,8 +8,12 @@ import java.math.BigDecimal;
  * khách hàng thấy cùng một thông số quy đổi.
  */
 public class PointConfig {
+    private BigDecimal earnRatePercent;
     private int pointValueVnd;
     private BigDecimal maxRedeemPercent;
+
+    public BigDecimal getEarnRatePercent() { return earnRatePercent; }
+    public void setEarnRatePercent(BigDecimal earnRatePercent) { this.earnRatePercent = earnRatePercent; }
 
     public int getPointValueVnd() { return pointValueVnd; }
     public void setPointValueVnd(int pointValueVnd) { this.pointValueVnd = pointValueVnd; }
@@ -19,10 +23,9 @@ public class PointConfig {
         this.maxRedeemPercent = maxRedeemPercent;
     }
 
-    /** "1 điểm = 1.000 VNĐ, dùng tối đa 20% giá trị đơn" */
+    /** Quy đổi điểm theo số tiền còn phải thanh toán sau các khoản giảm giá. */
     public String getRuleLabel() {
         String value = pointValueVnd <= 0 ? "0" : new java.text.DecimalFormat("#,###").format(pointValueVnd);
-        String percent = maxRedeemPercent == null ? "0" : maxRedeemPercent.stripTrailingZeros().toPlainString();
-        return "1 điểm = " + value + " VNĐ, dùng tối đa " + percent + "% giá trị đơn.";
+        return "1 điểm = " + value + " VNĐ, dùng toàn bộ điểm, tối đa bằng số tiền còn phải thanh toán.";
     }
 }

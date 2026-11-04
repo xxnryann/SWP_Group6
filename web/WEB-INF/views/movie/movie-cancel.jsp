@@ -5,11 +5,13 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Hủy phim &amp; hoàn tiền: <c:out value="${movie.title}"/></h2>
-    <p class="sub">Hành động này không thể hoàn tác. Tất cả suất chiếu sắp tới của phim sẽ bị hủy, vé đã bán được hoàn tiền (kèm trả lại MyPoint và voucher đã dùng), khách hàng nhận email thông báo và phim chuyển sang trạng thái ngừng chiếu.</p>
+    <p class="sub">Hành động này không thể hoàn tác. Các suất chiếu tương lai sẽ bị hủy, vé chưa sử dụng được hoàn tiền, MyPoint/voucher được hoàn lại và phim chuyển sang trạng thái ngừng chiếu.</p>
 
     <div class="admin-kpis">
       <div class="admin-kpi"><span>Suất chiếu bị hủy</span><strong><c:out value="${cancelShowtimes.size()}"/></strong></div>
       <div class="admin-kpi"><span>Vé đã bán sẽ hoàn tiền</span><strong><c:out value="${cancelTickets}"/></strong></div>
+      <div class="admin-kpi"><span>Khách hàng nhận hoàn tiền</span><strong><c:out value="${cancelSummary.customerCount}"/></strong></div>
+      <div class="admin-kpi"><span>Tổng tiền hoàn dự kiến</span><strong><c:out value="${cancelSummary.refundAmount}"/> đ</strong></div>
     </div>
 
     <c:choose>
@@ -30,10 +32,13 @@
     </c:choose>
 
     <form method="post" action="${ctx}/manage/movies" class="movie-cancel-actions"
-          onsubmit="return confirm('Xác nhận HỦY phim này và hoàn tiền toàn bộ vé đã bán?');">
+          onsubmit="return confirm('Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundAmount} đồng cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?');">
       <input type="hidden" name="_csrf" value="${csrf}">
       <input type="hidden" name="action" value="cancelMovie">
       <input type="hidden" name="id" value="${movie.movieId}">
+      <label class="field" for="cancelReason">Lý do hủy phim *</label>
+      <textarea id="cancelReason" name="reason" maxlength="200" required rows="3"
+                placeholder="Nhập lý do để lưu vào nhật ký thao tác (tối đa 200 ký tự)"></textarea>
       <a class="btn btn-outline" href="${ctx}/manage/movies">Quay lại</a>
       <button class="btn btn-danger" type="submit">Xác nhận hủy phim</button>
     </form>

@@ -30,6 +30,8 @@ public class MovieManagerMenuFilter implements Filter {
         boolean isHome = path.isEmpty() || path.startsWith("/home");
         httpRequest.setAttribute("movieModule", path.startsWith("/movies")
                 || path.startsWith("/showtimes") || path.startsWith("/manage/movies")
+      || path.startsWith("/manage/genres")
+
                 || path.startsWith("/manage/showtimes") || path.startsWith("/dashboard/customer") || isHome);
         // Dashboard theo vai trò: nạp CSS dashboard + gắn cờ cho các trang quản trị.
         boolean isDashboard = path.startsWith("/dashboard/admin")
@@ -45,7 +47,10 @@ public class MovieManagerMenuFilter implements Filter {
                 || path.startsWith("/manage")
                 || path.startsWith("/staff")
                 || path.startsWith("/customer")
-                || path.startsWith("/account");
+
+                || path.startsWith("/account")
+                || path.startsWith("/dashboard");
+
         httpRequest.setAttribute("roleModule", isRolePage);
         // Đã đăng nhập thì menu dọc (rail) hiện ở mọi trang nội bộ, kể cả khi
         // điều hướng sang trang khác -> không mất menu khi đổi trang.

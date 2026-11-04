@@ -19,14 +19,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
-  <link rel="stylesheet" href="${ctx}/assets/css/cinema.css">
+  <link rel="stylesheet" href="${ctx}/assets/css/cinema.css?v=20261103-2">
   <c:if test="${movieModule}">
-    <link rel="stylesheet" href="${ctx}/assets/css/movie.css">
+    <link rel="stylesheet" href="${ctx}/assets/css/movie.css?v=20261103-2">
   </c:if>
   <c:if test="${dashboardModule or railModule}">
     <link rel="stylesheet" href="${ctx}/assets/css/dashboard.css">
   </c:if>
-  <link rel="stylesheet" href="${ctx}/assets/css/modern.css?v=20261103">
+  <link rel="stylesheet" href="${ctx}/assets/css/modern.css?v=20261104">
 </head>
 <%-- Trang nội bộ theo vai trò (admin/manager/staff/customer) dùng sidebar riêng nên
      không hiện thanh nav công khai. Trang chủ "/" và các trang công khai giữ nguyên. --%>
@@ -83,7 +83,7 @@
 <c:if test="${railModule}">
 <header class="site-header role-header">
   <div class="container">
-    <a class="logo" href="${ctx}/home" aria-label="CineStar Cinemas">
+    <a class="logo" href="${ctx}<c:out value='${roleDashboardPath}'/>" aria-label="CineStar Cinemas">
       <%@ include file="_logo-mark.jspf" %>
       <span>Cine<b>Star</b></span>
     </a>
@@ -151,4 +151,3 @@
 
 <div class="toast-stack" id="toastStack" aria-live="polite"
      data-flash-type="<c:out value='${flashType}'/>" data-flash="<c:out value='${flashMsg}'/>"></div>
-

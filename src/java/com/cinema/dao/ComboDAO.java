@@ -23,6 +23,7 @@ public class ComboDAO {
         c.setDescription(rs.getString("description"));
         c.setPrice(rs.getBigDecimal("price"));
         c.setStock(rs.getInt("stock"));
+        c.setImageUrl(rs.getString("image_url"));
         c.setStatus(rs.getString("status"));
         return c;
     }
@@ -55,28 +56,28 @@ public class ComboDAO {
     }
 
     public void insert(Combo c) throws SQLException {
-        String sql = "INSERT INTO Combo (combo_name, description, price, stock, status) " +
+        String sql = "INSERT INTO Combo (combo_name, description, price, image_url, status) " +
                 "VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, c.getComboName());
             ps.setString(2, c.getDescription());
             ps.setBigDecimal(3, c.getPrice());
-            ps.setInt(4, c.getStock());
+            ps.setString(4, c.getImageUrl());
             ps.setString(5, c.getStatus());
             ps.executeUpdate();
         }
     }
 
     public void update(Combo c) throws SQLException {
-        String sql = "UPDATE Combo SET combo_name = ?, description = ?, price = ?, stock = ?, " +
-                "status = ? WHERE combo_id = ?";
+        String sql = "UPDATE Combo SET combo_name = ?, description = ?, price = ?, " +
+                "image_url = ?, status = ? WHERE combo_id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, c.getComboName());
             ps.setString(2, c.getDescription());
             ps.setBigDecimal(3, c.getPrice());
-            ps.setInt(4, c.getStock());
+            ps.setString(4, c.getImageUrl());
             ps.setString(5, c.getStatus());
             ps.setInt(6, c.getComboId());
             ps.executeUpdate();

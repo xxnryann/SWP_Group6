@@ -101,22 +101,22 @@ GO
 INSERT dbo.MovieGenre(movie_id, genre_id)
 SELECT v.movie_id, g.genre_id
 FROM (VALUES
-    (1, N'Action'), (1, N'Horror'),
-    (2, N'Romance'), (2, N'Horror'),
-    (3, N'Romance'), (3, N'Family'),
-    (4, N'Action'), (4, N'Horror'),
-    (5, N'Animation'), (5, N'Family'),
-    (6, N'Horror'), (6, N'Science Fiction'),
-    (7, N'Horror'), (7, N'Family'),
-    (8, N'Horror'),
-    (9, N'Animation'), (9, N'Family'),
-    (10, N'Horror'),
-    (11, N'Romance'), (11, N'Family'),
-    (12, N'Animation'), (12, N'Family'),
-    (13, N'Romance'), (13, N'Family'),
-    (14, N'Animation'), (14, N'Family')
-) AS v(movie_id, genre_name)
-JOIN dbo.Genre AS g ON g.genre_name = v.genre_name;
+          (1, N'Action'), (1, N'Horror'),
+          (2, N'Romance'), (2, N'Horror'),
+          (3, N'Romance'), (3, N'Family'),
+          (4, N'Action'), (4, N'Horror'),
+          (5, N'Animation'), (5, N'Family'),
+          (6, N'Horror'), (6, N'Science Fiction'),
+          (7, N'Horror'), (7, N'Family'),
+          (8, N'Horror'),
+          (9, N'Animation'), (9, N'Family'),
+          (10, N'Horror'),
+          (11, N'Romance'), (11, N'Family'),
+          (12, N'Animation'), (12, N'Family'),
+          (13, N'Romance'), (13, N'Family'),
+          (14, N'Animation'), (14, N'Family')
+     ) AS v(movie_id, genre_name)
+         JOIN dbo.Genre AS g ON g.genre_name = v.genre_name;
 GO
 
 -- ---------- Luồng 3. Rạp, phòng, ghế ----------
@@ -143,17 +143,17 @@ INSERT dbo.Seat(room_id, row_label, seat_number, seat_type_id)
 SELECT r.room_id, rw.row_label, n.seat_number,
        CASE WHEN rw.row_label IN ('A','B','C') THEN 1 WHEN rw.row_label = 'D' THEN 2 ELSE 3 END
 FROM dbo.Room r
-CROSS JOIN (VALUES ('A'),('B'),('C'),('D'),('E')) AS rw(row_label)
-CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS n(seat_number)
+         CROSS JOIN (VALUES ('A'),('B'),('C'),('D'),('E')) AS rw(row_label)
+         CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS n(seat_number)
 ORDER BY r.room_id, rw.row_label, n.seat_number;
 GO
 
 -- Gan ghế doi theo cap (E1-E2, E3-E4, ...)
 UPDATE s
 SET s.pair_seat_id = p.seat_id
-FROM dbo.Seat s
+    FROM dbo.Seat s
 JOIN dbo.Seat p ON p.room_id = s.room_id AND p.row_label = s.row_label
-               AND p.seat_number = CASE WHEN s.seat_number % 2 = 1 THEN s.seat_number + 1 ELSE s.seat_number - 1 END
+    AND p.seat_number = CASE WHEN s.seat_number % 2 = 1 THEN s.seat_number + 1 ELSE s.seat_number - 1 END
 WHERE s.seat_type_id = 3;
 GO
 
@@ -222,7 +222,7 @@ DECLARE @movie_count INT, @movie_id INT, @duration INT, @slot_id INT, @step INT;
 DECLARE @movies TABLE (rn INT PRIMARY KEY, movie_id INT NOT NULL, duration_minutes INT NOT NULL);
 
 DECLARE roomCur CURSOR LOCAL FAST_FORWARD FOR
-    SELECT room_id, room_name FROM dbo.Room WHERE status = 'Active' ORDER BY room_id;
+SELECT room_id, room_name FROM dbo.Room WHERE status = 'Active' ORDER BY room_id;
 
 WHILE @day_offset <= 15
 BEGIN
@@ -230,33 +230,33 @@ BEGIN
     SET @close_dt = DATEADD(MINUTE, @close_min, CAST(@day AS DATETIME2(7)));
     SET @room_index = 0;
 
-    OPEN roomCur;
-    FETCH NEXT FROM roomCur INTO @room_id, @room_name;
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        DELETE FROM @movies;
-        INSERT INTO @movies(rn, movie_id, duration_minutes)
-        SELECT ROW_NUMBER() OVER (ORDER BY m.movie_id), m.movie_id, m.duration_minutes
-        FROM dbo.Movie m
-        WHERE m.release_date <= @day
-          AND (m.end_date IS NULL OR m.end_date >= @day)
-          AND m.status <> 'Stopped';
+OPEN roomCur;
+FETCH NEXT FROM roomCur INTO @room_id, @room_name;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+DELETE FROM @movies;
+INSERT INTO @movies(rn, movie_id, duration_minutes)
+SELECT ROW_NUMBER() OVER (ORDER BY m.movie_id), m.movie_id, m.duration_minutes
+FROM dbo.Movie m
+WHERE m.release_date <= @day
+  AND (m.end_date IS NULL OR m.end_date >= @day)
+  AND m.status <> 'Stopped';
 
-        SET @movie_count = (SELECT COUNT(*) FROM @movies);
+SET @movie_count = (SELECT COUNT(*) FROM @movies);
         SET @cursor = DATEADD(MINUTE, @open_min, CAST(@day AS DATETIME2(7)));
         SET @step = 0;
 
         WHILE @movie_count > 0
-        BEGIN
+BEGIN
             SET @movie_id = NULL;
             -- Uu tien phim theo vong tron lech nhau giua cac phong, nhung chi
             -- chon phim ket thuc truoc gio dong cua.
-            SELECT TOP (1) @movie_id = movie_id, @duration = duration_minutes
-            FROM @movies
-            WHERE DATEADD(MINUTE, duration_minutes, @cursor) <= @close_dt
-            ORDER BY ((rn - 1 - @room_index - @step) % @movie_count + @movie_count) % @movie_count, rn;
+SELECT TOP (1) @movie_id = movie_id, @duration = duration_minutes
+FROM @movies
+WHERE DATEADD(MINUTE, duration_minutes, @cursor) <= @close_dt
+ORDER BY ((rn - 1 - @room_index - @step) % @movie_count + @movie_count) % @movie_count, rn;
 
-            IF @movie_id IS NULL BREAK;
+IF @movie_id IS NULL BREAK;
 
             SET @slot_id = (
                 SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts
@@ -271,14 +271,14 @@ BEGIN
 
             SET @cursor = DATEADD(MINUTE, @duration + @turnover, @cursor);
             SET @step = @step + 1;
-        END
+END
 
         SET @room_index = @room_index + 1;
-        FETCH NEXT FROM roomCur INTO @room_id, @room_name;
-    END
-    CLOSE roomCur;
+FETCH NEXT FROM roomCur INTO @room_id, @room_name;
+END
+CLOSE roomCur;
 
-    SET @day_offset = @day_offset + 1;
+SET @day_offset = @day_offset + 1;
 END
 DEALLOCATE roomCur;
 GO
@@ -287,7 +287,7 @@ GO
 UPDATE s
 SET s.ticket_price = COALESCE(
         dbo.fn_GetTicketPrice(s.showtime_id, (SELECT MIN(st.seat_type_id) FROM dbo.SeatType st)), 0)
-FROM dbo.Showtime s
+    FROM dbo.Showtime s
 WHERE s.ticket_price IS NULL OR s.ticket_price = 0;
 GO
 
@@ -398,7 +398,7 @@ DECLARE @sql NVARCHAR(MAX) = N'DELETE s FROM dbo.Showtime s WHERE s.show_date >=
 SELECT @sql += N' AND NOT EXISTS (SELECT 1 FROM ' + QUOTENAME(OBJECT_SCHEMA_NAME(fk.parent_object_id)) + N'.' + QUOTENAME(OBJECT_NAME(fk.parent_object_id))
              + N' x WHERE x.' + QUOTENAME(COL_NAME(fkc.parent_object_id, fkc.parent_column_id)) + N' = s.showtime_id)'
 FROM sys.foreign_keys fk
-JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
+    JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
 WHERE fk.referenced_object_id = OBJECT_ID('dbo.Showtime');
 EXEC sp_executesql @sql, N'@f DATE', @f = @from;
 DECLARE @kept INT = (SELECT COUNT(*) FROM dbo.Showtime WHERE show_date >= @from);
@@ -413,40 +413,40 @@ CREATE TABLE #avail (rk INT PRIMARY KEY, movie_id INT, dur INT);
 
 WHILE @day <= @to
 BEGIN
-    TRUNCATE TABLE #avail;
-    -- xep hang phim theo thu tu bam rieng cua tung ngay; moi ngay bo phim xep hang 1 (khi co tu 6 phim tro len)
-    -- de tap phim thay doi theo ngay. rk lien tuc 1..n de con tro xoay vong khong roi vao so khong ton tai.
-    DECLARE @total INT = (SELECT COUNT(*) FROM dbo.Movie m
+TRUNCATE TABLE #avail;
+-- xep hang phim theo thu tu bam rieng cua tung ngay; moi ngay bo phim xep hang 1 (khi co tu 6 phim tro len)
+-- de tap phim thay doi theo ngay. rk lien tuc 1..n de con tro xoay vong khong roi vao so khong ton tai.
+DECLARE @total INT = (SELECT COUNT(*) FROM dbo.Movie m
         WHERE m.release_date <= @day AND (m.end_date IS NULL OR m.end_date >= @day) AND m.status <> 'Stopped');
     INSERT #avail (rk, movie_id, dur)
-    SELECT ROW_NUMBER() OVER (ORDER BY h), movie_id, duration_minutes
-    FROM (SELECT m.movie_id, m.duration_minutes, ROW_NUMBER() OVER (ORDER BY ABS(CAST(HASHBYTES('MD5', CONCAT(m.movie_id, '#', CONVERT(varchar(10), @day, 120))) AS INT) % 1000003)) h0,
-                 ABS(CAST(HASHBYTES('MD5', CONCAT(m.movie_id, '#', CONVERT(varchar(10), @day, 120))) AS INT) % 1000003) h
-          FROM dbo.Movie m
-          WHERE m.release_date <= @day AND (m.end_date IS NULL OR m.end_date >= @day) AND m.status <> 'Stopped') q
-    WHERE NOT (@total >= 6 AND h0 = 1);
-    SET @n = (SELECT COUNT(*) FROM #avail);
+SELECT ROW_NUMBER() OVER (ORDER BY h), movie_id, duration_minutes
+FROM (SELECT m.movie_id, m.duration_minutes, ROW_NUMBER() OVER (ORDER BY ABS(CAST(HASHBYTES('MD5', CONCAT(m.movie_id, '#', CONVERT(varchar(10), @day, 120))) AS INT) % 1000003)) h0,
+          ABS(CAST(HASHBYTES('MD5', CONCAT(m.movie_id, '#', CONVERT(varchar(10), @day, 120))) AS INT) % 1000003) h
+      FROM dbo.Movie m
+      WHERE m.release_date <= @day AND (m.end_date IS NULL OR m.end_date >= @day) AND m.status <> 'Stopped') q
+WHERE NOT (@total >= 6 AND h0 = 1);
+SET @n = (SELECT COUNT(*) FROM #avail);
 
     IF @n > 0
-    BEGIN
+BEGIN
         SET @close_dt = DATEADD(MINUTE, @close_min, CAST(@day AS DATETIME2(7)));
         SET @base = ABS(CHECKSUM(CONCAT('p', CONVERT(varchar(10), @day, 120)))) % @n;
 
         DECLARE roomCur CURSOR LOCAL FAST_FORWARD FOR
-            SELECT room_id, room_name, ROW_NUMBER() OVER (ORDER BY room_id) FROM dbo.Room WHERE status = 'Active' ORDER BY room_id;
-        OPEN roomCur;
-        FETCH NEXT FROM roomCur INTO @room_id, @room_name, @room_idx;
-        WHILE @@FETCH_STATUS = 0
-        BEGIN
+SELECT room_id, room_name, ROW_NUMBER() OVER (ORDER BY room_id) FROM dbo.Room WHERE status = 'Active' ORDER BY room_id;
+OPEN roomCur;
+FETCH NEXT FROM roomCur INTO @room_id, @room_name, @room_idx;
+WHILE @@FETCH_STATUS = 0
+BEGIN
             SET @p = @base + ((@room_idx - 1) * @n) / 4;   -- moi phong bat dau o mot phim khac nhau
             SET @cursor = DATEADD(MINUTE, @open_min + 15 * (ABS(CHECKSUM(@day, @room_id, 5)) % 9), CAST(@day AS DATETIME2(7)));
             WHILE 1 = 1
-            BEGIN
+BEGIN
                 SET @movie_id = NULL; SET @try = 0;
                 WHILE @try < @n AND @movie_id IS NULL
-                BEGIN
-                    SELECT @movie_id = a.movie_id, @duration = a.dur FROM #avail a WHERE a.rk = (@p % @n) + 1;
-                    SET @p += 1; SET @try += 1;
+BEGIN
+SELECT @movie_id = a.movie_id, @duration = a.dur FROM #avail a WHERE a.rk = (@p % @n) + 1;
+SET @p += 1; SET @try += 1;
                     SET @end = DATEADD(MINUTE, @duration, @cursor);
                     -- phai ket thuc truoc gio dong cua, khong trung gio bat dau cung phim, khong dung suat khac cung phong
                     IF @end > @close_dt
@@ -454,7 +454,7 @@ BEGIN
                        OR EXISTS (SELECT 1 FROM dbo.Showtime s WHERE s.room_id = @room_id AND s.status <> 'Cancelled'
                                   AND s.start_time < DATEADD(MINUTE, 15, @end) AND DATEADD(MINUTE, 15, s.end_time) > @cursor)
                         SET @movie_id = NULL;
-                END
+END
                 IF @movie_id IS NULL BREAK;
 
                 SET @slot_id = (SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts
@@ -466,17 +466,17 @@ BEGIN
 
                 SET @mins = DATEDIFF(MINUTE, CAST(@day AS DATETIME2(7)), @cursor) + @duration + 15 + 15 * (ABS(CHECKSUM(NEWID())) % 3);
                 SET @cursor = DATEADD(MINUTE, ((@mins + 14) / 15) * 15, CAST(@day AS DATETIME2(7)));
-            END
-            FETCH NEXT FROM roomCur INTO @room_id, @room_name, @room_idx;
-        END
-        CLOSE roomCur; DEALLOCATE roomCur;
-    END
+END
+FETCH NEXT FROM roomCur INTO @room_id, @room_name, @room_idx;
+END
+CLOSE roomCur; DEALLOCATE roomCur;
+END
     SET @day = DATEADD(DAY, 1, @day);
 END
 DROP TABLE #avail;
 
 UPDATE s SET s.ticket_price = COALESCE(dbo.fn_GetTicketPrice(s.showtime_id, (SELECT MIN(seat_type_id) FROM dbo.SeatType)), 0)
-FROM dbo.Showtime s WHERE s.ticket_price IS NULL OR s.ticket_price = 0;
+    FROM dbo.Showtime s WHERE s.ticket_price IS NULL OR s.ticket_price = 0;
 
 SELECT @kept AS kept_with_data, @added AS added;
 GO
