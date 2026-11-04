@@ -130,6 +130,11 @@ public class ManageShowtimesServlet extends BaseServlet {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
+                if (showtime.getShowtimeId() > 0 && showtime.isLockedByPurchasedTickets()) {
+                    flash(request, "error", "Suất chiếu đã có vé được mua, không thể sửa để bảo toàn thông tin vé.");
+                    response.sendRedirect(request.getContextPath() + "/manage/showtimes");
+                    return;
+                }
                 request.setAttribute("showtime", showtime);
                 request.setAttribute("movies", movieDAO.findAllForShowtime());
                 request.setAttribute("rooms", showtimeDAO.findActiveRoomNames());
