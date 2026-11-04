@@ -8,39 +8,51 @@
   .rm-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
   .rm-stat { background: #fff; border: 1px solid var(--slate-200); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; color: var(--slate-500); }
   .rm-stat b { display: block; font-size: 20px; color: var(--navy); }
-  .rm-panel { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; box-shadow: var(--shadow); padding: 24px; margin-bottom: 24px; }
+  .rm-panel { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; box-shadow: var(--shadow); padding: 32px; margin-bottom: 24px; }
   .rm-panel h2 { margin: 0 0 4px; font-size: 18px; }
   .rm-panel .sub { color: var(--slate-500); font-size: 13.5px; margin-bottom: 16px; }
 
-  .seatmap { display: flex; flex-direction: column; gap: 8px; align-items: center; overflow-x: auto; padding: 8px 4px 16px; }
-  .screen { width: 62%; min-width: 260px; text-align: center; color: #fff; padding: 9px; margin-bottom: 18px;
-            background: linear-gradient(180deg, var(--brand), var(--beta)); border-radius: 6px 6px 26px 26px;
-            letter-spacing: 6px; font-weight: 700; font-size: 12.5px; }
-  .seat-row { display: flex; gap: 6px; align-items: center; }
-  .row-label { width: 24px; font-weight: 800; text-align: center; color: var(--slate-500); font-size: 13px; }
-  .row-tools { margin-left: 12px; }
-  .row-tools form { display: flex; gap: 4px; align-items: center; }
-  .row-tools select { padding: 4px 6px; font: 12px var(--font); border: 1px solid var(--slate-300); border-radius: 6px; background: #fff; }
-  .row-tools button { padding: 4px 9px; font-size: 12px; border-radius: 6px; }
+  .seatmap { display: flex; flex-direction: column; overflow-x: auto; padding: 12px 8px 20px; gap: 0; width: 100%; align-items: center; }
+  .seatmap-left { display: flex; flex-direction: column; gap: 0; align-items: center; max-width: 1200px; width: 100%; }
+  .screen { width: 100%; text-align: center; color: #fff; padding: 10px 24px; margin-bottom: 28px;
+            background: linear-gradient(180deg, var(--brand), var(--beta)); border-radius: 6px 6px 24px 24px;
+            letter-spacing: 12px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 12px rgba(29,78,216,0.15); }
+  .seatmap-content { display: flex; gap: 0; align-items: stretch; width: 100%; justify-content: center; padding-left: 100px; }
+  .seatmap-rows { display: flex; flex-direction: column; gap: 14px; }
+  .seat-row { display: flex; gap: 8px; align-items: center; }
+  .row-label { width: 32px; font-weight: 800; text-align: center; color: var(--slate-500); font-size: 15px; }
+  .seatmap-right { display: flex; flex-direction: column; margin-left: 18px; gap: 14px; min-width: 220px; }
+  .seatmap-right .row-tools-wrapper { display: flex; align-items: center; min-height: 54px; }
+  .row-tools-wrapper form { display: flex; gap: 8px; align-items: center; }
+  .row-tools-wrapper select { padding: 7px 10px; font: 13px var(--font); border: 1px solid var(--slate-300); border-radius: 7px; background: #fff; min-width: 140px; }
+  .row-tools-wrapper button { padding: 7px 14px; font-size: 13px; border-radius: 7px; white-space: nowrap; }
 
   .seat { position: relative; display: inline-block; cursor: pointer; }
   .seat input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-  .seat span { display: block; width: 42px; height: 38px; line-height: 34px; text-align: center; border-radius: 10px 10px 4px 4px;
-               border: 2px solid var(--slate-300); font: 700 11.5px/34px var(--font); background: #fff; color: var(--slate-700);
+  .seat span { display: block; width: 52px; height: 46px; line-height: 42px; text-align: center; border-radius: 12px 12px 5px 5px;
+               border: 2px solid var(--slate-300); font: 700 13px/42px var(--font); background: #fff; color: var(--slate-700);
                transition: transform .08s, background .12s; }
   .seat:hover span { transform: translateY(-2px); }
+  .seat.t-Unassigned span { background: #f1f5f9; border-color: var(--slate-400); color: var(--slate-600); }
   .seat.t-Standard span { background: #ecfdf5; border-color: var(--success); color: #065f46; }
   .seat.t-VIP span { background: #fef3c7; border-color: var(--accent); color: #92400e; }
   .seat.t-Couple span { background: #fce7f3; border-color: #db2777; color: #9d174d; }
-  .seat.couple-left { margin-right: -6px; }
-  .seat.couple-left span { border-radius: 10px 0 0 4px; width: 46px; border-right-width: 1px; }
-  .seat.couple-right span { border-radius: 0 10px 4px 0; width: 46px; border-left-width: 1px; }
+  .seat.couple-left { margin-right: -8px; }
+  .seat.couple-left span { border-radius: 12px 0 0 5px; width: 56px; border-right-width: 1px; }
+  .seat.couple-right span { border-radius: 0 12px 5px 0; width: 56px; border-left-width: 1px; }
   .seat.maint span { background: var(--slate-200); border-color: var(--slate-400); color: var(--slate-500);
                      background-image: repeating-linear-gradient(45deg, transparent 0 5px, rgba(100,116,139,.25) 5px 7px); }
   .seat input:checked + span { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 3px rgba(29,78,216,.30); background-image: none; }
 
-  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 6px 0 14px; font-size: 13px; color: var(--slate-600); }
-  .legend i { display: inline-block; width: 18px; height: 16px; border-radius: 5px; border: 2px solid; vertical-align: -3px; margin-right: 6px; }
+  .aisle-right { display: flex; align-items: center; justify-content: center; width: 58px;
+                 background: var(--slate-100); border: 2px dashed var(--slate-300); border-radius: 10px; color: var(--slate-500);
+                 font-size: 13px; font-weight: 700; letter-spacing: 1.5px; writing-mode: vertical-rl; text-orientation: mixed;
+                 margin-left: 18px; padding: 20px 0; align-self: stretch; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  @media (max-width: 1280px) { .aisle-right { width: 42px; font-size: 11px; margin-left: 14px; } }
+
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 6px 0 20px; font-size: 13px; color: var(--slate-600); justify-content: center; }
+  .legend i { display: inline-block; width: 20px; height: 18px; border-radius: 5px; border: 2px solid; vertical-align: -3px; margin-right: 7px; }
+  .legend .l-una { background: #f1f5f9; border-color: var(--slate-400); }
   .legend .l-std { background: #ecfdf5; border-color: var(--success); }
   .legend .l-vip { background: #fef3c7; border-color: var(--accent); }
   .legend .l-cpl { background: #fce7f3; border-color: #db2777; }
@@ -90,6 +102,7 @@
           </c:when>
           <c:otherwise>
             <div class="legend">
+              <span><i class="l-una"></i>Chưa chọn loại</span>
               <span><i class="l-std"></i>Ghế thường</span>
               <span><i class="l-vip"></i>Ghế VIP</span>
               <span><i class="l-cpl"></i>Ghế đôi (cặp)</span>
@@ -97,34 +110,55 @@
               <span><i class="l-sel"></i>Đã chọn</span>
             </div>
             <div class="seatmap">
-              <div class="screen">MÀN HÌNH</div>
-              <c:forEach var="row" items="${seatRows}">
-                <div class="seat-row">
-                  <div class="row-label"><c:out value="${row.key}"/></div>
-                  <c:forEach var="s" items="${row.value}">
-                    <label class="seat t-${s.seatTypeName}${s.couple ? (s.seatNumber % 2 == 1 ? ' couple-left' : ' couple-right') : ''}${s.maintenance ? ' maint' : ''}"
-                           title="${s.label} · ${s.seatTypeName}${s.maintenance ? ' · đang bảo trì' : ''}">
-                      <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm"
-                             <c:if test="${s.pairSeatId != null}">data-pair="${s.pairSeatId}"</c:if>>
-                      <span>${s.label}</span>
-                    </label>
-                  </c:forEach>
-                  <div class="row-tools">
-                    <form method="post" action="${ctx}/admin/seats">
-                      <input type="hidden" name="_csrf" value="${csrf}">
-                      <input type="hidden" name="action" value="rowType">
-                      <input type="hidden" name="roomId" value="${room.roomId}">
-                      <input type="hidden" name="row" value="<c:out value='${row.key}'/>">
-                      <select name="typeId" aria-label="Loại ghế hàng ${row.key}">
-                        <c:forEach var="t" items="${seatTypes}">
-                          <option value="${t.seatTypeId}" ${t.seatTypeId == row.value[0].seatTypeId ? 'selected' : ''}><c:out value="${t.typeName}"/></option>
+              <div class="seatmap-left">
+                <div class="screen">MÀN HÌNH</div>
+                <div class="seatmap-content">
+                  <div class="seatmap-rows">
+                    <c:forEach var="row" items="${seatRows}">
+                      <div class="seat-row">
+                        <div class="row-label"><c:out value="${row.key}"/></div>
+                        <c:forEach var="s" items="${row.value}">
+                          <label class="seat t-${s.seatTypeName}${s.couple ? (s.seatNumber % 2 == 1 ? ' couple-left' : ' couple-right') : ''}${s.maintenance ? ' maint' : ''}"
+                                 title="${s.label} · ${s.seatTypeName}${s.maintenance ? ' · đang bảo trì' : ''}">
+                            <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm"
+                                   <c:if test="${s.pairSeatId != null}">data-pair="${s.pairSeatId}"</c:if>>
+                            <span>${s.label}</span>
+                          </label>
                         </c:forEach>
-                      </select>
-                      <button class="btn btn-soft" type="submit">Đổi loại</button>
-                    </form>
+                      </div>
+                    </c:forEach>
+                  </div>
+                  <div class="aisle-right">LỐI ĐI</div>
+                  <div class="seatmap-right">
+                    <c:forEach var="row" items="${seatRows}">
+                      <div class="row-tools-wrapper">
+                        <form method="post" action="${ctx}/admin/seats">
+                          <input type="hidden" name="_csrf" value="${csrf}">
+                          <input type="hidden" name="action" value="rowType">
+                          <input type="hidden" name="roomId" value="${room.roomId}">
+                          <input type="hidden" name="row" value="<c:out value='${row.key}'/>">
+                          <select name="typeId" aria-label="Loại ghế hàng ${row.key}">
+                            <c:choose>
+                              <c:when test="${row.value[0].seatTypeName == 'Unassigned'}">
+                                <option value="" disabled selected>Chọn loại ghế</option>
+                              </c:when>
+                              <c:otherwise>
+                                <option value="" disabled>Chọn loại ghế</option>
+                              </c:otherwise>
+                            </c:choose>
+                            <c:forEach var="t" items="${seatTypes}">
+                              <c:if test="${t.typeName != 'Unassigned'}">
+                                <option value="${t.seatTypeId}" ${t.seatTypeId == row.value[0].seatTypeId ? 'selected' : ''}><c:out value="${t.typeName}"/></option>
+                              </c:if>
+                            </c:forEach>
+                          </select>
+                          <button class="btn btn-soft" type="submit">Đổi loại</button>
+                        </form>
+                      </div>
+                    </c:forEach>
                   </div>
                 </div>
-              </c:forEach>
+              </div>
             </div>
 
             <form id="maintForm" method="post" action="${ctx}/admin/seats">
