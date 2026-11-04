@@ -135,7 +135,8 @@ GO
 INSERT dbo.SeatType(type_name, is_couple, description) VALUES
     (N'Standard', 0, N'Ghế thường'),
     (N'VIP', 0, N'Ghế VIP'),
-    (N'Couple', 1, N'Ghế đôi (đặt theo cặp)');
+    (N'Couple', 1, N'Ghế đôi (đặt theo cặp)'),
+    (N'Unassigned', 0, N'Chưa chọn loại ghế (cần admin thiết lập)');   -- mặc định cho ghế của phòng mới tạo
 GO
 
 -- 4 phong x 5 hang x 10 ghe = 200 ghe. Hang A-C: Standard, D: VIP, E: Couple.

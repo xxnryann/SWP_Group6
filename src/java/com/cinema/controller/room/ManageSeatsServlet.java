@@ -59,9 +59,13 @@ public class ManageSeatsServlet extends AdminBaseServlet {
                 rows.computeIfAbsent(s.getRowLabel(), k -> new ArrayList<>()).add(s);
             }
 
-            // Giá trị khởi tạo cho form layout: lấy từ layout hiện có, hoặc mặc định 5 x 10.
-            int layoutRows = rows.isEmpty() ? 5 : rows.size();
-            int layoutCols = rows.isEmpty() ? 10 : rows.values().iterator().next().size();
+            // Giá trị khởi tạo cho form layout: lấy từ layout hiện có (hàng cuối có thể ngắn hơn nên lấy hàng dài
+            // nhất), hoặc gợi ý theo sức chứa đã nhập khi tạo phòng (55 → 5 × 11).
+            int layoutTotal = rows.isEmpty() ? Math.max(1, room.getCapacity()) : seats.size();
+            int[] grid = RoomRules.suggestGrid(layoutTotal);
+            int layoutRows = rows.isEmpty() ? grid[0] : rows.size();
+            int layoutCols = rows.isEmpty() ? grid[1]
+                    : rows.values().stream().mapToInt(List::size).max().orElse(grid[1]);
             List<Integer> rowTypeIds = new ArrayList<>();
             if (rows.isEmpty()) {
                 for (int i = 0; i < layoutRows; i++) {
@@ -79,6 +83,7 @@ public class ManageSeatsServlet extends AdminBaseServlet {
             req.setAttribute("seatTotal", seats.size());
             req.setAttribute("layoutRows", layoutRows);
             req.setAttribute("layoutCols", layoutCols);
+            req.setAttribute("layoutTotal", layoutTotal);
             req.setAttribute("layoutRowTypes", rowTypeIds.stream().map(String::valueOf)
                     .collect(Collectors.joining(",")));
             req.setAttribute("pageTitle", "Layout ghế · " + room.getRoomName());
@@ -137,6 +142,16 @@ public class ManageSeatsServlet extends AdminBaseServlet {
         if (rows == null || cols == null) {
             throw new IllegalArgumentException("Số hàng và số ghế mỗi hàng phải là số nguyên.");
         }
+        // Tổng số ghế (mặc định = sức chứa); không gửi thì là layout đủ hàng đủ cột.
+        String totalStr = Validator.trim(req.getParameter("total"));
+        Integer total = totalStr.isEmpty() ? Integer.valueOf(rows * cols) : RoomRules.parseInt(totalStr);
+        if (total == null) {
+            throw new IllegalArgumentException("Tổng số ghế phải là số nguyên.");
+        }
+        String layoutErr = RoomRules.validateLayout(rows, cols, total);
+        if (layoutErr != null) {
+            throw new IllegalArgumentException(layoutErr);
+        }
         int[] rowTypes = RoomRules.parseRowTypes(req.getParameter("rowTypes"), rows);
 
         List<SeatType> types = seatDAO.findSeatTypes();
@@ -149,10 +164,15 @@ public class ManageSeatsServlet extends AdminBaseServlet {
             }
         }
 
-        List<SeatSpec> specs = RoomRules.buildLayout(rows, cols, rowTypes, coupleIds);
+        List<SeatSpec> specs = RoomRules.buildLayout(rows, cols, total, rowTypes, coupleIds);
         seatDAO.replaceLayout(room.getRoomId(), specs);
-        flash(req, "success", "Đã thiết lập layout " + rows + " hàng × " + cols + " ghế ("
-                + specs.size() + " ghế) cho " + room.getRoomName() + ".");
+        int last = total - (rows - 1) * cols;
+        String shape = last == cols || rows == 1
+                ? rows + " hàng × " + cols + " ghế"
+                : rows + " hàng (" + RoomRules.rowLabel(0) + (rows > 2 ? "–" + RoomRules.rowLabel(rows - 2) : "")
+                  + " mỗi hàng " + cols + " ghế, hàng " + RoomRules.rowLabel(rows - 1) + " có " + last + " ghế)";
+        flash(req, "success", "Đã thiết lập layout " + shape + ", tổng " + specs.size() + " ghế cho "
+                + room.getRoomName() + ". Sức chứa phòng: " + specs.size() + ".");
     }
 
     private void rowType(HttpServletRequest req, Room room) throws SQLException, RoomRuleException {

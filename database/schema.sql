@@ -2017,9 +2017,11 @@ GO
    02/11/2026  Hủy combo: BookingCombo.cancelled_at, sp_CancelCombo, thông báo ComboCancelled
    03/11/2026  Email: Customer.receive_promo_email (khách tắt/bật email phim mới, ưu đãi); REMINDER_HOURS_BEFORE
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
+   04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
    
    Script nâng cấp DB cũ giữ nguyên dữ liệu nằm trong lịch sử git: git show 6fe0e9e:sql/upgrade.sql
    Nâng cấp DB cũ cho thay đổi 04/11/2026: git show 8a4aeb0:database/update_combo_image_points.sql
+   Thêm loại ghế Unassigned cho DB cũ: git show 48c6b35:database/add_unassigned_seat_type.sql
    ===================================================================== */
 
 PRINT N'[OK] Da tao cau truc CinemaWebDB (32 bang, 26 procedure, 3 view, 1 trigger, 1 function). Chay tiep database/seed.sql.';

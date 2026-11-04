@@ -47,9 +47,14 @@
               <label for="f-cap">Sức chứa (số ghế)</label>
               <input id="f-cap" type="number" name="capacity" min="1" max="500" required
                      value="${room.capacity > 0 ? room.capacity : ''}" ${capacityLocked ? 'readonly' : ''}>
-              <c:if test="${capacityLocked}">
-                <div class="hint">Phòng đã có layout nên sức chứa luôn bằng số ghế thực tế (${room.seatCount}). Thay đổi ở màn hình Layout &amp; ghế.</div>
-              </c:if>
+              <c:choose>
+                <c:when test="${capacityLocked}">
+                  <div class="hint">Phòng đã có layout nên sức chứa luôn bằng số ghế thực tế (${room.seatCount}). Thay đổi ở màn hình Layout &amp; ghế.</div>
+                </c:when>
+                <c:otherwise>
+                  <div class="hint">Là tổng số ghế khi thiết lập layout: hệ thống gợi ý số hàng × ghế mỗi hàng theo con số này (vd 55 → 5 hàng × 11 ghế).</div>
+                </c:otherwise>
+              </c:choose>
             </div>
           </div>
 
