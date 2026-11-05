@@ -1713,9 +1713,13 @@ CREATE TABLE dbo.Review (
     customer_id INT NOT NULL,
     rating TINYINT NOT NULL,
     comment NVARCHAR(1000) NULL,
+    moderated_at DATETIME2(7) NULL,
+    moderated_by INT NULL,
+    moderation_reason NVARCHAR(500) NULL,
     created_at DATETIME2(7) NOT NULL CONSTRAINT DF_Review_Created DEFAULT SYSDATETIME(),
     CONSTRAINT FK_Review_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_Review_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
+    CONSTRAINT FK_Review_ModeratedBy FOREIGN KEY (moderated_by) REFERENCES dbo.Account(account_id),
     CONSTRAINT UQ_Review_Movie_Customer UNIQUE (movie_id, customer_id),
     CONSTRAINT CK_Review_Rating CHECK (rating BETWEEN 1 AND 5)
 );
@@ -1794,7 +1798,7 @@ CREATE TABLE dbo.EmailNotification (
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_EmailNotification_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
-    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ComboCancelled','ReviewReminder','SeatChanged')),
+    CONSTRAINT CK_EmailNotification_Type CHECK (notif_type IN ('ETicket','ShowtimeReminder','NewMovie','Voucher','MovieCancelled','TicketCancelled','ComboCancelled','ReviewReminder','ReviewModerated','SeatChanged')),
     CONSTRAINT CK_EmailNotification_Status CHECK (status IN ('Pending','Sent','Failed','InApp'))
 );
 GO
