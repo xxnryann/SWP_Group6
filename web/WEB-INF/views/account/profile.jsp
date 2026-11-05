@@ -22,8 +22,23 @@
         <input id="avatarFile" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" hidden>
         <button class="btn btn-soft" type="button" id="avatarPick">TẢI ẢNH LÊN</button>
         <button class="btn btn-save-avatar" type="submit" id="avatarSave" disabled>LƯU ẢNH</button>
-        <span class="hint">JPG, PNG hoặc WEBP, tối đa 2 MB.</span>
+        <span class="hint">JPG, PNG hoặc WEBP. Chọn ảnh xong bạn được cắt vùng muốn dùng.</span>
       </form>
+
+      <div class="crop-modal" id="cropModal" hidden role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+        <div class="crop-box">
+          <h3 id="cropTitle">Cắt ảnh đại diện</h3>
+          <p class="sub">Kéo ảnh để chọn vùng trong khung tròn, dùng thanh trượt hoặc con lăn chuột để phóng to.</p>
+          <div class="crop-stage" id="cropStage"><canvas id="cropCanvas" width="600" height="600"></canvas></div>
+          <label class="crop-zoom">Thu nhỏ
+            <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="Phóng to ảnh">
+          Phóng to</label>
+          <div class="crop-actions">
+            <button class="btn btn-soft" type="button" id="cropCancel">Hủy</button>
+            <button class="btn btn-primary" type="button" id="cropApply">Dùng vùng này</button>
+          </div>
+        </div>
+      </div>
 
       <form method="post" action="${pageContext.request.contextPath}/account/profile" novalidate>
         <input type="hidden" name="_csrf" value="${csrf}">
@@ -151,13 +166,93 @@
   var file = document.getElementById('avatarFile'), pick = document.getElementById('avatarPick'),
       save = document.getElementById('avatarSave'), preview = document.getElementById('avatarPreview');
   if (file && pick) {
+    /* Ảnh chọn xong được cắt vuông trong khung (kéo để chọn vùng, phóng to bằng thanh trượt/con lăn),
+       xuất JPEG 512x512 rồi mới gửi lên, nên ảnh to bao nhiêu cũng chỉ lưu đúng vùng đã chọn. */
+    var OUT = 512, MAX_SOURCE = 15 * 1024 * 1024;
+    var modal = document.getElementById('cropModal'), stage = document.getElementById('cropStage');
+    var canvas = document.getElementById('cropCanvas'), ctx = canvas.getContext('2d');
+    var zoomIn = document.getElementById('cropZoom'), form = file.form;
+    var img = null, cropped = null, base = 1, zoom = 1, cx = 0, cy = 0, drag = null;
+
+    function clamp() {                       /* không để lộ khoảng trống ngoài ảnh trong khung */
+      var s = base * zoom, half = canvas.width / 2 / s;
+      cx = Math.min(Math.max(cx, half), img.width - half);
+      cy = Math.min(Math.max(cy, half), img.height - half);
+    }
+    function draw() {
+      var s = base * zoom;
+      clamp();
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, canvas.width / 2 - cx * s, canvas.height / 2 - cy * s, img.width * s, img.height * s);
+    }
+    function setZoom(z, keep) {
+      zoom = Math.min(4, Math.max(1, z)); zoomIn.value = zoom;
+      if (!keep) draw();
+    }
+    function openCropper(f) {
+      var url = URL.createObjectURL(f), im = new Image();
+      im.onload = function () {
+        img = im; base = canvas.width / Math.min(im.width, im.height);   /* cạnh ngắn vừa khít khung */
+        cx = im.width / 2; cy = im.height / 2; setZoom(1, true); draw();
+        modal.hidden = false; zoomIn.focus();
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); showToast('Không đọc được ảnh này.', 'error'); file.value = ''; };
+      im.src = url;
+    }
+    function closeCropper() { modal.hidden = true; file.value = ''; }
+
     pick.addEventListener('click', function () { file.click(); });
     file.addEventListener('change', function () {
       var f = file.files && file.files[0];
-      if (!f) { save.disabled = true; return; }
-      if (f.size > 2 * 1024 * 1024) { showToast('Ảnh vượt quá giới hạn 2 MB.', 'error'); file.value = ''; save.disabled = true; return; }
-      var img = document.createElement('img'); img.alt = 'Ảnh đại diện'; img.src = URL.createObjectURL(f);
-      preview.innerHTML = ''; preview.appendChild(img); save.disabled = false;
+      if (!f) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { showToast('Chỉ nhận ảnh JPG, PNG hoặc WEBP.', 'error'); file.value = ''; return; }
+      if (f.size > MAX_SOURCE) { showToast('Ảnh gốc quá lớn (tối đa 15 MB).', 'error'); file.value = ''; return; }
+      openCropper(f);
+    });
+
+    stage.addEventListener('pointerdown', function (e) {
+      if (!img) return;
+      drag = { x: e.clientX, y: e.clientY, cx: cx, cy: cy };
+      stage.setPointerCapture(e.pointerId); stage.classList.add('dragging');
+    });
+    stage.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var k = canvas.width / stage.clientWidth / (base * zoom);   /* px màn hình -> px ảnh gốc */
+      cx = drag.cx - (e.clientX - drag.x) * k; cy = drag.cy - (e.clientY - drag.y) * k; draw();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (t) {
+      stage.addEventListener(t, function () { drag = null; stage.classList.remove('dragging'); });
+    });
+    stage.addEventListener('wheel', function (e) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08)); }, { passive: false });
+    zoomIn.addEventListener('input', function () { setZoom(parseFloat(zoomIn.value)); });
+    document.getElementById('cropCancel').addEventListener('click', closeCropper);
+    modal.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCropper(); });
+
+    document.getElementById('cropApply').addEventListener('click', function () {
+      var out = document.createElement('canvas'), s = base * zoom, side = canvas.width / s;
+      out.width = OUT; out.height = OUT;
+      var o = out.getContext('2d');
+      o.fillStyle = '#fff'; o.fillRect(0, 0, OUT, OUT);         /* nền trắng cho ảnh PNG trong suốt */
+      o.drawImage(img, cx - side / 2, cy - side / 2, side, side, 0, 0, OUT, OUT);
+      out.toBlob(function (blob) {
+        if (!blob) { showToast('Không cắt được ảnh, hãy thử ảnh khác.', 'error'); return; }
+        cropped = blob;
+        var p = document.createElement('img'); p.alt = 'Ảnh đại diện'; p.src = URL.createObjectURL(blob);
+        preview.innerHTML = ''; preview.appendChild(p);
+        save.disabled = false; modal.hidden = true; file.value = '';
+      }, 'image/jpeg', 0.9);
+    });
+
+    /* Gửi ảnh đã cắt thay cho file gốc; server trả redirect về trang hồ sơ kèm thông báo. */
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!cropped) { showToast('Vui lòng chọn ảnh trước khi lưu.', 'error'); return; }
+      var data = new FormData(form);
+      data.set('avatar', cropped, 'avatar.jpg');
+      save.disabled = true;
+      fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin' })
+        .then(function (r) { location.href = r.url || location.href; })
+        .catch(function () { save.disabled = false; showToast('Không gửi được ảnh, hãy thử lại.', 'error'); });
     });
   }
 })();

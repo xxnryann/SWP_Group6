@@ -86,32 +86,111 @@ public final class RoomRules {
     }
 
     /**
-     * Sinh danh sách ghế cho layout rows x cols. rowTypeIds[i] là loại ghế của hàng i.
-     * Hàng ghế đôi phải có số cột chẵn; các ghế được ghép cặp (1-2, 3-4, ...).
+     * Kiểm tra layout rows x cols có xếp vừa đúng total ghế không: các hàng đầu đủ cols ghế, hàng cuối nhận
+     * phần còn lại (1..cols ghế). Trả về lỗi kèm gợi ý cụ thể, hoặc null nếu hợp lệ.
+     */
+    public static String validateLayout(int rows, int cols, int total) {
+        String err = validateGrid(rows, cols);
+        if (err != null) {
+            return err;
+        }
+        if (total < 1 || total > MAX_CAPACITY) {
+            return "Tổng số ghế phải từ 1 đến " + MAX_CAPACITY + ".";
+        }
+        int fit = rows * cols;
+        if (fit < total) {
+            int needRows = (total + cols - 1) / cols;
+            int needCols = (total + rows - 1) / rows;
+            StringBuilder hint = new StringBuilder();
+            if (needRows <= MAX_ROWS) {
+                hint.append("tăng lên ").append(needRows).append(" hàng").append(lastRowNote(needRows, cols, total));
+            }
+            if (needCols <= MAX_COLS) {
+                if (hint.length() > 0) hint.append(", hoặc ");
+                hint.append("tăng lên ").append(needCols).append(" ghế mỗi hàng").append(lastRowNote(rows, needCols, total));
+            }
+            return "Layout " + rows + " hàng × " + cols + " ghế chỉ chứa " + fit + " ghế, thiếu " + (total - fit)
+                    + " ghế so với tổng " + total + "."
+                    + (hint.length() > 0 ? " Hãy " + hint + "." : "")
+                    + " Hoặc giảm tổng số ghế xuống " + fit + ".";
+        }
+        if ((rows - 1) * cols >= total) {
+            int needRows = (total + cols - 1) / cols;
+            return "Với " + total + " ghế và " + cols + " ghế mỗi hàng chỉ cần " + needRows + " hàng"
+                    + lastRowNote(needRows, cols, total) + "; hàng " + rowLabel(rows - 1)
+                    + " sẽ không có ghế nào. Hãy giảm số hàng xuống " + needRows + ".";
+        }
+        return null;
+    }
+
+    /** " (hàng E có 6 ghế)" khi hàng cuối thiếu ghế, rỗng khi các hàng đều đủ. */
+    private static String lastRowNote(int rows, int cols, int total) {
+        int last = total - (rows - 1) * cols;
+        return last < cols ? " (hàng " + rowLabel(rows - 1) + " có " + last + " ghế)" : "";
+    }
+
+    /**
+     * Gợi ý số hàng × số ghế mỗi hàng cho total ghế: ưu tiên chia hết (mọi hàng đủ ghế) với hàng dài khoảng gấp
+     * đôi số hàng như phòng chiếu thường gặp (50 → 5 × 10, 55 → 5 × 11, 44 → 4 × 11); không chia hết thì hàng
+     * cuối ngắn hơn (53 → 6 × 10, hàng F có 3 ghế).
+     *
+     * @return {rows, cols}
+     */
+    public static int[] suggestGrid(int total) {
+        total = Math.max(1, Math.min(MAX_CAPACITY, total));
+        int minCols = Math.max(1, (total + MAX_ROWS - 1) / MAX_ROWS);
+        int[] best = null;
+        int bestScore = Integer.MAX_VALUE;
+        for (int cols = Math.max(minCols, 6); cols <= Math.min(MAX_COLS, 20); cols++) {
+            if (total % cols != 0) continue;
+            int rows = total / cols;
+            int score = Math.abs(cols - 2 * rows);
+            if (score < bestScore) {
+                bestScore = score;
+                best = new int[] {rows, cols};
+            }
+        }
+        if (best != null) {
+            return best;
+        }
+        int cols = (int) Math.round(Math.sqrt(total * 2.0));
+        cols = Math.max(minCols, Math.min(Math.min(MAX_COLS, 20), Math.max(Math.min(total, 6), cols)));
+        return new int[] {(total + cols - 1) / cols, cols};
+    }
+
+    /**
+     * Sinh danh sách ghế cho layout rows x cols, đủ đúng total ghế: các hàng đầu cols ghế, hàng cuối nhận phần còn
+     * lại. rowTypeIds[i] là loại ghế của hàng i. Hàng ghế đôi phải có số ghế chẵn; các ghế được ghép cặp (1-2, 3-4, ...).
      *
      * @throws IllegalArgumentException khi dữ liệu không hợp lệ (message hiển thị được cho người dùng)
      */
-    public static List<SeatSpec> buildLayout(int rows, int cols, int[] rowTypeIds, Set<Integer> coupleTypeIds) {
-        String err = validateGrid(rows, cols);
+    public static List<SeatSpec> buildLayout(int rows, int cols, int total, int[] rowTypeIds, Set<Integer> coupleTypeIds) {
+        String err = validateLayout(rows, cols, total);
         if (err != null) {
             throw new IllegalArgumentException(err);
         }
         if (rowTypeIds == null || rowTypeIds.length != rows) {
             throw new IllegalArgumentException("Thiếu loại ghế cho một số hàng.");
         }
-        List<SeatSpec> out = new ArrayList<>(rows * cols);
+        List<SeatSpec> out = new ArrayList<>(total);
         for (int r = 0; r < rows; r++) {
             int typeId = rowTypeIds[r];
             boolean couple = coupleTypeIds.contains(typeId);
-            if (couple && cols % 2 != 0) {
-                throw new IllegalArgumentException("Hàng " + rowLabel(r)
-                        + " là ghế đôi nên số ghế mỗi hàng phải là số chẵn.");
+            int seats = r < rows - 1 ? cols : total - (rows - 1) * cols;
+            if (couple && seats % 2 != 0) {
+                throw new IllegalArgumentException("Hàng " + rowLabel(r) + " là ghế đôi nên phải có số ghế chẵn"
+                        + " (đang có " + seats + " ghế).");
             }
-            for (int c = 1; c <= cols; c++) {
+            for (int c = 1; c <= seats; c++) {
                 out.add(new SeatSpec(rowLabel(r), c, typeId, couple));
             }
         }
         return out;
+    }
+
+    /** Layout đủ hàng đủ cột (rows x cols ghế). */
+    public static List<SeatSpec> buildLayout(int rows, int cols, int[] rowTypeIds, Set<Integer> coupleTypeIds) {
+        return buildLayout(rows, cols, rows * cols, rowTypeIds, coupleTypeIds);
     }
 
     /** Parse "1,1,2,3" → {1,1,2,3}; ném IllegalArgumentException nếu sai định dạng. */

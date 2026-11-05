@@ -61,7 +61,12 @@
 
   .maint-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
   .maint-bar .count { color: var(--slate-500); font-size: 13.5px; }
-  .layout-grid { display: grid; grid-template-columns: 140px 140px 1fr; gap: 16px; align-items: start; }
+  .layout-grid { display: grid; grid-template-columns: repeat(3, 160px); gap: 16px; align-items: start; }
+  .layout-note { color: var(--slate-500); font-size: 13px; margin: 10px 0 0; }
+  .layout-sum { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--radius); font-size: 13.5px; border: 1px solid; }
+  .layout-sum.ok { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+  .layout-sum.bad { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .layout-sum button { margin-left: 8px; padding: 4px 10px; font-size: 12.5px; border-radius: 6px; }
   .layout-grid .field { margin: 0; }
   .row-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; }
   .row-types label { display: block; font-size: 12px; font-weight: 700; color: var(--slate-600); margin-bottom: 3px; }
@@ -191,6 +196,10 @@
           <input type="hidden" name="rowTypes" id="rowTypes" value="<c:out value='${layoutRowTypes}'/>">
           <div class="layout-grid">
             <div class="field">
+              <label for="f-total">Tổng số ghế (1–500)</label>
+              <input id="f-total" type="number" name="total" min="1" max="500" value="${layoutTotal}" required>
+            </div>
+            <div class="field">
               <label for="f-rows">Số hàng (1–26)</label>
               <input id="f-rows" type="number" name="rows" min="1" max="26" value="${layoutRows}" required>
             </div>
@@ -198,11 +207,12 @@
               <label for="f-cols">Ghế mỗi hàng (1–30)</label>
               <input id="f-cols" type="number" name="cols" min="1" max="30" value="${layoutCols}" required>
             </div>
-            <div class="hint" style="align-self:end;color:var(--slate-500);font-size:13px">
-              Loại ghế:
-              <c:forEach var="t" items="${seatTypes}" varStatus="vs"><c:out value="${t.typeName}"/><c:if test="${t.couple}"> (đôi)</c:if><c:if test="${!vs.last}">, </c:if></c:forEach>
-            </div>
           </div>
+          <p class="layout-note">
+            Mặc định bằng sức chứa của phòng (${room.capacity}). Các hàng đầu đủ số ghế mỗi hàng, <b>hàng cuối nhận phần
+            còn lại</b> nên có thể ít ghế hơn. Áp dụng layout sẽ đặt sức chứa phòng bằng tổng số ghế.
+          </p>
+          <div class="layout-sum" id="layoutSum" aria-live="polite"></div>
           <div class="row-types" id="rowTypeBox"></div>
           <p class="alert alert-error" id="layoutErr" style="display:none"></p>
           <button class="btn btn-cta" type="submit">Áp dụng layout</button>
@@ -246,39 +256,119 @@
   if (clr) clr.addEventListener('click', function () { boxes.forEach(function (b) { b.checked = false; }); refresh(); });
   refresh();
 
-  /* ---------- form layout: chọn loại ghế theo từng hàng ---------- */
+  /* ---------- form layout: tổng số ghế, hàng × cột (hàng cuối nhận phần còn lại), loại ghế theo từng hàng ---------- */
+  var totalIn = document.getElementById('f-total');
   var rowsIn = document.getElementById('f-rows'), colsIn = document.getElementById('f-cols');
   var box = document.getElementById('rowTypeBox'), hidden = document.getElementById('rowTypes');
   var tpl = document.getElementById('typeTpl'), err = document.getElementById('layoutErr');
+  var sum = document.getElementById('layoutSum');
   var current = hidden.value ? hidden.value.split(',') : [];
+  var MAX_ROWS = 26, MAX_COLS = 30, MAX_TOTAL = 500;
+
+  function L(i) { return String.fromCharCode(65 + i); }
+  function num(input) { var v = parseInt(input.value, 10); return isNaN(v) ? 0 : v; }
+  /* Số ghế của hàng i (hàng cuối nhận phần còn lại). */
+  function seatsOfRow(i, rows, cols, total) { return i < rows - 1 ? cols : total - (rows - 1) * cols; }
+  function lastNote(rows, cols, total) {
+    var last = total - (rows - 1) * cols;
+    return last < cols ? ' (hàng ' + L(rows - 1) + ' có ' + last + ' ghế)' : '';
+  }
+  /* Giống RoomRules.suggestGrid: ưu tiên chia hết, hàng dài khoảng gấp đôi số hàng; không thì hàng cuối ngắn hơn. */
+  function suggest(total) {
+    total = Math.max(1, Math.min(MAX_TOTAL, total));
+    var minCols = Math.max(1, Math.ceil(total / MAX_ROWS)), best = null, bestScore = 1e9;
+    for (var c = Math.max(minCols, 6); c <= Math.min(MAX_COLS, 20); c++) {
+      if (total % c !== 0) continue;
+      var r = total / c, score = Math.abs(c - 2 * r);
+      if (score < bestScore) { bestScore = score; best = [r, c]; }
+    }
+    if (best) return best;
+    var cols = Math.round(Math.sqrt(total * 2));
+    cols = Math.max(minCols, Math.min(Math.min(MAX_COLS, 20), Math.max(Math.min(total, 6), cols)));
+    return [Math.ceil(total / cols), cols];
+  }
+  /* Giống RoomRules.validateLayout: trả về lỗi kèm gợi ý, hoặc '' nếu hợp lệ. */
+  function layoutError(rows, cols, total) {
+    if (rows < 1 || rows > MAX_ROWS) return 'Số hàng phải từ 1 đến 26 (A–Z).';
+    if (cols < 1 || cols > MAX_COLS) return 'Số ghế mỗi hàng phải từ 1 đến 30.';
+    if (total < 1 || total > MAX_TOTAL) return 'Tổng số ghế phải từ 1 đến 500.';
+    var fit = rows * cols;
+    if (fit < total) {
+      var needRows = Math.ceil(total / cols), needCols = Math.ceil(total / rows), hint = [];
+      if (needRows <= MAX_ROWS) hint.push('tăng lên ' + needRows + ' hàng' + lastNote(needRows, cols, total));
+      if (needCols <= MAX_COLS) hint.push('tăng lên ' + needCols + ' ghế mỗi hàng' + lastNote(rows, needCols, total));
+      return 'Layout ' + rows + ' hàng × ' + cols + ' ghế chỉ chứa ' + fit + ' ghế, thiếu ' + (total - fit)
+          + ' ghế so với tổng ' + total + '.' + (hint.length ? ' Hãy ' + hint.join(', hoặc ') + '.' : '')
+          + ' Hoặc giảm tổng số ghế xuống ' + fit + '.';
+    }
+    if ((rows - 1) * cols >= total) {
+      var need = Math.ceil(total / cols);
+      return 'Với ' + total + ' ghế và ' + cols + ' ghế mỗi hàng chỉ cần ' + need + ' hàng' + lastNote(need, cols, total)
+          + '; hàng ' + L(rows - 1) + ' sẽ không có ghế nào. Hãy giảm số hàng xuống ' + need + '.';
+    }
+    return '';
+  }
+  function shapeText(rows, cols, total) {
+    var last = total - (rows - 1) * cols;
+    if (last === cols || rows === 1) return rows + ' hàng × ' + cols + ' ghế = ' + total + ' ghế';
+    return rows + ' hàng: ' + L(0) + (rows > 2 ? '–' + L(rows - 2) : '') + ' mỗi hàng ' + cols + ' ghế, hàng '
+        + L(rows - 1) + ' có ' + last + ' ghế = ' + total + ' ghế';
+  }
 
   function build() {
-    var n = parseInt(rowsIn.value, 10);
-    if (isNaN(n) || n < 1) n = 0;
-    if (n > 26) n = 26;
+    var n = num(rowsIn);
+    if (n < 1) n = 0;
+    if (n > MAX_ROWS) n = MAX_ROWS;
     var keep = Array.prototype.map.call(box.querySelectorAll('select'), function (s) { return s.value; });
     if (keep.length) current = keep;
     box.innerHTML = '';
     for (var i = 0; i < n; i++) {
       var wrap = document.createElement('div');
       var lab = document.createElement('label');
-      lab.textContent = 'Hàng ' + String.fromCharCode(65 + i);
+      lab.setAttribute('data-row', i);
       var sel = document.createElement('select');
       sel.innerHTML = tpl.innerHTML;
       var want = current[i] !== undefined ? current[i] : current[current.length - 1];
       if (want !== undefined) sel.value = want;
       wrap.appendChild(lab); wrap.appendChild(sel); box.appendChild(wrap);
     }
+    refreshSummary();
+  }
+
+  /* Cập nhật nhãn "Hàng E · 6 ghế" và dòng tóm tắt; trả về lỗi hiện tại ('' nếu hợp lệ). */
+  function refreshSummary() {
+    var rows = num(rowsIn), cols = num(colsIn), total = num(totalIn);
+    var msg = layoutError(rows, cols, total);
+    Array.prototype.forEach.call(box.querySelectorAll('label[data-row]'), function (lab) {
+      var i = parseInt(lab.getAttribute('data-row'), 10), s = seatsOfRow(i, rows, cols, total);
+      lab.textContent = 'Hàng ' + L(i) + (msg ? '' : ' · ' + s + ' ghế');
+    });
+    sum.innerHTML = '';
+    sum.className = 'layout-sum ' + (msg ? 'bad' : 'ok');
+    sum.appendChild(document.createTextNode(msg || ('Layout: ' + shapeText(rows, cols, total) + '.')));
+    var g = suggest(total);
+    if (total >= 1 && total <= MAX_TOTAL && (g[0] !== rows || g[1] !== cols)) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn btn-soft';
+      b.textContent = 'Dùng gợi ý ' + g[0] + ' hàng × ' + g[1] + ' ghế' + lastNote(g[0], g[1], total);
+      b.addEventListener('click', function () { rowsIn.value = g[0]; colsIn.value = g[1]; build(); });
+      sum.appendChild(b);
+    }
+    return msg;
   }
   rowsIn.addEventListener('input', build);
+  colsIn.addEventListener('input', refreshSummary);
+  totalIn.addEventListener('input', refreshSummary);
   build();
 
   document.getElementById('layoutForm').addEventListener('submit', function (e) {
-    var sels = box.querySelectorAll('select'), cols = parseInt(colsIn.value, 10), msg = '';
-    if (!sels.length) msg = 'Số hàng không hợp lệ.';
-    Array.prototype.forEach.call(sels, function (s, i) {
-      if (s.options[s.selectedIndex].getAttribute('data-couple') === 'true' && cols % 2 !== 0)
-        msg = 'Hàng ' + String.fromCharCode(65 + i) + ' là ghế đôi nên số ghế mỗi hàng phải là số chẵn.';
+    var sels = box.querySelectorAll('select'), msg = refreshSummary();
+    var rows = num(rowsIn), cols = num(colsIn), total = num(totalIn);
+    if (!msg && !sels.length) msg = 'Số hàng không hợp lệ.';
+    if (!msg) Array.prototype.forEach.call(sels, function (s, i) {
+      var n = seatsOfRow(i, rows, cols, total);
+      if (!msg && s.options[s.selectedIndex].getAttribute('data-couple') === 'true' && n % 2 !== 0)
+        msg = 'Hàng ' + L(i) + ' là ghế đôi nên phải có số ghế chẵn (đang có ' + n + ' ghế).';
     });
     if (msg) { e.preventDefault(); err.textContent = msg; err.style.display = 'block'; return; }
     err.style.display = 'none';
