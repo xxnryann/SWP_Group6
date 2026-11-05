@@ -215,7 +215,7 @@ public class ManageShowtimesServlet extends BaseServlet {
             throw new IllegalArgumentException("Giờ chiếu phải ở trong tương lai.");
         }
         if (!ShowtimeRules.onGrid(start)) {
-            throw new IllegalArgumentException("Giờ chiếu phải nằm trên mốc 15 phút (ví dụ 14:00, 14:15, 14:30).");
+            throw new IllegalArgumentException("Giờ chiếu phải nằm trên mốc 5 phút (ví dụ 14:00, 14:05, 14:10).");
         }
         showtime.setStartsAt(start);
         showtime.setStatus("Scheduled");

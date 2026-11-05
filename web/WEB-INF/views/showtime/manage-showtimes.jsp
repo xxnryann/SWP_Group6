@@ -55,7 +55,13 @@
           <tr>
             <td><strong><c:out value="${showtime.movieTitle}"/></strong></td>
             <td><c:out value="${showtime.scheduleDateDisplay}"/></td>
-            <td><c:out value="${showtime.scheduleTimeDisplay}"/></td>
+            <td>
+              <c:out value="${showtime.startTimeOnly}"/> –
+              <c:out value="${showtime.endTimeOnly}"/>
+              <span class="showtime-actual-end">
+                (thực tế: <c:out value="${showtime.slotEndTimeOnly}"/>)
+              </span>
+            </td>
             <td><c:out value="${showtime.roomName}"/></td>
             <td><c:choose>
               <c:when test="${showtime.managementStatus == 'Scheduled'}">Đang mở</c:when>
@@ -83,5 +89,4 @@
 </div></main>
 
 <%@ include file="../_footer.jspf" %>
-
 

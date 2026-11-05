@@ -3,6 +3,7 @@ package com.cinema.model;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import com.cinema.util.showtime.ShowtimeRules;
 
 public class Showtime {
     private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
@@ -13,6 +14,7 @@ public class Showtime {
     private String roomName;
     private LocalDateTime startsAt;
     private String status = "Scheduled";
+    private int purchasedTicketCount;
 
     public int getShowtimeId() {
         return showtimeId;
@@ -70,6 +72,22 @@ public class Showtime {
         this.status = status;
     }
 
+    public int getPurchasedTicketCount() {
+        return purchasedTicketCount;
+    }
+
+    public void setPurchasedTicketCount(int purchasedTicketCount) {
+        this.purchasedTicketCount = purchasedTicketCount;
+    }
+
+    public boolean isLockedByPurchasedTickets() {
+        return purchasedTicketCount > 0;
+    }
+
+    public boolean getLockedByPurchasedTickets() {
+        return isLockedByPurchasedTickets();
+    }
+
     public String getStartDisplay() {
         return startsAt == null ? "" : startsAt.format(DISPLAY_FORMAT);
     }
@@ -83,7 +101,8 @@ public class Showtime {
     }
 
     public String getScheduleTimeDisplay() {
-        return startsAt == null ? "" : getStartTimeOnly() + " – " + getEndTimeOnly();
+        return startsAt == null ? "" : getStartTimeOnly() + " – " + getEndTimeOnly()
+                + " (thực tế: " + getSlotEndTimeOnly() + ")";
     }
 
     public String getManagementStatus() {
@@ -99,6 +118,13 @@ public class Showtime {
 
     public String getEndTimeOnly() {
         return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes)
+                .format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    /** Kết thúc block lịch chiếu, gồm phim và thời gian nghỉ đã bù để chia hết cho 5. */
+    public String getSlotEndTimeOnly() {
+        return startsAt == null ? "" : startsAt
+                .plusMinutes(ShowtimeRules.blockMinutes(movieDurationMinutes))
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
