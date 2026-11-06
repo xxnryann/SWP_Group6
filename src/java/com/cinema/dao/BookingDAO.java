@@ -67,6 +67,17 @@ public class BookingDAO {
         }
     }
 
+    public String getRoomType(int showtimeId) throws SQLException {
+        String sql = "SELECT r.room_type FROM Showtime s JOIN Room r ON r.room_id = s.room_id WHERE s.showtime_id = ?";
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, showtimeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
     /** Sơ đồ ghế của một suất chiếu (màu GREEN/YELLOW/RED/GREY từ vw_SeatMap). */
     public List<SeatCell> getSeatMap(int showtimeId) throws SQLException {
         List<SeatCell> list = new ArrayList<>();

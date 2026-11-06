@@ -194,6 +194,15 @@ public class OnlineBookingService {
                 && email.trim().equalsIgnoreCase(booking.getCustomerEmail());
     }
 
+    public String getRoomType(int showtimeId) {
+        try {
+            return bookingDAO.getRoomType(showtimeId);
+        } catch (SQLException e) {
+            LOG.log(Level.WARNING, "getRoomType lỗi", e);
+            return null;
+        }
+    }
+
     /** Sơ đồ ghế của suất chiếu. */
     public List<SeatCell> getSeatMap(int showtimeId) {
         try {

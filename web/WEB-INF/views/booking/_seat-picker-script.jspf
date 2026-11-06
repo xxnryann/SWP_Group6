@@ -22,20 +22,6 @@
     hasAnyPrice = true;
   });
 
-  /* Cac hang co so nut khac nhau (hang ghe doi ngan hon) -> dua ve cung do rong de chu cai A-E thang cot;
-     ghe cua hang ngan duoc can giua trong phan con lai. */
-  (function alignRows() {
-    const rows = [...document.querySelectorAll('.seat-row')];
-    if (!rows.length) return;
-    const widths = rows.map(r => r.scrollWidth);
-    const max = Math.max(...widths);
-    rows.forEach((r, i) => {
-      r.style.width = max + 'px';
-      const firstSeat = r.querySelector('.seat');
-      if (firstSeat && max > widths[i]) firstSeat.style.marginLeft = ((max - widths[i]) / 2) + 'px';
-    });
-  })();
-
   function formatVnd(value) {
     return value.toLocaleString('vi-VN');
   }
