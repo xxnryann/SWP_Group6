@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="seat" tagdir="/WEB-INF/tags" %>
 <c:set var="pageTitle" value="Layout ghế · ${room.roomName}"/>
 <%@ include file="../_header.jspf" %>
 <style>
@@ -12,52 +13,10 @@
   .rm-panel h2 { margin: 0 0 4px; font-size: 18px; }
   .rm-panel .sub { color: var(--slate-500); font-size: 13.5px; margin-bottom: 16px; }
 
-  .seatmap { display: flex; flex-direction: column; overflow-x: auto; padding: 12px 8px 20px; gap: 0; width: 100%; align-items: center; }
-  .seatmap-left { display: flex; flex-direction: column; gap: 0; align-items: center; max-width: 1200px; width: 100%; }
-  .screen { width: 100%; text-align: center; color: #fff; padding: 10px 24px; margin-bottom: 28px;
-            background: linear-gradient(180deg, var(--brand), var(--beta)); border-radius: 6px 6px 24px 24px;
-            letter-spacing: 12px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 12px rgba(29,78,216,0.15); }
-  .seatmap-content { display: flex; gap: 0; align-items: stretch; width: 100%; justify-content: center; padding-left: 100px; }
-  .seatmap-rows { display: flex; flex-direction: column; gap: 14px; }
-  .seat-row { display: flex; gap: 8px; align-items: center; }
-  .row-label { width: 32px; font-weight: 800; text-align: center; color: var(--slate-500); font-size: 15px; }
-  .seatmap-right { display: flex; flex-direction: column; margin-left: 18px; gap: 14px; min-width: 220px; }
-  .seatmap-right .row-tools-wrapper { display: flex; align-items: center; min-height: 54px; }
-  .row-tools-wrapper form { display: flex; gap: 8px; align-items: center; }
-  .row-tools-wrapper select { padding: 7px 10px; font: 13px var(--font); border: 1px solid var(--slate-300); border-radius: 7px; background: #fff; min-width: 140px; }
-  .row-tools-wrapper button { padding: 7px 14px; font-size: 13px; border-radius: 7px; white-space: nowrap; }
-
-  .seat { position: relative; display: inline-block; cursor: pointer; }
-  .seat input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-  .seat span { display: block; width: 52px; height: 46px; line-height: 42px; text-align: center; border-radius: 12px 12px 5px 5px;
-               border: 2px solid var(--slate-300); font: 700 13px/42px var(--font); background: #fff; color: var(--slate-700);
-               transition: transform .08s, background .12s; }
-  .seat:hover span { transform: translateY(-2px); }
-  .seat.t-Unassigned span { background: #f1f5f9; border-color: var(--slate-400); color: var(--slate-600); }
-  .seat.t-Standard span { background: #ecfdf5; border-color: var(--success); color: #065f46; }
-  .seat.t-VIP span { background: #fef3c7; border-color: var(--accent); color: #92400e; }
-  .seat.t-Couple span { background: #fce7f3; border-color: #db2777; color: #9d174d; }
-  .seat.couple-left { margin-right: -8px; }
-  .seat.couple-left span { border-radius: 12px 0 0 5px; width: 56px; border-right-width: 1px; }
-  .seat.couple-right span { border-radius: 0 12px 5px 0; width: 56px; border-left-width: 1px; }
-  .seat.maint span { background: var(--slate-200); border-color: var(--slate-400); color: var(--slate-500);
-                     background-image: repeating-linear-gradient(45deg, transparent 0 5px, rgba(100,116,139,.25) 5px 7px); }
-  .seat input:checked + span { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 3px rgba(29,78,216,.30); background-image: none; }
-
-  .aisle-right { display: flex; align-items: center; justify-content: center; width: 58px;
-                 background: var(--slate-100); border: 2px dashed var(--slate-300); border-radius: 10px; color: var(--slate-500);
-                 font-size: 13px; font-weight: 700; letter-spacing: 1.5px; writing-mode: vertical-rl; text-orientation: mixed;
-                 margin-left: 18px; padding: 20px 0; align-self: stretch; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-  @media (max-width: 1280px) { .aisle-right { width: 42px; font-size: 11px; margin-left: 14px; } }
-
-  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 6px 0 20px; font-size: 13px; color: var(--slate-600); justify-content: center; }
-  .legend i { display: inline-block; width: 20px; height: 18px; border-radius: 5px; border: 2px solid; vertical-align: -3px; margin-right: 7px; }
-  .legend .l-una { background: #f1f5f9; border-color: var(--slate-400); }
-  .legend .l-std { background: #ecfdf5; border-color: var(--success); }
-  .legend .l-vip { background: #fef3c7; border-color: var(--accent); }
-  .legend .l-cpl { background: #fce7f3; border-color: #db2777; }
-  .legend .l-mnt { background: var(--slate-200); border-color: var(--slate-400); }
-  .legend .l-sel { background: var(--brand); border-color: var(--brand); }
+  .row-tools { flex: none; display: flex; gap: 8px; align-items: center; }
+  .row-tools select { padding: 5px 8px; font: 13px var(--font); border: 1px solid var(--slate-300); border-radius: 7px; background: #fff; min-width: 130px; }
+  .row-tools button { padding: 5px 12px; font-size: 13px; border-radius: 7px; white-space: nowrap; }
+  .rm-okbox { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; border-radius: var(--radius); padding: 10px 14px; font-size: 13.5px; margin-bottom: 12px; }
 
   .maint-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
   .maint-bar .count { color: var(--slate-500); font-size: 13.5px; }
@@ -106,65 +65,72 @@
             <div class="rm-empty">Phòng chưa có layout ghế. Hãy thiết lập layout ở phần bên dưới.</div>
           </c:when>
           <c:otherwise>
-            <div class="legend">
+            <div class="sp-legend">
               <span><i class="l-una"></i>Chưa chọn loại</span>
-              <span><i class="l-std"></i>Ghế thường</span>
+              <span><i></i>Ghế thường</span>
               <span><i class="l-vip"></i>Ghế VIP</span>
               <span><i class="l-cpl"></i>Ghế đôi (cặp)</span>
               <span><i class="l-mnt"></i>Đang bảo trì</span>
               <span><i class="l-sel"></i>Đã chọn</span>
             </div>
-            <div class="seatmap">
-              <div class="seatmap-left">
-                <div class="screen">MÀN HÌNH</div>
-                <div class="seatmap-content">
-                  <div class="seatmap-rows">
-                    <c:forEach var="row" items="${seatRows}">
-                      <div class="seat-row">
-                        <div class="row-label"><c:out value="${row.key}"/></div>
-                        <c:forEach var="s" items="${row.value}">
-                          <label class="seat t-${s.seatTypeName}${s.couple ? (s.seatNumber % 2 == 1 ? ' couple-left' : ' couple-right') : ''}${s.maintenance ? ' maint' : ''}"
-                                 title="${s.label} · ${s.seatTypeName}${s.maintenance ? ' · đang bảo trì' : ''}">
-                            <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm"
-                                   <c:if test="${s.pairSeatId != null}">data-pair="${s.pairSeatId}"</c:if>>
-                            <span>${s.label}</span>
-                          </label>
+            <seat:plan variant="${planVariant}">
+              <c:remove var="prevType"/>
+              <c:forEach var="row" items="${seatRows}">
+                <c:set var="rowType" value="${row.value[0].seatTypeName}"/>
+                <c:if test="${rowType != prevType}"><seat:rowDivider type="${rowType}" variant="${planVariant}"/></c:if>
+                <c:set var="prevType" value="${rowType}"/>
+                <div class="sp-line" data-row="${row.key}">
+                  <div class="seat-row row-${rowType}">
+                    <span class="row-label"><c:out value="${row.key}"/></span>
+                    <c:forEach var="s" items="${row.value}">
+                      <c:set var="isAisle" value="${s.couple ? coupleAisles.contains(s.seatNumber) : fixedLayout && (s.seatNumber == aisleFromStart || (aisleFromEnd > 0 && s.seatNumber == row.value.size() - aisleFromEnd))}"/>
+                      <c:set var="useWings" value="${planVariant == '3d' && !s.couple}"/>
+                      <c:set var="opensPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 1 : s.seatNumber % 4 == 1)}"/>
+                      <c:set var="closesPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 0 : (s.seatNumber % 4 == 0 || s.seatNumber == row.value.size()))}"/>
+                      <c:if test="${opensPod}"><seat:podOpen row="${row.key}" number="${s.seatNumber}" couple="${s.couple}" seatType="${s.seatTypeName}" zone="${seatZones[s.label]}"/></c:if>
+                      <c:if test="${useWings && s.seatNumber == 1}"><div class="sp-block sp-wing-l"></c:if>
+                      <label class="seat t-${s.seatTypeName}${s.couple ? (s.seatNumber % 2 == 1 ? ' pair-l' : ' pair-r') : ''}${s.maintenance ? ' maint' : ''}"
+                             title="${s.label} · ${s.seatTypeName}${s.maintenance ? ' · đang bảo trì' : ''}"
+                             data-zone="${seatZones[s.label]}">
+                        <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm" aria-label="${s.label}"
+                               <c:if test="${s.pairSeatId != null}">data-pair="${s.pairSeatId}"</c:if>>
+                        <span>${s.couple || planVariant != '' ? s.label : s.seatNumber}</span>
+                      </label>
+                      <c:if test="${closesPod}"></div></c:if>
+                      <c:if test="${useWings && isAisle}"></div></c:if>
+                      <c:if test="${isAisle}"><span class="sp-gap"></span></c:if>
+                      <c:if test="${useWings && isAisle}"><div class="sp-block ${s.seatNumber == 3 ? 'sp-center' : 'sp-wing-r'}"></c:if>
+                      <c:if test="${useWings && s.seatNumber == row.value.size()}"></div></c:if>
+                    </c:forEach>
+                    <span class="row-label"><c:out value="${row.key}"/></span>
+                  </div>
+                  <c:if test="${!fixedLayout}">
+                    <form class="row-tools" method="post" action="${ctx}/admin/seats">
+                      <input type="hidden" name="_csrf" value="${csrf}">
+                      <input type="hidden" name="action" value="rowType">
+                      <input type="hidden" name="roomId" value="${room.roomId}">
+                      <input type="hidden" name="row" value="<c:out value='${row.key}'/>">
+                      <select name="typeId" aria-label="Loại ghế hàng ${row.key}">
+                        <c:choose>
+                          <c:when test="${rowType == 'Unassigned'}">
+                            <option value="" disabled selected>Chọn loại ghế</option>
+                          </c:when>
+                          <c:otherwise>
+                            <option value="" disabled>Chọn loại ghế</option>
+                          </c:otherwise>
+                        </c:choose>
+                        <c:forEach var="t" items="${seatTypes}">
+                          <c:if test="${t.typeName != 'Unassigned'}">
+                            <option value="${t.seatTypeId}" ${t.seatTypeId == row.value[0].seatTypeId ? 'selected' : ''}><c:out value="${t.typeName}"/></option>
+                          </c:if>
                         </c:forEach>
-                      </div>
-                    </c:forEach>
-                  </div>
-                  <div class="aisle-right">LỐI ĐI</div>
-                  <div class="seatmap-right">
-                    <c:forEach var="row" items="${seatRows}">
-                      <div class="row-tools-wrapper">
-                        <form method="post" action="${ctx}/admin/seats">
-                          <input type="hidden" name="_csrf" value="${csrf}">
-                          <input type="hidden" name="action" value="rowType">
-                          <input type="hidden" name="roomId" value="${room.roomId}">
-                          <input type="hidden" name="row" value="<c:out value='${row.key}'/>">
-                          <select name="typeId" aria-label="Loại ghế hàng ${row.key}">
-                            <c:choose>
-                              <c:when test="${row.value[0].seatTypeName == 'Unassigned'}">
-                                <option value="" disabled selected>Chọn loại ghế</option>
-                              </c:when>
-                              <c:otherwise>
-                                <option value="" disabled>Chọn loại ghế</option>
-                              </c:otherwise>
-                            </c:choose>
-                            <c:forEach var="t" items="${seatTypes}">
-                              <c:if test="${t.typeName != 'Unassigned'}">
-                                <option value="${t.seatTypeId}" ${t.seatTypeId == row.value[0].seatTypeId ? 'selected' : ''}><c:out value="${t.typeName}"/></option>
-                              </c:if>
-                            </c:forEach>
-                          </select>
-                          <button class="btn btn-soft" type="submit">Đổi loại</button>
-                        </form>
-                      </div>
-                    </c:forEach>
-                  </div>
+                      </select>
+                      <button class="btn btn-soft" type="submit">Đổi loại</button>
+                    </form>
+                  </c:if>
                 </div>
-              </div>
-            </div>
+              </c:forEach>
+            </seat:plan>
 
             <form id="maintForm" method="post" action="${ctx}/admin/seats">
               <input type="hidden" name="_csrf" value="${csrf}">
@@ -181,6 +147,31 @@
       </div>
 
       <%-- ================= Thiết lập layout ================= --%>
+      <c:choose>
+        <c:when test="${fixedLayout}">
+          <div class="rm-panel">
+            <h2>Layout cố định của rạp ${room.roomType}</h2>
+            <p class="sub">${fixedSummary}</p>
+            <c:choose>
+              <c:when test="${layoutMatchesFixed}">
+                <div class="rm-okbox">Phòng đang dùng đúng layout chuẩn ${room.roomType}.</div>
+              </c:when>
+              <c:otherwise>
+                <div class="rm-warnbox">
+                  Phòng đang có ${seatTotal} ghế, chưa đúng layout chuẩn ${room.roomType}. Áp dụng sẽ giữ nguyên các ghế còn dùng và lịch sử vé.
+                  Hệ thống từ chối nếu ghế cần đổi loại đang có vé còn hiệu lực.
+                </div>
+                <form method="post" action="${ctx}/admin/seats">
+                  <input type="hidden" name="_csrf" value="${csrf}">
+                  <input type="hidden" name="action" value="applyFixed">
+                  <input type="hidden" name="roomId" value="${room.roomId}">
+                  <button class="btn btn-cta" type="submit">Áp dụng layout chuẩn ${room.roomType}</button>
+                </form>
+              </c:otherwise>
+            </c:choose>
+          </div>
+        </c:when>
+        <c:otherwise>
       <div class="rm-panel">
         <h2>Thiết lập layout ghế</h2>
         <c:if test="${seatTotal > 0}">
@@ -224,6 +215,8 @@
           </c:forEach>
         </template>
       </div>
+        </c:otherwise>
+      </c:choose>
         </div>
       </div>
     </div>
@@ -259,6 +252,7 @@
   /* ---------- form layout: tổng số ghế, hàng × cột (hàng cuối nhận phần còn lại), loại ghế theo từng hàng ---------- */
   var totalIn = document.getElementById('f-total');
   var rowsIn = document.getElementById('f-rows'), colsIn = document.getElementById('f-cols');
+  if (!rowsIn) return;
   var box = document.getElementById('rowTypeBox'), hidden = document.getElementById('rowTypes');
   var tpl = document.getElementById('typeTpl'), err = document.getElementById('layoutErr');
   var sum = document.getElementById('layoutSum');
