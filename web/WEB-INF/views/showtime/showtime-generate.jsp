@@ -31,7 +31,7 @@
     <div class="movie-form-grid">
       <div class="field">
         <label for="openTime">Giờ bắt đầu suất đầu tiên</label>
-        <input id="openTime" name="openTime" type="time" step="900" value="${openTime}"
+        <input id="openTime" name="openTime" type="time" step="300" value="${openTime}"
                min="${openTime}" max="${closeTime}">
       </div>
       <div class="field">

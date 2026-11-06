@@ -177,7 +177,7 @@ public class ShowtimeDAO {
             }
 
             LocalDateTime now = LocalDateTime.now();
-            LocalTime earliest = ShowtimeRules.earliestStartFor(date, now);
+            LocalTime earliest = roundUpToGrid(ShowtimeRules.earliestStartFor(date, now));
             List<LocalTime> available = new ArrayList<>();
             for (LocalTime candidate = earliest;
                     !candidate.isAfter(ShowtimeRules.CLOSE_TIME);
@@ -191,8 +191,9 @@ public class ShowtimeDAO {
                 for (int i = 0; i < existingStarts.size(); i++) {
                     LocalDateTime existingStart = existingStarts.get(i);
                     LocalDateTime existingEnd = existingStart.plusMinutes(existingDurations.get(i));
-                    if (start.isBefore(existingEnd.plusMinutes(ShowtimeRules.TURNOVER_MINUTES))
-                            && end.plusMinutes(ShowtimeRules.TURNOVER_MINUTES).isAfter(existingStart)) {
+                    if (start.isBefore(existingEnd.plusMinutes(
+                                    ShowtimeRules.turnoverFor(existingDurations.get(i))))
+                            && end.plusMinutes(ShowtimeRules.turnoverFor(duration)).isAfter(existingStart)) {
                         roomAvailable = false;
                         break;
                     }
@@ -203,6 +204,16 @@ public class ShowtimeDAO {
             }
             return available;
         }
+    }
+
+    private static LocalTime roundUpToGrid(LocalTime time) {
+        LocalTime normalized = time.withSecond(0).withNano(0);
+        int remainder = normalized.getMinute() % ShowtimeRules.GRID_MINUTES;
+        if (time.getSecond() != 0 || time.getNano() != 0 || remainder != 0) {
+            normalized = normalized.plusMinutes(
+                    remainder == 0 ? ShowtimeRules.GRID_MINUTES : ShowtimeRules.GRID_MINUTES - remainder);
+        }
+        return normalized;
     }
 
     /** Các mốc giờ đã bị chiếm trong ngày (dùng để xếp lịch không trùng). */
@@ -409,14 +420,15 @@ public class ShowtimeDAO {
                 + "WHERE s.room_name = ? AND s.status = 'Scheduled' "
                 + "AND s.showtime_id <> ? "
                 + "AND s.starts_at < DATEADD(MINUTE, ?, ?) "
-                + "AND DATEADD(MINUTE, m.duration_minutes + ?, s.starts_at) > ?";
+                + "AND DATEADD(MINUTE, "
+                + "m.duration_minutes + 15 + ((5 - ((m.duration_minutes + 15) % 5)) % 5), "
+                + "s.starts_at) > ?";
         try (PreparedStatement statement = connection.prepareStatement(conflictSql)) {
             statement.setString(1, showtime.getRoomName());
             statement.setInt(2, showtime.getShowtimeId());
-            statement.setInt(3, duration + ShowtimeRules.TURNOVER_MINUTES);
+            statement.setInt(3, ShowtimeRules.blockMinutes(duration));
             statement.setTimestamp(4, Timestamp.valueOf(showtime.getStartsAt()));
-            statement.setInt(5, ShowtimeRules.TURNOVER_MINUTES);
-            statement.setTimestamp(6, Timestamp.valueOf(showtime.getStartsAt()));
+            statement.setTimestamp(5, Timestamp.valueOf(showtime.getStartsAt()));
             try (ResultSet result = statement.executeQuery()) {
                 result.next();
                 if (result.getInt(1) > 0) {
