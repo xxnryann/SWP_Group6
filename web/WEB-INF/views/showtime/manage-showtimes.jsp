@@ -70,7 +70,13 @@
               <c:otherwise>Đã hủy</c:otherwise>
             </c:choose></td>
             <td class="movie-actions">
-              <a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sửa</a>
+              <c:choose>
+                <c:when test="${showtime.lockedByPurchasedTickets}">
+                  <button class="btn btn-soft btn-small" type="button" disabled
+                          title="Suất chiếu đã có ${showtime.purchasedTicketCount} vé được mua">Sửa</button>
+                </c:when>
+                <c:otherwise><a class="btn btn-soft btn-small" href="${escapedEditUrl}">Sửa</a></c:otherwise>
+              </c:choose>
               <form method="post" action="${ctx}/manage/showtimes" onsubmit="return confirm('Bạn có chắc muốn xóa suất chiếu này?');">
                 <input type="hidden" name="_csrf" value="${escapedCsrf}">
                 <input type="hidden" name="action" value="delete">

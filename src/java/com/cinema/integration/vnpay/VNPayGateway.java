@@ -5,7 +5,10 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -231,8 +234,13 @@ public class VNPayGateway {
     /**
      * Chuẩn hoá địa chỉ IP cho đúng định dạng VNPAY yêu cầu.
      *
+     * <p>VNPAY chỉ nhận IPv4 dạng {@code x.x.x.x}. Khi chạy trên Windows,
+     * {@code getRemoteAddr()} trả về IPv6 loopback {@code 0:0:0:0:0:0:0:1}
+     * nên phải quy về {@code 127.0.0.1}, nếu không cổng sẽ báo lỗi
+     * tham số {@code vnp_IpAddr}.</p>
+     *
      * @param clientIp địa chỉ IP của khách hàng
-     * @return địa chỉ IP hợp lệ
+     * @return địa chỉ IPv4 hợp lệ
      */
     public static String normalizeIp(String clientIp) {
         if (clientIp == null || clientIp.trim().isEmpty()) {
@@ -246,24 +254,68 @@ public class VNPayGateway {
         if (ip.contains(",")) {
             ip = ip.substring(0, ip.indexOf(','));
         }
+        if (isIpv6Loopback(ip)) {
+            return "127.0.0.1";
+        }
         return ip;
+    }
+
+    /**
+     * Địa chỉ có phải IPv6 loopback không ({@code ::1} hoặc dạng đầy đủ).
+     *
+     * @param ip địa chỉ IP đã cắt khoảng trắng
+     * @return true nếu là IPv6 loopback
+     */
+    private static boolean isIpv6Loopback(String ip) {
+        if ("::1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip)) {
+            return true;
+        }
+        // Dạng rút gọn khác của loopback, vd "0:0:0:0:0:0:0:1%0".
+        return ip.startsWith("::1") || ip.startsWith("0:0:0:0:0:0:0:1");
     }
 
     /**
      * Ghép các tham số thành query string đã URL-encode.
      *
+     * <p>Tham số được xuất theo <b>thứ tự tên tăng dần</b> và
+     * {@code vnp_SecureHash} đặt <b>cuối cùng</b> — đúng thứ tự mẫu
+     * chính thức của VNPAY 2.1.0. Nhờ vậy chuỗi ký và query string
+     * trùng khớp, giảm rủi ro cổng từ chối checksum.</p>
+     *
      * @param params các tham số
      * @return query string
      */
     private static String toQueryString(Map<String, String> params) {
+        List<String> names = new ArrayList<String>(params.keySet());
+        Collections.sort(names);
+
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
+        // vnp_SecureHash luôn đặt cuối cùng, giống mẫu chính thức
+        // (hash tính trên tập tham số đã sort, không gồm chính nó).
+        String hash = null;
+        for (String name : names) {
+            String value = params.get(name);
+            if (value == null || value.isEmpty()) {
+                continue;
+            }
+            if (VNPaySigner.SECURE_HASH_PARAM.equals(name)) {
+                hash = value;
+                continue;
+            }
             if (builder.length() > 0) {
                 builder.append('&');
             }
-            builder.append(VNPaySigner.encode(entry.getKey()))
+            builder.append(VNPaySigner.encode(name))
                     .append('=')
-                    .append(VNPaySigner.encode(entry.getValue()));
+                    .append(VNPaySigner.encode(value));
+        }
+        if (hash != null) {
+            if (builder.length() > 0) {
+                builder.append('&');
+            }
+            builder.append(VNPaySigner.encode(VNPaySigner.SECURE_HASH_PARAM))
+                    .append('=')
+                    .append(VNPaySigner.encode(hash));
         }
         return builder.toString();
     }

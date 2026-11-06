@@ -40,10 +40,23 @@
                      value="${combo.price}">
             </div>
             <div class="field">
-              <label for="f-stock">Tồn kho</label>
-              <input id="f-stock" type="number" name="stock" min="0" required
-                     value="${combo.stock}">
+              <label for="f-image">Ảnh minh họa (URL)</label>
+              <input id="f-image" type="url" name="imageUrl" maxlength="500"
+                     placeholder="https://example.com/combo.jpg"
+                     value="<c:out value='${combo.imageUrl}'/>">
             </div>
+          </div>
+          <div class="field">
+            <c:choose>
+              <c:when test="${combo.hasImage()}">
+                <img id="image-preview" src="<c:out value='${combo.imageUrl}'/>" alt="Ảnh minh họa combo"
+                     style="max-width:220px;max-height:140px;border-radius:10px;object-fit:cover">
+              </c:when>
+              <c:otherwise>
+                <img id="image-preview" alt="Xem trước ảnh" hidden
+                     style="max-width:220px;max-height:140px;border-radius:10px;object-fit:cover">
+              </c:otherwise>
+            </c:choose>
           </div>
 
           <div class="field">
@@ -65,7 +78,18 @@
     </div>
   </section>
 </main>
+<script>
+  (function () {
+    var input = document.getElementById('f-image');
+    var preview = document.getElementById('image-preview');
+    if (!input || !preview) return;
+    input.addEventListener('input', function () {
+      var value = input.value.trim();
+      preview.src = value;
+      preview.hidden = !value;
+    });
+    preview.addEventListener('error', function () { preview.hidden = true; });
+  })();
+</script>
 <%@ include file="../_footer.jspf" %>
-
-
 

@@ -10,7 +10,10 @@
       <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Quản lý phim</h1>
     </div>
-    <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">Thêm phim</a>
+    <div>
+      <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">Thêm phim</a>
+      <a class="btn btn-outline" href="${ctx}/manage/genres">Quản lý thể loại</a>
+    </div>
   </section>
   <form class="panel movie-manage-filters" method="get" action="${ctx}/manage/movies">
     <label>Trạng thái

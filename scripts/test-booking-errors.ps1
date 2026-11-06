@@ -52,33 +52,44 @@ $holdPage = Invoke-WebRequest -Uri $seat.url -WebSession $session -UseBasicParsi
 Assert-Test ($holdPage.Content -match ('class="seat YELLOW"[^>]*data-id="' + $firstSeatId + '"')) `
     "ghe $firstSeatId dang duoc giu (YELLOW)"
 
-$mockUrl = Get-MockPaymentUrl -Session $session -BaseUrl $BaseUrl
-Assert-Test ($mockUrl.AbsolutePath -like '*/mock/payment*') 'den cong gia lap'
+# Cong thanh toan dang dung: cong gia lap noi bo hay cong VNPAY that?
+# Buoc A va C can tuong tac voi cong (huy / thanh toan) => chi chay duoc
+# voi cong gia lap. Khi dung cong VNPAY that, hai buoc nay bi BO QUA.
+$gatewayUrl = Get-PaymentGatewayUrl -Session $session -BaseUrl $BaseUrl
+$isMockGateway = Test-IsMockGatewayUrl -Uri $gatewayUrl
+Write-Host "  cong thanh toan: $gatewayUrl"
 
-# Chon "Huy" -> cong gia lap chuyen ve voi vnp_ResponseCode != 00
-$cancelReturn = Invoke-MockPayment -Session $session -MockUrl $mockUrl.AbsoluteUri -Decision 'cancel'
-Write-Host "  cong tra ve: $cancelReturn"
-Assert-Test ($cancelReturn -match 'vnp_ResponseCode=(?!00)') 'cong bao giao dich khong thanh cong'
+if (-not $isMockGateway) {
+    Write-Host '  [INFO] dang dung cong VNPAY that - BO QUA buoc A (hu tren cong) va C (thanh toan trung lap).' -ForegroundColor Yellow
+    Write-Host '         Hai buoc nay can thao tac tren trinh duyet cua VNPAY.' -ForegroundColor Yellow
+} else {
+    Assert-Test $true 'den cong gia lap'
 
-# Phai theo chinh redirect cua cong de server xu ly ket qua huy.
-$cancelCallback = Invoke-WebRequest -Uri $cancelReturn -WebSession $session -UseBasicParsing -MaximumRedirection 5
-Assert-Test ($cancelCallback.BaseResponse.ResponseUri.AbsolutePath -like '*/booking/cancel-result*') `
-    "server xu ly huy -> chuyen toi trang ket qua (thuoc: $($cancelCallback.BaseResponse.ResponseUri.AbsolutePath))"
+    # Chon "Huy" -> cong gia lap chuyen ve voi vnp_ResponseCode != 00
+    $cancelReturn = Invoke-MockPayment -Session $session -MockUrl $gatewayUrl.AbsoluteUri -Decision 'cancel'
+    Write-Host "  cong tra ve: $cancelReturn"
+    Assert-Test ($cancelReturn -match 'vnp_ResponseCode=(?!00)') 'cong bao giao dich khong thanh cong'
 
-$cancelPage = Invoke-WebRequest -Uri "$BaseUrl/booking/cancel-result" -WebSession $session -UseBasicParsing
-Assert-Test ($cancelPage.StatusCode -eq 200) 'mo duoc trang ket qua huy'
-Assert-Test ($cancelPage.Content.Contains(([char]0x0111 + [char]0x00E3))) `
-    'trang ket qua huy co thong bao tieng Viet'
+    # Phai theo chinh redirect cua cong de server xu ly ket qua huy.
+    $cancelCallback = Invoke-WebRequest -Uri $cancelReturn -WebSession $session -UseBasicParsing -MaximumRedirection 5
+    Assert-Test ($cancelCallback.BaseResponse.ResponseUri.AbsolutePath -like '*/booking/cancel-result*') `
+        "server xu ly huy -> chuyen toi trang ket qua (thuoc: $($cancelCallback.BaseResponse.ResponseUri.AbsolutePath))"
 
-# Ghe phai duoc tra ve GREEN ngay sau khi huy (GBR-01).
-# Kiem tra o day truoc khi buoc C giu lai ghe, neu khong se khong phan biet
-# "ghe chua duoc tra" voi "ghe dang bi giu boi buoc sau".
-$seatPage = Invoke-WebRequest -Uri $seat.url -WebSession $session -UseBasicParsing
-$stillGreen = $false
-if ($seatPage.Content -match ('class="seat GREEN"[^>]*data-id="' + $firstSeatId + '"')) {
-    $stillGreen = $true
+    $cancelPage = Invoke-WebRequest -Uri "$BaseUrl/booking/cancel-result" -WebSession $session -UseBasicParsing
+    Assert-Test ($cancelPage.StatusCode -eq 200) 'mo duoc trang ket qua huy'
+    Assert-Test ($cancelPage.Content.Contains(([char]0x0111 + [char]0x00E3))) `
+        'trang ket qua huy co thong bao tieng Viet'
+
+    # Ghe phai duoc tra ve GREEN ngay sau khi huy (GBR-01).
+    # Kiem tra o day truoc khi buoc C giu lai ghe, neu khong se khong phan biet
+    # "ghe chua duoc tra" voi "ghe dang bi giu boi buoc sau".
+    $seatPage = Invoke-WebRequest -Uri $seat.url -WebSession $session -UseBasicParsing
+    $stillGreen = $false
+    if ($seatPage.Content -match ('class="seat GREEN"[^>]*data-id="' + $firstSeatId + '"')) {
+        $stillGreen = $true
+    }
+    Assert-Test $stillGreen "ghe $firstSeatId da duoc tra ve trang thai GREEN"
 }
-Assert-Test $stillGreen "ghe $firstSeatId da duoc tra ve trang thai GREEN"
 
 # =====================================================================
 Write-Step 'B. WEBHOOK SAI CHU KY'
@@ -117,7 +128,12 @@ if (-not $seat.ids) {
 }
 Invoke-HoldSeats -Session $session -SeatsUrl $seat.url -ShowtimeId $showtimeId -SeatIds $seat.ids
 
-$mockUrl = Get-MockPaymentUrl -Session $session -BaseUrl $BaseUrl
+$mockUrl = Get-PaymentGatewayUrl -Session $session -BaseUrl $BaseUrl
+if (-not (Test-IsMockGatewayUrl -Uri $mockUrl)) {
+    Write-Host '  [INFO] dang dung cong VNPAY that - BO QUA buoc C (thanh toan trung lap) va D (ghe chuyen RED).' -ForegroundColor Yellow
+    Write-Host '         Can thao tac thanh toan tren trinh duyet cua VNPAY truoc.' -ForegroundColor Yellow
+    exit (Write-Result)
+}
 $txnRef = ([regex]::Match($mockUrl.Query, 'vnp_TxnRef=([^&]+)')).Groups[1].Value
 Assert-Test ([bool]$txnRef) "ma don: $txnRef"
 

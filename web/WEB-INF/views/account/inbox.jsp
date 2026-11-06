@@ -60,6 +60,10 @@
                 <c:set var="itemClass" value="is-success"/>
                 <c:set var="itemTitle" value="${n.subject}"/>
               </c:when>
+              <c:when test="${n.notif_type == 'ReviewModerated'}">
+                <c:set var="itemClass" value=""/>
+                <c:set var="itemTitle" value="${n.subject}"/>
+              </c:when>
               <c:when test="${n.notif_type == 'NewMovie'}">
                 <c:set var="itemClass" value=""/>
                 <c:set var="itemTitle" value="${n.title}"/>
@@ -117,6 +121,9 @@
                     <c:when test="${n.can_review == 1}"><p><a class="btn btn-primary btn-small" href="${ctx}/movies/detail?id=${n.movie_id}#reviews">Đánh giá ngay</a></p></c:when>
                     <c:otherwise><p class="inbox-meta">Bạn đã đánh giá phim này hoặc phim không còn nhận đánh giá.</p></c:otherwise>
                   </c:choose>
+                </c:when>
+                <c:when test="${n.notif_type == 'ReviewModerated'}">
+                  <p><c:out value="${n.body}"/></p>
                 </c:when>
                 <c:otherwise>
                   <c:choose>

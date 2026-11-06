@@ -21,10 +21,6 @@
               -webkit-box-orient: vertical; overflow: hidden; }
   .uip-price { color: var(--cta); font-weight: 800; font-size: 22px; }
   .uip-price-wrap small { color: var(--slate-500); font-weight: 600; font-size: 13px; }
-  .uip-stock { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
-  .uip-stock-ok { background: #d1fae5; color: var(--success); }
-  .uip-stock-low { background: #fef3c7; color: #b45309; }
-  .uip-stock-out { background: #fee2e2; color: var(--danger); }
   .uip-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
   .uip-badge-on { background: #dbeafe; color: var(--brand); }
   .uip-badge-off { background: var(--slate-200); color: var(--slate-600); }
@@ -53,7 +49,14 @@
       <div class="uip-grid">
         <c:forEach var="c" items="${comboList}">
           <article class="uip-ccard">
-            <div class="uip-top">🍿
+            <div class="uip-top">
+              <c:choose>
+                <c:when test="${c.hasImage()}">
+                  <img src="<c:out value='${c.imageUrl}'/>" alt="<c:out value='${c.comboName}'/>"
+                       style="width:100%;height:110px;object-fit:cover;border-radius:10px">
+                </c:when>
+                <c:otherwise>🍿</c:otherwise>
+              </c:choose>
               <span class="uip-status">
                 <c:choose>
                   <c:when test="${c.active}"><span class="uip-badge uip-badge-on">Đang bán</span></c:when>
@@ -65,13 +68,6 @@
               <h3><c:out value="${c.comboName}"/></h3>
               <p class="uip-desc"><c:out value="${c.description}"/></p>
               <div class="uip-price-wrap"><span class="uip-price">${c.priceLabel}</span> <small>VNĐ</small></div>
-              <div>
-                <c:choose>
-                  <c:when test="${c.stock == 0}"><span class="uip-stock uip-stock-out">Hết hàng</span></c:when>
-                  <c:when test="${c.stock <= 10}"><span class="uip-stock uip-stock-low">Sắp hết · còn ${c.stock}</span></c:when>
-                  <c:otherwise><span class="uip-stock uip-stock-ok">Còn ${c.stock} phần</span></c:otherwise>
-                </c:choose>
-              </div>
               <div class="uip-actions">
                 <a class="btn btn-soft" href="${ctx}/staff/combo?action=edit&id=${c.comboId}">Sửa</a>
                 <form method="post" action="${ctx}/staff/combo"
@@ -93,6 +89,4 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
-
-
 

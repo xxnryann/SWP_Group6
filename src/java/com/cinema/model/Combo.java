@@ -13,6 +13,7 @@ public class Combo {
     private String description;
     private BigDecimal price;
     private int stock;
+    private String imageUrl;
     private String status; // "Active" | "Hidden" (đúng CHECK trong DB)
 
     public int getComboId() { return comboId; }
@@ -32,6 +33,10 @@ public class Combo {
 
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public boolean hasImage() { return imageUrl != null && !imageUrl.trim().isEmpty(); }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

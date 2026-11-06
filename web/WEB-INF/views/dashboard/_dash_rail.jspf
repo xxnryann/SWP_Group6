@@ -13,7 +13,7 @@
       <a href="${ctx}/dashboard/manager">Tổng quan</a>
       <a href="${ctx}/manage/movies">Quản lý phim</a>
 
-      <a href="${ctx}/manage/genres">Quản lý thể loại</a>
+      <a href="${ctx}/manage/reviews">Kiểm duyệt đánh giá</a>
       <a href="${ctx}/manage/showtimes">Lịch chiếu</a>
       <a href="${ctx}/manager/news">Quản lý tin tức</a>
       <a href="${ctx}/manager/vouchers">Voucher</a>

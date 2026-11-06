@@ -135,7 +135,8 @@ GO
 INSERT dbo.SeatType(type_name, is_couple, description) VALUES
     (N'Standard', 0, N'Ghế thường'),
     (N'VIP', 0, N'Ghế VIP'),
-    (N'Couple', 1, N'Ghế đôi (đặt theo cặp)');
+    (N'Couple', 1, N'Ghế đôi (đặt theo cặp)'),
+    (N'Unassigned', 0, N'Chưa chọn loại ghế (cần admin thiết lập)');   -- mặc định cho ghế của phòng mới tạo
 GO
 
 -- 4 phong x 5 hang x 10 ghe = 200 ghe. Hang A-C: Standard, D: VIP, E: Couple.
@@ -198,7 +199,7 @@ INSERT dbo.Voucher(code, description, discount_type, discount_value, max_discoun
 GO
 
 INSERT dbo.MyPointConfig(earn_rate_percent, point_value_vnd, max_redeem_percent, effective_from, is_active, updated_by) VALUES
-    (5.00, 1000, 20.00, '2026-10-18', 1, 2);
+    (5.00, 1000, 100.00, '2026-10-18', 1, 2);
 GO
 
 -- ---------- Luồng 5. Lịch chiếu ----------

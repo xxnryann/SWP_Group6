@@ -28,6 +28,13 @@
       <div class="movie-detail-copy">
         <p class="eyebrow">CHI TIẾT PHIM</p>
         <h1><c:out value="${movie.title}"/></h1>
+        <c:if test="${reviewStats.review_count > 0}">
+          <div class="movie-rating-highlight" aria-label="Điểm đánh giá phim">
+            <span class="movie-rating-stars">★</span>
+            <strong><c:out value="${reviewStats.avg_rating}"/>/5</strong>
+            <span>(<c:out value="${reviewStats.review_count}"/> lượt đánh giá)</span>
+          </div>
+        </c:if>
         <c:if test="${not empty movie.originalTitle}"><p class="movie-original-title"><c:out value="${movie.originalTitle}"/></p></c:if>
         <div class="movie-detail-badges">
           <span class="badge"><c:out value="${movie.ageRating}"/></span>
@@ -151,6 +158,5 @@
 
 <script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="../_footer.jspf" %>
-
 
 

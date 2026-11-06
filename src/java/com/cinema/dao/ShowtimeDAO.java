@@ -24,7 +24,9 @@ public class ShowtimeDAO {
     }
 
     private static final String SELECT_COLUMNS = "s.showtime_id, s.movie_id, m.title AS movie_title, "
-            + "m.duration_minutes, s.room_name, s.starts_at, s.status ";
+            + "m.duration_minutes, s.room_name, s.starts_at, s.status, "
+            + "(SELECT COUNT(*) FROM dbo.Ticket t WHERE t.showtime_id = s.showtime_id "
+            + "AND t.status IN ('Booked', 'Used')) AS purchased_ticket_count ";
     private static final String SELECT_FROM = "FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id ";
 
     public List<ShowtimeMovieGroup> findForDate(LocalDate date) throws SQLException {
@@ -311,6 +313,9 @@ public class ShowtimeDAO {
                             + " và phim phải kết thúc trước giờ đóng cửa.");
                 }
                 LocalDateTime end = start.plusMinutes(duration);
+                if (showtime.getShowtimeId() > 0 && hasPurchasedTickets(connection, showtime.getShowtimeId())) {
+                    throw new SQLException("Suất chiếu đã có vé được mua, không thể sửa để bảo toàn thông tin vé.");
+                }
                 String sql = showtime.getShowtimeId() == 0
                         ? "INSERT INTO dbo.Showtime "
                                 + "(movie_id, room_id, slot_id, start_time, end_time, status, created_by, "
@@ -337,10 +342,28 @@ public class ShowtimeDAO {
                         statement.executeUpdate();
                     }
                 }
+
                 connection.commit();
             } catch (SQLException | RuntimeException e) {
                 connection.rollback();
                 throw e;
+            }
+        }
+    }
+
+    public boolean hasPurchasedTickets(int showtimeId) throws SQLException {
+        try (Connection connection = DBContext.getConnection()) {
+            return hasPurchasedTickets(connection, showtimeId);
+        }
+    }
+
+    private boolean hasPurchasedTickets(Connection connection, int showtimeId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM dbo.Ticket WHERE showtime_id = ? AND status IN ('Booked', 'Used')";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, showtimeId);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1) > 0;
             }
         }
     }
@@ -472,6 +495,7 @@ public class ShowtimeDAO {
         Timestamp startsAt = result.getTimestamp("starts_at");
         showtime.setStartsAt(startsAt == null ? null : startsAt.toLocalDateTime());
         showtime.setStatus(result.getString("status"));
+        showtime.setPurchasedTicketCount(result.getInt("purchased_ticket_count"));
         return showtime;
     }
 

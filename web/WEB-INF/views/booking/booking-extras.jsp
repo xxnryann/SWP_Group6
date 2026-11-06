@@ -41,6 +41,17 @@
   .uip-payer span { display: block; color: var(--slate-500); font-size: 13px; margin-bottom: 2px; }
   .uip-payer strong { word-break: break-word; }
   .uip-hint { margin: 10px 0 0; font-size: 13px; color: var(--slate-500); }
+  .uip-voucher-list { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  .uip-voucher-list th, .uip-voucher-list td { padding: 8px; border-bottom: 1px solid var(--slate-100); text-align: left; }
+  .uip-voucher-list tbody tr { cursor: pointer; }
+  .uip-voucher-list tbody tr:hover { background: var(--slate-50); }
+  .uip-voucher-code { font-family: ui-monospace, Consolas, monospace; font-weight: 800; color: var(--brand); }
+  .uip-point-value { color: var(--success); font-weight: 700; }
+  .uip-qty-stepper { display: inline-flex; align-items: center; gap: 8px; }
+  .uip-qty-stepper button { width: 30px; height: 30px; border: 1px solid var(--slate-300); border-radius: 50%;
+                            background: #fff; color: var(--brand); font-size: 18px; line-height: 1; cursor: pointer; }
+  .uip-qty-stepper button:hover { background: var(--slate-100); }
+  .uip-qty-value { min-width: 22px; text-align: center; font-weight: 700; }
   .uip-seat-line { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
                    margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--slate-200); }
   .uip-seat-type { font-weight: 800; text-transform: uppercase; }
@@ -91,17 +102,28 @@
               <input type="hidden" name="action" value="updateCombos">
               <div class="table-wrap" style="margin-bottom:14px">
                 <table class="data" style="min-width:0">
-                  <thead><tr><th>Combo</th><th>Giá (VNĐ)</th><th>Tồn kho</th><th>Số lượng</th></tr></thead>
+                  <thead><tr><th>Combo</th><th>Giá (VNĐ)</th><th>Số lượng</th></tr></thead>
                   <tbody>
                     <c:forEach var="cb" items="${combos}">
                       <tr>
-                        <td><strong><c:out value="${cb.comboName}"/></strong></td>
+                        <td>
+                          <c:choose>
+                            <c:when test="${cb.hasImage()}"><img src="<c:out value='${cb.imageUrl}'/>"
+                              alt="<c:out value='${cb.comboName}'/>" style="width:52px;height:52px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:8px"></c:when>
+                            <c:otherwise><span style="font-size:28px;vertical-align:middle;margin-right:8px">🍿</span></c:otherwise>
+                          </c:choose>
+                          <strong><c:out value="${cb.comboName}"/></strong><br>
+                          <small style="color:var(--slate-500)"><c:out value="${cb.description}"/></small>
+                        </td>
                         <td>${cb.priceLabel}</td>
-                        <td>${cb.stock}</td>
                         <td>
                           <input type="hidden" name="comboId" value="${cb.comboId}">
-                          <input class="uip-qty" type="number" name="qty" min="0" max="${cb.stock}"
-                                 value="${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}">
+                          <span class="uip-qty-stepper">
+                            <button type="button" data-qty-action="decrease" aria-label="Giảm số lượng">−</button>
+                            <input type="hidden" name="qty" value="${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}">
+                            <span class="uip-qty-value">${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}</span>
+                            <button type="button" data-qty-action="increase" aria-label="Tăng số lượng">+</button>
+                          </span>
                         </td>
                       </tr>
                     </c:forEach>
@@ -113,23 +135,42 @@
           </div>
 
           <div class="card uip-sec">
-            <h2><span class="uip-n">2</span> Voucher &amp; MyPoint</h2>
-            <c:if test="${not empty pointConfig}">
-              <p><em><c:out value="${pointConfig.ruleLabel}"/></em></p>
-            </c:if>
-            <p>Số dư MyPoint của bạn: <strong>${pointBalance}</strong> điểm.</p>
+            <h2><span class="uip-n">2</span> Voucher</h2>
             <form method="post" action="${ctx}/booking/extras" class="uip-inline-form">
               <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="applyDiscount">
+              <input type="hidden" name="action" value="applyVoucher">
               <input type="text" name="voucherCode" placeholder="Mã voucher (nếu có)" maxlength="30">
-              <input type="number" name="points" min="0" max="${pointBalance}" value="0"
-                     placeholder="Điểm muốn dùng">
-              <button class="btn btn-outline" type="submit">Áp dụng giảm giá</button>
+              <button class="btn btn-outline" type="submit">Áp dụng</button>
             </form>
+            <strong style="display:block;margin-top:18px">VOUCHER CỦA BẠN</strong>
+            <table class="uip-voucher-list">
+              <thead><tr><th>Mã voucher</th><th>Nội dung voucher</th><th>Ngày hết hạn</th></tr></thead>
+              <tbody>
+                <c:forEach var="v" items="${vouchers}">
+                  <tr data-voucher-code="<c:out value='${v.code}'/>">
+                    <td class="uip-voucher-code"><c:out value="${v.code}"/></td>
+                    <td><c:out value="${v.description}"/></td>
+                    <td><c:out value="${v.valid_to_txt}"/></td>
+                  </tr>
+                </c:forEach>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card uip-sec">
+            <h2><span class="uip-n">3</span> Điểm</h2>
+            <p>Điểm hiện có: <strong>${pointBalance}</strong></p>
+            <form method="post" action="${ctx}/booking/extras" class="uip-inline-form">
+              <input type="hidden" name="_csrf" value="${csrf}">
+              <input type="hidden" name="action" value="applyPoints">
+              <input id="pointsInput" type="number" name="points" min="0" max="${pointBalance}" value="${booking.pointsUsed}"
+                     placeholder="Nhập điểm">
+              <button class="btn btn-outline" type="submit">Đổi điểm</button>
+            </form>
+            <p>Số tiền được giảm = <span class="uip-point-value" id="pointsDiscountPreview">0</span> VNĐ</p>
+            <p class="uip-hint"><em>Áp voucher sẽ xóa điểm đã dùng, hãy áp voucher trước rồi mới đổi điểm.</em></p>
             <p style="margin-top:12px">Đã giảm: voucher <strong>${booking.voucherDiscountLabel} VNĐ</strong>,
                MyPoint <strong>${booking.pointsDiscountLabel} VNĐ</strong> (${booking.pointsUsed} điểm).</p>
-            <p style="margin-top:6px"><em>Voucher được áp trước, MyPoint áp sau — vì áp voucher sẽ
-               huỷ số điểm đã dùng trước đó.</em></p>
           </div>
         </div>
 
@@ -233,7 +274,39 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') box.hidden = true; });
 })();
 </script>
+<script>
+(function () {
+  document.querySelectorAll('.uip-qty-stepper').forEach(function (stepper) {
+    var input = stepper.querySelector('input[name="qty"]');
+    var output = stepper.querySelector('.uip-qty-value');
+    stepper.addEventListener('click', function (e) {
+      var button = e.target.closest('button[data-qty-action]');
+      if (!button) return;
+      var value = parseInt(input.value || '0', 10);
+      value += button.dataset.qtyAction === 'increase' ? 1 : -1;
+      value = Math.max(0, Math.min(99, value));
+      input.value = value;
+      output.textContent = value;
+    });
+  });
+  var voucherInput = document.querySelector('input[name="voucherCode"]');
+  document.querySelectorAll('[data-voucher-code]').forEach(function (row) {
+    row.addEventListener('click', function () {
+      if (voucherInput) voucherInput.value = row.dataset.voucherCode;
+    });
+  });
+  var pointsInput = document.getElementById('pointsInput');
+  var pointPreview = document.getElementById('pointsDiscountPreview');
+  var pointValue = ${not empty pointConfig ? pointConfig.pointValueVnd : 0};
+  function updatePointPreview() {
+    if (pointsInput && pointPreview) {
+      pointPreview.textContent = (Math.max(0, parseInt(pointsInput.value || '0', 10)) * pointValue).toLocaleString('vi-VN');
+    }
+  }
+  if (pointsInput) {
+    pointsInput.addEventListener('input', updatePointPreview);
+    updatePointPreview();
+  }
+})();
+</script>
 <%@ include file="../_footer.jspf" %>
-
-
-

@@ -98,27 +98,25 @@ public class ComboServlet extends BaseServlet {
             String comboName = Validator.trim(req.getParameter("comboName"));
             String description = Validator.trim(req.getParameter("description"));
             String priceStr = Validator.trim(req.getParameter("price"));
-            String stockStr = Validator.trim(req.getParameter("stock"));
+            String imageUrl = Validator.trim(req.getParameter("imageUrl"));
             String status = Validator.trim(req.getParameter("status"));
 
             String error = null;
             BigDecimal price = null;
-            int stock = 0;
             try {
                 price = new BigDecimal(priceStr);
                 if (price.compareTo(BigDecimal.ZERO) < 0) error = "Giá không được âm.";
-                stock = Integer.parseInt(stockStr);
-                if (stock < 0) error = "Tồn kho không được âm.";
             } catch (NumberFormatException e) {
-                error = "Giá và tồn kho phải là số hợp lệ.";
+                error = "Giá phải là số hợp lệ.";
             }
             if (comboName.isEmpty()) error = "Tên combo là bắt buộc.";
+            if (imageUrl.length() > 500) error = "URL ảnh không được vượt quá 500 ký tự.";
             if (!STATUSES.contains(status)) error = "Trạng thái không hợp lệ.";
 
             if (error != null) {
                 Combo c = new Combo();
                 c.setComboName(comboName); c.setDescription(description);
-                c.setPrice(price); c.setStock(stock); c.setStatus(status);
+                c.setPrice(price); c.setImageUrl(imageUrl); c.setStatus(status);
                 req.setAttribute("combo", c);
                 req.setAttribute("error", error);
                 req.setAttribute("pageTitle", idStr.isEmpty() ? "Thêm combo mới" : "Sửa combo");
@@ -130,7 +128,7 @@ public class ComboServlet extends BaseServlet {
             c.setComboName(comboName);
             c.setDescription(description.isEmpty() ? null : description);
             c.setPrice(price);
-            c.setStock(stock);
+            c.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
             c.setStatus(status);
 
             if (idStr.isEmpty()) {

@@ -174,6 +174,18 @@ public class CounterSaleDAO {
         return bookingDAO.getPointConfig();
     }
 
+    public int getPointBalanceForBooking(int bookingId) throws SQLException {
+        String sql = "SELECT ISNULL(c.my_point_balance, 0) FROM Booking b "
+                + "LEFT JOIN Customer c ON c.customer_id = b.customer_id WHERE b.booking_id = ?";
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, bookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
     public BookingSummary getBookingSummary(int bookingId) throws SQLException {
         BookingSummary s = null;
         String sql =

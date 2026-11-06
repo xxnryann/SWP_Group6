@@ -42,7 +42,6 @@
         </div>
       </c:when>
       <c:otherwise>
-        <c:if test="${canBook}"><p class="st-hint">Bấm vào giờ chiếu để chọn ghế và đặt vé.</p></c:if>
         <div class="st-grid">
           <c:forEach var="group" items="${showtimeGroups}">
             <c:url var="detailUrl" value="/movies/detail"><c:param name="id" value="${group.movie.movieId}"/></c:url>

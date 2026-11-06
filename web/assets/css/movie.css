@@ -25,6 +25,9 @@
 .movie-detail-poster { overflow: hidden; aspect-ratio: 2 / 3; background: var(--slate-100); border-radius: 12px; }
 .movie-detail-poster img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .movie-detail-copy h1 { font-size: clamp(28px, 4vw, 42px); }
+.movie-rating-highlight { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 4px; padding: 8px 14px; border: 1px solid #f4cf55; border-radius: 999px; background: #fff8d9; color: #8a5a00; font-size: 16px; }
+.movie-rating-highlight .movie-rating-stars { color: #f2b400; font-size: 24px; line-height: 1; text-shadow: 0 1px 0 #d99500; }
+.movie-rating-highlight strong { color: #9a6500; font-size: 19px; }
 .movie-original-title { margin: 6px 0 12px; color: var(--slate-500); font-size: 18px; }
 .movie-detail-badges { display: flex; flex-wrap: wrap; gap: 9px; margin: 15px 0; }
 .movie-metadata { display: grid; grid-template-columns: minmax(120px, 160px) 1fr; gap: 7px 14px; }
@@ -245,7 +248,6 @@ body.showtime-modal-open { overflow: hidden; }
 .st-date:hover { background: var(--brand-soft); color: var(--brand); text-decoration: none; }
 .st-date.is-active, .st-date.is-active:hover { background: var(--brand); color: #fff; }
 .st-date.is-active strong { color: #fff; }
-.st-hint { margin-bottom: 14px; color: var(--muted); font-size: 14px; }
 .st-empty { padding: 56px 20px; border: 1px dashed var(--brand-tint-2); border-radius: var(--radius-lg); background: var(--surface); text-align: center; }
 .st-empty h2 { margin-bottom: 6px; font-size: 20px; }
 .st-empty p { color: var(--muted); }
