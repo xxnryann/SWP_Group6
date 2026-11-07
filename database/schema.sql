@@ -1725,6 +1725,18 @@ CREATE TABLE dbo.Review (
 );
 GO
 
+CREATE TABLE dbo.ReviewReport (
+    report_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_ReviewReport PRIMARY KEY,
+    review_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    reason NVARCHAR(200) NOT NULL,
+    created_at DATETIME2(7) NOT NULL CONSTRAINT DF_ReviewReport_Created DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_ReviewReport_Review FOREIGN KEY (review_id) REFERENCES dbo.Review(review_id),
+    CONSTRAINT FK_ReviewReport_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
+    CONSTRAINT UQ_ReviewReport_ReviewCustomer UNIQUE (review_id, customer_id)
+);
+GO
+
 -- ---------- View ----------
 GO
 
