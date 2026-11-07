@@ -6,6 +6,7 @@ import com.cinema.model.SeatRowLegend;
 import com.cinema.model.SeatTypeInfo;
 import com.cinema.service.OnlineBookingService;
 import com.cinema.util.Validator;
+import com.cinema.util.room.RoomRules;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -126,6 +127,13 @@ public final class BookingSession {
                 legendByRow.put(lg.getRowLabel(), lg);
             }
         }
+        String roomType = service.getRoomType(showtimeId);
+        req.setAttribute("planVariant", RoomRules.planVariant(roomType));
+        req.setAttribute("fixedLayout", RoomRules.isFixedLayout(roomType));
+        req.setAttribute("coupleAisles", RoomRules.coupleAisles(roomType));
+        req.setAttribute("aisleFromStart", RoomRules.aisleFromStart(roomType));
+        req.setAttribute("aisleFromEnd", RoomRules.aisleFromEnd(roomType));
+        req.setAttribute("seatZones", RoomRules.seatZones(roomType));
         req.setAttribute("seatRows", rows);
         req.setAttribute("seatTypes", seatTypes);
         req.setAttribute("rowLegendMap", legendByRow);

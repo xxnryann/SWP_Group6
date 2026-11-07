@@ -1,33 +1,7 @@
 <%-- So do ghe dung chung: dat ve online (booking-seats) va ban ve tai quay (counter-seats). --%>
+<%@ taglib prefix="seat" tagdir="/WEB-INF/tags" %>
 <style>
-  .seatmap { display:flex; flex-direction:column; gap:8px; align-items:center; margin:0 0 20px;
-             background:#fff; border:1px solid var(--slate-200); border-radius:16px; box-shadow:var(--shadow);
-             padding:28px 16px 24px; overflow-x:auto; }
   .sm-title { font-size:17px; margin:0 0 10px; }
-  .seat-row { display:flex; gap:10px; align-items:center; }
-  .row-label { width:40px; display:inline-flex; align-items:center; justify-content:center;
-               font-weight:800; color:var(--slate-500); font-size:19px; }
-  .seat { position:relative; width:56px; height:48px; border-radius:14px 14px 6px 6px; border:3px solid var(--slate-300);
-          cursor:pointer; font: 800 14px var(--font); background:#fff; color:var(--slate-700); padding:0;
-          transition: transform .08s, background .12s, border-color .12s; }
-  .seat:hover:not(:disabled) { transform: translateY(-2px); }
-  /* Ghe trong: mau theo LOAI ghe (thuong = xanh la, VIP = cam, doi = hong). Class GREEN/YELLOW/RED/GREY giu nguyen
-     (test script doi khop class). */
-  .seat.GREEN { background:#ecfdf5; border-color:#059669; color:#065f46; }
-  .seat.GREEN[data-type="VIP"] { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
-  .seat.GREEN[data-type="Couple"] { background:#fce7f3; border-color:#db2777; color:#9d174d; }
-  .seat.YELLOW { background:#fef3c7; border-color:var(--accent); color:#92400e; cursor:not-allowed; opacity:.65; }
-  .seat.RED { background:#fee2e2; border-color:#fca5a5; color:#991b1b; cursor:not-allowed; }
-  .seat.GREY { background:var(--slate-100); border-color:var(--slate-200); color:var(--slate-400); cursor:not-allowed; }
-  .seat.selected, .seat.selected[data-type] { background:var(--brand); border-color:var(--brand); color:#fff;
-                   box-shadow: 0 0 0 3px rgba(29,78,216,.30); opacity:1; }
-  /* Ghe doi: hai ghe cua mot cap ghep thanh mot khoi rong dung bang 2 ghe thuong + khe giua (56+10+56 = 2 x 61),
-     nen moi cap thang cot voi hai ghe o hang tren va ca hang dai bang cac hang khac. */
-  .seat.pair-l { width:61px; border-radius:14px 0 0 6px; border-right-width:1.5px; margin-right:-10px; }
-  .seat.pair-r { width:61px; border-radius:0 14px 6px 0; border-left-width:1.5px; }
-  .screen { width:62%; min-width:280px; text-align:center; color:#fff; padding:10px; margin-bottom:22px;
-            background: linear-gradient(180deg, var(--brand), var(--beta)); border-radius:6px 6px 26px 26px;
-            letter-spacing:6px; font-weight:700; font-size:13px; box-shadow: 0 14px 18px -10px rgba(15,23,42,.45); }
   /* ---------- chu thich loai ghe ---------- */
   .sg-types { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin:0 0 22px; }
   .sg-type { border:1px solid var(--slate-200); border-radius:12px; padding:12px 14px; background:#fff; }
@@ -37,9 +11,9 @@
   .sg-type .sg-type-price b { color:var(--brand); font-size:15px; }
   .seat-type-dot { width:10px; height:10px; border-radius:50%; flex:none; display:inline-block;
                     border:2px solid var(--slate-300); background:#fff; }
-  .seat-type-dot.t-Standard { background:#ecfdf5; border-color:#059669; }
-  .seat-type-dot.t-VIP { background:#fef3c7; border-color:#f59e0b; }
-  .seat-type-dot.t-Couple { background:#fce7f3; border-color:#db2777; }
+  .seat-type-dot.t-Standard { background:#f1f5f9; border-color:#94a3b8; }
+  .seat-type-dot.t-VIP { background:#fffbeb; border-color:#fbbf24; }
+  .seat-type-dot.t-Couple { background:#fdf2f8; border-color:#f9a8d4; }
   .sg-empty { color:var(--slate-500); font-size:13.5px; margin:0 0 22px; }
   .uip-note { color: var(--slate-500); font-size: 13.5px; text-align: center; margin: 0 0 6px; }
 </style>
@@ -72,25 +46,51 @@
       </c:choose>
 
       <h2 class="sm-title">Sơ đồ ghế</h2>
-      <div class="seatmap">
-        <div class="screen">MÀN HÌNH</div>
+      <div class="sp-legend">
+        <span><i></i>Ghế thường</span>
+        <span><i class="l-vip"></i>Ghế VIP</span>
+        <span><i class="l-cpl"></i>Ghế đôi</span>
+        <span><i class="l-sel"></i>Đang chọn</span>
+        <span><i class="l-held"></i>Đang giữ</span>
+        <span><i class="l-sold"></i>Đã đặt</span>
+        <span><i class="l-mnt"></i>Bảo trì</span>
+      </div>
+      <seat:plan variant="${planVariant}">
+        <c:remove var="prevType"/>
         <c:forEach var="row" items="${seatRows}">
-          <div class="seat-row">
-            <c:set var="lg" value="${rowLegendMap[row[0].rowLabel]}"/>
-            <span class="row-label"
-                  title="Hàng ${row[0].rowLabel} · ${row[0].seatType} · ${lg.seatRangeLabel} · ${lg.priceLabel} — ${lg.noteLabel}">
-              ${row[0].rowLabel}
-            </span>
-            <c:forEach var="s" items="${row}">
-              <button type="button" class="seat ${s.color}"
-                      title="${s.label} · ${s.seatType} · ${s.statusLabel}"
-                      data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
-                      ${s.available ? '' : 'disabled="disabled"'}
-                      onclick="toggleSeat(this)">${s.label}</button>
-            </c:forEach>
+          <c:if test="${row[0].seatType != prevType}"><seat:rowDivider type="${row[0].seatType}" variant="${planVariant}"/></c:if>
+          <c:set var="prevType" value="${row[0].seatType}"/>
+          <c:set var="lg" value="${rowLegendMap[row[0].rowLabel]}"/>
+          <c:set var="rowTitle" value="Hàng ${row[0].rowLabel} · ${row[0].seatType} · ${lg.seatRangeLabel} · ${lg.priceLabel} — ${lg.noteLabel}"/>
+          <%-- Hang B cua 4DX co ca ghe thuong va VIP nen gia lay tu ghe dau hang se sai; moi ghe da co tooltip rieng. --%>
+          <c:if test="${planVariant == '4dx'}"><c:set var="rowTitle" value="Hàng ${row[0].rowLabel}"/></c:if>
+          <div class="sp-line" data-row="${row[0].rowLabel}">
+            <div class="seat-row row-${row[0].seatType}">
+              <span class="row-label" title="${rowTitle}">${row[0].rowLabel}</span>
+              <c:forEach var="s" items="${row}">
+                <c:set var="isAisle" value="${s.couple ? coupleAisles.contains(s.seatNumber) : fixedLayout && (s.seatNumber == aisleFromStart || (aisleFromEnd > 0 && s.seatNumber == row.size() - aisleFromEnd))}"/>
+                <c:set var="useWings" value="${planVariant == '3d' && !s.couple}"/>
+                <c:set var="opensPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 1 : s.seatNumber % 4 == 1)}"/>
+                <c:set var="closesPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 0 : (s.seatNumber % 4 == 0 || s.seatNumber == row.size()))}"/>
+                <c:if test="${opensPod}"><seat:podOpen row="${s.rowLabel}" number="${s.seatNumber}" couple="${s.couple}" seatType="${s.seatType}" zone="${seatZones[s.label]}"/></c:if>
+                <c:if test="${useWings && s.seatNumber == 1}"><div class="sp-block sp-wing-l"></c:if>
+                <button type="button" class="seat ${s.color}"
+                        title="${s.label} · ${s.seatType} · ${s.statusLabel}" aria-label="${s.label} · ${s.seatType} · ${s.statusLabel}"
+                        data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
+                        data-zone="${seatZones[s.label]}"
+                        ${s.available ? '' : 'disabled="disabled"'}
+                        onclick="toggleSeat(this)">${s.couple || planVariant != '' ? s.label : (s.color == 'RED' ? '✕' : s.seatNumber)}</button>
+                <c:if test="${closesPod}"></div></c:if>
+                <c:if test="${useWings && isAisle}"></div></c:if>
+                <c:if test="${isAisle}"><span class="sp-gap"></span></c:if>
+                <c:if test="${useWings && isAisle}"><div class="sp-block ${s.seatNumber == 3 ? 'sp-center' : 'sp-wing-r'}"></c:if>
+                <c:if test="${useWings && s.seatNumber == row.size()}"></div></c:if>
+              </c:forEach>
+              <span class="row-label" title="${rowTitle}">${row[0].rowLabel}</span>
+            </div>
           </div>
         </c:forEach>
-      </div>
+      </seat:plan>
 
       <p class="uip-note">Ghế đôi luôn phải chọn cả cặp — bấm một ghế sẽ tự chọn luôn ghế còn lại.
          Ghế đã giữ bởi người khác sẽ tự trở lại khi hết thời gian chờ thanh toán.</p>

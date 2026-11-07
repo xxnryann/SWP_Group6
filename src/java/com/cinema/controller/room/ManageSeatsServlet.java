@@ -77,6 +77,22 @@ public class ManageSeatsServlet extends AdminBaseServlet {
                 }
             }
 
+            boolean fixedLayout = RoomRules.isFixedLayout(room.getRoomType());
+            req.setAttribute("fixedLayout", fixedLayout);
+            req.setAttribute("fixedSummary", RoomRules.fixedSummary(room.getRoomType()));
+            req.setAttribute("planVariant", RoomRules.planVariant(room.getRoomType()));
+            req.setAttribute("coupleAisles", RoomRules.coupleAisles(room.getRoomType()));
+            req.setAttribute("aisleFromStart", RoomRules.aisleFromStart(room.getRoomType()));
+            req.setAttribute("aisleFromEnd", RoomRules.aisleFromEnd(room.getRoomType()));
+            req.setAttribute("seatZones", RoomRules.seatZones(room.getRoomType()));
+            if (fixedLayout) {
+                try {
+                    req.setAttribute("layoutMatchesFixed",
+                            seatDAO.matchesLayout(seats, seatDAO.fixedSpecs(room.getRoomType())));
+                } catch (RoomRuleException e) {
+                    req.setAttribute("error", e.getMessage());
+                }
+            }
             req.setAttribute("room", room);
             req.setAttribute("seatTypes", types);
             req.setAttribute("seatRows", rows);
@@ -112,6 +128,9 @@ public class ManageSeatsServlet extends AdminBaseServlet {
                     case "generate":
                         generate(req, room);
                         break;
+                    case "applyFixed":
+                        applyFixed(req, room);
+                        break;
                     case "rowType":
                         rowType(req, room);
                         break;
@@ -136,7 +155,24 @@ public class ManageSeatsServlet extends AdminBaseServlet {
 
     // ---------- actions (ném RoomRuleException/IllegalArgumentException khi dữ liệu không hợp lệ) ----------
 
+    private void applyFixed(HttpServletRequest req, Room room) throws SQLException, RoomRuleException {
+        if (!RoomRules.isFixedLayout(room.getRoomType())) {
+            throw new RoomRuleException("Chỉ phòng 2D và IMAX mới dùng layout cố định.");
+        }
+        seatDAO.applyLayoutKeepingSeats(room.getRoomId(), seatDAO.fixedSpecs(room.getRoomType()));
+        flash(req, "success", "Đã áp dụng layout chuẩn " + room.getRoomType() + " ("
+                + RoomRules.fixedCapacity(room.getRoomType()) + " ghế) cho " + room.getRoomName() + ".");
+    }
+
+    private void requireFreeLayout(Room room) throws RoomRuleException {
+        if (RoomRules.isFixedLayout(room.getRoomType())) {
+            throw new RoomRuleException("Phòng " + room.getRoomType()
+                    + " dùng layout cố định, không thể thay đổi hàng ghế.");
+        }
+    }
+
     private void generate(HttpServletRequest req, Room room) throws SQLException, RoomRuleException {
+        requireFreeLayout(room);
         Integer rows = RoomRules.parseInt(req.getParameter("rows"));
         Integer cols = RoomRules.parseInt(req.getParameter("cols"));
         if (rows == null || cols == null) {
@@ -176,7 +212,8 @@ public class ManageSeatsServlet extends AdminBaseServlet {
     }
 
     private void rowType(HttpServletRequest req, Room room) throws SQLException, RoomRuleException {
-        String row = Validator.trim(req.getParameter("row")).toUpperCase();
+        requireFreeLayout(room);
+        String row =Validator.trim(req.getParameter("row")).toUpperCase();
         Integer typeId = intParam(req, "typeId");
         if (typeId == null) {
             throw new IllegalArgumentException("Chưa chọn loại ghế.");
