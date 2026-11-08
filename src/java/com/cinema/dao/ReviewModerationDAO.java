@@ -5,6 +5,7 @@ import com.cinema.util.Rows;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -18,22 +19,30 @@ public class ReviewModerationDAO {
             String status, int page, int pageSize) throws SQLException {
         StringBuilder where = new StringBuilder(" WHERE 1=1 ");
         List<Object> params = new java.util.ArrayList<>();
-        if (movie != null && !movie.isBlank()) {
+        String movieFilter = clean(movie);
+        if (movieFilter != null) {
             try {
                 where.append("AND m.movie_id = ? ");
-                params.add(Integer.parseInt(movie.trim()));
+                params.add(Integer.parseInt(movieFilter));
             } catch (NumberFormatException ignored) {
                 where.append("AND 1 = 0 ");
             }
         }
 
-        if (rating != null) { where.append("AND r.rating = ").append(rating).append(' '); }
-        if (from != null && !from.isBlank()) { where.append("AND r.created_at >= ? "); params.add(from + " 00:00:00"); }
-        if (to != null && !to.isBlank()) { where.append("AND r.created_at < DATEADD(DAY, 1, ?) "); params.add(to + " 00:00:00"); }
-        if (keyword != null && !keyword.isBlank()) { where.append("AND r.comment LIKE ? "); params.add("%" + keyword.trim() + "%"); }
-        if ("deleted".equals(status)) where.append("AND r.moderated_at IS NOT NULL ");
-        if ("visible".equals(status)) where.append("AND r.moderated_at IS NULL ");
-        if ("reported".equals(status)) where.append("AND EXISTS (SELECT 1 FROM dbo.ReviewReport rr0 WHERE rr0.review_id = r.review_id) ");
+        if (rating != null && rating >= 1 && rating <= 5) {
+            where.append("AND r.rating = ? ");
+            params.add(rating);
+        }
+        LocalDate fromDate = parseDate(from);
+        LocalDate toDate = parseDate(to);
+        if (fromDate != null) { where.append("AND r.created_at >= ? "); params.add(java.sql.Date.valueOf(fromDate)); }
+        if (toDate != null) { where.append("AND r.created_at < DATEADD(DAY, 1, ?) "); params.add(java.sql.Date.valueOf(toDate)); }
+        String keywordFilter = clean(keyword);
+        if (keywordFilter != null) { where.append("AND r.comment LIKE ? "); params.add("%" + keywordFilter + "%"); }
+        String statusFilter = clean(status);
+        if ("deleted".equalsIgnoreCase(statusFilter)) where.append("AND r.moderated_at IS NOT NULL ");
+        if ("visible".equalsIgnoreCase(statusFilter)) where.append("AND r.moderated_at IS NULL ");
+        if ("reported".equalsIgnoreCase(statusFilter)) where.append("AND EXISTS (SELECT 1 FROM dbo.ReviewReport rr0 WHERE rr0.review_id = r.review_id) ");
 
         String base = " FROM dbo.Review r JOIN dbo.Movie m ON m.movie_id = r.movie_id "
                 + "JOIN dbo.Account a ON a.account_id = r.customer_id " + where;
@@ -53,10 +62,31 @@ public class ReviewModerationDAO {
                         : ((Number) count.get("average_rating")).doubleValue());
     }
 
+    private String clean(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private LocalDate parseDate(String value) {
+        try {
+            String cleaned = clean(value);
+            return cleaned == null ? null : LocalDate.parse(cleaned);
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
     public List<Map<String, Object>> findMoviesWithReviews() throws SQLException {
         return Rows.query("SELECT DISTINCT m.movie_id, m.title "
                 + "FROM dbo.Movie m JOIN dbo.Review r ON r.movie_id = m.movie_id "
                 + "WHERE m.status = 'NowShowing' ORDER BY m.title");
+    }
+
+    public List<Map<String, Object>> findNowShowingMovieSummaries() throws SQLException {
+        return Rows.query("SELECT m.movie_id, m.title, COUNT(r.review_id) AS review_count, "
+                + "AVG(CAST(r.rating AS DECIMAL(4,2))) AS average_rating "
+                + "FROM dbo.Movie m JOIN dbo.Review r ON r.movie_id = m.movie_id "
+                + "WHERE m.status = 'NowShowing' "
+                + "GROUP BY m.movie_id, m.title ORDER BY m.title");
     }
 
     public Summary findNowShowingSummary() throws SQLException {

@@ -9,18 +9,27 @@
       <p class="sub">Chỉ được xóa bình luận vi phạm; điểm sao của khách hàng luôn được giữ nguyên.</p></div>
   </section>
   <div class="review-stats">
-    <div class="review-stat-card"><span>Tổng đánh giá phim đang chiếu</span><strong>${summaryTotal}</strong></div>
-    <div class="review-stat-card"><span>Bình luận đang hiển thị</span><strong>${summaryComments}</strong></div>
-    <div class="review-stat-card review-stat-rating"><span>Điểm trung bình</span><strong>★ ${summaryAverage}/5</strong></div>
+    <div class="review-stat-card"><span>Tổng đánh giá phim đang chiếu:</span><strong>${summaryTotal}</strong></div>
+    <div class="review-stat-card"><span>Bình luận đang hiển thị:</span><strong>${summaryComments}</strong></div>
+    <div class="review-stat-card review-stat-movies">
+      <span>Điểm trung bình theo phim:</span>
+      <c:forEach var="movieSummary" items="${movieSummaries}">
+        <div class="movie-rating-summary"><strong><c:out value="${movieSummary.title}"/>:</strong><span>★ ${movieSummary.average_rating}/5 (${movieSummary.review_count} đánh giá)</span></div>
+      </c:forEach>
+    </div>
   </div>
   <form class="panel review-filters" method="get" action="${ctx}/manage/reviews">
-    <label class="review-filter-field">Phim đang chiếu
+    <label class="review-filter-field">Phim đang chiếu:
       <select name="movie"><option value="">Tất cả phim</option><c:forEach var="movieOption" items="${reviewMovies}"><option value="${movieOption.movie_id}" <c:if test="${filterMovie == movieOption.movie_id}">selected</c:if>><c:out value="${movieOption.title}"/></option></c:forEach></select>
     </label>
-    <select name="rating"><option value="">Tất cả sao</option><c:forEach var="n" begin="1" end="5"><option value="${n}" <c:if test="${filterRating == n}">selected</c:if>>${n} sao</option></c:forEach></select>
-    <label class="review-filter-field">Từ ngày<input type="date" name="from" value="${filterFrom}"></label>
-    <label class="review-filter-field">Đến ngày<input type="date" name="to" value="${filterTo}"></label>
-    <select name="status"><option value="">Tất cả trạng thái</option><option value="visible" <c:if test="${filterStatus == 'visible'}">selected</c:if>>Đang hiển thị</option><option value="deleted" <c:if test="${filterStatus == 'deleted'}">selected</c:if>>Đã xóa bởi quản lý</option><option value="reported" <c:if test="${filterStatus == 'reported'}">selected</c:if>>Có báo cáo</option></select>
+    <label class="review-filter-field">Số sao:
+      <select name="rating"><option value="">Tất cả sao</option><c:forEach var="n" begin="1" end="5"><option value="${n}" <c:if test="${filterRating == n}">selected</c:if>>${n} sao</option></c:forEach></select>
+    </label>
+    <label class="review-filter-field">Từ ngày:<input type="date" name="from" value="${filterFrom}"></label>
+    <label class="review-filter-field">Đến ngày:<input type="date" name="to" value="${filterTo}"></label>
+    <label class="review-filter-field">Trạng thái:
+      <select name="status"><option value="">Tất cả trạng thái</option><option value="visible" <c:if test="${filterStatus == 'visible'}">selected</c:if>>Đang hiển thị</option><option value="deleted" <c:if test="${filterStatus == 'deleted'}">selected</c:if>>Đã xóa bởi quản lý</option><option value="reported" <c:if test="${filterStatus == 'reported'}">selected</c:if>>Có báo cáo</option></select>
+    </label>
     <button class="btn btn-primary btn-small" type="submit">Lọc</button><a class="btn btn-outline btn-small" href="${ctx}/manage/reviews">Xóa lọc</a>
   </form>
   <div class="table-wrap"><table class="data">

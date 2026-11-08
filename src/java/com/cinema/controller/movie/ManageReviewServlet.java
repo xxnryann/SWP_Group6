@@ -28,6 +28,7 @@ public class ManageReviewServlet extends BaseServlet {
             request.setAttribute("reviewPage", result);
             request.setAttribute("reviews", result.reviews());
             request.setAttribute("reviewMovies", reviewDAO.findMoviesWithReviews());
+            request.setAttribute("movieSummaries", reviewDAO.findNowShowingMovieSummaries());
             ReviewModerationDAO.Summary summary = reviewDAO.findNowShowingSummary();
             request.setAttribute("reviewSummary", summary);
             request.setAttribute("summaryTotal", summary.total());
