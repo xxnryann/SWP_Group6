@@ -1,17 +1,11 @@
 package com.cinema.util;
 
-/**
- * Tiện ích cho điều hướng dashboard dựa trên vai trò người dùng.
- */
+/** Tiện ích cho điều hướng dashboard dựa trên vai trò người dùng. */
 public final class RoleDashboard {
     
     private RoleDashboard() {}
     
-    /**
-     * Lấy đường dẫn dashboard tương ứng với vai trò.
-     * @param role vai trò (ADMIN, MANAGER, STAFF, CUSTOMER)
-     * @return đường dẫn dashboard, mặc định /dashboard/customer nếu không xác định
-     */
+    /** Lấy đường dẫn dashboard tương ứng với vai trò. */
     public static String pathFor(String role) {
         if (role == null) {
             return "/dashboard/customer";
@@ -30,12 +24,7 @@ public final class RoleDashboard {
         }
     }
     
-    /**
-     * Kiểm tra xem một đường dẫn có được phép cho vai trò hay không.
-     * @param role vai trò
-     * @param path đường dẫn cần kiểm tra
-     * @return true nếu đường dẫn hợp lệ cho vai trò, false nếu cần điều hướng lại
-     */
+    /** Kiểm tra xem một đường dẫn có được phép cho vai trò hay không. */
     public static boolean isAllowedForRole(String role, String path) {
         if (path == null || path.isEmpty()) {
             return false;

@@ -16,9 +16,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Gửi email theo thứ tự ưu tiên cấu hình: mail.api.key (API Brevo) → mail.host (SMTP) → chế độ dev (chỉ ghi log).
- */
+/** Gửi email theo thứ tự ưu tiên cấu hình: mail.api.key (API Brevo) → mail.host (SMTP) → chế độ dev (chỉ ghi log). */
 public final class EmailService {
 
     private static final Logger LOG = Logger.getLogger(EmailService.class.getName());
@@ -29,10 +27,7 @@ public final class EmailService {
     private EmailService() {
     }
 
-    /**
-     * Gửi một email thông báo (vé điện tử, nhắc lịch chiếu...). Nếu chưa cấu hình cách gửi thì chỉ ghi log
-     * (chế độ dev) và coi như đã gửi.
-     */
+    /** Gửi một email thông báo (vé điện tử, nhắc lịch chiếu...). Nếu chưa cấu hình cách gửi thì chỉ ghi log */
     public static boolean sendMail(String to, String subject, String body) {
         if (isDevMode()) {
             LOG.log(Level.INFO, "[DEV MODE] Email to {0}: {1}\n{2}", new Object[]{to, subject, body});

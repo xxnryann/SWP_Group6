@@ -14,15 +14,7 @@ public final class TicketLinks {
     private TicketLinks() {
     }
 
-    /**
-     * Link công khai tới trang thông tin vé. Điện thoại không mở được "localhost" của máy chủ, nên thứ tự ưu tiên:
-     * <ol>
-     *   <li>nội dung file app.public.url.file — địa chỉ tunnel công khai do scripts/public-qr.ps1 ghi khi đang chạy
-     *       (vd https://abc.trycloudflare.com), đổi được mà không cần deploy lại;</li>
-     *   <li>app.public.url (vd http://192.168.1.10:9999/CinemaTest);</li>
-     *   <li>địa chỉ của request hiện tại.</li>
-     * </ol>
-     */
+    /** Link công khai tới trang thông tin vé. Điện thoại không mở được "localhost" của máy chủ, nên thứ tự ưu tiên: */
     public static String viewUrl(HttpServletRequest req, String ticketCode) {
         String base = tunnelUrl();
         if (base.isEmpty()) base = AppConfig.get("app.public.url");

@@ -13,16 +13,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
 
-/**
- * Sinh mã QR cho vé điện tử (UC18 — vé điện tử QR).
- *
- * <p>QR của vé chứa link trang thông tin vé ({@code TicketLinks.viewUrl}), trong link có mã vé
- * — chuỗi mà {@code sp_CheckInTicket} tra cứu. Màn hình soát vé tách mã này ra (UC39).</p>
- *
- * <p>Dùng ZXing ({@code com.google.zxing}) ở tầng tiện ích để cả màn hình
- * lịch sử vé và màn hình hóa đơn tại quầy dùng chung <b>một</b> cách dựng
- * ảnh — không nhân bản logic vẽ QR ở nhiều nơi.</p>
- */
+/** Sinh mã QR cho vé điện tử (UC18 — vé điện tử QR). */
 public final class QrCodeUtil {
 
     /** Cạnh của ảnh QR (px). Vừa để in/mở trên điện thoại. */
@@ -37,14 +28,7 @@ public final class QrCodeUtil {
     private QrCodeUtil() {
     }
 
-    /**
-     * Sinh ảnh QR (PNG) chứa nội dung cho trước.
-     *
-     * @param content nội dung cần mã hoá (mã vé)
-     * @param size    cạnh ảnh (px)
-     * @return ảnh PNG dạng byte[]
-     * @throws IOException khi ghi ảnh lỗi
-     */
+    /** Sinh ảnh QR (PNG) chứa nội dung cho trước. */
     public static byte[] toPngBytes(String content, int size) throws IOException {
         BufferedImage image = toImage(content, size);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -52,13 +36,7 @@ public final class QrCodeUtil {
         return out.toByteArray();
     }
 
-    /**
-     * Sinh ảnh QR chứa nội dung cho trước.
-     *
-     * @param content nội dung cần mã hoá (mã vé)
-     * @param size    cạnh ảnh (px)
-     * @return ảnh QR (đen trên nền trắng)
-     */
+    /** Sinh ảnh QR chứa nội dung cho trước. */
     public static BufferedImage toImage(String content, int size) {
         int side = size > 0 ? size : DEFAULT_SIZE;
         try {
@@ -87,13 +65,7 @@ public final class QrCodeUtil {
         }
     }
 
-    /**
-     * Sinh ảnh QR với kích thước mặc định.
-     *
-     * @param content nội dung cần mã hoá (mã vé)
-     * @return ảnh PNG dạng byte[]
-     * @throws IOException khi ghi ảnh lỗi
-     */
+    /** Sinh ảnh QR với kích thước mặc định. */
     public static byte[] toPngBytes(String content) throws IOException {
         return toPngBytes(content, DEFAULT_SIZE);
     }

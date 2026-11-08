@@ -9,10 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Đọc kết quả truy vấn thành danh sách Map (khoá = tên cột viết thường) để JSP dùng trực tiếp
- * cho các màn hình báo cáo/quản trị nhỏ, không cần tạo thêm lớp model.
- */
+/** Đọc kết quả truy vấn thành danh sách Map (khoá = tên cột viết thường) để JSP dùng trực tiếp */
 public final class Rows {
 
     private static final java.time.format.DateTimeFormatter DISPLAY =
