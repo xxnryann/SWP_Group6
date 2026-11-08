@@ -12,17 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * Screening Room Management (Admin) — tạo phòng chiếu và thiết lập thông tin phòng (tên, loại phòng, sức chứa).
- *
- * URL: /admin/rooms
- *   GET  (không action)        danh sách phòng, tìm theo tên (?q=)
- *   GET  ?action=new           form thêm phòng
- *   GET  ?action=edit&id=N     form sửa phòng
- *   POST action=save           thêm/sửa phòng
- *   POST action=toggle         đóng/mở phòng
- *   POST action=delete         xóa phòng (chỉ khi chưa có suất chiếu/vé)
- */
+/** Screening Room Management (Admin) — tạo phòng chiếu và thiết lập thông tin phòng (tên, loại phòng, sức chứa). */
 @WebServlet("/admin/rooms")
 public class ManageRoomsServlet extends AdminBaseServlet {
 

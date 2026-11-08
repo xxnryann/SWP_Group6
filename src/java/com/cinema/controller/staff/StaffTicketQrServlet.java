@@ -13,19 +13,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
 
-/**
- * Trả về ảnh mã QR của một vé cho NHÂN VIÊN (màn hình bán vé tại quầy).
- *
- * <p>URL: {@code GET /staff/tickets/qr?ticketId=N} → ảnh PNG.</p>
- *
- * <p>Khách mua vé tại quầy cũng cần mã QR để soát vé (UC39), nhưng nhân viên
- * không phải chủ vé nên không dùng được endpoint {@code /account/tickets/qr}
- * (endpoint đó kiểm tra ownership — chỉ chủ vé mới xem được QR của mình).</p>
- *
- * <p>Endpoint này chỉ dành cho vai trò nhân viên quầy
- * ({@code STA}/{@code MANAGER}/{@code ADMIN}) — cùng bộ vai trò mà
- * {@code CounterSalesServlet} đang dùng cho luồng bán vé.</p>
- */
+/** Trả về ảnh mã QR của một vé cho NHÂN VIÊN (màn hình bán vé tại quầy). */
 @WebServlet("/staff/tickets/qr")
 public class StaffTicketQrServlet extends BaseServlet {
 
