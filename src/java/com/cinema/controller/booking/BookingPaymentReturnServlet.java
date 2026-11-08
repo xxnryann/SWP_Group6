@@ -10,20 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * Cổng thanh toán chuyển khách hàng về sau khi thanh toán (UC15).
- *
- * <p>Đây là đường xác nhận thanh toán ở môi trường local: cổng gửi kèm chữ
- * ký HMAC-SHA512 trong query string, ta kiểm tra chữ ký và đối soát số tiền
- * trước khi ghi nhận đơn hàng là đã thanh toán. Đơn hàng chỉ chuyển sang
- * trạng thái {@code Paid} khi bước này hoàn tất — không có chuyện tự xác nhận
- * thành công.</p>
- *
- * <p>Endpoint này nằm trong {@code /booking/*} nhưng được
- * {@code BookingAuthFilter} cố ý bỏ qua: cổng thanh toán gọi bằng GET và
- * không mang cookie phiên làm bắt buộc. Việc tra cứu đơn dựa trên
- * {@code vnp_TxnRef} (= mã đơn) chứ không dựa vào session, nên vẫn an toàn.</p>
- */
+/** Cổng thanh toán chuyển khách hàng về sau khi thanh toán (UC15). */
 @WebServlet("/booking/payment/return")
 public class BookingPaymentReturnServlet extends BaseServlet {
 

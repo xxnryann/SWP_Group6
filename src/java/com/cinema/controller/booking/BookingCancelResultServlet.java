@@ -7,9 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Trang kết quả thất bại / huỷ / hết hạn của luồng đặt vé online.
- */
+/** Trang kết quả thất bại / huỷ / hết hạn của luồng đặt vé online. */
 @WebServlet("/booking/cancel-result")
 public class BookingCancelResultServlet extends BaseServlet {
 

@@ -13,16 +13,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * Bước 1 của luồng đặt vé online: chọn suất chiếu + chọn ghế.
- *
- * <ul>
- *   <li>GET /booking/seats?showtimeId=… → sơ đồ ghế (màu từ vw_SeatMap)</li>
- *   <li>POST /booking/seats → mở phiên đặt vé (sp_CreateBooking) + giữ ghế (sp_HoldSeats)</li>
- * </ul>
- *
- * <p>Phân quyền do {@link BookingAuthFilter} lo (bắt buộc đăng nhập, role CUSTOMER).</p>
- */
+/** Bước 1 của luồng đặt vé online: chọn suất chiếu + chọn ghế. */
 @WebServlet("/booking/seats")
 public class BookingSeatsServlet extends BaseServlet {
 

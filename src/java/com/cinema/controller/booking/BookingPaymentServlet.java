@@ -10,15 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Bước 3 của luồng đặt vé online: tổng tiền + đếm ngược + chuyển sang cổng thanh toán.
- *
- * <ul>
- *   <li>GET /booking/payment → tóm tắt đơn + đồng hồ đếm ngược tới payment_expires_at</li>
- *   <li>POST /booking/payment (action=pay) → dựng URL cổng thanh toán rồi chuyển hướng</li>
- *   <li>POST /booking/payment (action=cancel) → huỷ đơn, trả ghế về trạng thái trống</li>
- * </ul>
- */
+/** Bước 3 của luồng đặt vé online: tổng tiền + đếm ngược + chuyển sang cổng thanh toán. */
 @WebServlet("/booking/payment")
 public class BookingPaymentServlet extends BaseServlet {
 

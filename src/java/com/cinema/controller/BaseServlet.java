@@ -38,10 +38,7 @@ public abstract class BaseServlet extends HttpServlet {
         return false;
     }
 
-    /**
-     * Chặn truy cập theo vai trò: chưa đăng nhập -> chuyển về /login, sai vai trò -> 403.
-     * @return true nếu người dùng có một trong các vai trò cho phép.
-     */
+    /** Chặn truy cập theo vai trò: chưa đăng nhập -> chuyển về /login, sai vai trò -> 403. */
     protected boolean requireRole(HttpServletRequest req, HttpServletResponse resp, String... roles)
             throws IOException {
         User u = currentUser(req);

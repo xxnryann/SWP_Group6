@@ -16,12 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
-/**
- * Quản lý hệ thống (Admin). URL: /admin/system
- *   GET ?tab=config|backup|logs   xem cấu hình, lịch sử sao lưu, nhật ký
- *   POST saveConfig               lưu cấu hình chung
- *   POST backup                   sao lưu CSDL
- */
+/** Quản lý hệ thống (Admin). URL: /admin/system */
 @WebServlet("/admin/system")
 public class AdminSystemServlet extends BaseServlet {
 

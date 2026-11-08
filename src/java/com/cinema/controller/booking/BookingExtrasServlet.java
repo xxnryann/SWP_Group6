@@ -15,12 +15,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Bước 2 của luồng đặt vé online: combo → voucher → MyPoint.
- *
- * <p>Thứ tự áp dụng đúng theo nghiệp vụ: <b>voucher trước, MyPoint sau</b> —
- * vì áp voucher sẽ reset số điểm đã dùng trước đó (xem DiscountService).</p>
- */
+/** Bước 2 của luồng đặt vé online: combo → voucher → MyPoint. */
 @WebServlet("/booking/extras")
 public class BookingExtrasServlet extends BaseServlet {
 
