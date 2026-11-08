@@ -3,10 +3,7 @@ package com.cinema.model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Tin tức — STT 12 (quản lý), STT 16 (khách xem).
- * Khớp 100% bảng News trong script database của nhóm.
- */
+/** Tin tức — STT 12 (quản lý), STT 16 (khách xem). */
 public class News {
     private int newsId;
     private String title;

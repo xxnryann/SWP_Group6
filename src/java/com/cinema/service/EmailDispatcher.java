@@ -16,7 +16,7 @@ public class EmailDispatcher {
 
     private final EmailOutboxDAO dao = new EmailOutboxDAO();
 
-    /** Gửi tối đa {@code batch} thư; trả về số thư gửi thành công. */
+    /** Gửi tối đa batch thư; trả về số thư gửi thành công. */
     public int dispatchPending(int batch) {
         synchronized (LOCK) {
             int sent = 0;

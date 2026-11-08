@@ -2,11 +2,7 @@ package com.cinema.model;
 
 import java.math.BigDecimal;
 
-/**
- * Cấu hình quy đổi MyPoint đang có hiệu lực (bảng MyPointConfig).
- * Dùng chung cho luồng đặt vé online và bán tại quầy để nhân viên /
- * khách hàng thấy cùng một thông số quy đổi.
- */
+/** Cấu hình quy đổi MyPoint đang có hiệu lực (bảng MyPointConfig). */
 public class PointConfig {
     private BigDecimal earnRatePercent;
     private int pointValueVnd;

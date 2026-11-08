@@ -3,16 +3,7 @@ package com.cinema.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Một vé điện tử của khách (UC18 — vé điện tử QR, lịch sử đặt vé).
- *
- * <p>Mỗi vé là <b>1 thẻ</b> trên màn hình "Lịch sử vé": có mã vé riêng, 1 mã QR
- * riêng, 1 ghế, và trạng thái riêng. Vé hết hạn (quá giờ chiếu) chuyển sang
- * {@code EXPIRED} và không còn huỷ được.</p>
- *
- * <p>Trạng thái vé lấy từ cột {@code Ticket.status}:
- * {@code Held} · {@code Booked} · {@code Used} · {@code Expired} · {@code Cancelled}.</p>
- */
+/** Một vé điện tử của khách (UC18 — vé điện tử QR, lịch sử đặt vé). */
 public class Ticket {
 
     private int ticketId;
@@ -36,7 +27,7 @@ public class Ticket {
 
     private BigDecimal price = BigDecimal.ZERO;
 
-    /** Trạng thái vé: {@code HELD}, {@code BOOKED}, {@code USED}, {@code EXPIRED}, {@code CANCELLED}. */
+    /** Trạng thái vé: HELD, BOOKED, USED, EXPIRED, CANCELLED. */
     private String status;
 
     /** Vé còn hiệu lực và còn trong thời hạn huỷ được không. */
@@ -86,15 +77,7 @@ public class Ticket {
 
     public String getStatus() { return status; }
 
-    /**
-     * Gán trạng thái vé. Chuẩn hoá về chữ HOA để so sánh không phụ thuộc
-     * cách viết trong DB ({@code 'Booked'} vs {@code 'BOOKED'}).
-     *
-     * <p>DB lưu trạng thái dạng PascalCase ({@code Held}, {@code Booked},
-     * {@code Used}, {@code Expired}, {@code Cancelled}); nếu để nguyên thì
-     * mọi so sánh {@code "BOOKED".equals(status)} ở tầng service/JSP sẽ
-     * sai → vé hợp lệ bị hiển thị như hết hạn, nút "Huỷ vé" bị ẩn.</p>
-     */
+    /** Gán trạng thái vé. Chuẩn hoá về chữ HOA để so sánh không phụ thuộc */
     public void setStatus(String status) {
         this.status = status == null ? null : status.trim().toUpperCase(java.util.Locale.ROOT);
     }

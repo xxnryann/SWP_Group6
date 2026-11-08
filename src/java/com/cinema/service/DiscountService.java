@@ -7,27 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * STT 26 + STT 27 (Iter3) — Áp voucher & MyPoint khi thanh toán.
- *
- * MỘT hàm duy nhất dùng chung cho cả đặt vé online (STT 25 — Phạm Nam gọi)
- * và bán tại quầy (STT 21 — Long gọi), để hai luồng không tính lệch nhau.
- *
- * Logic giảm giá nằm trong stored procedure của database nhóm:
- *  - sp_ApplyVoucher: kiểm tra mã, trạng thái Allowed, còn hạn, còn lượt,
- *    chi tiêu tích lũy >= min_cumulative_spending, đơn >= min_order_amount.
- *    Áp voucher sẽ reset điểm đã dùng trước đó → LUÔN gọi voucher trước.
- *  - sp_ApplyMyPoint: kiểm tra số dư điểm và trần % giá trị đơn.
- * Lỗi nghiệp vụ được procedure THROW với message tiếng Việt → trả về UI.
- */
+/** STT 26 + STT 27 (Iter3) — Áp voucher & MyPoint khi thanh toán. */
 public class DiscountService {
 
-    /**
-     * @param bookingId   id booking đang ở trạng thái PendingPayment
-     * @param voucherCode mã voucher khách nhập (null/rỗng nếu không dùng)
-     * @param pointsToUse số điểm muốn dùng (0 nếu không dùng)
-     * @return kết quả tính toán; message chứa lỗi tiếng Việt nếu thất bại
-     */
+
     public DiscountResult applyDiscounts(int bookingId, String voucherCode, int pointsToUse) {
         DiscountResult r = new DiscountResult();
         try (Connection c = DBContext.getConnection()) {

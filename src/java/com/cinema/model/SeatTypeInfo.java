@@ -5,10 +5,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-/**
- * Loại ghế kèm giá vé của một suất chiếu, dùng cho phần chú thích ở màn hình chọn ghế.
- * {@code price} là {@code null} khi chưa cấu hình giá cho (loại ghế, khung giờ, loại ngày).
- */
+/** Loại ghế kèm giá vé của một suất chiếu, dùng cho phần chú thích ở màn hình chọn ghế. */
 public class SeatTypeInfo {
     private int seatTypeId;
     private String typeName;
