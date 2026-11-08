@@ -12,10 +12,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO bảng Room — Screening Room Management (Admin).
- * Cột khớp script database của nhóm: room_id, cinema_id, room_name, room_type, capacity, status.
- */
+/** DAO bảng Room — Screening Room Management (Admin). */
 public class RoomDAO {
 
     private static final String SELECT_WITH_STATS =
@@ -157,10 +154,7 @@ public class RoomDAO {
         }
     }
 
-    /**
-     * Xóa phòng cùng toàn bộ ghế. Chỉ xóa được khi phòng chưa từng có suất chiếu và chưa có vé nào
-     * (các bảng Showtime/Ticket có khóa ngoại tới phòng/ghế). Nếu không, nên "Đóng" phòng thay vì xóa.
-     */
+    /** Xóa phòng cùng toàn bộ ghế. Chỉ xóa được khi phòng chưa từng có suất chiếu và chưa có vé nào */
     public void delete(int roomId) throws SQLException, RoomRuleException {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);

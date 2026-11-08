@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
-/** Đánh giá phim: chỉ khách đã xem xong (vé đã soát, suất đã kết thúc) mới được đánh giá, mỗi phim một lần — {@code sp_AddReview}. */
+/** Đánh giá phim: chỉ khách đã xem xong (vé đã soát, suất đã kết thúc) mới được đánh giá, mỗi phim một lần — sp_AddReview. */
 public class ReviewDAO {
 
     public List<Map<String, Object>> findByMovie(int movieId) throws SQLException {

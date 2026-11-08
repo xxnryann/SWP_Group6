@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-/** Soát vé tại cửa phòng chiếu: dùng stored procedure {@code sp_CheckInTicket}. */
+/** Soát vé tại cửa phòng chiếu: dùng stored procedure sp_CheckInTicket. */
 public class CheckInDAO {
 
     private static final String TICKET_INFO =
@@ -27,9 +27,7 @@ public class CheckInDAO {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
-    /**
-     * Soát vé. Procedure ném lỗi 5006x (không tồn tại, đã dùng, không hợp lệ, ngoài giờ cho phép).
-     */
+    /** Soát vé. Procedure ném lỗi 5006x (không tồn tại, đã dùng, không hợp lệ, ngoài giờ cho phép). */
     public void checkIn(String ticketCode, int staffAccountId) throws SQLException {
         try (Connection c = DBContext.getConnection();
              CallableStatement cs = c.prepareCall("{call dbo.sp_CheckInTicket(?, ?)}")) {

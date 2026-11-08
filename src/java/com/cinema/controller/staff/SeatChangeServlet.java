@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
 
-/**
- * Đổi ghế cho vé đã thanh toán (Staff).
- * URL: /staff/seat-change?code=... (GET tra cứu vé + ghế trống), POST đổi ghế.
- */
+/** Đổi ghế cho vé đã thanh toán (Staff). */
 @WebServlet("/staff/seat-change")
 public class SeatChangeServlet extends BaseServlet {
 

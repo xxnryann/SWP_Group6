@@ -18,24 +18,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO trung tâm cho luồng đặt vé online (BF-02) và bán tại quầy (BF-03).
- *
- * <p>Sở hữu toàn bộ lời gọi stored procedure của database nhóm:
- * <ul>
- *   <li>{@code sp_CreateBooking} — mở phiên đặt vé (15 phút), channel Online/Counter</li>
- *   <li>{@code sp_HoldSeats} — giữ ghế (GBR-03 ghế đôi, GBR-08 bảo trì, chống bán trùng)</li>
- *   <li>{@code sp_AddCombo} — thêm/bỏ combo (kiểm tra tồn kho)</li>
- *   <li>{@code sp_ConfirmPayment} — phát vé, trừ kho, cộng/trừ MyPoint (GBR-06)</li>
- *   <li>{@code sp_ReleaseExpiredHolds} — nhả ghế khi hết hạn (GBR-01/02), idempotent</li>
- * </ul>
- *
- * <p>Lỗi nghiệp vụ được procedure THROW với message tiếng Việt → tầng service
- * chuyển nguyên văn cho UI.</p>
- *
- * <p>Lưu ý: {@code Account.account_id} có thể khác {@code Users.UserId}. Mọi
- * truy vấn đọc resolve {@code customer_id} qua email, không hardcode.</p>
- */
+/** DAO trung tâm cho luồng đặt vé online (BF-02) và bán tại quầy (BF-03). */
 public class BookingDAO {
 
     /* ---------- đọc dữ liệu dùng chung ---------- */
@@ -93,17 +76,7 @@ public class BookingDAO {
         return list;
     }
 
-    /**
-     * Danh sách loại ghế kèm giá vé của suất chiếu.
-     *
-     * <p>Giá lấy từ {@code dbo.fn_GetTicketPrice} — hàm này tự suy ra khung giờ
-     * và loại ngày (thường / cuối tuần / lễ) của suất chiếu rồi tra bảng
-     * {@code TicketPrice}. Nếu chưa cấu hình giá cho (loại ghế, khung giờ, loại ngày)
-     * thì giá là {@code null} và UI hiển thị "—".</p>
-     *
-     * @param showtimeId suất chiếu
-     * @return danh sách loại ghế (không rỗng trừ khi lỗi truy vấn)
-     */
+    /** Danh sách loại ghế kèm giá vé của suất chiếu. */
     public List<SeatTypeInfo> findSeatTypesWithPrice(int showtimeId) throws SQLException {
         List<SeatTypeInfo> list = new ArrayList<>();
         String sql = "SELECT st.seat_type_id, st.type_name, st.is_couple, st.description, "
@@ -169,25 +142,12 @@ public class BookingDAO {
 
     /* ---------- ghi dữ liệu qua stored procedure ---------- */
 
-    /**
-     * Mở phiên đặt vé online: sp_CreateBooking với {@code @channel = 'Online'}.
-     *
-     * @param customerAccountId account_id của khách (null = khách vãng lai)
-     * @param showtimeId suất chiếu
-     * @return booking_id vừa tạo
-     */
+    /** Mở phiên đặt vé online: sp_CreateBooking với @channel = 'Online'. */
     public int createOnlineBooking(Integer customerAccountId, int showtimeId) throws SQLException {
         return createBooking(customerAccountId, null, showtimeId, "Online");
     }
 
-    /**
-     * Mở phiên bán tại quầy: sp_CreateBooking với {@code @channel = 'Counter'}.
-     *
-     * @param customerId account_id khách đã đăng ký (null = khách vãng lai)
-     * @param staffAccountId account_id của nhân viên (null = không ghi)
-     * @param showtimeId suất chiếu
-     * @return booking_id vừa tạo
-     */
+    /** Mở phiên bán tại quầy: sp_CreateBooking với @channel = 'Counter'. */
     public int createCounterBooking(Integer customerId, Integer staffAccountId, int showtimeId)
             throws SQLException {
         return createBooking(customerId, staffAccountId, showtimeId, "Counter");
@@ -231,15 +191,7 @@ public class BookingDAO {
         }
     }
 
-    /**
-     * Xác nhận thanh toán: sp_ConfirmPayment. Procedure tự chuyển vé Held → Booked,
-     * trừ kho combo, cộng/trừ MyPoint và ghi email e-ticket (nếu có khách hàng).
-     *
-     * @param bookingId đơn cần xác nhận
-     * @param gatewayTxnId mã giao dịch của cổng thanh toán (null ở quầy)
-     * @param success true khi cổng báo thanh toán thành công
-     * @param method 'Cash' (quầy) hoặc 'BankTransfer' (online)
-     */
+    /** Xác nhận thanh toán: sp_ConfirmPayment. Procedure tự chuyển vé Held → Booked, */
     public void confirmPayment(int bookingId, String gatewayTxnId, boolean success, String method)
             throws SQLException {
         try (Connection c = DBContext.getConnection();
@@ -256,10 +208,7 @@ public class BookingDAO {
         }
     }
 
-    /**
-     * Nhả ghế / hủy booking đã hết hạn (GBR-01, GBR-02). Idempotent — có thể
-     * gọi ở mọi lần đọc dữ liệu mà không phụ thuộc lưu lượng truy cập.
-     */
+    /** Nhả ghế / hủy booking đã hết hạn (GBR-01, GBR-02). Idempotent — có thể */
     public void releaseExpiredHolds() throws SQLException {
         try (Connection c = DBContext.getConnection();
              CallableStatement cs = c.prepareCall("{call sp_ReleaseExpiredHolds}")) {
@@ -267,13 +216,7 @@ public class BookingDAO {
         }
     }
 
-    /**
-     * Hủy đơn đang dở (nhả ghế đã giữ) — dùng cho nút "Huỷ đơn".
-     *
-     * <p>Chạy trong transaction: nếu không, có thể xảy ra trường hợp vé đã bị
-     * huỷ nhưng đơn vẫn còn ở trạng thái chờ thanh toán (hoặc ngược lại) —
-     * khi đó ghế bị mất mà đơn vẫn "sống".</p>
-     */
+    /** Hủy đơn đang dở (nhả ghế đã giữ) — dùng cho nút "Huỷ đơn". */
     public void cancelPendingBooking(int bookingId) throws SQLException {
         try (Connection c = DBContext.getConnection()) {
             boolean autoCommit = c.getAutoCommit();
@@ -303,16 +246,7 @@ public class BookingDAO {
 
     /* ---------- đọc chi tiết đơn ---------- */
 
-    /**
-     * Đọc chi tiết đơn theo mã đơn (booking_code).
-     *
-     * <p>Gộp "tra booking_id" + "đọc chi tiết" vào <b>cùng một connection</b>
-     * để tiết kiệm 1 round-trip: luồng thanh toán (return URL / IPN) luôn
-     * cần cả hai bước.</p>
-     *
-     * @param bookingCode mã đơn
-     * @return chi tiết đơn, null nếu không tồn tại
-     */
+    /** Đọc chi tiết đơn theo mã đơn (booking_code). */
     public OnlineBooking findOnlineBookingByCode(String bookingCode) throws SQLException {
         if (bookingCode == null || bookingCode.trim().isEmpty()) {
             return null;
@@ -333,10 +267,7 @@ public class BookingDAO {
         }
     }
 
-    /**
-     * Đọc chi tiết một booking (vé, ghế, combo, thời điểm hết hạn, voucher).
-     * Trả về null nếu không tồn tại.
-     */
+    /** Đọc chi tiết một booking (vé, ghế, combo, thời điểm hết hạn, voucher). */
     public OnlineBooking findOnlineBooking(int bookingId) throws SQLException {
         try (Connection c = DBContext.getConnection()) {
             return findOnlineBooking(c, bookingId);

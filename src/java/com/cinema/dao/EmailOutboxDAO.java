@@ -49,12 +49,7 @@ public class EmailOutboxDAO {
         runProc("{call dbo.sp_SyncInboxPromotions(?)}", customerId);
     }
 
-    /**
-     * Hộp thư của khách: mọi loại thông báo (không phụ thuộc email đã gửi được hay chưa).
-     * Phim mới đã ngừng chiếu và voucher đã bị xóa không còn hiện.
-     *
-     * @param type chỉ lấy một loại thông báo; null để lấy tất cả
-     */
+    /** Hộp thư của khách: mọi loại thông báo (không phụ thuộc email đã gửi được hay chưa). */
     public List<Map<String, Object>> customerInbox(int customerId, int limit, String type) throws SQLException {
         String sql = "SELECT TOP (?) e.notif_id, e.notif_type, e.subject, "
                 + "CASE WHEN e.notif_type = 'NewMovie' THEN N'Phim \"' + m.title + N'\"' "
@@ -86,7 +81,7 @@ public class EmailOutboxDAO {
         return type == null ? Rows.query(sql, limit, customerId) : Rows.query(sql, limit, customerId, type);
     }
 
-    /** Job định kỳ: nhắc lịch chiếu cho các suất bắt đầu trong {@code hoursBefore} giờ tới. */
+    /** Job định kỳ: nhắc lịch chiếu cho các suất bắt đầu trong hoursBefore giờ tới. */
     public void queueReminders(int hoursBefore) throws SQLException {
         runProc("{call dbo.sp_QueueShowtimeReminders(?)}", hoursBefore);
     }

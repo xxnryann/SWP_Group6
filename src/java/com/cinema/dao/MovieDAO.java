@@ -15,14 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MovieDAO {
-    /**
-     * Trang kết quả phim + thông tin phân trang.
-     *
-     * <p>EL của JSP chỉ nhận accessor theo quy ước JavaBean
-     * ({@code getX()}/{@code isX()}), <b>không</b> nhận accessor kiểu record
-     * ({@code x()}). Vì vậy các getter dưới đây là bắt buộc để
-     * {@code ${moviePage.totalPages}} hoạt động trong JSP.</p>
-     */
+    /** Trang kết quả phim + thông tin phân trang. */
     public record MoviePage(List<Movie> movies, int page, int totalPages, int totalItems) {
         public int getPage() {
             return page;
@@ -54,11 +47,7 @@ public class MovieDAO {
         return filter(genreId, status, requestedPage, pageSize, false);
     }
 
-    /**
-     * @param publicView true = khách / customer: ẩn phim đã kết thúc (hết hạn chiếu hoặc bị dừng),
-     *                   xếp phim đang chiếu lên đầu, phim sắp chiếu phía sau. Phim kết thúc chỉ hiện lại
-     *                   khi được mở chiếu lại (status khác Stopped và end_date còn hiệu lực).
-     */
+    /** xếp phim đang chiếu lên đầu, phim sắp chiếu phía sau. Phim kết thúc chỉ hiện lại */
     public MoviePage filter(Integer genreId, String status, int requestedPage, int pageSize, boolean publicView)
             throws SQLException {
         String visible = publicView
@@ -131,11 +120,7 @@ public class MovieDAO {
         return movies;
     }
 
-    /**
-     * Các phim đang được phát hành vào một ngày cụ thể (dùng để xếp lịch tự động).
-     *
-     * @param date ngày cần xếp lịch
-     */
+    /** Các phim đang được phát hành vào một ngày cụ thể (dùng để xếp lịch tự động). */
     public List<Movie> findAllForDate(LocalDate date) throws SQLException {
         List<Movie> movies = new ArrayList<>();
         String sql = "SELECT d.*, 0 AS active_ticket_count FROM dbo.vw_MovieDetail d "
@@ -239,7 +224,7 @@ public class MovieDAO {
         }
     }
 
-    /** Xem trước tác động của việc hủy phim: các suất sắp chiếu bị hủy và số vé đã bán ({@code sp_CancelMovie} @confirm=0). */
+    /** Xem trước tác động của việc hủy phim: các suất sắp chiếu bị hủy và số vé đã bán (sp_CancelMovie @confirm=0). */
     public java.util.List<java.util.Map<String, Object>> cancelPreview(int movieId) throws SQLException {
         try (Connection connection = DBContext.getConnection();
                 CallableStatement statement = connection.prepareCall("{CALL dbo.sp_CancelMovie(?, ?, ?)}")) {
@@ -281,7 +266,7 @@ public class MovieDAO {
             }
         }
 
-    /** Hủy phim đang chiếu: hủy mọi suất sắp chiếu, hoàn tiền/điểm/voucher và gửi email báo khách ({@code sp_CancelMovie} @confirm=1). */
+    /** Hủy phim đang chiếu: hủy mọi suất sắp chiếu, hoàn tiền/điểm/voucher và gửi email báo khách (sp_CancelMovie @confirm=1). */
     public void cancelMovie(int movieId, int managerAccountId) throws SQLException {
         try (Connection connection = DBContext.getConnection();
                 CallableStatement statement = connection.prepareCall("{CALL dbo.sp_CancelMovie(?, ?, ?)}")) {
