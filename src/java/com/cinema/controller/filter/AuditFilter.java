@@ -14,11 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
-/**
- * Ghi nhật ký mọi thao tác ghi (POST) của nhân sự vào SystemLog: ai, làm gì, thành công hay không.
- * Chỉ ghi các tham số định danh trong {@link #LOGGED_PARAMS}, không bao giờ ghi mật khẩu hay nội dung form.
- * Servlet có thể bổ sung chi tiết qua request attribute {@link #DETAIL_ATTR}.
- */
+/** Ghi nhật ký mọi thao tác ghi (POST) của nhân sự vào SystemLog: ai, làm gì, thành công hay không. */
 @WebFilter({"/admin/*", "/manager/*", "/manage/*", "/staff/*", "/logout"})
 public class AuditFilter implements Filter {
 

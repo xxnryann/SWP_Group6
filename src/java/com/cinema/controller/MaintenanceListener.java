@@ -13,13 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Các job nền của hệ thống:
- * <ul>
- *   <li>mỗi phút: nhả ghế giữ quá hạn, chuyển vé đã qua giờ chiếu sang Expired, nhắc đánh giá phim, gửi email đang chờ;</li>
- *   <li>mỗi 15 phút: xếp thư nhắc lịch chiếu cho các suất bắt đầu trong REMINDER_HOURS_BEFORE giờ tới (Admin chỉnh trong Quản lý hệ thống).</li>
- * </ul>
- */
+/** Các job nền của hệ thống: */
 @WebListener
 public class MaintenanceListener implements ServletContextListener {
 

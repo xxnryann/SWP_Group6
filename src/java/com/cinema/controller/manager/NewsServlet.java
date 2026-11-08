@@ -13,19 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-/**
- * STT 12 — Quản lý tin tức (Cinema Manager).
- * URL: /manager/news?action=list|add|edit|delete|view
- *
- * Khớp bảng News trong script database của nhóm:
- *  - status IN ('Draft','Published','Hidden')
- *  - created_by NOT NULL REFERENCES Account(account_id) → tra theo email user đăng nhập
- *
- * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): phân quyền hiện kiểm tra ngay trong servlet này (đang đúng);
- * mục tiêu dài hạn là gom về filter phân quyền tập trung.
- * NỢ KỸ THUẬT: bảng Users (khung đăng nhập) và bảng Account (script DB) vẫn song song;
- * created_by tra account_id theo email, nếu không có Account trùng email thì báo lỗi (xem doPost).
- */
+/** STT 12 — Quản lý tin tức (Cinema Manager). */
 @WebServlet("/manager/news")
 public class NewsServlet extends BaseServlet {
 

@@ -21,19 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Trang thanh toán giả lập, chỉ dùng cho môi trường dev (UC15).
- *
- * <p>Đóng vai cổng VNPAY để chạy và kiểm thử trọn luồng thanh toán khi chưa
- * có {@code vnpay.secretKey} hợp lệ. Trang này hiển thị đúng thông tin giao
- * dịch, cho khách chọn "Thanh toán" hoặc "Huỷ", rồi chuyển hồi kết quả về
- * {@code vnp_ReturnUrl} — cùng đường dẫn mà cổng thật dùng, kèm chữ ký
- * HMAC-SHA512 hợp lệ.</p>
- *
- * <p>Không được phép dùng ở môi trường thật: mọi giao dịch đi qua đây đều
- * không có giá trị tiền thật. Trang tự từ chối khi cấu hình không bật cổng
- * giả lập.</p>
- */
+/** Trang thanh toán giả lập, chỉ dùng cho môi trường dev (UC15). */
 @WebServlet("/mock/payment")
 public class MockPaymentServlet extends HttpServlet {
 
@@ -71,11 +59,7 @@ public class MockPaymentServlet extends HttpServlet {
                 .forward(request, response);
     }
 
-    /**
-     * Sinh mã QR của chính trang thanh toán giả lập (như cổng thật hiển thị QR để quét bằng app ngân hàng).
-     * Quét bằng điện thoại sẽ mở lại trang này; điện thoại phải truy cập được địa chỉ máy chủ
-     * (không dùng được nếu địa chỉ là localhost).
-     */
+    /** Sinh mã QR của chính trang thanh toán giả lập (như cổng thật hiển thị QR để quét bằng app ngân hàng). */
     private static void attachQr(HttpServletRequest request) {
         String url = request.getRequestURL()
                 + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
@@ -90,9 +74,7 @@ public class MockPaymentServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Nhận lựa chọn của khách và chuyển hồi kết quả về cổng thật.
-     */
+    /** Nhận lựa chọn của khách và chuyển hồi kết quả về cổng thật. */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -149,9 +131,7 @@ public class MockPaymentServlet extends HttpServlet {
         response.sendRedirect(returnUrl + "?" + toQueryString(result));
     }
 
-    /**
-     * Ghép tham số thành query string đã mã hoá.
-     */
+    /** Ghép tham số thành query string đã mã hoá. */
     private static String toQueryString(Map<String, String> params) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, String> entry : params.entrySet()) {

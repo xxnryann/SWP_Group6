@@ -16,15 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Lịch chiếu của một phim cho cửa sổ "Mua vé" ở danh sách phim: GET /movies/showtimes?id=N → JSON.
- *
- * <ul>
- *   <li>Phim đang chiếu: các ngày còn suất chiếu trong 7 ngày tới (mỗi ngày một tab).</li>
- *   <li>Phim sắp chiếu: chỉ ngày chiếu gần nhất.</li>
- *   <li>Phim ngừng chiếu hoặc không còn suất: 404 (không có nút mua vé).</li>
- * </ul>
- */
+/** Lịch chiếu của một phim cho cửa sổ "Mua vé" ở danh sách phim: GET /movies/showtimes?id=N → JSON. */
 @WebServlet("/movies/showtimes")
 public class MovieShowtimesServlet extends BaseServlet {
 

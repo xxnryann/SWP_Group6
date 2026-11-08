@@ -10,12 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
 
-/**
- * Bảo vệ các URL dashboard: chưa đăng nhập → 302 /login; sai vai trò → 403.
- *
- * <p>Quy ước: admin → ADMIN · manager → MANAGER, ADMIN · staff → STAFF, MANAGER, ADMIN ·
- * customer → CUSTOMER.</p>
- */
+/** Bảo vệ các URL dashboard: chưa đăng nhập → 302 /login; sai vai trò → 403. */
 @WebFilter(urlPatterns = "/dashboard/*")
 public class DashboardAuthFilter extends HttpFilter {
 

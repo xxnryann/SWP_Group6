@@ -7,10 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Base servlet cho tất cả các dashboard (Admin, Manager, Staff, Customer).
- * Cung cấp các phương thức chung như xác thực, forward, flash messages.
- */
+/** Base servlet cho tất cả các dashboard (Admin, Manager, Staff, Customer). */
 public abstract class DashboardBaseServlet extends BaseServlet {
     
     @Override

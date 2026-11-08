@@ -11,21 +11,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
-/**
- * Webhook (IPN) của cổng thanh toán VNPAY (API-02).
- *
- * <p>VNPAY gọi server-to-server để thông báo kết quả giao dịch. Theo đặc tả,
- * merchant phải trả về JSON {@code RspCode} để VNPAY biết có tiếp tục retry hay không:</p>
- * <ul>
- *   <li>{@code 00} — đã cập nhật thành công, VNPAY kết thúc luồng.</li>
- *   <li>{@code 97} — chữ ký không hợp lệ, không cập nhật gì.</li>
- *   <li>{@code 99} — lỗi hệ thống, VNPAY sẽ retry tối đa 10 lần.</li>
- * </ul>
- *
- * <p>Việc xác thực chữ ký được thực hiện **trước** khi cập nhật bất kỳ
- * dữ liệu nào. Hàm cập nhật đơn hàng là idempotent nên webhook gọi lặp
- * không phát vé hai lần.</p>
- */
+/** Webhook (IPN) của cổng thanh toán VNPAY (API-02). */
 @WebServlet("/api/v1/commerce/payment/webhook/vnpay")
 public class PaymentWebhookServlet extends HttpServlet {
 
@@ -60,9 +46,7 @@ public class PaymentWebhookServlet extends HttpServlet {
                 "Giao dich khong thanh cong");
     }
 
-    /**
-     * Trả về JSON cho VNPAY.
-     */
+    /** Trả về JSON cho VNPAY. */
     private void writeResponse(HttpServletResponse response, int status,
             String rspCode, String message) throws IOException {
         response.setStatus(status);

@@ -16,13 +16,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Quản lý voucher (Manager/Admin). URL: /manager/vouchers
- *   GET            danh sách + form thêm/sửa (?edit=id)
- *   POST save      thêm hoặc cập nhật
- *   POST toggle    bật/tắt voucher
- *   POST delete    xóa voucher chưa từng được dùng
- */
+/** Quản lý voucher (Manager/Admin). URL: /manager/vouchers */
 @WebServlet("/manager/vouchers")
 public class VoucherServlet extends BaseServlet {
 
