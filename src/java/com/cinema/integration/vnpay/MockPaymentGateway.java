@@ -7,25 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Cổng thanh toán giả lập nội bộ, dùng cho môi trường dev.
- *
- * <p>VNPAY Sandbox từ chối mọi chữ ký khi {@code vnp_HashSecret} không
- * khớp với khoá do họ cấp — mã lỗi trả về luôn là {@code 99} và không
- * thể xác định nguyên nhân từ phía merchant. Cổng giả lập cho phép
- * chạy và kiểm thử trọn luồng thanh toán (UC15, UC16) mà không phụ
- * thuộc tài khoản VNPAY thật.</p>
- *
- * <p>Adapter này giữ nguyên hợp đồng với {@link VNPayGateway}: cùng
- * kiểu trả về, cùng tham số, cùng quy trình xác thực chữ ký ở phía
- * nhận. Khi bổ sung khoá thật, chỉ cần đổi
- * {@link VNPayProperties#isGatewayMock()} và
- * {@link VNPayProperties#getPaymentUrl()}.</p>
- *
- * <p>Chữ ký vẫn dùng HMAC-SHA512 để phía nhận chạy đúng đường kiểm
- * tra {@link VNPaySigner#verify(Map, String)} như thật, chỉ khác ở chỗ
- * khoá dùng chung với cả hai đầu nằm trong cùng hệ thống.</p>
- */
+/** Cổng thanh toán giả lập nội bộ, dùng cho môi trường dev. */
 public class MockPaymentGateway {
 
     /** Múi giờ dùng cho mốc thời gian, khớp VNPAY. */
@@ -44,17 +26,7 @@ public class MockPaymentGateway {
     private MockPaymentGateway() {
     }
 
-    /**
-     * Dựng tham số thanh toán giả lập, ký bằng HMAC-SHA512.
-     *
-     * @param txnRef mã tham chiếu (dùng làm mã đơn hàng)
-     * @param amount tổng tiền cần thanh toán
-     * @param orderInfo mô tả đơn hàng
-     * @param clientIp địa chỉ IP của khách hàng
-     * @param returnUrl URL quay về sau khi "thanh toán"
-     * @param expireMinutes số phút cho phép thanh toán
-     * @return map tham số đã ký, sẵn sàng đưa vào query string
-     */
+    /** Dựng tham số thanh toán giả lập, ký bằng HMAC-SHA512. */
     public static Map<String, String> buildSignedParams(String txnRef,
             BigDecimal amount, String orderInfo, String clientIp,
             String returnUrl, int expireMinutes) {
@@ -84,15 +56,7 @@ public class MockPaymentGateway {
         return params;
     }
 
-    /**
-     * Sinh chữ ký cho một tập tham số do cổng giả lập phát lại.
-     *
-     * <p>Dùng ở phía nhận để tái tạo dữ liệu gốc rồi kiểm tra bằng
-     * đúng đường kiểm tra của cổng thật.</p>
-     *
-     * @param params các tham số nhận được (chưa có chữ ký)
-     * @return chữ ký hex
-     */
+    /** Sinh chữ ký cho một tập tham số do cổng giả lập phát lại. */
     public static String signParams(Map<String, String> params) {
         Map<String, String> signable
                 = new LinkedHashMap<String, String>(params);
@@ -101,23 +65,13 @@ public class MockPaymentGateway {
                 VNPayProperties.mockSecretKey());
     }
 
-    /**
-     * Mã đơn hàng giao dịch giả lập.
-     *
-     * @return mã giao dịch dạng số
-     */
+    /** Mã đơn hàng giao dịch giả lập. */
     public static String generateTransactionNo() {
         long suffix = Math.abs(System.nanoTime() % 100_000_000L);
         return String.valueOf(10_000_000L + suffix);
     }
 
-    /**
-     * Kiểm tra thời hạn thanh toán của giao dịch giả lập.
-     *
-     * @param createTime thời điểm tạo (yyyyMMddHHmmss)
-     * @param expireTime thời điểm hết hạn (yyyyMMddHHmmss)
-     * @return true nếu đã quá thời hạn
-     */
+    /** Kiểm tra thời hạn thanh toán của giao dịch giả lập. */
     public static boolean isExpired(String createTime, String expireTime) {
         LocalDateTime deadline = parseTime(expireTime);
         if (deadline == null) {

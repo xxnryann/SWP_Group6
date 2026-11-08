@@ -2,9 +2,7 @@ package com.cinema.model;
 
 import java.time.LocalDate;
 
-/**
- * Model để hiển thị thông tin phim và suất chiếu trong dashboard.
- */
+/** Model để hiển thị thông tin phim và suất chiếu trong dashboard. */
 public class DashboardShowtime {
     private Movie movie;
     private LocalDate nextShowDate;

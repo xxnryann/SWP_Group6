@@ -51,12 +51,7 @@ public class SystemDAO {
         }
     }
 
-    /**
-     * Sao lưu đầy đủ CSDL vào thư mục backup mặc định của SQL Server.
-     * Dùng COPY_ONLY để không ảnh hưởng chuỗi sao lưu sẵn có; file nằm trên máy chạy SQL Server.
-     *
-     * @return đường dẫn file .bak
-     */
+    /** Sao lưu đầy đủ CSDL vào thư mục backup mặc định của SQL Server. */
     public String backup() throws SQLException {
         try (Connection c = DBContext.getConnection(); Statement st = c.createStatement()) {
             Map<String, Object> info = Rows.query(c, "SELECT DB_NAME() AS db, "

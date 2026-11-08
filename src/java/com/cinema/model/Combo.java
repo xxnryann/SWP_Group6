@@ -3,10 +3,7 @@ package com.cinema.model;
 import com.cinema.util.Moneys;
 import java.math.BigDecimal;
 
-/**
- * Combo bắp nước — STT 13.
- * Khớp 100% bảng Combo trong script database của nhóm.
- */
+/** Combo bắp nước — STT 13. */
 public class Combo {
     private int comboId;
     private String comboName;

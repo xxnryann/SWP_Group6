@@ -102,14 +102,7 @@ public class ShowtimeDAO {
         }
     }
 
-    /**
-     * Các mốc giờ bắt đầu còn trống trong phòng cho ngày đã chọn.
-     *
-     * <p>Không còn khung giờ cố định: mọi mốc 15 phút từ giờ mở cửa tới giờ
-     * đóng cửa đều được xét. Một mốc hợp lệ khi suất chiếu kết thúc trước
-     * giờ đóng cửa và không đè lên suất đã có của phòng (tính cả 15 phút
-     * dọn phòng).</p>
-     */
+    /** Các mốc giờ bắt đầu còn trống trong phòng cho ngày đã chọn. */
     public List<LocalTime> findAvailableStartTimes(LocalDate date, String roomName, int movieId,
             int excludedShowtimeId) throws SQLException {
         if (date.isBefore(LocalDate.now())) {
@@ -227,14 +220,7 @@ public class ShowtimeDAO {
         return slots;
     }
 
-    /**
-     * Ghi hàng loạt suất chiếu trong một transaction.
-     *
-     * <p>Dùng cho luồng "sinh lịch tự động": toàn bộ lịch của ngày hoặc được
-     * ghi hết, hoặc không gì cả — tránh để lại nửa lịch khi một suất bị trùng.</p>
-     *
-     * @return số suất chiếu đã ghi
-     */
+    /** Ghi hàng loạt suất chiếu trong một transaction. */
     public int insertBatch(List<Showtime> showtimes) throws SQLException {
         if (showtimes == null || showtimes.isEmpty()) {
             return 0;
@@ -417,10 +403,7 @@ public class ShowtimeDAO {
         }
     }
 
-    /**
-     * Tra room_id của phòng đang hoạt động và slot_id (khung giá Sáng/Chiều/Tối)
-     * suy ra từ giờ bắt đầu. Không còn khung giờ chiếu cố định.
-     */
+    /** Tra room_id của phòng đang hoạt động và slot_id (khung giá Sáng/Chiều/Tối) */
     private RoomSlot validateRoomAndSlot(Connection connection, Showtime showtime) throws SQLException {
         String roomSql = "SELECT TOP (1) r.room_id FROM dbo.Room r "
                 + "WHERE r.room_name = ? AND r.status = 'Active' ORDER BY r.room_id";
