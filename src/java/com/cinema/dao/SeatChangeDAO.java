@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-/** Đổi ghế cho vé đã thanh toán (Staff) — dùng {@code sp_ChangeSeat}. */
+/** Đổi ghế cho vé đã thanh toán (Staff) — dùng sp_ChangeSeat. */
 public class SeatChangeDAO {
 
     /** Vé + suất chiếu theo mã vé; null nếu không có. */

@@ -2,10 +2,7 @@ package com.cinema.service;
 
 import java.math.BigDecimal;
 
-/**
- * Kết quả tính giảm giá dùng chung.
- * Dùng cho: STT 25 (thanh toán online — Phạm Nam), STT 21 (bán tại quầy — Long).
- */
+/** Kết quả tính giảm giá dùng chung. */
 public class DiscountResult {
     private BigDecimal voucherDiscount; // tiền giảm từ voucher
     private BigDecimal pointsDiscount;  // tiền giảm từ MyPoint

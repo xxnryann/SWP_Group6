@@ -15,25 +15,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * Phân quyền cho luồng đặt vé online (/booking/*).
- *
- * <p>Quy tắc: đặt vé online bắt buộc phải đăng nhập (UC12) và chỉ khách
- * hàng (role CUSTOMER) được dùng. Nhân viên quầy dùng luồng riêng
- * (/staff/counter).</p>
- *
- * <ul>
- *   <li>Chưa đăng nhập → chuyển về /login (nhớ URL để quay lại sau khi đăng nhập)</li>
- *   <li>Đã đăng nhập nhưng sai vai trò → 403</li>
- *   <li>Tài khoản bị khoá / không còn ACTIVE → đăng xuất, chuyển về /login</li>
- * </ul>
- *
- * <p><b>Phạm vi filter có chủ đích:</b> chỉ bọc các bước khách hàng chủ động
- * mở ({@code /booking/seats}, {@code /booking/extras}, {@code /booking/payment},
- * {@code /booking/cancel-result}). Endpoint {@code /booking/payment/return} là
- * nơi <b>cổng thanh toán</b> chuyển khách về — nó phải truy cập được mà không
- * cần phiên đăng nhập (cổng gọi bằng GET, có thể không kèm cookie).</p>
- */
+/** Phân quyền cho luồng đặt vé online (/booking/*). */
 @WebFilter("/booking/*")
 public class BookingAuthFilter implements Filter {
 

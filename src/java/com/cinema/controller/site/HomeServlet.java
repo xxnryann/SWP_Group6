@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * Trang chủ cho khách (GUEST) và khách hàng: dùng chung giao diện "tổng quan customer"
- * (slider tin nổi bật + tab phim đang chiếu / sắp chiếu).
- */
+/** Trang chủ cho khách (GUEST) và khách hàng: dùng chung giao diện "tổng quan customer" */
 @WebServlet(urlPatterns = {"/home", ""})
 public class HomeServlet extends BaseServlet {
     private final DashboardDAO dashboardDAO;

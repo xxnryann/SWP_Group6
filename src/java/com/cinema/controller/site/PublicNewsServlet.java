@@ -10,11 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * STT 16 — Xem tin tức (Guest, Customer: không cần đăng nhập).
- * URL: /news        -> danh sách tin đã xuất bản
- * URL: /news?id=... -> chi tiết tin (chỉ tin published)
- */
+/** STT 16 — Xem tin tức (Guest, Customer: không cần đăng nhập). */
 @WebServlet("/news")
 public class PublicNewsServlet extends BaseServlet {
 

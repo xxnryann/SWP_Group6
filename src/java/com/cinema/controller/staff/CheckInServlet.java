@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
 
-/**
- * Soát vé (QR) tại cửa phòng chiếu — nhân viên nhập/quét mã vé, hệ thống gọi sp_CheckInTicket.
- * URL: /staff/checkin  (GET: form + vé soát gần đây, POST: soát vé)
- */
+/** Soát vé (QR) tại cửa phòng chiếu — nhân viên nhập/quét mã vé, hệ thống gọi sp_CheckInTicket. */
 @WebServlet("/staff/checkin")
 public class CheckInServlet extends BaseServlet {
 

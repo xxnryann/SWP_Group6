@@ -15,10 +15,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Quản lý giá vé theo loại ghế × khung giờ × loại ngày, và danh sách ngày lễ (Manager/Admin).
- * URL: /manager/prices  (POST action=savePrices | addHoliday | deleteHoliday)
- */
+/** Quản lý giá vé theo loại ghế × khung giờ × loại ngày, và danh sách ngày lễ (Manager/Admin). */
 @WebServlet("/manager/prices")
 public class PriceManageServlet extends BaseServlet {
 

@@ -23,25 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * STT 21 — Bán vé tại quầy (Staff).
- * URL: /staff/counter?action=showtimes|seats|checkout|success
- * Quyền: STAFF / MANAGER / ADMIN.
- *
- * Luồng 3 bước (booking_id giữ trong session giữa các bước):
- *  1. Chọn suất chiếu  → danh sách suất sắp chiếu còn ghế trống
- *  2. Chọn ghế         → sơ đồ ghế từ vw_SeatMap, giữ ghế bằng sp_HoldSeats
- *  3. Thanh toán       → thêm combo (sp_AddCombo), gắn khách hàng (nếu có),
- *                        áp voucher/MyPoint (qua DiscountService — chỉ khi có
- *                        khách hàng đã đăng ký, vì sp_ApplyVoucher từ chối
- *                        khách vãng lai), thu tiền mặt (sp_ConfirmPayment 'Cash')
- *
- * Lưu ý: phiên giữ ghế có thời hạn (SystemConfig BOOKING_SESSION_MINUTES, PAYMENT_WINDOW_MINUTES).
- * Nếu hết hạn giữa chừng, servlet tự tạo booking mới khi giữ ghế lại.
- *
- * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): phân quyền hiện kiểm tra ngay trong servlet này (đang đúng);
- * mục tiêu dài hạn là gom về filter phân quyền tập trung.
- */
+/** STT 21 — Bán vé tại quầy (Staff). */
 @WebServlet("/staff/counter")
 public class CounterSalesServlet extends BaseServlet {
 

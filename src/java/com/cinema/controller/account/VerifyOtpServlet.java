@@ -113,15 +113,7 @@ public class VerifyOtpServlet extends BaseServlet {
         resp.sendRedirect(req.getContextPath() + "/login");
     }
 
-    /**
-     * Cấp phát {@code Account} + {@code Customer} trong hệ thống nghiệp vụ cho
-     * khách vừa xác thực.
-     *
-     * <p>Luồng đặt vé (Booking/Ticket/MyPoint) dùng {@code Account.account_id}
-     * chứ không phải {@code Users.UserId}, nên khách phải có bản ghi
-     * {@code Account} tương ứng thì mới đặt vé được. Lỗi ở đây không được
-     * làm hỏng luồng đăng nhập — chỉ ghi log để xử lý sau.</p>
-     */
+    /** Cấp phát Account + Customer trong hệ thống nghiệp vụ cho */
     private void ensureBusinessAccount(User u) {
         try {
             accountDAO.ensureCustomerAccount(u.getEmail(), u.getFullName(),

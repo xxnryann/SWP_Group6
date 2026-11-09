@@ -18,7 +18,7 @@ public final class AuditLog {
     private AuditLog() {
     }
 
-    /** @param email email người thực hiện; null nếu chưa xác định (vd đăng nhập sai). */
+
     public static void write(String email, String action, String detail) {
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(

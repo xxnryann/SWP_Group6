@@ -11,12 +11,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
-/**
- * Trang thông tin vé mà mã QR trỏ tới: GET /ticket/view?code=TK...
- *
- * <p>Không cần đăng nhập để điện thoại nào quét QR cũng mở được. Mã vé ngẫu nhiên đóng vai trò khóa truy cập;
- * trang chỉ hiện thông tin suất chiếu, không hiện tên hay email của khách.</p>
- */
+/** Trang thông tin vé mà mã QR trỏ tới: GET /ticket/view?code=TK... */
 @WebServlet("/ticket/view")
 public class TicketViewServlet extends BaseServlet {
 

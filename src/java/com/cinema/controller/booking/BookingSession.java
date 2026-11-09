@@ -14,12 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Tiện ích nhỏ cho luồng đặt vé online: đọc/ghi trạng thái phiên đặt vé.
- *
- * <p>Phiên đặt vé giữ {@code bookingId} và {@code showtimeId} trong session
- * giữa các bước (chọn ghế → combo/voucher/điểm → thanh toán).</p>
- */
+/** Tiện ích nhỏ cho luồng đặt vé online: đọc/ghi trạng thái phiên đặt vé. */
 public final class BookingSession {
 
     /** Khóa session chứa booking_id hiện tại. */
@@ -45,9 +40,7 @@ public final class BookingSession {
         }
     }
 
-    /**
-     * Gom ghế theo hàng để vẽ sơ đồ.
-     */
+    /** Gom ghế theo hàng để vẽ sơ đồ. */
     public static List<List<SeatCell>> groupByRow(List<SeatCell> seats) {
         Map<String, List<SeatCell>> rows = new LinkedHashMap<>();
         for (SeatCell s : seats) {
@@ -56,17 +49,7 @@ public final class BookingSession {
         return new ArrayList<>(rows.values());
     }
 
-    /**
-     * Tóm tắt từng hàng ghế: hàng nào thuộc loại ghế nào, có bao nhiêu ghế,
-     * khoảng ghế và giá vé của loại ghế đó.
-     *
-     * <p>Loại ghế lấy theo ghế đầu tiên của hàng (mỗi hàng trong hệ thống hiện
-     * dùng chung một loại ghế — quản trị đổi loại theo cả hàng).</p>
-     *
-     * @param rows        ghế đã group theo hàng
-     * @param typesByName map loại ghế theo tên (key = {@code SeatType.type_name})
-     * @return danh sách chú thích theo thứ tự hàng hiển thị
-     */
+    /** Tóm tắt từng hàng ghế: hàng nào thuộc loại ghế nào, có bao nhiêu ghế, */
     public static List<SeatRowLegend> buildRowLegends(List<List<SeatCell>> rows,
             Map<String, SeatTypeInfo> typesByName) {
         List<SeatRowLegend> legends = new ArrayList<>();
@@ -104,13 +87,7 @@ public final class BookingSession {
         return legends;
     }
 
-    /**
-     * Gắn dữ liệu sơ đồ ghế + chú thích loại ghế vào request (dùng chung cho
-     * đặt vé online và bán vé tại quầy).
-     *
-     * <p>Chú thích gồm: danh sách loại ghế kèm giá vé của suất chiếu, và map
-     * chú thích theo hàng dùng để gắn tooltip lên nhãn hàng trong sơ đồ ghế.</p>
-     */
+    /** Gắn dữ liệu sơ đồ ghế + chú thích loại ghế vào request (dùng chung cho */
     public static void applySeatGuide(HttpServletRequest req, OnlineBookingService service,
             int showtimeId, List<SeatCell> seats) {
         List<SeatTypeInfo> seatTypes = service.getSeatTypesWithPrice(showtimeId);
@@ -139,9 +116,7 @@ public final class BookingSession {
         req.setAttribute("rowLegendMap", legendByRow);
     }
 
-    /**
-     * Chuẩn hoá danh sách id ghế do client gửi lên: "41, 42,abc" → "41,42".
-     */
+    /** Chuẩn hoá danh sách id ghế do client gửi lên: "41, 42,abc" → "41,42". */
     public static String cleanSeatIds(String raw) {
         StringBuilder sb = new StringBuilder();
         for (String part : Validator.trim(raw).split(",")) {
@@ -156,9 +131,7 @@ public final class BookingSession {
         return sb.toString();
     }
 
-    /**
-     * Đọc đơn hiện tại của người đang đăng nhập từ session (null nếu không có).
-     */
+    /** Đọc đơn hiện tại của người đang đăng nhập từ session (null nếu không có). */
     public static OnlineBooking currentBooking(HttpServletRequest req, OnlineBookingService service) {
         Integer id = bookingId(req);
         if (id == null) {

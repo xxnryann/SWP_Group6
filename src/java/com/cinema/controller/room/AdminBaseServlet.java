@@ -7,15 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Nền chung cho các màn hình Admin của module Phòng chiếu / Ghế.
- * Chỉ tài khoản có role ADMIN được truy cập.
- *
- * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): quyền ADMIN đang kiểm tra trong servlet; dài hạn gom về filter tập trung.
- */
+/** Nền chung cho các màn hình Admin của module Phòng chiếu / Ghế. */
 abstract class AdminBaseServlet extends BaseServlet {
 
-    /** @return true nếu là ADMIN; ngược lại đã chuyển hướng/trả lỗi và servlet phải dừng. */
+
     protected boolean requireAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User u = currentUser(req);
         if (u == null) {

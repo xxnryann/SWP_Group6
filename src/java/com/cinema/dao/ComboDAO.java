@@ -9,11 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO bảng Combo — STT 13.
- * Cột/tên bảng khớp script database của nhóm (combo_id, combo_name,
- * status IN ('Active','Hidden')).
- */
+/** DAO bảng Combo — STT 13. */
 public class ComboDAO {
 
     private Combo map(ResultSet rs) throws SQLException {

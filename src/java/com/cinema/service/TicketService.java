@@ -6,25 +6,7 @@ import com.cinema.model.Ticket;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * Nghiệp vụ lịch sử vé + huỷ vé của khách (UC19 / BF-09).
- *
- * <p>Tầng service là nơi duy nhất quyết định khách có được huỷ vé hay không.
- * Điều kiện kiểm tra (đã chốt):</p>
- * <ol>
- *   <li><b>Ownership</b>: vé phải thuộc đơn của chính khách đang đăng nhập
- *       (không tin id gửi lên từ client).</li>
- *   <li><b>Còn hiệu lực</b>: vé phải {@code Booked} — chưa soát vé, chưa huỷ,
- *       chưa quá giờ chiếu.</li>
- *   <li><b>Còn trong thời hạn huỷ</b>: còn trước mốc
- *       {@code CANCEL_BEFORE_HOURS} giờ trước giờ chiếu.</li>
- * </ol>
- *
- * <p>Việc kiểm tra cuối cùng nằm trong stored procedure
- * {@code sp_CancelTicket} (transaction + ownership + hoàn tiền/điểm), nên
- * service chỉ chịu trách nhiệm tiền điều kiện + dịch message tiếng Việt
- * cho UI. Không copy-paste logic giữa controller.</p>
- */
+/** Nghiệp vụ lịch sử vé + huỷ vé của khách (UC19 / BF-09). */
 public class TicketService {
 
     private final TicketDAO ticketDAO;
@@ -39,11 +21,7 @@ public class TicketService {
         this.accountDAO = accountDAO;
     }
 
-    /**
-     * Lịch sử vé của khách (mỗi vé 1 thẻ 1 mã QR).
-     *
-     * @param email email khách đang đăng nhập
-     */
+    /** Lịch sử vé của khách (mỗi vé 1 thẻ 1 mã QR). */
     public List<Ticket> getCustomerTickets(String email) throws SQLException {
         return ticketDAO.findByUser(email);
     }
@@ -52,14 +30,7 @@ public class TicketService {
         return ticketDAO.findComboOrdersByUser(email);
     }
 
-    /**
-     * Huỷ MỘT vé của khách đang đăng nhập.
-     *
-     * @param ticketId id vé (từ form, KHÔNG tin tuyệt đối — kiểm tra ownership)
-     * @param email    email khách đang đăng nhập
-     * @param reason   lý do huỷ (tuỳ chọn)
-     * @return kết quả kèm thông báo tiếng Việt
-     */
+    /** Huỷ MỘT vé của khách đang đăng nhập. */
     public CancelResult cancelTicket(int ticketId, String email, String reason) {
         if (ticketId <= 0) {
             return CancelResult.fail("Vé không hợp lệ.");
@@ -103,13 +74,7 @@ public class TicketService {
         }
     }
 
-    /**
-     * Huỷ toàn bộ combo của một đơn của khách đang đăng nhập.
-     *
-     * @param bookingId id đơn (từ form, procedure kiểm tra chủ đơn)
-     * @param email     email khách đang đăng nhập
-     * @return kết quả kèm thông báo tiếng Việt
-     */
+    /** Huỷ toàn bộ combo của một đơn của khách đang đăng nhập. */
     public CancelResult cancelCombo(int bookingId, String email) {
         if (bookingId <= 0) {
             return CancelResult.fail("Đơn không hợp lệ.");
@@ -128,14 +93,7 @@ public class TicketService {
         }
     }
 
-    /**
-     * Tìm vé theo id nhưng chỉ trả về khi thuộc đơn của khách đang đăng nhập.
-     *
-     * @param ticketId  id vé
-     * @param email     email khách đang đăng nhập
-     * @param accountId account_id của khách đang đăng nhập
-     * @return vé, hoặc null nếu không tồn tại / không thuộc khách đó
-     */
+    /** Tìm vé theo id nhưng chỉ trả về khi thuộc đơn của khách đang đăng nhập. */
     private Ticket findOwnedTicket(int ticketId, String email, int accountId) {
         try {
             Ticket t = ticketDAO.findOneByUser(ticketId, email);
@@ -149,9 +107,7 @@ public class TicketService {
         }
     }
 
-    /**
-     * Kết quả thao tác huỷ vé: thành công hay thất bại kèm thông báo.
-     */
+    /** Kết quả thao tác huỷ vé: thành công hay thất bại kèm thông báo. */
     public static class CancelResult {
         private final boolean success;
         private final String message;

@@ -1,10 +1,6 @@
 package com.cinema.model;
 
-/**
- * Ghế của một phòng chiếu (bảng Seat).
- * status IN ('Active','Maintenance'). pairSeatId != null nghĩa là ghế đôi, đi cùng ghế còn lại của cặp.
- * Không nhầm với SeatCell (sơ đồ ghế theo suất chiếu, có màu GREEN/YELLOW/RED/GREY).
- */
+/** Ghế của một phòng chiếu (bảng Seat). */
 public class Seat {
     private int seatId;
     private int roomId;

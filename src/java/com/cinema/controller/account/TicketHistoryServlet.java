@@ -9,15 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * Lịch sử vé của khách + huỷ vé (UC18 / UC19).
- *
- * <ul>
- *   <li>GET /account/tickets → danh sách vé (mỗi vé 1 thẻ 1 mã QR)</li>
- *   <li>POST /account/tickets (action=cancel) → huỷ 1 vé còn hiệu lực</li>
- *   <li>POST /account/tickets (action=cancelCombo) → huỷ toàn bộ combo của 1 đơn</li>
- * </ul>
- */
+/** Lịch sử vé của khách + huỷ vé (UC18 / UC19). */
 @WebServlet("/account/tickets")
 public class TicketHistoryServlet extends BaseServlet {
 

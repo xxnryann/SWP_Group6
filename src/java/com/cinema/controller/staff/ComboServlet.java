@@ -14,16 +14,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
-/**
- * STT 13 — Quản lý combo bắp nước (Staff).
- * URL: /staff/combo?action=list|add|edit|delete
- *
- * Khớp bảng Combo trong script database của nhóm:
- *  - combo_name (không phải name), status IN ('Active','Hidden')
- *
- * NỢ KỸ THUẬT (đã biết, xem README mục "Nợ kỹ thuật"): phân quyền hiện kiểm tra ngay trong servlet này (đang đúng);
- * mục tiêu dài hạn là gom về filter phân quyền tập trung.
- */
+/** STT 13 — Quản lý combo bắp nước (Staff). */
 @WebServlet("/staff/combo")
 public class ComboServlet extends BaseServlet {
 

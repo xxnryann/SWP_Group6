@@ -3,9 +3,7 @@ package com.cinema.integration.vnpay;
 import java.math.BigDecimal;
 import java.util.Map;
 
-/**
- * Kết quả thanh toán do VNPAY trả về qua Return URL hoặc IPN.
- */
+/** Kết quả thanh toán do VNPAY trả về qua Return URL hoặc IPN. */
 public class VNPayCallback {
 
     /** Mã tham chiếu giao dịch gửi sang VNPAY (vnp_TxnRef). */
@@ -35,12 +33,7 @@ public class VNPayCallback {
     /** Chữ ký do VNPAY gửi kèm. */
     private String secureHash;
 
-    /**
-     * Đọc kết quả thanh toán từ tập tham số nhận được.
-     *
-     * @param params các tham số do VNPAY gửi về
-     * @return kết quả thanh toán
-     */
+    /** Đọc kết quả thanh toán từ tập tham số nhận được. */
     public static VNPayCallback from(Map<String, String> params) {
         VNPayCallback callback = new VNPayCallback();
         callback.txnRef = params.get("vnp_TxnRef");
@@ -68,15 +61,7 @@ public class VNPayCallback {
         return callback;
     }
 
-    /**
-     * Giao dịch có thành công hay không.
-     *
-     * <p>VNPAY trả về mã {@code 00} cho giao dịch thành công. Trường
-     * {@code vnp_TransactionStatus} chỉ xuất hiện từ phiên bản 2.1.0
-     * nên được kiểm tra khi có mặt.</p>
-     *
-     * @return true nếu giao dịch thành công
-     */
+    /** Giao dịch có thành công hay không. */
     public boolean isSuccess() {
         if (!"00".equals(responseCode)) {
             return false;

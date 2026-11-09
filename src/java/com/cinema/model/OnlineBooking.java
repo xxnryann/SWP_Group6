@@ -4,13 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Chi tiết một đơn đặt vé online (luồng BF-02).
- *
- * <p>Mở rộng {@link BookingSummary} (dùng chung với luồng bán tại quầy)
- * bằng các thông tin chỉ có ở luồng online: thời điểm hết hạn thanh toán,
- * ghế đã chọn và thông tin suất chiếu.</p>
- */
+/** Chi tiết một đơn đặt vé online (luồng BF-02). */
 public class OnlineBooking extends BookingSummary {
 
     private int showtimeId;

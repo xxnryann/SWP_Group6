@@ -12,19 +12,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Truy vấn lịch sử vé của khách + biến động MyPoint.
- *
- * <p>Lịch sử vé đọc qua stored procedure {@code sp_GetCustomerTickets} của DB
- * nhóm: procedure tự {@code sp_ExpirePastTickets} (vé đã qua giờ chiếu →
- * {@code Expired}) rồi trả về <b>từng vé</b> kèm cờ {@code can_cancel} —
- * nút "Huỷ vé" chỉ hiện khi vé còn hiệu lực và còn trong thời hạn huỷ.</p>
- *
- * <p>Lưu ý quan trọng: {@code Booking.customer_id} / {@code MyPointTransaction.customer_id}
- * trỏ tới {@code Account.account_id} (hệ thống nghiệp vụ), KHÔNG phải
- * {@code Users.UserId}. Vì vậy các truy vấn dưới đây resolve customer_id qua
- * email của user đang đăng nhập thay vì dùng thẳng userId.</p>
- */
+/** Truy vấn lịch sử vé của khách + biến động MyPoint. */
 public class TicketDAO {
 
     /** Số giờ tối thiểu trước giờ chiếu để còn huỷ được vé (đồng bộ CANCEL_BEFORE_HOURS). */
@@ -39,11 +27,7 @@ public class TicketDAO {
         }
     }
 
-    /**
-     * Lịch sử vé của khách — mỗi phần tử là MỘT vé (1 thẻ, 1 mã QR).
-     *
-     * @param email email của người dùng đang đăng nhập
-     */
+    /** Lịch sử vé của khách — mỗi phần tử là MỘT vé (1 thẻ, 1 mã QR). */
     public List<Ticket> findByUser(String email) throws SQLException {
         List<Ticket> list = new ArrayList<>();
         // Account.email dùng collation CI_AS (case-insensitive) → so sánh trực tiếp,
@@ -102,11 +86,7 @@ public class TicketDAO {
         return list;
     }
 
-    /**
-     * Các đơn có combo của khách đã thanh toán ("Đã mua"), hoặc đã bị huỷ
-     * (mọi vé của đơn đã huỷ → "Đã huỷ"). Đơn chưa từng thanh toán không được liệt kê.
-     * Đơn còn hiệu lực lên đầu, trong mỗi nhóm mua gần nhất trước.
-     */
+    /** Các đơn có combo của khách đã thanh toán ("Đã mua"), hoặc đã bị huỷ */
     public List<com.cinema.model.ComboOrder> findComboOrdersByUser(String email) throws SQLException {
         String sql = "SELECT b.booking_id, b.booking_code, b.status AS booking_status, "
                 + "COALESCE(b.paid_at, b.created_at) AS purchased_at, "
@@ -163,23 +143,12 @@ public class TicketDAO {
         return list;
     }
 
-    /**
-     * Đọc MỘT vé theo id (không kiểm tra ownership — dành cho nhân viên quầy
-     * in mã QR lúc bán vé).
-     *
-     * @param ticketId id vé
-     * @return vé, hoặc null nếu không tồn tại
-     */
+    /** Đọc MỘT vé theo id (không kiểm tra ownership — dành cho nhân viên quầy */
     public Ticket findById(int ticketId) throws SQLException {
         return findOne("t.ticket_id = ?", ticketId);
     }
 
-    /**
-     * Đọc MỘT vé theo mã vé (trang thông tin vé mà QR trỏ tới, không cần đăng nhập).
-     *
-     * @param ticketCode mã vé, vd TK4C537F9A2BD3
-     * @return vé, hoặc null nếu không tồn tại
-     */
+    /** Đọc MỘT vé theo mã vé (trang thông tin vé mà QR trỏ tới, không cần đăng nhập). */
     public Ticket findByCode(String ticketCode) throws SQLException {
         return findOne("t.ticket_code = ?", ticketCode);
     }
@@ -229,17 +198,7 @@ public class TicketDAO {
         }
     }
 
-    /**
-     * Đọc MỘT vé của khách theo id (dùng để kiểm tra ownership trước khi huỷ).
-     *
-     * <p>Trả về {@code null} nếu vé không tồn tại hoặc không thuộc đơn của khách
-     * đang đăng nhập — nhờ vậy controller không thể đoán/id giả để huỷ vé của
-     * người khác.</p>
-     *
-     * @param ticketId id vé
-     * @param email    email khách đang đăng nhập
-     * @return vé của khách, hoặc null
-     */
+    /** Đọc MỘT vé của khách theo id (dùng để kiểm tra ownership trước khi huỷ). */
     public Ticket findOneByUser(int ticketId, String email) throws SQLException {
         String sql = "SELECT t.ticket_id, t.ticket_code, t.status AS ticket_status, t.price, "
                 + "b.booking_id, b.booking_code, b.status AS booking_status, b.customer_id, "
@@ -294,19 +253,7 @@ public class TicketDAO {
         }
     }
 
-    /**
-     * Huỷ MỘT vé đã thanh toán (UC19 / BF-09).
-     *
-     * <p>Gọi {@code sp_CancelTicket} — procedure kiểm tra ownership (vé phải
-     * thuộc đơn của khách đang đăng nhập), trạng thái vé, thời hạn huỷ, rồi
-     * hoàn tiền cho đúng 1 vé và trả lại MyPoint/voucher khi đơn không còn
-     * vé hiệu lực nào.</p>
-     *
-     * @param ticketId  vé cần huỷ
-     * @param accountId account_id của khách đang đăng nhập
-     * @param reason    lý do huỷ (tuỳ chọn)
-     * @throws SQLException message tiếng Việt từ procedure khi nghiệp vụ không cho phép
-     */
+    /** Huỷ MỘT vé đã thanh toán (UC19 / BF-09). */
     public void cancelTicket(int ticketId, int accountId, String reason) throws SQLException {
         String sql = "{call sp_CancelTicket(?, ?, ?)}";
         try (Connection c = DBContext.getConnection();
@@ -318,7 +265,7 @@ public class TicketDAO {
         }
     }
 
-    /** Huỷ toàn bộ combo của một đơn; {@code sp_CancelCombo} kiểm tra chủ đơn, thời hạn và hoàn tiền. */
+    /** Huỷ toàn bộ combo của một đơn; sp_CancelCombo kiểm tra chủ đơn, thời hạn và hoàn tiền. */
     public void cancelCombo(int bookingId, int accountId) throws SQLException {
         try (Connection c = DBContext.getConnection();
              CallableStatement cs = c.prepareCall("{call sp_CancelCombo(?, ?)}")) {
@@ -328,11 +275,7 @@ public class TicketDAO {
         }
     }
 
-    /**
-     * Lịch sử biến động MyPoint của khách.
-     *
-     * @param email email của người dùng đang đăng nhập
-     */
+    /** Lịch sử biến động MyPoint của khách. */
     public List<PointTransaction> findPointHistory(String email) throws SQLException {
         // Account.email dùng collation CI_AS → so sánh trực tiếp để giữ index seek.
         String sql = "SELECT p.txn_id, p.points, p.created_at, "

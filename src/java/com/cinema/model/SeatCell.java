@@ -1,10 +1,6 @@
 package com.cinema.model;
 
-/**
- * STT 21 — Bán vé tại quầy. Một ô ghế trên sơ đồ.
- * Màu ghế lấy từ view vw_SeatMap của database nhóm:
- * GREEN = trống | YELLOW = đang giữ chờ thanh toán | RED = đã bán | GREY = bảo trì.
- */
+/** STT 21 — Bán vé tại quầy. Một ô ghế trên sơ đồ. */
 public class SeatCell {
     private int seatId;
     private String rowLabel;

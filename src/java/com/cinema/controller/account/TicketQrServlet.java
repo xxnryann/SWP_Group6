@@ -13,18 +13,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
 
-/**
- * Trả về ảnh mã QR của một vé (UC18 — vé điện tử QR).
- *
- * <p>URL: {@code GET /account/tickets/qr?ticketId=N} → ảnh PNG.</p>
- *
- * <p>QR chứa link trang thông tin vé ({@code /ticket/view?code=...}): điện thoại quét sẽ mở trang trắng
- * hiện phim, ngày giờ chiếu, thời lượng, rạp, phòng, ghế. Màn hình soát vé tách mã vé trong link để check-in (UC39).</p>
- *
- * <p><b>Bảo mật:</b> chỉ chủ vé mới xem được mã QR của vé mình. Servlet nằm
- * dưới {@code /account/*} nên {@code AuthFilter} đã bắt buộc đăng nhập; thêm
- * lớp kiểm tra ownership trong DAO để không lộ QR của người khác.</p>
- */
+/** Trả về ảnh mã QR của một vé (UC18 — vé điện tử QR). */
 @WebServlet("/account/tickets/qr")
 public class TicketQrServlet extends BaseServlet {
 

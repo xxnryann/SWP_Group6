@@ -1,10 +1,6 @@
 package com.cinema.model;
 
-/**
- * Phòng chiếu — Screening Room Management (Admin).
- * Khớp bảng Room: room_type IN ('2D','3D','IMAX','4DX'), status IN ('Active','Closed'), capacity > 0.
- * Các trường seatCount/maintenanceCount/upcomingShowtimes là số liệu tổng hợp chỉ để hiển thị.
- */
+/** Phòng chiếu — Screening Room Management (Admin). */
 public class Room {
     private int roomId;
     private int cinemaId;

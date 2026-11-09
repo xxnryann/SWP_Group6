@@ -11,11 +11,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO bảng News — STT 12, STT 16.
- * Cột/tên bảng khớp script database của nhóm (news_id, thumbnail_url,
- * status IN ('Draft','Published','Hidden'), created_by NOT NULL).
- */
+/** DAO bảng News — STT 12, STT 16. */
 public class NewsDAO {
 
     private News map(ResultSet rs) throws SQLException {
@@ -38,10 +34,7 @@ public class NewsDAO {
         return n;
     }
 
-    /**
-     * Danh sách tin cho trang quản lý, có lọc theo trạng thái + tìm theo tiêu đề
-     * (giống các tab lọc trong mockup: Tất cả / Đã xuất bản / Bản nháp / Đã ẩn).
-     */
+    /** Danh sách tin cho trang quản lý, có lọc theo trạng thái + tìm theo tiêu đề */
     public List<News> findAll(String statusFilter, String keyword) throws SQLException {
         List<News> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -132,13 +125,7 @@ public class NewsDAO {
         }
     }
 
-    /**
-     * Tìm account_id trong bảng Account theo email của user đang đăng nhập.
-     * Cần vì News.created_by NOT NULL REFERENCES Account(account_id),
-     * trong khi đăng nhập của khung code dùng bảng Users.
-     *
-     * @return account_id, hoặc 0 nếu email chưa có trong bảng Account
-     */
+    /** Tìm account_id trong bảng Account theo email của user đang đăng nhập. */
     public int findAccountIdByEmail(String email) throws SQLException {
         String sql = "SELECT account_id FROM Account WHERE email = ?";
         try (Connection c = DBContext.getConnection();

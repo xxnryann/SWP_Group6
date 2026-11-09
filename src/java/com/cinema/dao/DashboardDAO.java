@@ -16,14 +16,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * DAO để lấy dữ liệu cho các dashboard (Admin, Manager, Staff, Customer).
- */
+/** DAO để lấy dữ liệu cho các dashboard (Admin, Manager, Staff, Customer). */
 public class DashboardDAO {
     
-    /**
-     * Số liệu tổng quan cho dashboard quản trị viên (giữ thứ tự khai báo).
-     */
+    /** Số liệu tổng quan cho dashboard quản trị viên (giữ thứ tự khai báo). */
     public Map<String, Long> getAdminStats() throws SQLException {
         String sql = "SELECT "
                 + "(SELECT COUNT(*) FROM Users) AS users_total, "
@@ -50,7 +46,7 @@ public class DashboardDAO {
         return stats;
     }
 
-    /** Số suất chiếu đang mở theo từng ngày trong {@code days} ngày tới (kể cả hôm nay); ngày không có suất = 0. */
+    /** Số suất chiếu đang mở theo từng ngày trong days ngày tới (kể cả hôm nay); ngày không có suất = 0. */
     public List<ChartBar> getShowtimesPerDay(int days) throws SQLException {
         Map<LocalDate, Long> counts = new LinkedHashMap<>();
         LocalDate today = LocalDate.now();
@@ -175,7 +171,7 @@ public class DashboardDAO {
         return stats;
     }
 
-    /** Số suất chiếu sắp tới của từng phim, nhiều nhất trước (tối đa {@code limit} phim). */
+    /** Số suất chiếu sắp tới của từng phim, nhiều nhất trước (tối đa limit phim). */
     public List<ChartBar> getUpcomingShowtimesPerMovie(int limit) throws SQLException {
         String sql = "SELECT TOP (?) m.title, COUNT(*) AS n FROM Showtime s JOIN Movie m ON m.movie_id = s.movie_id "
                 + "WHERE s.status = 'Scheduled' AND s.start_time >= SYSDATETIME() "
@@ -222,9 +218,7 @@ public class DashboardDAO {
         return bars;
     }
 
-    /**
-     * Lấy danh sách phim đang chiếu cho dashboard customer.
-     */
+    /** Lấy danh sách phim đang chiếu cho dashboard customer. */
     public List<DashboardShowtime> getNowShowingMovies() throws SQLException {
         return queryMovies("m.release_date <= CAST(GETDATE() AS DATE) "
                 + "AND (m.end_date IS NULL OR m.end_date >= CAST(GETDATE() AS DATE)) "

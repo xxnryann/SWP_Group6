@@ -7,23 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * DAO cầu nối giữa {@code Users} (đăng nhập) và {@code Account}/{@code Customer}
- * (hệ thống nghiệp vụ đặt vé).
- *
- * <p>Trong DB nhóm, {@code Account.account_id} là khóa chính của hệ thống
- * nghiệp vụ (Booking.customer_id, MyPointTransaction.customer_id, ...) và
- * <b>không</b> bảo đảm bằng {@code Users.UserId}. Vì vậy mọi truy vấn đọc
- * đều resolve {@code customer_id} qua email thay vì giả định hai id bằng nhau.</p>
- */
+/** DAO cầu nối giữa Users (đăng nhập) và Account/Customer */
 public class AccountDAO {
 
-    /**
-     * Tra {@code account_id} trong bảng Account theo email.
-     *
-     * @param email email của người dùng đăng nhập
-     * @return account_id, hoặc 0 nếu chưa có trong Account
-     */
+    /** Tra account_id trong bảng Account theo email. */
     public int findAccountIdByEmail(String email) throws SQLException {
         if (email == null || email.trim().isEmpty()) {
             return 0;
@@ -50,19 +37,7 @@ public class AccountDAO {
         }
     }
 
-    /**
-     * Bảo đảm khách đăng nhập có {@code Account} (role Customer) và {@code Customer}
-     * tương ứng trong hệ thống nghiệp vụ. Nếu đã có thì trả về account_id cũ.
-     *
-     * <p>Dùng stored procedure {@code sp_RegisterAccount} của DB nhóm để insert
-     * Account + Customer trong cùng một transaction (có bù trừ khi lỗi).</p>
-     *
-     * @param email email đăng nhập
-     * @param fullName họ tên hiển thị
-     * @param phone số điện thoại
-     * @param passwordHash mật khẩu đã băm (có thể null → dùng chuỗi rỗng)
-     * @return account_id của khách, hoặc 0 nếu không tạo được
-     */
+    /** Bảo đảm khách đăng nhập có Account (role Customer) và Customer */
     public int ensureCustomerAccount(String email, String fullName, String phone, String passwordHash) {
         if (email == null || email.trim().isEmpty()) {
             return 0;
@@ -97,12 +72,7 @@ public class AccountDAO {
         }
     }
 
-    /**
-     * Số dư MyPoint và tổng chi tiêu của một khách.
-     *
-     * @param accountId account_id trong Account
-     * @return mảng {balance, totalSpent}, hoặc null nếu khách không tồn tại
-     */
+    /** Số dư MyPoint và tổng chi tiêu của một khách. */
     public long[] findCustomerBalance(int accountId) throws SQLException {
         String sql = "SELECT my_point_balance, total_spent FROM Customer WHERE customer_id = ?";
         try (Connection c = DBContext.getConnection();

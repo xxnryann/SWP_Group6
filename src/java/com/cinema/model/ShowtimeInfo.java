@@ -3,10 +3,7 @@ package com.cinema.model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * STT 21 — Bán vé tại quầy. Thông tin một suất chiếu sắp chiếu
- * để nhân viên chọn khi bắt đầu bán vé.
- */
+/** STT 21 — Bán vé tại quầy. Thông tin một suất chiếu sắp chiếu */
 public class ShowtimeInfo {
     private int showtimeId;
     private String title;

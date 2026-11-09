@@ -254,13 +254,7 @@ public class ManageShowtimesServlet extends BaseServlet {
         }
     }
 
-    /**
-     * Sinh lịch chiếu tự động cho ngày được chọn.
-     *
-     * <p>Mỗi phòng được xếp suất liên tục: suất sau bắt đầu 15 phút sau khi
-     * suất trước kết thúc, phim xoay vòn và lệch nhau giữa các phòng nên cùng
-     * một phim xuất hiện ở nhiều phòng với các giờ khác nhau.</p>
-     */
+    /** Sinh lịch chiếu tự động cho ngày được chọn. */
     private int generateSchedule(HttpServletRequest request) throws SQLException {
         LocalDate date = LocalDate.parse(ShowtimeUtil.requiredText(
                 request.getParameter("showDate"), "Ngày chiếu không hợp lệ.", 10));

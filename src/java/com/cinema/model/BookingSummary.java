@@ -5,10 +5,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * STT 21 — Bán vé tại quầy. Tóm tắt một booking để hiển thị ở màn hình
- * thanh toán và in hóa đơn: tiền vé, tiền combo, các khoản giảm, mã vé.
- */
+/** STT 21 — Bán vé tại quầy. Tóm tắt một booking để hiển thị ở màn hình */
 public class BookingSummary {
     private int bookingId;
     private String bookingCode;
@@ -90,7 +87,7 @@ public class BookingSummary {
 
     public List<String> getTicketCodes() { return ticketCodes; }
 
-    /** Id của từng vé (để dựng URL ảnh QR). Song song với {@link #getTicketCodes()}. */
+    /** Id của từng vé (để dựng URL ảnh QR). Song song với #getTicketCodes(). */
     public List<Integer> getTicketIds() { return ticketIds; }
 
     public List<ComboLine> getComboLines() { return comboLines; }

@@ -14,24 +14,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * STT 21 — Bán vé tại quầy (Staff).
- *
- * Nghiệp vụ bán vé nằm trong stored procedure của database nhóm:
- *  - sp_CreateBooking (@channel = 'Counter'): mở phiên đặt vé
- *  - sp_HoldSeats: giữ ghế (kiểm tra ghế đôi phải chọn cả cặp, chống đặt trùng)
- *  - sp_AddCombo: thêm/bỏ combo (kiểm tra tồn kho)
- *  - sp_ConfirmPayment (@method = 'Cash'): xác nhận thanh toán tiền mặt
- *  - vw_SeatMap: sơ đồ ghế kèm màu trạng thái
- *
- * Lỗi nghiệp vụ được procedure THROW với message tiếng Việt → servlet
- * hiện trực tiếp cho nhân viên.
- *
- * <p>Phần gọi stored procedure đã được gom về {@link BookingDAO} để luồng
- * online (BF-02) và luồng quầy (BF-03) dùng chung một đường gọi DB, tránh
- * copy-paste logic. Các truy vấn riêng của quầy (tìm/gắn khách hàng) vẫn
- * nằm ở đây.</p>
- */
+/** STT 21 — Bán vé tại quầy (Staff). */
 public class CounterSaleDAO {
 
     /** Lớp DAO dùng chung cho các lời gọi stored procedure. */
@@ -57,10 +40,7 @@ public class CounterSaleDAO {
         public int getPointBalance() { return pointBalance; }
     }
 
-    /**
-     * Tra account_id trong bảng Account theo email của user đăng nhập
-     * (dùng cho Booking.staff_id). Trả về 0 nếu email chưa có trong Account.
-     */
+    /** Tra account_id trong bảng Account theo email của user đăng nhập */
     public int findAccountIdByEmail(String email) throws SQLException {
         return accountDAO.findAccountIdByEmail(email);
     }
@@ -111,10 +91,7 @@ public class CounterSaleDAO {
 
     /* ---------- bước 2-3: booking, giữ ghế, combo ---------- */
 
-    /**
-     * Mở phiên bán tại quầy: sp_CreateBooking với @channel = 'Counter'.
-     * @return booking_id vừa tạo
-     */
+    /** Mở phiên bán tại quầy: sp_CreateBooking với @channel = 'Counter'. */
     public int createCounterBooking(Integer customerId, Integer staffAccountId, int showtimeId)
             throws SQLException {
         return bookingDAO.createCounterBooking(customerId, staffAccountId, showtimeId);
@@ -243,11 +220,7 @@ public class CounterSaleDAO {
         return s;
     }
 
-    /**
-     * Xác nhận thanh toán tiền mặt: sp_ConfirmPayment với @is_success = 1,
-     * @method = 'Cash'. Procedure tự: chuyển vé Held → Booked, trừ kho combo,
-     * cộng/trừ MyPoint, ghi email e-ticket (nếu có khách hàng).
-     */
+    /** Xác nhận thanh toán tiền mặt: sp_ConfirmPayment với @is_success = 1, */
     public void confirmCashPayment(int bookingId) throws SQLException {
         bookingDAO.confirmPayment(bookingId, null, true, "Cash");
     }
