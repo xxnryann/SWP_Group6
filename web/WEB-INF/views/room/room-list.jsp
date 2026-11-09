@@ -140,7 +140,7 @@
                     </c:otherwise>
                   </c:choose>
                 </td>
-                <td>${r.upcomingShowtimes}</td>
+                <td><a href="${ctx}/admin/room-showtimes?roomId=${r.roomId}">${r.upcomingShowtimes}</a></td>
                 <td>
                   <c:choose>
                     <c:when test="${r.active}"><span class="rm-badge rm-on">${r.statusLabel}</span></c:when>
@@ -150,6 +150,7 @@
                 <td>
                   <div class="rm-actions">
                     <a class="btn btn-primary btn-small" href="${ctx}/admin/seats?roomId=${r.roomId}">Layout &amp; ghế</a>
+                    <a class="btn btn-outline btn-small" href="${ctx}/admin/room-showtimes?roomId=${r.roomId}">Suất chiếu</a>
                     <a class="btn btn-soft btn-small" href="${ctx}/admin/rooms?action=edit&id=${r.roomId}">Sửa</a>
                     <form method="post" action="${ctx}/admin/rooms"
                           onsubmit="return confirm('${r.active ? 'Đóng' : 'Mở lại'} phòng này?')">
