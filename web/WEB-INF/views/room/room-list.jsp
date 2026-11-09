@@ -22,6 +22,10 @@
   .rm-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .rm-actions form { display: inline-flex; }
   .rm-empty { text-align: center; padding: 40px 20px; color: var(--slate-500); }
+  .rm-schedule { min-width: 220px; }
+  .rm-slot { padding: 5px 0; border-bottom: 1px solid var(--slate-200); white-space: nowrap; }
+  .rm-slot:last-child { border-bottom: 0; }
+  .rm-slot b { color: var(--brand); }
 </style>
 <main>
   <section class="page">
@@ -53,6 +57,9 @@
 
       <form method="get" action="${ctx}/admin/rooms" class="rm-search">
         <input type="search" name="q" placeholder="Tìm theo tên phòng..." value="<c:out value='${keyword}'/>">
+        <label style="display:flex;align-items:center;gap:6px">Ngày
+          <input type="date" name="date" value="${scheduleDate}">
+        </label>
         <button class="btn btn-outline" type="submit">Tìm</button>
         <label class="rm-filter">Phòng
           <select name="room" onchange="this.form.submit()">
@@ -102,7 +109,7 @@
           <thead>
             <tr>
               <th>Phòng</th><th>Rạp</th><th>Loại</th><th>Sức chứa</th><th>Ghế</th>
-              <th>Suất sắp tới</th><th>Trạng thái</th><th>Thao tác</th>
+              <th>Lịch chiếu ngày ${scheduleDate}</th><th>Suất sắp tới</th><th>Trạng thái</th><th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -121,6 +128,16 @@
                       </c:if>
                     </c:when>
                     <c:otherwise><span class="rm-warn">Chưa có layout</span></c:otherwise>
+                  </c:choose>
+                </td>
+                <td class="rm-schedule">
+                  <c:choose>
+                    <c:when test="${empty r.schedule}"><span class="rm-muted">Không có suất chiếu</span></c:when>
+                    <c:otherwise>
+                      <c:forEach var="slot" items="${r.schedule}">
+                        <div class="rm-slot"><b>${slot.scheduleTimeDisplay}</b> · <c:out value="${slot.movieTitle}"/></div>
+                      </c:forEach>
+                    </c:otherwise>
                   </c:choose>
                 </td>
                 <td>${r.upcomingShowtimes}</td>
@@ -167,6 +184,5 @@
   </section>
 </main>
 <%@ include file="../_footer.jspf" %>
-
 
 

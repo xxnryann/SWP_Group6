@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 /**
  * Screening Room Management (Admin) — tạo phòng chiếu và thiết lập thông tin phòng (tên, loại phòng, sức chứa).

@@ -59,9 +59,7 @@
             <dt>Mã phim</dt><dd><c:out value="${movie.movieId}"/></dd>
             <dt>Ngày tạo</dt><dd><c:out value="${movie.createdAtLabel}"/></dd>
             <dt>Cập nhật</dt><dd><c:out value="${movie.updatedAtLabel}"/></dd>
-            <dt>URL trailer</dt><dd><c:out value="${empty movie.trailerUrl ? '—' : movie.trailerUrl}"/></dd>
             <dt>Tệp trailer</dt><dd><c:out value="${empty movie.trailerFile ? '—' : movie.trailerFile}"/></dd>
-            <dt>URL poster</dt><dd><c:out value="${empty movie.posterUrl ? '—' : movie.posterUrl}"/></dd>
           </c:if>
         </dl>
         <c:if test="${not empty movie.synopsis}">

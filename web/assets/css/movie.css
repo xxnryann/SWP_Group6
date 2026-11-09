@@ -120,6 +120,9 @@
   background: #fff; color: var(--slate-800); font: 15px var(--font);
 }
 .showtime-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+.showtime-checkboxes, .showtime-time-checkboxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 12px; border: 1px solid var(--slate-300); border-radius: var(--radius); background: #fff; }
+.showtime-time-checkboxes { grid-template-columns: repeat(2, minmax(130px, 1fr)); min-height: 80px; }
+.showtime-checkboxes .check, .showtime-time-checkboxes .check { margin: 0; padding: 8px; border: 1px solid var(--slate-200); border-radius: 6px; }
 .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
 
 /* ---------- home: danh sách phim đang chiếu / sắp chiếu ---------- */

@@ -4,10 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("movie-form");
   if (!form) return;
 
-  const posterInput = document.getElementById("posterFile");
-  const posterPreview = document.getElementById("poster-preview");
-  const posterEmpty = document.getElementById("poster-preview-empty");
-  const trailerInput = document.getElementById("trailerFile");
+  const trailerUrlInput = document.getElementById("trailerUrl");
+  const trailerPreview = document.getElementById("trailer-url-preview");
+  const trailerFrame = document.getElementById("trailer-url-frame");
   const releaseDate = document.getElementById("releaseDate");
   const endDate = document.getElementById("endDate");
   let automaticEndDate = "";
@@ -62,29 +61,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   };
 
-  if (posterInput) {
-    posterInput.addEventListener("change", () => {
-      if (!validateFile(posterInput, ["jpg", "jpeg", "png", "webp"], "Poster")) return;
-      const file = posterInput.files[0];
-      if (!file) return;
-      posterPreview.src = URL.createObjectURL(file);
-      posterPreview.hidden = false;
-      posterEmpty.hidden = true;
-    });
-  }
+  const youtubeEmbedUrl = (value) => {
+    try {
+      const url = new URL(value.trim());
+      const host = url.hostname.toLowerCase();
+      let id = "";
+      if (host === "youtu.be" || host === "www.youtu.be") {
+        id = url.pathname.substring(1).split("/")[0];
+      } else if (["youtube.com", "www.youtube.com", "m.youtube.com",
+        "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+        if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
+        else if (url.pathname.startsWith("/embed/")) id = url.pathname.substring(7).split("/")[0];
+        else if (url.pathname.startsWith("/shorts/")) id = url.pathname.substring(7).split("/")[0];
+      }
+      return /^[A-Za-z0-9_-]{6,20}$/.test(id)
+        ? `https://www.youtube-nocookie.com/embed/${id}`
+        : "";
+    } catch (error) {
+      return "";
+    }
+  };
 
-  if (trailerInput) {
-    trailerInput.addEventListener("change", () => {
-      validateFile(trailerInput, ["mp4", "webm"], "Video trailer");
-    });
+  const updateTrailerPreview = () => {
+    if (!trailerUrlInput || !trailerPreview || !trailerFrame) return;
+    const embedUrl = youtubeEmbedUrl(trailerUrlInput.value);
+    trailerFrame.src = embedUrl;
+    trailerPreview.hidden = !embedUrl;
+  };
+
+  if (trailerUrlInput) {
+    trailerUrlInput.addEventListener("input", updateTrailerPreview);
+    updateTrailerPreview();
   }
 
   form.addEventListener("submit", (event) => {
-    if (!validateFile(posterInput, ["jpg", "jpeg", "png", "webp"], "Poster")
-        || !validateFile(trailerInput, ["mp4", "webm"], "Video trailer")) {
-      event.preventDefault();
-      return;
-    }
     if (releaseDate.value && endDate.value && endDate.value < releaseDate.value) {
       endDate.setCustomValidity("Ngày kết thúc không được trước ngày khởi chiếu.");
       endDate.reportValidity();

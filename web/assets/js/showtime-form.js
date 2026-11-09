@@ -30,7 +30,8 @@
   function updateEstimatedEnd() {
     var selectedMovie = movieSelect.options[movieSelect.selectedIndex];
     var duration = Number(selectedMovie && selectedMovie.dataset.duration);
-    var start = timeSelect.value;
+    var selectedStart = timeSelect.querySelector('input[name="showTime"]:checked');
+    var start = selectedStart ? selectedStart.value : '';
     if (!start || !duration) {
       estimatedEnd.textContent = '';
       return;
@@ -40,46 +41,55 @@
       + ' (nghỉ ' + turnoverFor(duration) + ' phút)';
   }
 
-  function resetOptions(label) {
-    timeSelect.replaceChildren(new Option(label, ''));
-    timeSelect.value = '';
-    updateEstimatedEnd();
-  }
-
   async function loadAvailableTimes() {
     var requestId = ++requestNumber;
     var movieId = movieSelect.value;
-    var roomName = roomSelect.value;
+    var roomNames = Array.from(roomSelect.querySelectorAll('input[name="roomName"]:checked')).map(function (input) { return input.value; });
     var date = dateInput.value;
-    if (!movieId || !roomName || !date) {
-      resetOptions('Chọn phim, phòng và ngày trước');
+    if (!movieId || !roomNames.length || !date) {
+      timeSelect.replaceChildren(new Option('Chọn phim, phòng và ngày trước', ''));
       message.textContent = 'Chọn phim, phòng và ngày để tải giờ còn trống.';
       return;
     }
 
     if (dateInput.min && date < dateInput.min) {
-      resetOptions('Ngày chiếu đã qua');
+      timeSelect.replaceChildren(new Option('Ngày chiếu đã qua', ''));
       message.textContent = 'Ngày chiếu đã qua. Vui lòng chọn hôm nay hoặc một ngày trong tương lai.';
       return;
     }
 
-    resetOptions('Đang kiểm tra giờ trống…');
+    timeSelect.replaceChildren(new Option('Đang kiểm tra giờ trống…', ''));
     message.textContent = 'Đang kiểm tra lịch chiếu của phòng...';
     var url = new URL(form.dataset.availabilityUrl, window.location.href);
     url.searchParams.set('action', 'available-times');
+    url.searchParams.set('_ts', String(Date.now()));
     url.searchParams.set('movieId', movieId);
-    url.searchParams.set('roomName', roomName);
-    url.searchParams.set('date', date);
     var showtimeId = form.querySelector('input[name="id"]');
-    if (showtimeId) url.searchParams.set('id', showtimeId.value);
 
     try {
-      var response = await fetch(url, { credentials: 'same-origin' });
-      if (!response.ok) throw new Error('Không thể kiểm tra giờ chiếu còn trống.');
-      var times = await response.json();
+      var responses = await Promise.all(roomNames.map(function (roomName) {
+        var roomUrl = new URL(url);
+        roomUrl.searchParams.set('roomName', roomName);
+        roomUrl.searchParams.set('date', date);
+        if (showtimeId) roomUrl.searchParams.set('id', showtimeId.value);
+        return fetch(roomUrl, { credentials: 'same-origin', cache: 'no-store' }).then(function (response) {
+          if (response.status === 401) {
+            throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          }
+          if (!response.ok) throw new Error('Không thể kiểm tra giờ chiếu còn trống (HTTP ' + response.status + ').');
+          return response.json();
+        });
+      }));
+      var times = [];
+      responses.forEach(function (roomTimes) {
+        roomTimes.forEach(function (time) {
+          if (times.indexOf(time) === -1) times.push(time);
+        });
+      });
+      times.sort();
       if (requestId !== requestNumber) return;
 
-      resetOptions(times.length ? 'Chọn giờ bắt đầu' : 'Không còn giờ phù hợp');
+      timeSelect.replaceChildren();
       var selectedMovie = movieSelect.options[movieSelect.selectedIndex];
       var duration = Number(selectedMovie.dataset.duration);
       times.forEach(function (time) {
@@ -88,7 +98,8 @@
         timeSelect.add(option);
       });
       if (currentTime && times.indexOf(currentTime) !== -1) {
-        timeSelect.value = currentTime;
+        var current = timeSelect.querySelector('input[value="' + currentTime + '"]');
+        if (current) current.checked = true;
       }
       currentTime = '';
       message.textContent = times.length
@@ -97,13 +108,19 @@
       updateEstimatedEnd();
     } catch (error) {
       if (requestId !== requestNumber) return;
-      resetOptions('Không tải được giờ chiếu');
+      timeSelect.replaceChildren(new Option('Không tải được giờ chiếu', ''));
+      updateEstimatedEnd();
       message.textContent = error.message;
     }
   }
 
-  [movieSelect, roomSelect, dateInput].forEach(function (control) {
-    control.addEventListener('change', loadAvailableTimes);
+  movieSelect.addEventListener('change', loadAvailableTimes);
+  dateInput.addEventListener('change', loadAvailableTimes);
+  roomSelect.addEventListener('change', loadAvailableTimes);
+  roomSelect.addEventListener('click', function (event) {
+    if (event.target.matches('input[name="roomName"]')) {
+      window.setTimeout(loadAvailableTimes, 0);
+    }
   });
   timeSelect.addEventListener('change', updateEstimatedEnd);
   loadAvailableTimes();
