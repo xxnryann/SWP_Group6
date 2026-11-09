@@ -5,6 +5,7 @@ import com.cinema.dao.SeatDAO;
 import com.cinema.model.Room;
 import com.cinema.util.room.RoomRuleException;
 import com.cinema.util.room.RoomRules;
+import com.cinema.util.room.RoomSort;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,7 +18,7 @@ import java.sql.SQLException;
  * Screening Room Management (Admin) — tạo phòng chiếu và thiết lập thông tin phòng (tên, loại phòng, sức chứa).
  *
  * URL: /admin/rooms
- *   GET  (không action)        danh sách phòng, tìm theo tên (?q=)
+ *   GET  (không action)        danh sách phòng, tìm theo tên (?q=), sắp xếp/lọc (?room, type, capacity, upcoming, status, xem RoomSort)
  *   GET  ?action=new           form thêm phòng
  *   GET  ?action=edit&id=N     form sửa phòng
  *   POST action=save           thêm/sửa phòng
@@ -38,6 +39,10 @@ public class ManageRoomsServlet extends AdminBaseServlet {
         String action = req.getParameter("action");
         try {
             if ("new".equals(action)) {
+                if (roomDAO.countAll() >= RoomRules.MAX_ROOMS) {
+                    redirectRoomLimit(req, resp);
+                    return;
+                }
                 Room r = new Room();
                 r.setRoomType("2D");
                 r.setCapacity(RoomRules.FIXED_2D_CAPACITY);
@@ -53,8 +58,15 @@ public class ManageRoomsServlet extends AdminBaseServlet {
                 showForm(req, resp, r);
             } else {
                 String keyword = Validator.trim(req.getParameter("q"));
-                req.setAttribute("rooms", roomDAO.findAll(keyword));
+                req.setAttribute("rooms", RoomSort.apply(roomDAO.findAll(keyword), req.getParameter("room"),
+                        req.getParameter("type"), req.getParameter("capacity"),
+                        req.getParameter("upcoming"), req.getParameter("status")));
+                req.setAttribute("roomTypes", RoomRules.ROOM_TYPES);
                 req.setAttribute("keyword", keyword);
+                boolean limitReached = roomDAO.countAll() >= RoomRules.MAX_ROOMS;
+                req.setAttribute("roomLimitReached", limitReached);
+                req.setAttribute("showRoomLimit", limitReached && "full".equals(req.getParameter("limit")));
+                req.setAttribute("roomLimitMessage", RoomRules.ROOM_LIMIT_MESSAGE);
                 req.setAttribute("pageTitle", "Quản lý phòng chiếu");
                 forward(req, resp, "room/room-list");
             }
@@ -163,6 +175,8 @@ public class ManageRoomsServlet extends AdminBaseServlet {
                 }
                 resp.sendRedirect(req.getContextPath() + "/admin/seats?roomId=" + newId);
             }
+        } catch (RoomRuleException e) {
+            redirectRoomLimit(req, resp);
         } catch (SQLException e) {
             if (e.getErrorCode() == 2601 || e.getErrorCode() == 2627) { // trùng UNIQUE (cinema_id, room_name)
                 req.setAttribute("error", "Rạp này đã có phòng tên \"" + name + "\".");
@@ -214,6 +228,11 @@ public class ManageRoomsServlet extends AdminBaseServlet {
             flash(req, "error", e.getMessage());
         }
         resp.sendRedirect(req.getContextPath() + "/admin/rooms");
+    }
+
+    /** Quay về danh sách và mở pop-up báo đã đạt số phòng tối đa. */
+    private void redirectRoomLimit(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.sendRedirect(req.getContextPath() + "/admin/rooms?limit=full");
     }
 
     private void showForm(HttpServletRequest req, HttpServletResponse resp, Room room)

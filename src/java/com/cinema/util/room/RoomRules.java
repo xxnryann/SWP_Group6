@@ -23,6 +23,11 @@ public final class RoomRules {
     public static final String SEAT_ACTIVE = "Active";
     public static final String SEAT_MAINTENANCE = "Maintenance";
 
+    /** Tổng số phòng chiếu tối đa (tính cả phòng đã đóng vì có thể mở lại). */
+    public static final int MAX_ROOMS = 13;
+    public static final String ROOM_LIMIT_MESSAGE =
+            "Số phòng chiếu đã đạt tối đa (" + MAX_ROOMS + " phòng). Không thể thêm phòng mới.";
+
     public static final int MAX_ROOM_NAME = 50;
     public static final int MAX_CAPACITY = 500;
     /** row_label là CHAR(1) nên tối đa 26 hàng A–Z. */
