@@ -12,8 +12,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -131,6 +135,155 @@ public class SeatDAO {
             } catch (SQLException | RoomRuleException | RuntimeException e) {
                 c.rollback();
                 throw e;
+            }
+        }
+    }
+
+    /** Danh sách ghế của layout cố định theo loại phòng, dùng seat_type_id thực tế trong database. */
+    public List<SeatSpec> fixedSpecs(String roomType) throws SQLException, RoomRuleException {
+        Integer standard = null;
+        Integer vip = null;
+        Integer couple = null;
+        for (SeatType t : findSeatTypes()) {
+            if ("Standard".equalsIgnoreCase(t.getTypeName())) {
+                standard = t.getSeatTypeId();
+            } else if ("VIP".equalsIgnoreCase(t.getTypeName())) {
+                vip = t.getSeatTypeId();
+            } else if (t.isCouple()) {
+                couple = t.getSeatTypeId();
+            }
+        }
+        if (standard == null || vip == null || couple == null) {
+            throw new RoomRuleException("Thiếu loại ghế Standard, VIP hoặc Couple trong hệ thống.");
+        }
+        return RoomRules.fixedLayout(roomType, standard, vip, couple);
+    }
+
+    public boolean matchesLayout(List<Seat> seats, List<SeatSpec> specs) {
+        if (seats.size() != specs.size()) {
+            return false;
+        }
+        Map<String, Integer> typeByLabel = new HashMap<>();
+        for (Seat s : seats) {
+            typeByLabel.put(s.getLabel(), s.getSeatTypeId());
+        }
+        for (SeatSpec sp : specs) {
+            Integer type = typeByLabel.get(sp.rowLabel + sp.seatNumber);
+            if (type == null || type != sp.seatTypeId) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Đưa phòng về layout cho trước mà vẫn giữ seat_id của các ghế còn dùng, nhờ đó phòng đã có lịch sử vé vẫn
+     * nâng cấp được. Từ chối khi ghế cần đổi loại/xóa đang có vé còn hiệu lực, hoặc ghế cần xóa đã có lịch sử vé.
+     */
+    public void applyLayoutKeepingSeats(int roomId, List<SeatSpec> specs) throws SQLException, RoomRuleException {
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                Map<String, SeatSpec> wanted = new HashMap<>();
+                for (SeatSpec sp : specs) {
+                    wanted.put(sp.rowLabel + sp.seatNumber, sp);
+                }
+                Set<String> existing = new HashSet<>();
+                List<Integer> removed = new ArrayList<>();
+                Map<Integer, Integer> newTypeBySeat = new LinkedHashMap<>();
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT seat_id, row_label, seat_number, seat_type_id FROM Seat WHERE room_id = ?")) {
+                    ps.setInt(1, roomId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            String label = rs.getString("row_label") + rs.getInt("seat_number");
+                            SeatSpec sp = wanted.get(label);
+                            existing.add(label);
+                            if (sp == null) {
+                                removed.add(rs.getInt("seat_id"));
+                            } else if (sp.seatTypeId != rs.getInt("seat_type_id")) {
+                                newTypeBySeat.put(rs.getInt("seat_id"), sp.seatTypeId);
+                            }
+                        }
+                    }
+                }
+
+                List<Integer> affected = new ArrayList<>(removed);
+                affected.addAll(newTypeBySeat.keySet());
+                List<String> busy = activeTicketSeats(c, affected);
+                if (!busy.isEmpty()) {
+                    throw new RoomRuleException("Chưa thể áp dụng layout: ghế " + String.join(", ", busy)
+                            + " đang có vé còn hiệu lực. Hãy đổi ghế cho khách hoặc chờ suất chiếu kết thúc.");
+                }
+                if (hasSeatHistory(c, removed)) {
+                    throw new RoomRuleException("Chưa thể áp dụng layout: phòng có ghế nằm ngoài layout mới "
+                            + "nhưng đã có lịch sử vé nên không xóa được.");
+                }
+
+                exec(c, "UPDATE Seat SET pair_seat_id = NULL WHERE room_id = ?", roomId);
+                try (PreparedStatement ps = c.prepareStatement("DELETE FROM Seat WHERE seat_id = ?")) {
+                    for (Integer id : removed) {
+                        ps.setInt(1, id);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                try (PreparedStatement ps = c.prepareStatement("UPDATE Seat SET seat_type_id = ? WHERE seat_id = ?")) {
+                    for (Map.Entry<Integer, Integer> e : newTypeBySeat.entrySet()) {
+                        ps.setInt(1, e.getValue());
+                        ps.setInt(2, e.getKey());
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO Seat (room_id, row_label, seat_number, seat_type_id, pair_seat_id, status) "
+                        + "VALUES (?, ?, ?, ?, NULL, 'Active')")) {
+                    for (SeatSpec sp : specs) {
+                        if (!existing.contains(sp.rowLabel + sp.seatNumber)) {
+                            ps.setInt(1, roomId);
+                            ps.setString(2, sp.rowLabel);
+                            ps.setInt(3, sp.seatNumber);
+                            ps.setInt(4, sp.seatTypeId);
+                            ps.addBatch();
+                        }
+                    }
+                    ps.executeBatch();
+                }
+                linkCouplePairs(c, roomId, null);
+                // Một ghế của cặp đang bảo trì thì cả cặp không bán được.
+                exec(c, "UPDATE s SET s.status = 'Maintenance' FROM Seat s JOIN Seat p ON p.seat_id = s.pair_seat_id "
+                        + "WHERE s.room_id = ? AND p.status = 'Maintenance'", roomId);
+                try (PreparedStatement ps = c.prepareStatement("UPDATE Room SET capacity = ? WHERE room_id = ?")) {
+                    ps.setInt(1, specs.size());
+                    ps.setInt(2, roomId);
+                    ps.executeUpdate();
+                }
+                c.commit();
+            } catch (SQLException | RoomRuleException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
+        }
+    }
+
+    private boolean hasSeatHistory(Connection c, List<Integer> seatIds) throws SQLException {
+        if (seatIds.isEmpty()) {
+            return false;
+        }
+        String in = placeholders(seatIds.size());
+        String sql = "SELECT CASE WHEN EXISTS (SELECT 1 FROM Ticket WHERE seat_id IN (" + in + ")) "
+                + "OR EXISTS (SELECT 1 FROM TicketChangeHistory WHERE old_seat_id IN (" + in + ") "
+                + "OR new_seat_id IN (" + in + ")) THEN 1 ELSE 0 END";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            int i = 1;
+            for (int round = 0; round < 3; round++) {
+                for (Integer id : seatIds) {
+                    ps.setInt(i++, id);
+                }
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
             }
         }
     }

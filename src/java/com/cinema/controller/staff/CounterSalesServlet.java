@@ -9,6 +9,7 @@ import com.cinema.model.User;
 import com.cinema.service.DiscountResult;
 import com.cinema.service.DiscountService;
 import com.cinema.service.OnlineBookingService;
+import com.cinema.controller.site.PromotionsServlet;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -182,8 +183,11 @@ public class CounterSalesServlet extends BaseServlet {
         req.setAttribute("summary", s);
         req.setAttribute("showtime", showtimeId == null ? null : dao.findShowtimeById(showtimeId));
         req.setAttribute("combos", dao.findActiveCombos());
-        req.setAttribute("comboQty", comboQty);
         req.setAttribute("pointConfig", dao.getPointConfig());
+        req.setAttribute("pointBalance", s.hasCustomer()
+                ? dao.getPointBalanceForBooking(bookingId) : 0);
+        req.setAttribute("vouchers", PromotionsServlet.activeVouchers());
+        req.setAttribute("comboQty", comboQty);
         req.setAttribute("pageTitle", "Bán vé tại quầy — Thanh toán");
         forward(req, resp, "counter/counter-checkout");
     }
@@ -228,7 +232,8 @@ public class CounterSalesServlet extends BaseServlet {
                 case "hold": doHold(req, resp); break;
                 case "attachCustomer": doAttachCustomer(req, resp); break;
                 case "updateCombos": doUpdateCombos(req, resp); break;
-                case "applyDiscount": doApplyDiscount(req, resp); break;
+                case "applyVoucher": doApplyVoucher(req, resp); break;
+                case "applyPoints": doApplyPoints(req, resp); break;
                 case "pay": doPay(req, resp); break;
                 case "cancelBooking": doCancelBooking(req, resp); break;
                 default: resp.sendRedirect(req.getContextPath() + "/staff/counter");
@@ -369,8 +374,7 @@ public class CounterSalesServlet extends BaseServlet {
         resp.sendRedirect(checkoutUrl(req));
     }
 
-    /** Áp voucher + MyPoint (chỉ có tác dụng khi đơn đã gắn khách hàng đã đăng ký). */
-    private void doApplyDiscount(HttpServletRequest req, HttpServletResponse resp)
+    private void doApplyVoucher(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         Integer bookingId = sessionBookingId(req);
         if (bookingId == null) {
@@ -378,8 +382,20 @@ public class CounterSalesServlet extends BaseServlet {
             return;
         }
         String code = Validator.trim(req.getParameter("voucherCode"));
+        DiscountResult r = discountService.applyDiscounts(bookingId, code, 0);
+        flash(req, r.getTotal() != null ? "success" : "error", r.getMessage());
+        resp.sendRedirect(checkoutUrl(req));
+    }
+
+    private void doApplyPoints(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        Integer bookingId = sessionBookingId(req);
+        if (bookingId == null) {
+            resp.sendRedirect(req.getContextPath() + "/staff/counter");
+            return;
+        }
         int points = Math.max(0, parseIntSafe(req.getParameter("points"), 0));
-        DiscountResult r = discountService.applyDiscounts(bookingId, code, points);
+        DiscountResult r = discountService.applyDiscounts(bookingId, null, points);
         // total != null ⇔ procedure chạy thành công; ngược lại message là lỗi tiếng Việt
         flash(req, r.getTotal() != null ? "success" : "error", r.getMessage());
         resp.sendRedirect(checkoutUrl(req));

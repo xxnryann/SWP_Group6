@@ -18,23 +18,20 @@
         <div class="field"><label for="pointValueVnd">1 ĐIỂM = (VNĐ)</label>
           <input id="pointValueVnd" name="pointValueVnd" type="number" min="1" required
                  value="${not empty configs ? configs[0].point_value_vnd : 1000}"></div>
-        <div class="field"><label for="maxRedeemPercent">DÙNG ĐIỂM TỐI ĐA (% GIÁ TRỊ ĐƠN)</label>
-          <input id="maxRedeemPercent" name="maxRedeemPercent" type="number" step="0.01" min="0" max="100" required
-                 value="${not empty configs ? configs[0].max_redeem_percent : 20}"></div>
+        <p class="sub">Khách dùng được toàn bộ số điểm đang có, tối đa bằng số tiền còn phải thanh toán.</p>
       </div>
       <button class="btn btn-primary" type="submit">Áp dụng cấu hình mới</button>
     </form>
 
     <h3 style="margin-top:28px">Lịch sử cấu hình</h3>
     <div class="table-wrap"><table class="data">
-      <thead><tr><th>Có hiệu lực từ</th><th>Tích điểm</th><th>1 điểm</th><th>Dùng tối đa</th><th>Trạng thái</th><th>Người cập nhật</th></tr></thead>
+      <thead><tr><th>Có hiệu lực từ</th><th>Tích điểm</th><th>1 điểm</th><th>Trạng thái</th><th>Người cập nhật</th></tr></thead>
       <tbody>
       <c:forEach var="cfg" items="${configs}">
         <tr>
           <td><c:out value="${cfg.effective_from}"/></td>
           <td><fmt:formatNumber value="${cfg.earn_rate_percent}" maxFractionDigits="2"/>%</td>
           <td><fmt:formatNumber value="${cfg.point_value_vnd}" groupingUsed="true"/>đ</td>
-          <td><fmt:formatNumber value="${cfg.max_redeem_percent}" maxFractionDigits="2"/>%</td>
           <td><c:choose><c:when test="${cfg.is_active}"><span class="chip chip-success">Đang áp dụng</span></c:when>
                         <c:otherwise><span class="chip">Cũ</span></c:otherwise></c:choose></td>
           <td><c:out value="${cfg.updated_by_name}"/></td>

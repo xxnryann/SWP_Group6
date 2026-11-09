@@ -67,6 +67,17 @@ public class BookingDAO {
         }
     }
 
+    public String getRoomType(int showtimeId) throws SQLException {
+        String sql = "SELECT r.room_type FROM Showtime s JOIN Room r ON r.room_id = s.room_id WHERE s.showtime_id = ?";
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, showtimeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
     /** Sơ đồ ghế của một suất chiếu (màu GREEN/YELLOW/RED/GREY từ vw_SeatMap). */
     public List<SeatCell> getSeatMap(int showtimeId) throws SQLException {
         List<SeatCell> list = new ArrayList<>();
@@ -131,7 +142,7 @@ public class BookingDAO {
     /** Combo đang bán (kèm tồn kho) để khách chọn ở bước combo. */
     public List<Combo> findActiveCombos() throws SQLException {
         List<Combo> list = new ArrayList<>();
-        String sql = "SELECT combo_id, combo_name, description, price, stock, status " +
+        String sql = "SELECT combo_id, combo_name, description, price, stock, image_url, status " +
                 "FROM Combo WHERE status = 'Active' ORDER BY combo_id";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -143,6 +154,7 @@ public class BookingDAO {
                 cb.setDescription(rs.getString("description"));
                 cb.setPrice(rs.getBigDecimal("price"));
                 cb.setStock(rs.getInt("stock"));
+                cb.setImageUrl(rs.getString("image_url"));
                 cb.setStatus(rs.getString("status"));
                 list.add(cb);
             }
@@ -152,13 +164,14 @@ public class BookingDAO {
 
     /** Cấu hình quy đổi MyPoint đang có hiệu lực. */
     public PointConfig getPointConfig() throws SQLException {
-        String sql = "SELECT TOP 1 point_value_vnd, max_redeem_percent FROM MyPointConfig " +
+        String sql = "SELECT TOP 1 earn_rate_percent, point_value_vnd, max_redeem_percent FROM MyPointConfig " +
                 "WHERE is_active = 1 ORDER BY effective_from DESC, config_id DESC";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (!rs.next()) return null;
             PointConfig pc = new PointConfig();
+            pc.setEarnRatePercent(rs.getBigDecimal("earn_rate_percent"));
             pc.setPointValueVnd(rs.getInt("point_value_vnd"));
             pc.setMaxRedeemPercent(rs.getBigDecimal("max_redeem_percent"));
             return pc;

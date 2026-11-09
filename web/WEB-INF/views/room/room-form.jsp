@@ -47,9 +47,39 @@
               <label for="f-cap">Sức chứa (số ghế)</label>
               <input id="f-cap" type="number" name="capacity" min="1" max="500" required
                      value="${room.capacity > 0 ? room.capacity : ''}" ${capacityLocked ? 'readonly' : ''}>
-              <c:if test="${capacityLocked}">
-                <div class="hint">Phòng đã có layout nên sức chứa luôn bằng số ghế thực tế (${room.seatCount}). Thay đổi ở màn hình Layout &amp; ghế.</div>
-              </c:if>
+              <c:choose>
+                <c:when test="${capacityLocked}">
+                  <div class="hint">Phòng đã có layout nên sức chứa luôn bằng số ghế thực tế (${room.seatCount}). Thay đổi ở màn hình Layout &amp; ghế.</div>
+                </c:when>
+                <c:otherwise>
+                  <div class="hint" id="capHint">Là tổng số ghế khi thiết lập layout: hệ thống gợi ý số hàng × ghế mỗi hàng theo con số này (vd 55 → 5 hàng × 11 ghế).</div>
+                  <div class="hint" id="capHint2D" hidden>Phòng 2D dùng layout cố định ${fixedSummary2d} Hệ thống tự tạo ghế khi lưu.</div>
+                  <div class="hint" id="capHintIMAX" hidden>Phòng IMAX dùng layout cố định ${fixedSummaryImax} Hệ thống tự tạo ghế khi lưu.</div>
+                  <div class="hint" id="capHint3D" hidden>Phòng 3D dùng layout cố định ${fixedSummary3d} Hệ thống tự tạo ghế khi lưu.</div>
+                  <div class="hint" id="capHint4DX" hidden>Phòng 4DX dùng layout cố định ${fixedSummary4dx} Hệ thống tự tạo ghế khi lưu.</div>
+                  <script>
+                    (function () {
+                      var type = document.getElementById('f-type'), cap = document.getElementById('f-cap');
+                      var free = document.getElementById('capHint');
+                      var fixed = {
+                        '2D': { capacity: '${fixedCapacity2d}', hint: document.getElementById('capHint2D') },
+                        '3D': { capacity: '${fixedCapacity3d}', hint: document.getElementById('capHint3D') },
+                        'IMAX': { capacity: '${fixedCapacityImax}', hint: document.getElementById('capHintIMAX') },
+                        '4DX': { capacity: '${fixedCapacity4dx}', hint: document.getElementById('capHint4DX') }
+                      };
+                      function sync() {
+                        var current = fixed[type.value];
+                        if (current) cap.value = current.capacity;
+                        cap.readOnly = !!current;
+                        free.hidden = !!current;
+                        Object.keys(fixed).forEach(function (k) { fixed[k].hint.hidden = fixed[k] !== current; });
+                      }
+                      type.addEventListener('change', sync);
+                      sync();
+                    })();
+                  </script>
+                </c:otherwise>
+              </c:choose>
             </div>
           </div>
 

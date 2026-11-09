@@ -4,6 +4,7 @@ import com.cinema.controller.BaseServlet;
 import com.cinema.model.OnlineBooking;
 import com.cinema.service.OnlineBookingService;
 import com.cinema.util.Validator;
+import com.cinema.util.WebUrls;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -78,8 +79,8 @@ public class BookingPaymentServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/showtimes");
             return;
         }
-        String returnUrl = req.getContextPath() + "/booking/payment/return";
-        String url = service.buildPaymentUrl(booking, req.getRemoteAddr(),
+        String returnUrl = WebUrls.absoluteBase(req) + "/booking/payment/return";
+        String url = service.buildPaymentUrl(booking, WebUrls.clientIp(req),
                 req.getContextPath(), returnUrl);
         resp.sendRedirect(url);
     }

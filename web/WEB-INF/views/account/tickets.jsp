@@ -29,8 +29,8 @@
   .tk-row { display: grid; grid-template-columns: 132px 1fr; gap: 14px;
             padding: 11px 0; border-top: 1px solid var(--line); }
   .tk-row:first-child { border-top: 0; }
-  .tk-row .tk-label { color: var(--muted); font-size: 14px; font-weight: 600; }
-  .tk-row .tk-value { color: var(--ink); font-size: 14.5px; }
+  .tk-row .tk-label { color: var(--muted); font-size: 15px; font-weight: 600; }
+  .tk-row .tk-value { color: var(--ink); font-size: 15px; }
   .tk-row .tk-value.muted { color: var(--muted); }
   .tk-seat { font-weight: 800; font-size: 16px; }
 
@@ -39,7 +39,7 @@
                padding: 9px 22px; font: 700 14px var(--font); cursor: pointer; }
   .tk-cancel:hover { background: #991b1b; }
   .tk-cancel[disabled] { opacity: .45; cursor: not-allowed; }
-  .tk-note { margin-top: 10px; color: var(--muted); font-size: 13px; }
+  .tk-note { margin-top: 10px; color: var(--muted); font-size: 14px; }
 
   /* ---------- cột QR ---------- */
   .tk-right { background: #fff; color: var(--navy);
@@ -255,6 +255,5 @@
   </div>
 </div></main>
 <%@ include file="../_footer.jspf" %>
-
 
 

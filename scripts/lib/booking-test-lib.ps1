@@ -247,10 +247,17 @@ function Invoke-HoldSeats {
         -MaximumRedirection 5 | Out-Null
 }
 
-function Get-MockPaymentUrl {
+function Get-PaymentGatewayUrl {
     <#
     .SYNOPSIS
-        Bam "Thanh toan" o man hinh thanh toan -> tra ve URL cong gia lap.
+        Bam "Thanh toan" o man hinh thanh toan -> tra ve URL cong thanh toan.
+
+    .DESCRIPTION
+        Cong co the la cong gia lap noi bo (/mock/payment) hoac cong VNPAY that
+        (sandbox.vnpayment.vn). Script KHONG follow redirect vi du khong the
+        truy cap Internet trong moi truong test, va redirect sang domain ngoai
+        se bi theo doi se lam test cham/bro. Dung Invoke-NoRedirect de lay
+        nguyen header Location.
     #>
     param(
         [Parameter(Mandatory = $true)] $Session,
@@ -258,9 +265,22 @@ function Get-MockPaymentUrl {
     )
     $payUrl = "$BaseUrl/booking/payment"
     $csrf = Get-Csrf -Session $Session -Uri $payUrl
-    $response = Invoke-WebRequest -Uri $payUrl -Method Post -WebSession $Session -UseBasicParsing `
-        -Body @{ _csrf = $csrf; action = 'pay' } -MaximumRedirection 5
-    return $response.BaseResponse.ResponseUri
+    $response = Invoke-NoRedirect -Uri $payUrl -Body @{ _csrf = $csrf; action = 'pay' } -Session $Session
+    $location = Get-RedirectLocation -Response $response
+    $response.Close()
+    if (-not $location) { throw 'khong lay duoc Location cua cong thanh toan' }
+    return [Uri]$location
+}
+
+function Test-IsMockGatewayUrl {
+    <#
+    .SYNOPSIS
+        Kiem tra URL cong thanh toan co phai cong gia lap noi bo hay khong.
+    #>
+    param(
+        [Parameter(Mandatory = $true)] [Uri]$Uri
+    )
+    return $Uri.AbsolutePath -like '*/mock/payment*'
 }
 
 function Invoke-MockPayment {

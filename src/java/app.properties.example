@@ -34,10 +34,28 @@ otp.ttl.minutes=5
 otp.max.attempts=5
 
 # ---- Cong thanh toan (VNPAY 2.1.0) ----
-# Khi chua co vnpay.secretKey (hoac vnpay.mockGateway=true) he thong dung cong gia lap /mock/payment.
+# Dung cong THAT (sandbox.vnpayment.vn): vnpay.partnerCode = ma TmnCode,
+# vnpay.secretKey = chuoi bi mat tao checksum (HMAC-SHA512).
+# Dat vnpay.mockGateway=true de quay ve cong gia lap noi bo /mock/payment (dung khi chay test tu dong,
+# khong tien that) hoac khi chua co vnpay.secretKey hop le.
 vnpay.partnerCode=
 vnpay.secretKey=
-vnpay.mockGateway=true
+vnpay.mockGateway=false
 vnpay.paymentUrl=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 vnpay.bankCode=
 vnpay.mockPaymentUrl=/mock/payment
+# Dia chi cong khai cua app, vd http://192.168.1.10:9999/CinemaWeb hoac https://xxx.trycloudflare.com.
+# Dung cho vnp_ReturnUrl (phai la URL TUYET DOI) va de VNPAY goi IPN server-to-server.
+# De trong => tu suy ra tu dia chi request hien tai (chi chay duoc tren may chu).
+vnpay.publicBaseUrl=
+
+# Moi khoa o tren deu ghi de duoc luc chay ma khong can sua file:
+#   -Dvnpay.publicBaseUrl=https://xxx.trycloudflare.com   (system property)
+#   $env:VNPAY_PUBLICBASEURL = 'https://xxx.trycloudflare.com'   (bien moi truong)
+# Ten bien moi truong = ten khoa viet hoa, dau "." -> "_".
+
+# ---- The test cua VNPAY Sandbox (de thu thanh toan that) ----
+# Cong: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+# Ngan hang: NCB | So the: 9704198526191432198 | Ten: NGUYEN VAN A | Ngay: 07/15 | OTP: 123456
+# So the phai khop BIN cua ngan hang duoc chon (NCB dung BIN 970419).
+

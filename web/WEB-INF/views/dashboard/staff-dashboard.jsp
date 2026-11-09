@@ -29,11 +29,6 @@
           <strong><c:out value="${stats.checked_in}"/></strong>
           <small><a href="${ctx}/staff/checkin">Mở trang soát vé</a></small>
         </div>
-        <div class="admin-kpi">
-          <span>Cần chú ý</span>
-          <strong><c:out value="${stats.combos_low}"/></strong>
-          <small><c:out value="${stats.combos_low}"/> combo sắp hết</small>
-        </div>
       </section>
 
       <section class="admin-charts">

@@ -168,34 +168,76 @@ Write-Step "ADMIN - phong chieu"
 $cinemaId = Invoke-Sql "SELECT TOP 1 cinema_id FROM Cinema ORDER BY cinema_id"
 $roomName = "$tag-R"
 Assert-Test ((Get-Page $admin '/admin/rooms').StatusCode -eq 200) 'danh sach phong mo duoc'
-$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $roomName; roomType = '2D'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
+$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $roomName; roomType = '4DX'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
 $roomId = Invoke-Sql "SELECT room_id FROM Room WHERE room_name=N'$roomName'"
 Assert-Test ($roomId -match '^\d+$') "tao phong $roomName (room_id=$roomId)"
-$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $roomName; roomType = '3D'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
+$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $roomName; roomType = '4DX'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
 Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Room WHERE room_name=N'$roomName'") -eq '1') 'khong tao phong trung ten trong cung rap'
 $r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = "$tag-bad"; roomType = '9D'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
 Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Room WHERE room_name=N'$tag-bad'") -eq '0') 'tu choi loai phong khong hop le'
-$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = "$tag-bad"; roomType = '2D'; capacity = '0'; cinemaId = $cinemaId } '/admin/rooms?action=new'
-Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Room WHERE room_name=N'$tag-bad'") -eq '0') 'tu choi suc chua = 0'
-$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; id = $roomId; roomName = $roomName; roomType = '3D'; capacity = '24'; cinemaId = $cinemaId; status = 'Active' } "/admin/rooms?action=edit&id=$roomId"
-Assert-Test ((Invoke-Sql "SELECT room_type + '/' + CAST(capacity AS varchar(5)) FROM Room WHERE room_id=$roomId") -eq '3D/24') 'sua phong: loai 3D, suc chua 24'
+$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; id = $roomId; roomName = $roomName; roomType = '4DX'; capacity = '24'; cinemaId = $cinemaId; status = 'Active' } "/admin/rooms?action=edit&id=$roomId"
+Assert-Test ((Invoke-Sql "SELECT room_type + '/' + CAST(capacity AS varchar(5)) FROM Room WHERE room_id=$roomId") -eq '4DX/66') 'sua phong: suc chua 4DX giu nguyen 66'
 
 Write-Step "ADMIN - so do ghe"
 $seatTypes = (Invoke-Sql "SELECT STRING_AGG(CAST(seat_type_id AS varchar(5)), ',') FROM SeatType WHERE is_couple = 0") -split ','
 $t1 = $seatTypes[0]; $t2 = $seatTypes[-1]
 Assert-Test ((Get-Page $admin "/admin/seats?roomId=$roomId").StatusCode -eq 200) 'trang so do ghe mo duoc'
 $r = Send-Form $admin '/admin/seats' @{ action = 'generate'; roomId = $roomId; rows = '2'; cols = '4'; rowTypes = "$t1,$t2" } "/admin/seats?roomId=$roomId"
-Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$roomId") -eq '8') 'tao layout 2 hang x 4 ghe = 8 ghe'
-Test-Ok $r 'thong bao tao layout'
-$r = Send-Form $admin '/admin/seats' @{ action = 'generate'; roomId = $roomId; rows = '0'; cols = '4'; rowTypes = '' } "/admin/seats?roomId=$roomId"
-Test-Err $r 'tu choi layout khong hop le'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$roomId") -eq '66') 'phong 4DX tu choi dung lai layout'
+Test-Err $r 'thong bao tu choi dung lai layout'
+$typeCounts = Invoke-Sql "SELECT STRING_AGG(CONCAT(t.type_name, ':', c.n), ',') WITHIN GROUP (ORDER BY t.type_name) FROM (SELECT seat_type_id, COUNT(*) n FROM Seat WHERE room_id=$roomId GROUP BY seat_type_id) c JOIN SeatType t ON t.seat_type_id = c.seat_type_id"
+Assert-Test ($typeCounts -eq 'Couple:10,Standard:16,VIP:40') "phan bo loai ghe phong 4DX ($typeCounts)"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat s JOIN SeatType t ON t.seat_type_id = s.seat_type_id WHERE s.room_id=$roomId AND s.row_label='B' AND t.type_name='VIP' AND s.seat_number BETWEEN 5 AND 8") -eq '4') 'hang B: B5-B8 la VIP'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$roomId AND row_label='F' AND pair_seat_id IS NOT NULL") -eq '10') 'hang F ghep du 5 cap'
 $r = Send-Form $admin '/admin/seats' @{ action = 'rowType'; roomId = $roomId; row = 'A'; typeId = $t2 } "/admin/seats?roomId=$roomId"
-Assert-Test ((Invoke-Sql "SELECT COUNT(DISTINCT seat_type_id) FROM Seat WHERE room_id=$roomId AND row_label='A'") -eq '1' -and (Invoke-Sql "SELECT MIN(seat_type_id) FROM Seat WHERE room_id=$roomId AND row_label='A'") -eq $t2) 'doi loai ghe hang A'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat s JOIN SeatType t ON t.seat_type_id = s.seat_type_id WHERE s.room_id=$roomId AND s.row_label='A' AND t.type_name='Standard'") -eq '8') 'phong 4DX tu choi doi loai hang'
 $seatId = Invoke-Sql "SELECT TOP 1 seat_id FROM Seat WHERE room_id=$roomId ORDER BY seat_id"
 $r = Send-Form $admin '/admin/seats' @{ action = 'maintain'; roomId = $roomId; seatIds = $seatId } "/admin/seats?roomId=$roomId"
 Assert-Test ((Invoke-Sql "SELECT status FROM Seat WHERE seat_id=$seatId") -eq 'Maintenance') 'dua ghe vao bao tri'
 $r = Send-Form $admin '/admin/seats' @{ action = 'reopen'; roomId = $roomId; seatIds = $seatId } "/admin/seats?roomId=$roomId"
 Assert-Test ((Invoke-Sql "SELECT status FROM Seat WHERE seat_id=$seatId") -eq 'Active') 'mo lai ghe sau bao tri'
+
+Write-Step "ADMIN - layout co dinh phong 2D"
+$room2d = "$tag-2D"
+$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $room2d; roomType = '2D'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
+$room2dId = Invoke-Sql "SELECT room_id FROM Room WHERE room_name=N'$room2d'"
+Assert-Test ((Invoke-Sql "SELECT capacity FROM Room WHERE room_id=$room2dId") -eq '124') 'phong 2D luon co suc chua 124'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$room2dId") -eq '124') 'phong 2D tu tao 124 ghe'
+$typeCounts = Invoke-Sql "SELECT STRING_AGG(CONCAT(t.type_name, ':', c.n), ',') WITHIN GROUP (ORDER BY t.type_name) FROM (SELECT seat_type_id, COUNT(*) n FROM Seat WHERE room_id=$room2dId GROUP BY seat_type_id) c JOIN SeatType t ON t.seat_type_id = c.seat_type_id"
+Assert-Test ($typeCounts -eq 'Couple:12,Standard:56,VIP:56') "phan bo loai ghe phong 2D ($typeCounts)"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$room2dId AND row_label='J' AND pair_seat_id IS NOT NULL") -eq '12') 'hang J ghep du 6 cap'
+$r = Send-Form $admin '/admin/seats' @{ action = 'generate'; roomId = $room2dId; rows = '2'; cols = '4'; rowTypes = "$t1,$t2" } "/admin/seats?roomId=$room2dId"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$room2dId") -eq '124') 'phong 2D tu choi dung lai layout'
+$r = Send-Form $admin '/admin/seats' @{ action = 'rowType'; roomId = $room2dId; row = 'A'; typeId = $t2 } "/admin/seats?roomId=$room2dId"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat s JOIN SeatType t ON t.seat_type_id = s.seat_type_id WHERE s.room_id=$room2dId AND s.row_label='A' AND t.type_name='Standard'") -eq '14') 'phong 2D tu choi doi loai hang'
+$r = Send-Form $admin '/admin/rooms' @{ action = 'delete'; id = $room2dId } '/admin/rooms'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Room WHERE room_id=$room2dId") -eq '0') 'xoa phong 2D thu'
+
+Write-Step "ADMIN - layout co dinh phong 3D"
+$room3d = "$tag-3D"
+$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $room3d; roomType = '3D'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
+$room3dId = Invoke-Sql "SELECT room_id FROM Room WHERE room_name=N'$room3d'"
+Assert-Test ((Invoke-Sql "SELECT capacity FROM Room WHERE room_id=$room3dId") -eq '107') 'phong 3D luon co suc chua 107'
+$typeCounts = Invoke-Sql "SELECT STRING_AGG(CONCAT(t.type_name, ':', c.n), ',') WITHIN GROUP (ORDER BY t.type_name) FROM (SELECT seat_type_id, COUNT(*) n FROM Seat WHERE room_id=$room3dId GROUP BY seat_type_id) c JOIN SeatType t ON t.seat_type_id = c.seat_type_id"
+Assert-Test ($typeCounts -eq 'Couple:12,Standard:39,VIP:56') "phan bo loai ghe phong 3D ($typeCounts)"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$room3dId AND row_label='H' AND pair_seat_id IS NOT NULL") -eq '12') 'hang H ghep du 6 cap'
+$r = Send-Form $admin '/admin/seats' @{ action = 'generate'; roomId = $room3dId; rows = '2'; cols = '4'; rowTypes = "$t1,$t2" } "/admin/seats?roomId=$room3dId"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$room3dId") -eq '107') 'phong 3D tu choi dung lai layout'
+$r = Send-Form $admin '/admin/rooms' @{ action = 'delete'; id = $room3dId } '/admin/rooms'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Room WHERE room_id=$room3dId") -eq '0') 'xoa phong 3D thu'
+
+Write-Step "ADMIN - layout co dinh phong IMAX"
+$roomImax = "$tag-IMAX"
+$r = Send-Form $admin '/admin/rooms' @{ action = 'save'; roomName = $roomImax; roomType = 'IMAX'; capacity = '20'; cinemaId = $cinemaId } '/admin/rooms?action=new'
+$roomImaxId = Invoke-Sql "SELECT room_id FROM Room WHERE room_name=N'$roomImax'"
+Assert-Test ((Invoke-Sql "SELECT capacity FROM Room WHERE room_id=$roomImaxId") -eq '40') 'phong IMAX luon co suc chua 40'
+$typeCounts = Invoke-Sql "SELECT STRING_AGG(CONCAT(t.type_name, ':', c.n), ',') WITHIN GROUP (ORDER BY t.type_name) FROM (SELECT seat_type_id, COUNT(*) n FROM Seat WHERE room_id=$roomImaxId GROUP BY seat_type_id) c JOIN SeatType t ON t.seat_type_id = c.seat_type_id"
+Assert-Test ($typeCounts -eq 'Couple:8,Standard:16,VIP:16') "phan bo loai ghe phong IMAX ($typeCounts)"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$roomImaxId AND row_label='E' AND pair_seat_id IS NOT NULL") -eq '8') 'hang E ghep du 4 cap'
+$r = Send-Form $admin '/admin/seats' @{ action = 'generate'; roomId = $roomImaxId; rows = '2'; cols = '4'; rowTypes = "$t1,$t2" } "/admin/seats?roomId=$roomImaxId"
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Seat WHERE room_id=$roomImaxId") -eq '40') 'phong IMAX tu choi dung lai layout'
+$r = Send-Form $admin '/admin/rooms' @{ action = 'delete'; id = $roomImaxId } '/admin/rooms'
+Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Room WHERE room_id=$roomImaxId") -eq '0') 'xoa phong IMAX thu'
 
 Write-Step "ADMIN - dong / mo / xoa phong"
 $r = Send-Form $admin '/admin/rooms' @{ action = 'toggle'; id = $roomId } '/admin/rooms'
@@ -297,6 +339,9 @@ if ([int]$genMovies -gt 0) {
 } else { Write-Host "  [INFO] khong co phim phat hanh ngay $genDate de thu sinh lich" }
 
 Write-Step "MANAGER - xoa phim thu"
+# Chi xoa duoc phim da ngung chieu (sp_DeleteMovie) -> ngung chieu truoc roi moi xoa.
+$null = Send-Form $manager '/manage/movies' @{ action = 'stop'; id = $movieId } '/manage/movies'
+Assert-Test ((Invoke-Sql "SELECT status FROM Movie WHERE movie_id=$movieId") -eq 'Stopped') 'ngung chieu phim thu'
 $r = Send-Form $manager '/manage/movies' @{ action = 'delete'; id = $movieId } '/manage/movies'
 # Job nen co the da gui email phim moi truoc luc xoa -> phim co lich su, chi bi xoa mem: ca hai deu hop le.
 Assert-Test ((Invoke-Sql "SELECT COUNT(*) FROM Movie WHERE movie_id=$movieId AND is_deleted=0") -eq '0') "xoa phim thu (flash: $($r.flash))"

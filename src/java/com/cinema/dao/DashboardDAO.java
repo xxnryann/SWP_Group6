@@ -106,15 +106,13 @@ public class DashboardDAO {
                 + "   AND CAST(b.paid_at AS DATE) = CAST(GETDATE() AS DATE)) AS counter_tickets, "
                 + "(SELECT ISNULL(SUM(total_amount), 0) FROM Booking WHERE channel = 'Counter' AND status = 'Paid' "
                 + "   AND CAST(paid_at AS DATE) = CAST(GETDATE() AS DATE)) AS counter_revenue, "
-                + "(SELECT COUNT(*) FROM Ticket WHERE status = 'Used' AND CAST(checked_in_at AS DATE) = CAST(GETDATE() AS DATE)) AS checked_in, "
-                + "(SELECT COUNT(*) FROM Combo WHERE status = 'Active' AND stock <= 10) AS combos_low";
+                + "(SELECT COUNT(*) FROM Ticket WHERE status = 'Used' AND CAST(checked_in_at AS DATE) = CAST(GETDATE() AS DATE)) AS checked_in";
         Map<String, Long> stats = new LinkedHashMap<>();
         try (Connection connection = DBContext.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
             if (result.next()) {
-                for (String key : new String[] {"showtimes_left", "counter_tickets", "counter_revenue", "checked_in",
-                        "combos_low"}) {
+                for (String key : new String[] {"showtimes_left", "counter_tickets", "counter_revenue", "checked_in"}) {
                     stats.put(key, result.getLong(key));
                 }
             }

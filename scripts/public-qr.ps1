@@ -47,7 +47,7 @@ try {
 } catch { throw "Website chua chay tai $AppUrl" }
 
 $proxy = Start-Process node -ArgumentList @("`"$(Join-Path $PSScriptRoot 'ticket-proxy.js')`"", $ProxyPort, $AppUrl) -WindowStyle Hidden -PassThru
-$tunnel = Start-Process $Cloudflared -ArgumentList @('tunnel', '--no-autoupdate', '--url', "http://127.0.0.1:$ProxyPort", '--logfile', "`"$logFile`"") -WindowStyle Hidden -PassThru
+$tunnel = Start-Process $Cloudflared -ArgumentList @('tunnel', '--no-autoupdate', '--protocol', 'http2', '--url', "http://127.0.0.1:$ProxyPort", '--logfile', "`"$logFile`"") -WindowStyle Hidden -PassThru
 @($proxy.Id, $tunnel.Id) | Set-Content $pidFile
 
 try {
@@ -62,6 +62,12 @@ try {
         }
     }
     if (-not $public) { throw 'Khong lay duoc dia chi tunnel sau 60 giay, xem log: ' + $logFile }
+    # cho tunnel ket noi that toi Cloudflare (co dia chi chua chac da ket noi duoc)
+    $deadline = (Get-Date).AddSeconds(60)
+    while (-not (Select-String -Path $logFile -Pattern 'Registered tunnel connection' -Quiet)) {
+        if ($tunnel.HasExited -or (Get-Date) -gt $deadline) { throw 'Tunnel khong ket noi duoc toi Cloudflare (mang chan?), xem log: ' + $logFile }
+        Start-Sleep -Milliseconds 500
+    }
 
     # cho DNS cua dia chi moi san sang
     $deadline = (Get-Date).AddSeconds(60)
@@ -80,6 +86,11 @@ try {
         while (-not $tunnel.HasExited) { Start-Sleep 5 }
     }
 } finally {
-    Stop-PublicQr
+    # Chi don file trang thai neu van la cua lan chay nay (khong xoa cua mot lan chay khac da bat lai sau do)
+    if ((Test-Path $pidFile) -and @(Get-Content $pidFile) -contains "$($tunnel.Id)") {
+        Stop-PublicQr
+    } else {
+        foreach ($p in $proxy, $tunnel) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+    }
     'Da tat tunnel.'
 }

@@ -5,10 +5,14 @@
   .rm-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
   .rm-head h1 { margin: 0; }
   .rm-head p { color: var(--slate-500); margin: 4px 0 0; font-size: 14px; }
-  .rm-search { display: flex; gap: 8px; margin-bottom: 20px; }
+  .rm-search { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; margin-bottom: 20px; }
+  .rm-filter { display: flex; flex-direction: column; gap: 4px; margin: 0; font-size: 13px; font-weight: 600; color: var(--slate-600); }
   .rm-search input[type=search] { padding: 9px 14px; border: 1px solid var(--slate-300); border-radius: var(--radius);
                                   font: 14px var(--font); min-width: 260px; outline: none; background: #fff; }
   .rm-search input[type=search]:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.18); }
+  .rm-search select { padding: 9px 14px; border: 1px solid var(--slate-300); border-radius: var(--radius);
+                      font: 14px var(--font); outline: none; background: #fff; width: auto; }
+  .rm-search select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.18); }
   .rm-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
   .rm-on { background: #d1fae5; color: var(--success); }
   .rm-off { background: var(--slate-200); color: var(--slate-600); }
@@ -32,7 +36,23 @@
         <div>
           <h1>Quản lý phòng chiếu</h1>
         </div>
-        <a class="btn btn-cta" href="${ctx}/admin/rooms?action=new">+ Thêm phòng chiếu</a>
+        <c:choose>
+          <c:when test="${roomLimitReached}">
+            <button class="btn btn-cta" type="button" id="roomLimitBtn" data-message="<c:out value='${roomLimitMessage}'/>"
+                    data-auto-open="${showRoomLimit}">+ Thêm phòng chiếu</button>
+            <script>
+              document.addEventListener('DOMContentLoaded', function () {
+                var btn = document.getElementById('roomLimitBtn');
+                function showLimit() { openModal('Không thể thêm phòng chiếu', btn.dataset.message); }
+                btn.addEventListener('click', showLimit);
+                if (btn.dataset.autoOpen === 'true') showLimit();
+              });
+            </script>
+          </c:when>
+          <c:otherwise>
+            <a class="btn btn-cta" href="${ctx}/admin/rooms?action=new">+ Thêm phòng chiếu</a>
+          </c:otherwise>
+        </c:choose>
       </div>
 
       <form method="get" action="${ctx}/admin/rooms" class="rm-search">
@@ -41,6 +61,47 @@
           <input type="date" name="date" value="${scheduleDate}">
         </label>
         <button class="btn btn-outline" type="submit">Tìm</button>
+        <label class="rm-filter">Phòng
+          <select name="room" onchange="this.form.submit()">
+            <option value="">Mặc định</option>
+            <option value="name_asc" ${param.room == 'name_asc' ? 'selected' : ''}>A - Z</option>
+            <option value="name_desc" ${param.room == 'name_desc' ? 'selected' : ''}>Z - A</option>
+            <option value="number_desc" ${param.room == 'number_desc' ? 'selected' : ''}>Số phòng: Lớn - Bé</option>
+            <option value="number_asc" ${param.room == 'number_asc' ? 'selected' : ''}>Số phòng: Bé - Lớn</option>
+          </select>
+        </label>
+        <label class="rm-filter">Loại
+          <select name="type" onchange="this.form.submit()">
+            <option value="">Tất cả</option>
+            <c:forEach var="t" items="${roomTypes}">
+              <option value="${t}" ${param.type == t ? 'selected' : ''}>${t}</option>
+            </c:forEach>
+          </select>
+        </label>
+        <label class="rm-filter">Sức chứa
+          <select name="capacity" onchange="this.form.submit()">
+            <option value="">Mặc định</option>
+            <option value="desc" ${param.capacity == 'desc' ? 'selected' : ''}>Lớn - Bé</option>
+            <option value="asc" ${param.capacity == 'asc' ? 'selected' : ''}>Bé - Lớn</option>
+          </select>
+        </label>
+        <label class="rm-filter">Suất sắp tới
+          <select name="upcoming" onchange="this.form.submit()">
+            <option value="">Mặc định</option>
+            <option value="desc" ${param.upcoming == 'desc' ? 'selected' : ''}>Nhiều - Ít</option>
+            <option value="asc" ${param.upcoming == 'asc' ? 'selected' : ''}>Ít - Nhiều</option>
+          </select>
+        </label>
+        <label class="rm-filter">Trạng thái
+          <select name="status" onchange="this.form.submit()">
+            <option value="">Tất cả</option>
+            <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Đang hoạt động</option>
+            <option value="Closed" ${param.status == 'Closed' ? 'selected' : ''}>Đã đóng</option>
+          </select>
+        </label>
+        <c:if test="${not empty keyword or not empty param.room or not empty param.type or not empty param.capacity or not empty param.upcoming or not empty param.status}">
+          <a class="btn btn-soft" href="${ctx}/admin/rooms">Xóa bộ lọc</a>
+        </c:if>
       </form>
 
       <div class="table-wrap">
@@ -109,12 +170,12 @@
               </tr>
             </c:forEach>
             <c:if test="${empty rooms}">
-              <tr><td colspan="8" class="rm-empty">Chưa có phòng chiếu nào.</td></tr>
+              <tr><td colspan="8" class="rm-empty">Không có phòng chiếu phù hợp.</td></tr>
             </c:if>
           </tbody>
         </table>
       </div>
-      <p class="rm-muted" style="margin-top:12px">
+      <p class=”rm-muted” style=”margin-top:12px”>
         Phòng đã có suất chiếu hoặc vé không thể xóa — hãy dùng “Đóng phòng” (chỉ đóng được khi không còn suất chiếu sắp tới).
       </p>
         </div>

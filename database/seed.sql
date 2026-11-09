@@ -126,29 +126,38 @@ INSERT dbo.Cinema(cinema_name, address, phone) VALUES (N'Cinema Hòa Lạc', N'T
 GO
 
 INSERT dbo.Room(cinema_id, room_name, room_type, capacity) VALUES
-    (1, N'Phòng 1', '2D', 50),
-    (1, N'Phòng 2', '3D', 50),
-    (1, N'Phòng 3', '2D', 50),
-    (1, N'Phòng 4', '3D', 50);
+    (1, N'Phòng 1', '2D', 124),
+    (1, N'Phòng 2', '3D', 107),
+    (1, N'Phòng 3', '2D', 124),
+    (1, N'Phòng 4', '3D', 107);
 GO
 
 INSERT dbo.SeatType(type_name, is_couple, description) VALUES
     (N'Standard', 0, N'Ghế thường'),
     (N'VIP', 0, N'Ghế VIP'),
-    (N'Couple', 1, N'Ghế đôi (đặt theo cặp)');
+    (N'Couple', 1, N'Ghế đôi (đặt theo cặp)'),
+    (N'Unassigned', 0, N'Chưa chọn loại ghế (cần admin thiết lập)');   -- mặc định cho ghế của phòng mới tạo
 GO
 
--- 4 phong x 5 hang x 10 ghe = 200 ghe. Hang A-C: Standard, D: VIP, E: Couple.
+-- Phong 2D (layout co dinh, 124 ghe): A-D Standard, E-H VIP moi hang 14 ghe; J Couple 12 ghe (khong co hang I).
+-- Phong 3D (layout co dinh, 107 ghe): A/B/C Standard 12/13/14 ghe; D-G VIP moi hang 14 ghe; H Couple 12 ghe.
 INSERT dbo.Seat(room_id, row_label, seat_number, seat_type_id)
-SELECT r.room_id, rw.row_label, n.seat_number,
-       CASE WHEN rw.row_label IN ('A','B','C') THEN 1 WHEN rw.row_label = 'D' THEN 2 ELSE 3 END
+SELECT r.room_id, rw.row_label, n.seat_number, rw.seat_type_id
 FROM dbo.Room r
-         CROSS JOIN (VALUES ('A'),('B'),('C'),('D'),('E')) AS rw(row_label)
-         CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS n(seat_number)
+         JOIN (VALUES
+                   ('2D','A',1,14),('2D','B',1,14),('2D','C',1,14),('2D','D',1,14),
+                   ('2D','E',2,14),('2D','F',2,14),('2D','G',2,14),('2D','H',2,14),
+                   ('2D','J',3,12),
+                   ('3D','A',1,12),('3D','B',1,13),('3D','C',1,14),
+                   ('3D','D',2,14),('3D','E',2,14),('3D','F',2,14),('3D','G',2,14),
+                   ('3D','H',3,12)
+              ) AS rw(room_type, row_label, seat_type_id, seats) ON rw.room_type = r.room_type
+         JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14)) AS n(seat_number)
+              ON n.seat_number <= rw.seats
 ORDER BY r.room_id, rw.row_label, n.seat_number;
 GO
 
--- Gan ghế doi theo cap (E1-E2, E3-E4, ...)
+-- Gan ghế doi theo cap (J1-J2, J3-J4, ...)
 UPDATE s
 SET s.pair_seat_id = p.seat_id
     FROM dbo.Seat s
@@ -198,7 +207,7 @@ INSERT dbo.Voucher(code, description, discount_type, discount_value, max_discoun
 GO
 
 INSERT dbo.MyPointConfig(earn_rate_percent, point_value_vnd, max_redeem_percent, effective_from, is_active, updated_by) VALUES
-    (5.00, 1000, 20.00, '2026-10-18', 1, 2);
+    (5.00, 1000, 100.00, '2026-10-18', 1, 2);
 GO
 
 -- ---------- Luồng 5. Lịch chiếu ----------
@@ -307,8 +316,9 @@ INSERT dbo.BookingCombo(booking_id, combo_id, quantity, unit_price) VALUES (1, 1
 GO
 
 INSERT dbo.Ticket(booking_id, showtime_id, seat_id, price, ticket_code, status, checked_in_at, checked_in_by) VALUES
-    (1, 1, 35, 90000, 'TK4C537F9A2BD3', 'Booked', NULL, NULL),
-    (1, 1, 36, 90000, 'TK26EDCB1E2C3D', 'Booked', NULL, NULL);
+    -- ghe E5, E6 (VIP) cua Phong 1
+    (1, 1, 61, 90000, 'TK4C537F9A2BD3', 'Booked', NULL, NULL),
+    (1, 1, 62, 90000, 'TK26EDCB1E2C3D', 'Booked', NULL, NULL);
 GO
 
 INSERT dbo.Payment(booking_id, method, amount, refunded_amount, gateway_txn_id, status, created_at, paid_at) VALUES

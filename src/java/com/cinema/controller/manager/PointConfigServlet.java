@@ -38,8 +38,8 @@ public class PointConfigServlet extends BaseServlet {
         req.setCharacterEncoding("UTF-8");
         try {
             BigDecimal earn = decimal(req.getParameter("earnRatePercent"), "Tỷ lệ tích điểm");
-            BigDecimal maxRedeem = decimal(req.getParameter("maxRedeemPercent"), "Tỷ lệ dùng điểm tối đa");
-            if (earn.compareTo(BigDecimal.valueOf(100)) > 0 || maxRedeem.compareTo(BigDecimal.valueOf(100)) > 0) {
+            BigDecimal maxRedeem = BigDecimal.valueOf(100);
+            if (earn.compareTo(BigDecimal.valueOf(100)) > 0) {
                 throw new IllegalArgumentException("Tỷ lệ phần trăm tối đa 100%.");
             }
             int pointValue;

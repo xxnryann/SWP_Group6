@@ -44,7 +44,6 @@
 .review-filters select[name="rating"], .review-filters select[name="status"] { min-width: 145px; }
 .review-filters .btn-small { min-height: 36px; font-size: 13px; }
 .review-report-form { display: flex; gap: 6px; margin-top: 8px; }
-.movie-form-trailer-preview { max-width: 720px; margin-top: 12px; }
 @media (max-width: 760px) { .review-stats { grid-template-columns: 1fr; } }
 .movie-original-title { margin: 6px 0 12px; color: var(--slate-500); font-size: 18px; }
 .movie-detail-badges { display: flex; flex-wrap: wrap; gap: 9px; margin: 15px 0; }
@@ -261,15 +260,14 @@ body.showtime-modal-open { overflow: hidden; }
 .st-manage, .st-manage:hover { background: #fff; color: var(--brand); }
 .st-body { padding-bottom: 48px; }
 .st-dates { display: grid; grid-template-columns: repeat(8, minmax(84px, 1fr)); gap: 6px; margin: -36px 0 22px; padding: 8px; overflow-x: auto;
-            border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-lift); }
-.st-date { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; border-radius: var(--radius); color: var(--muted);
+            border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-lift); }
+.st-date { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; border-radius: var(--radius); color: #334155;
            transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
-.st-date strong { color: var(--ink); font-size: 17px; }
-.st-date span { font-size: 12.5px; white-space: nowrap; }
+.st-date strong { color: #0f172a; font-size: 17px; font-weight: 700; }
+.st-date span { font-size: 12.5px; font-weight: 500; white-space: nowrap; }
 .st-date:hover { background: var(--brand-soft); color: var(--brand); text-decoration: none; }
 .st-date.is-active, .st-date.is-active:hover { background: var(--brand); color: #fff; }
 .st-date.is-active strong { color: #fff; }
-.st-hint { margin-bottom: 14px; color: var(--muted); font-size: 14px; }
 .st-empty { padding: 56px 20px; border: 1px dashed var(--brand-tint-2); border-radius: var(--radius-lg); background: var(--surface); text-align: center; }
 .st-empty h2 { margin-bottom: 6px; font-size: 20px; }
 .st-empty p { color: var(--muted); }

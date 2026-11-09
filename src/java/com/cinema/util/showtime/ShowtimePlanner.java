@@ -14,7 +14,8 @@ import java.util.Map;
  * Máy lập lịch tự động cho lịch chiếu hàng ngày.
  * Mỗi phòng được xếp suất liên tục từ giờ bắt đầu đến giờ đóng cửa; phim xoay vòng và lệch nhau giữa
  * các phòng. Giờ bắt đầu luôn nằm trên lưới 15 phút, suất kết thúc trước giờ đóng cửa và không đè lên
- * các suất đã có (kể cả thời gian dọn phòng) nên kết quả luôn qua được bước kiểm tra khi ghi vào CSDL.
+ * các suất đã có (kể cả thời gian nghỉ đã bù để tổng block chia hết cho 5)
+ * nên kết quả luôn qua được bước kiểm tra khi ghi vào CSDL.
  */
 public final class ShowtimePlanner {
 
@@ -54,7 +55,6 @@ public final class ShowtimePlanner {
             return result;
         }
         LocalDateTime close = date.atTime(ShowtimeRules.CLOSE_TIME);
-        int turnover = ShowtimeRules.TURNOVER_MINUTES;
         Map<Integer, List<LocalDateTime>> startsByMovie = new HashMap<>();
 
         for (int r = 0; r < rooms.size(); r++) {
@@ -78,7 +78,7 @@ public final class ShowtimePlanner {
                         Movie candidate = movies.get((next + tries) % movies.size());
                         LocalDateTime finish = cursor.plusMinutes(candidate.getDurationMinutes());
                         if (finish.isAfter(close)) continue;
-                        LocalDateTime clash = clashEnd(busy, cursor, candidate.getDurationMinutes(), turnover);
+                        LocalDateTime clash = clashEnd(busy, cursor, candidate.getDurationMinutes());
                         if (clash != null) {
                             moved = clash;
                             break;
@@ -90,7 +90,7 @@ public final class ShowtimePlanner {
                 }
                 if (moved != null) {
                     // Đụng suất có sẵn: nhảy tới sau suất đó rồi thử lại.
-                    cursor = roundUp(moved.plusMinutes(turnover));
+                    cursor = roundUp(moved);
                     continue;
                 }
                 if (chosen == null) {
@@ -104,13 +104,14 @@ public final class ShowtimePlanner {
                 showtime.setStatus("Scheduled");
                 result.add(showtime);
                 startsByMovie.computeIfAbsent(chosen.getMovieId(), k -> new ArrayList<>()).add(cursor);
-                cursor = roundUp(cursor.plusMinutes(chosen.getDurationMinutes() + turnover));
+                cursor = roundUp(cursor.plusMinutes(
+                        ShowtimeRules.blockMinutes(chosen.getDurationMinutes())));
             }
         }
         return result;
     }
 
-    /** Làm tròn lên mốc 15 phút. */
+    /** Làm tròn lên mốc 5 phút. */
     private static LocalDateTime roundUp(LocalDateTime time) {
         LocalDateTime t = time.withSecond(0).withNano(0);
         int rest = t.getMinute() % ShowtimeRules.GRID_MINUTES;
@@ -118,13 +119,15 @@ public final class ShowtimePlanner {
                 ? t : t.plusMinutes(ShowtimeRules.GRID_MINUTES - rest);
     }
 
-    /** Nếu suất [start, start+duration+turnover) đè lên suất có sẵn thì trả về giờ kết thúc của suất đó, ngược lại null. */
-    private static LocalDateTime clashEnd(List<OccupiedSlot> busy, LocalDateTime start, int duration, int turnover) {
-        LocalDateTime end = start.plusMinutes(duration + turnover);
+    /** Nếu block suất mới đè lên suất có sẵn thì trả về mốc có thể thử tiếp. */
+    private static LocalDateTime clashEnd(List<OccupiedSlot> busy, LocalDateTime start, int duration) {
+        LocalDateTime end = start.plusMinutes(ShowtimeRules.blockMinutes(duration));
         for (OccupiedSlot slot : busy) {
             LocalDateTime slotEnd = slot.endTime != null ? slot.endTime : slot.startTime.plusMinutes(1);
-            if (slot.startTime.isBefore(end) && slotEnd.plusMinutes(turnover).isAfter(start)) {
-                return slotEnd;
+            int existingDuration = (int) java.time.Duration.between(slot.startTime, slotEnd).toMinutes();
+            if (slot.startTime.isBefore(end)
+                    && slotEnd.plusMinutes(ShowtimeRules.turnoverFor(existingDuration)).isAfter(start)) {
+                return slotEnd.plusMinutes(ShowtimeRules.turnoverFor(existingDuration));
             }
         }
         return null;
