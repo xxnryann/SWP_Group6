@@ -257,11 +257,11 @@ body.showtime-modal-open { overflow: hidden; }
 .st-manage, .st-manage:hover { background: #fff; color: var(--brand); }
 .st-body { padding-bottom: 48px; }
 .st-dates { display: grid; grid-template-columns: repeat(8, minmax(84px, 1fr)); gap: 6px; margin: -36px 0 22px; padding: 8px; overflow-x: auto;
-            border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-lift); }
-.st-date { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; border-radius: var(--radius); color: var(--muted);
+            border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-lift); }
+.st-date { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; border-radius: var(--radius); color: #334155;
            transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
-.st-date strong { color: var(--ink); font-size: 17px; }
-.st-date span { font-size: 12.5px; white-space: nowrap; }
+.st-date strong { color: #0f172a; font-size: 17px; font-weight: 700; }
+.st-date span { font-size: 12.5px; font-weight: 500; white-space: nowrap; }
 .st-date:hover { background: var(--brand-soft); color: var(--brand); text-decoration: none; }
 .st-date.is-active, .st-date.is-active:hover { background: var(--brand); color: #fff; }
 .st-date.is-active strong { color: #fff; }
