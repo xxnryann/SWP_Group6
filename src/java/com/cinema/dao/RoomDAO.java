@@ -4,6 +4,7 @@ import com.cinema.model.Cinema;
 import com.cinema.model.Room;
 import com.cinema.util.DBContext;
 import com.cinema.util.room.RoomRuleException;
+import com.cinema.util.room.RoomRules;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -105,9 +106,22 @@ public class RoomDAO {
         }
     }
 
-    /** Thêm phòng mới, trả về room_id. */
-    public int insert(Room r) throws SQLException {
-        String sql = "INSERT INTO Room (cinema_id, room_name, room_type, capacity, status) VALUES (?, ?, ?, ?, ?)";
+    /** Tổng số phòng chiếu, tính cả phòng đã đóng. */
+    public int countAll() throws SQLException {
+        try (Connection c = DBContext.getConnection();
+             Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM Room")) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
+    /**
+     * Thêm phòng mới, trả về room_id. Đếm và thêm trong cùng một câu lệnh (khóa UPDLOCK, HOLDLOCK)
+     * để hai admin thêm cùng lúc không vượt quá giới hạn số phòng.
+     */
+    public int insert(Room r) throws SQLException, RoomRuleException {
+        String sql = "INSERT INTO Room (cinema_id, room_name, room_type, capacity, status) "
+                + "SELECT ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM Room WITH (UPDLOCK, HOLDLOCK)) < ?";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, r.getCinemaId());
@@ -115,7 +129,10 @@ public class RoomDAO {
             ps.setString(3, r.getRoomType());
             ps.setInt(4, r.getCapacity());
             ps.setString(5, r.getStatus());
-            ps.executeUpdate();
+            ps.setInt(6, RoomRules.MAX_ROOMS);
+            if (ps.executeUpdate() == 0) {
+                throw new RoomRuleException(RoomRules.ROOM_LIMIT_MESSAGE);
+            }
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 return keys.next() ? keys.getInt(1) : 0;
             }
