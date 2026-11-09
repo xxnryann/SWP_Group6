@@ -11,20 +11,11 @@
   var requestNumber = 0;
   var currentTime = timeSelect.dataset.currentTime;
 
-  function addMinutesLabel(start, minutes) {
+  function endTimeLabel(start, duration) {
     var parts = start.split(':').map(Number);
-    var endMinutes = parts[0] * 60 + parts[1] + minutes;
+    var endMinutes = parts[0] * 60 + parts[1] + duration;
     return String(Math.floor(endMinutes / 60)).padStart(2, '0')
       + ':' + String(endMinutes % 60).padStart(2, '0');
-  }
-
-  function turnoverFor(duration) {
-    var remainder = (duration + 15) % 5;
-    return 15 + (remainder === 0 ? 0 : 5 - remainder);
-  }
-
-  function slotEndLabel(start, duration) {
-    return addMinutesLabel(start, duration + turnoverFor(duration));
   }
 
   function updateEstimatedEnd() {
@@ -36,9 +27,7 @@
       estimatedEnd.textContent = '';
       return;
     }
-    estimatedEnd.textContent = 'Kết thúc phim: ' + addMinutesLabel(start, duration)
-      + ' · Kết thúc slot: ' + slotEndLabel(start, duration)
-      + ' (nghỉ ' + turnoverFor(duration) + ' phút)';
+    estimatedEnd.textContent = 'Kết thúc dự kiến: ' + endTimeLabel(start, duration);
   }
 
   async function loadAvailableTimes() {
@@ -93,9 +82,11 @@
       var selectedMovie = movieSelect.options[movieSelect.selectedIndex];
       var duration = Number(selectedMovie.dataset.duration);
       times.forEach(function (time) {
-        var end = slotEndLabel(time, duration);
-        var option = new Option(time + ' – ' + end, time);
-        timeSelect.add(option);
+        var end = endTimeLabel(time, duration);
+        var label = document.createElement('label');
+        label.className = 'check';
+        label.innerHTML = '<input type="checkbox" name="showTime" value="' + time + '"><span>' + time + ' – ' + end + '</span>';
+        timeSelect.appendChild(label);
       });
       if (currentTime && times.indexOf(currentTime) !== -1) {
         var current = timeSelect.querySelector('input[value="' + currentTime + '"]');
@@ -103,8 +94,8 @@
       }
       currentTime = '';
       message.textContent = times.length
-        ? 'Giờ bắt đầu chia hết cho 5; slot gồm thời lượng phim và thời gian nghỉ tối thiểu 15 phút.'
-        : 'Không có khung giờ trống phù hợp trong phòng này.';
+        ? 'Đã hiển thị các giờ trống theo thời lượng phim và thời gian dọn phòng.'
+        : 'Không có giờ trống chung cho các phòng đã chọn.';
       updateEstimatedEnd();
     } catch (error) {
       if (requestId !== requestNumber) return;

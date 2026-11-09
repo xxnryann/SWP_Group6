@@ -15,13 +15,13 @@ public final class ShowtimeRules {
     /** Giờ đóng cửa rạp mặc định (23h00, khớp script CSDL và lịch mẫu). */
     public static final LocalTime CLOSE_TIME = LocalTime.of(23, 55);
     
-    /** Thời gian nghỉ tối thiểu giữa hai suất chiếu; phần bù làm tròn block nằm trong turnoverFor(). */
+    /** Thời gian từ khi bộ phim kết thúc đến khi suất tiếp theo bắt đầu (15 phút). */
     public static final int TURNOVER_MINUTES = 15;
     
     /** Thời lượng phim tối đa cho phép (300 phút = 5 giờ). */
     public static final int MAX_MOVIE_MINUTES = 300;
     
-    /** Lưới thời gian xếp lịch: các mốc giờ đẹp, chia hết cho 5 phút. */
+    /** Mọi giờ bắt đầu phải nằm trên mốc 5 phút. */
     public static final int GRID_MINUTES = 5;
     
     private ShowtimeRules() {}
@@ -59,15 +59,6 @@ public final class ShowtimeRules {
         return ((rawInterval + GRID_MINUTES - 1) / GRID_MINUTES) * GRID_MINUTES;
     }
 
-    /** Giờ bắt đầu phải nằm trên lưới 5 phút. */
-    public static boolean onGrid(LocalDateTime startTime) {
-        return startTime.getMinute() % GRID_MINUTES == 0 && startTime.getSecond() == 0;
-    }
-
-    /**
-     * Nghỉ ít nhất 15 phút và bù phần lẻ để tổng thời lượng phim + nghỉ
-     * luôn là bội số của 5 (ví dụ phim 94 phút được nghỉ 16 phút).
-     */
     public static int turnoverFor(int durationMinutes) {
         int remainder = (durationMinutes + TURNOVER_MINUTES) % GRID_MINUTES;
         return TURNOVER_MINUTES + (remainder == 0 ? 0 : GRID_MINUTES - remainder);
@@ -75,5 +66,19 @@ public final class ShowtimeRules {
 
     public static int blockMinutes(int durationMinutes) {
         return durationMinutes + turnoverFor(durationMinutes);
+    }
+
+    /** Giờ bắt đầu phải nằm trên lưới 5 phút. */
+    public static boolean onGrid(LocalDateTime startTime) {
+        return startTime.getMinute() % GRID_MINUTES == 0 && startTime.getSecond() == 0;
+    }
+
+    public static LocalDateTime roundUpToGrid(LocalDateTime value) {
+        LocalDateTime normalized = value.withSecond(0).withNano(0);
+        int remainder = normalized.getMinute() % GRID_MINUTES;
+        if (remainder == 0 && value.getSecond() == 0 && value.getNano() == 0) {
+            return normalized;
+        }
+        return normalized.plusMinutes(GRID_MINUTES - remainder);
     }
 }
