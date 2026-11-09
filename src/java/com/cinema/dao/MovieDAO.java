@@ -118,8 +118,7 @@ public class MovieDAO {
     public List<Movie> findAllForShowtime() throws SQLException {
         List<Movie> movies = new ArrayList<>();
         String sql = "SELECT d.*, 0 AS active_ticket_count FROM dbo.vw_MovieDetail d "
-                + "WHERE status <> 'Stopped' "
-                + "AND (end_date IS NULL OR end_date >= CAST(GETDATE() AS DATE)) "
+                + "WHERE (end_date IS NULL OR end_date >= CAST(GETDATE() AS DATE)) "
                 + "ORDER BY title";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql);

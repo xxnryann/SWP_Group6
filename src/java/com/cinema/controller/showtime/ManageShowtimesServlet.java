@@ -107,6 +107,11 @@ public class ManageShowtimesServlet extends BaseServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if (!isManager(request)) {
+            if ("available-times".equals(request.getParameter("action"))) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                        "Phiên đăng nhập quản lý đã hết hạn. Vui lòng đăng nhập lại.");
+                return;
+            }
             if (currentUser(request) == null) {
                 response.sendRedirect(request.getContextPath() + "/login");
             } else {
@@ -174,8 +179,25 @@ public class ManageShowtimesServlet extends BaseServlet {
         try {
             String action = request.getParameter("action");
             if ("save".equals(action)) {
-                showtimeDAO.save(readShowtime(request));
-                flash(request, "success", "Đã lưu suất chiếu.");
+                String[] rooms = request.getParameterValues("roomName");
+                String[] times = request.getParameterValues("showTime");
+                if (rooms == null || rooms.length == 0 || times == null || times.length == 0) {
+                    throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng và một giờ chiếu.");
+                }
+                String id = request.getParameter("id");
+                if (id != null && !id.isBlank()) {
+                    showtimeDAO.save(readShowtime(request, rooms[0], times[0], id));
+                    flash(request, "success", "Đã lưu suất chiếu.");
+                } else {
+                    int created = 0;
+                    for (String room : rooms) {
+                        for (String time : times) {
+                            showtimeDAO.save(readShowtime(request, room, time, null));
+                            created++;
+                        }
+                    }
+                    flash(request, "success", "Đã tạo " + created + " suất chiếu.");
+                }
             } else if ("generate".equals(action)) {
                 int created = generateSchedule(request);
                 flash(request, "success", "Đã tạo " + created + " suất chiếu.");
@@ -198,15 +220,13 @@ public class ManageShowtimesServlet extends BaseServlet {
         response.sendRedirect(request.getContextPath() + "/manage/showtimes");
     }
 
-    private Showtime readShowtime(HttpServletRequest request) {
+    private Showtime readShowtime(HttpServletRequest request, String roomName, String showTime, String id) {
         Showtime showtime = new Showtime();
-        String id = request.getParameter("id");
         showtime.setShowtimeId(id == null || id.isBlank() ? 0 : ShowtimeUtil.parseId(id));
         showtime.setMovieId(ShowtimeUtil.parseId(request.getParameter("movieId")));
-        showtime.setRoomName(ShowtimeUtil.requiredText(request.getParameter("roomName"),
+        showtime.setRoomName(ShowtimeUtil.requiredText(roomName,
                 "Tên phòng không được để trống.", 50));
         String showDate = request.getParameter("showDate");
-        String showTime = request.getParameter("showTime");
         if (showDate == null || showDate.isBlank() || showTime == null || showTime.isBlank()) {
             throw new IllegalArgumentException("Vui lòng chọn ngày và giờ chiếu.");
         }
@@ -220,7 +240,7 @@ public class ManageShowtimesServlet extends BaseServlet {
             throw new IllegalArgumentException("Giờ chiếu phải ở trong tương lai.");
         }
         if (!ShowtimeRules.onGrid(start)) {
-            throw new IllegalArgumentException("Giờ chiếu phải nằm trên mốc 15 phút (ví dụ 14:00, 14:15, 14:30).");
+            throw new IllegalArgumentException("Giờ chiếu phải nằm trên mốc 5 phút (ví dụ 14:00, 14:05, 14:10).");
         }
         showtime.setStartsAt(start);
         showtime.setStatus("Scheduled");
@@ -344,6 +364,8 @@ public class ManageShowtimesServlet extends BaseServlet {
                 json.append('"').append(availableTimes.get(i)).append('"');
             }
             response.setContentType("application/json;charset=UTF-8");
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            response.setHeader("Pragma", "no-cache");
             response.getWriter().write(json.append(']').toString());
         } catch (IllegalArgumentException | DateTimeParseException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Thông tin ngày, phim hoặc phòng không hợp lệ.");

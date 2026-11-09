@@ -141,41 +141,18 @@
                                     </c:forEach>
                                 </div>
                             </div>
-                            <div class="field">
-                                <label for="posterUrl">Poster URL (tùy chọn)</label>
-                                <input id="posterUrl" name="posterUrl" type="url" maxlength="500" value="${escapedPosterUrl}" placeholder="https://...">
-                                <small class="field-hint">(Tùy chọn; phải là URL http/https hợp lệ.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="trailerUrl">Trailer URL ngoài (tùy chọn)</label>
-                                <input id="trailerUrl" name="trailerUrl" type="url" maxlength="500" value="${escapedTrailerUrl}" placeholder="YouTube hoặc URL HTTPS">
-                                <small class="field-hint">(Tùy chọn; phải là URL http/https hợp lệ, tối đa 500 ký tự.)</small>
-                            </div>
                             <div class="field movie-form-full">
-                                <label for="posterFile">Tải poster lên (JPG, JPEG, PNG, WEBP; tối đa 5 MB)</label>
-                                <input id="posterFile" name="posterFile" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-max-bytes="5242880">
-                                <small class="field-hint">(Tùy chọn; JPG, JPEG, PNG hoặc WEBP; tối đa 5 MB.)</small>
-                                <div class="poster-preview-wrap">
-                                    <c:choose>
-                                        <c:when test="${movie.uploadedPoster}"><img id="poster-preview" class="poster-preview" src="${ctx}${posterSrc}" alt="Xem trước poster" <c:if test="${empty movie.posterDisplayUrl}">hidden</c:if>></c:when>
-                        <c:otherwise><img id="poster-preview" class="poster-preview" src="${posterSrc}" alt="Xem trước poster" <c:if test="${empty movie.posterDisplayUrl}">hidden</c:if>></c:otherwise>
-                        </c:choose>
-                        <span id="poster-preview-empty" <c:if test="${not empty movie.posterDisplayUrl}">hidden</c:if>>Chưa có poster</span>
-                        </div>
-                        <c:if test="${not empty movie.posterUrl}">
-                            <label class="check movie-remove-check"><input type="checkbox" name="deletePoster" value="true"><span>Xóa poster hiện tại</span></label>
-                        </c:if>
-                        </div>
+                                <label for="posterUrl">Link poster (tùy chọn)</label>
+                                <input id="posterUrl" name="posterUrl" type="url" maxlength="500" value="${escapedPosterUrl}" placeholder="https://...">
+                                <small class="field-hint">Dán link ảnh trực tiếp (JPG, PNG, WEBP...).</small>
+                            </div>
                         <div class="field movie-form-full">
-                            <label for="trailerFile">Tải video trailer lên (MP4, WEBM; tối đa 100 MB)</label>
-                            <input id="trailerFile" name="trailerFile" type="file" accept=".mp4,.webm,video/mp4,video/webm" data-max-bytes="104857600">
-                            <small class="field-hint">(Tùy chọn; MP4 hoặc WEBM; tối đa 100 MB.)</small>
-                            <c:if test="${not empty movie.trailerFile or not empty movie.trailerUrl}">
-                                <p class="muted">Video hiện tại:
-                                    <c:out value="${movie.trailerFile}" />
-                                </p>
-                                <label class="check movie-remove-check"><input type="checkbox" name="deleteTrailer" value="true"><span>Xóa video và URL trailer hiện tại</span></label>
-                            </c:if>
+                            <label for="trailerUrl">Link YouTube trailer (tùy chọn)</label>
+                            <input id="trailerUrl" name="trailerUrl" type="url" maxlength="500" value="${escapedTrailerUrl}" placeholder="https://www.youtube.com/watch?v=...">
+                            <small class="field-hint">Dán link YouTube để xem trước trực tiếp; hỗ trợ link youtube.com, youtu.be và Shorts.</small>
+                            <div id="trailer-url-preview" class="movie-embed movie-form-trailer-preview" hidden>
+                                <iframe id="trailer-url-frame" title="Xem trước trailer" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                            </div>
                         </div>
                         </c:if>
                     </div>

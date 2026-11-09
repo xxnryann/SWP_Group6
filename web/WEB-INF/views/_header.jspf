@@ -19,9 +19,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
-  <link rel="stylesheet" href="${ctx}/assets/css/cinema.css?v=20261103-2">
+  <link rel="stylesheet" href="${ctx}/assets/css/cinema.css?v=20261109-1">
   <c:if test="${movieModule}">
-    <link rel="stylesheet" href="${ctx}/assets/css/movie.css?v=20261103-2">
+    <link rel="stylesheet" href="${ctx}/assets/css/movie.css?v=20261109-6">
   </c:if>
   <c:if test="${dashboardModule or railModule}">
     <link rel="stylesheet" href="${ctx}/assets/css/dashboard.css">

@@ -2,6 +2,7 @@ package com.cinema.dao;
 
 import com.cinema.model.Cinema;
 import com.cinema.model.Room;
+import com.cinema.model.Showtime;
 import com.cinema.util.DBContext;
 import com.cinema.util.room.RoomRuleException;
 import java.sql.Connection;
@@ -9,8 +10,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO bảng Room — Screening Room Management (Admin).
@@ -42,7 +48,7 @@ public class RoomDAO {
     }
 
     /** Danh sách phòng (kèm số ghế, ghế bảo trì, suất chiếu sắp tới); keyword lọc theo tên phòng. */
-    public List<Room> findAll(String keyword) throws SQLException {
+    public List<Room> findAll(String keyword, LocalDate scheduleDate) throws SQLException {
         boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
         String sql = SELECT_WITH_STATS + (hasKeyword ? "WHERE r.room_name LIKE ? " : "")
                 + "ORDER BY c.cinema_name, r.room_name";
@@ -58,7 +64,41 @@ public class RoomDAO {
                 }
             }
         }
+        loadSchedules(list, scheduleDate == null ? LocalDate.now() : scheduleDate);
         return list;
+    }
+
+    private void loadSchedules(List<Room> rooms, LocalDate date) throws SQLException {
+        if (rooms.isEmpty()) return;
+        Map<Integer, Room> byId = new HashMap<>();
+        for (Room room : rooms) {
+            byId.put(room.getRoomId(), room);
+        }
+        String sql = "SELECT s.room_id, s.showtime_id, s.movie_id, m.title, m.duration_minutes, "
+                + "s.room_name, s.starts_at, s.status "
+                + "FROM Showtime s JOIN Movie m ON m.movie_id = s.movie_id "
+                + "WHERE s.status = 'Scheduled' AND CAST(s.starts_at AS DATE) = ? "
+                + "AND s.room_id IS NOT NULL ORDER BY s.room_id, s.starts_at";
+        try (Connection c = DBContext.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setDate(1, Date.valueOf(date));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Room room = byId.get(rs.getInt("room_id"));
+                    if (room == null) continue;
+                    Showtime showtime = new Showtime();
+                    showtime.setShowtimeId(rs.getInt("showtime_id"));
+                    showtime.setMovieId(rs.getInt("movie_id"));
+                    showtime.setMovieTitle(rs.getString("title"));
+                    showtime.setMovieDurationMinutes(rs.getInt("duration_minutes"));
+                    showtime.setRoomName(rs.getString("room_name"));
+                    Timestamp startsAt = rs.getTimestamp("starts_at");
+                    showtime.setStartsAt(startsAt == null ? null : startsAt.toLocalDateTime());
+                    showtime.setStatus(rs.getString("status"));
+                    room.getSchedule().add(showtime);
+                }
+            }
+        }
     }
 
     public Room findById(int roomId) throws SQLException {

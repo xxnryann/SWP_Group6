@@ -33,24 +33,23 @@
     </div>
     <div class="showtime-form-grid">
       <div class="field">
-        <label for="roomName">Phòng chiếu</label>
-        <select id="roomName" name="roomName" required>
-          <option value="">Chọn phòng</option>
+        <span class="field-label">Phòng chiếu *</span>
+        <div id="roomName" class="showtime-checkboxes">
           <c:forEach var="room" items="${rooms}">
-            <option value="<c:out value='${room}'/>" <c:if test="${showtime.roomName == room}">selected</c:if>><c:out value="${room}"/></option>
+            <label class="check"><input type="checkbox" name="roomName" value="<c:out value='${room}'/>" <c:if test="${showtime.roomName == room}">checked</c:if>><span><c:out value="${room}"/></span></label>
           </c:forEach>
-        </select>
+        </div>
       </div>
       <div class="field">
         <label for="showDate">Ngày chiếu</label>
         <input id="showDate" name="showDate" type="date" min="${todayDate}" value="${escapedShowDate}" required>
       </div>
       <div class="field">
-        <label for="showTime">Giờ bắt đầu</label>
-        <select id="showTime" name="showTime" required data-current-time="${escapedShowTime}">
-          <option value="">Chọn phim, phòng và ngày trước</option>
-        </select>
-        <small id="showtime-availability-message" role="status">Chọn phim, phòng và ngày để tải giờ còn trống.</small>
+        <span class="field-label">Giờ bắt đầu *</span>
+        <div id="showTime" class="showtime-time-checkboxes" data-current-time="${escapedShowTime}">
+          <span class="muted">Chọn phim, phòng và ngày trước</span>
+        </div>
+        <small id="showtime-availability-message" role="status">Đang tải các giờ còn trống theo phòng đã chọn.</small>
         <small id="showtime-estimated-end"></small>
       </div>
     </div>
@@ -61,8 +60,5 @@
   </form>
 </main>
 
-<script src="${ctx}/assets/js/showtime-form.js" defer></script>
+<script src="${ctx}/assets/js/showtime-form.js?v=20261109-3" defer></script>
 <%@ include file="../_footer.jspf" %>
-
-
-

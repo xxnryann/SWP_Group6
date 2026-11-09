@@ -299,14 +299,8 @@ public class ManageMovieServlet extends BaseServlet {
         movie.setStatus(calculatedStatus);
         String validationMessage = MovieValidator.validate(movie, id == 0);
         if (validationMessage != null) throw new IllegalArgumentException(validationMessage);
-        Part posterPart = reschedule ? null : optionalPart(request, "posterFile");
-        Part trailerPart = reschedule ? null : optionalPart(request, "trailerFile");
-        String posterPath = MediaUploadUtil.store(posterPart, MediaUploadUtil.MediaType.POSTER);
-        request.setAttribute("newPoster", posterPath);
-        String trailerPath = MediaUploadUtil.store(trailerPart, MediaUploadUtil.MediaType.TRAILER);
-        request.setAttribute("newTrailer", trailerPath);
-        if (posterPath != null) movie.setPosterUrl(posterPath);
-        if (trailerPath != null) movie.setTrailerFile(trailerPath);
+        request.setAttribute("newPoster", null);
+        request.setAttribute("newTrailer", null);
         String genreIds = reschedule ? oldMovie.getGenreIds()
                 : join(parseGenreIds(request.getParameterValues("genreIds")));
         if (!reschedule) {

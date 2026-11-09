@@ -107,10 +107,9 @@ public class ShowtimeDAO {
     /**
      * Các mốc giờ bắt đầu còn trống trong phòng cho ngày đã chọn.
      *
-     * <p>Không còn khung giờ cố định: mọi mốc 15 phút từ giờ mở cửa tới giờ
-     * đóng cửa đều được xét. Một mốc hợp lệ khi suất chiếu kết thúc trước
-     * giờ đóng cửa và không đè lên suất đã có của phòng (tính cả 15 phút
-     * dọn phòng).</p>
+     * <p>Các mốc được sinh theo chu kỳ thời lượng phim cộng 15 phút dọn phòng,
+     * bắt đầu từ giờ mở cửa. Một mốc hợp lệ khi suất chiếu kết thúc trước giờ
+     * đóng cửa và không đè lên suất đã có của phòng.</p>
      */
     public List<LocalTime> findAvailableStartTimes(LocalDate date, String roomName, int movieId,
             int excludedShowtimeId) throws SQLException {
@@ -176,13 +175,34 @@ public class ShowtimeDAO {
                 }
             }
 
+            List<LocalTime> candidates = new ArrayList<>();
+            int slotInterval = ShowtimeRules.slotIntervalMinutes(duration);
             LocalDateTime now = LocalDateTime.now();
-            LocalTime earliest = ShowtimeRules.earliestStartFor(date, now);
-            List<LocalTime> available = new ArrayList<>();
-            for (LocalTime candidate = earliest;
+            for (LocalTime candidate = ShowtimeRules.OPEN_TIME;
                     !candidate.isAfter(ShowtimeRules.CLOSE_TIME);
-                    candidate = candidate.plusMinutes(ShowtimeRules.GRID_MINUTES)) {
+                    candidate = candidate.plusMinutes(slotInterval)) {
+                candidates.add(candidate);
+            }
+            // Lịch cũ có thể không nằm đúng pha của chu kỳ mới. Cho phép tiếp tục
+            // từ sau từng suất cũ, làm tròn lên mốc 5 phút thay vì trả về rỗng.
+            for (int i = 0; i < existingStarts.size(); i++) {
+                LocalDateTime nextStart = existingStarts.get(i)
+                        .plusMinutes(existingDurations.get(i) + ShowtimeRules.TURNOVER_MINUTES);
+                LocalTime candidate = ShowtimeRules.roundUpToGrid(nextStart).toLocalTime();
+                if (!candidate.isBefore(ShowtimeRules.OPEN_TIME)
+                        && !candidate.isAfter(ShowtimeRules.CLOSE_TIME)
+                        && !candidates.contains(candidate)) {
+                    candidates.add(candidate);
+                }
+            }
+            candidates.sort(LocalTime::compareTo);
+
+            List<LocalTime> available = new ArrayList<>();
+            for (LocalTime candidate : candidates) {
                 LocalDateTime start = date.atTime(candidate);
+                if (date.equals(now.toLocalDate()) && !start.isAfter(now)) {
+                    continue;
+                }
                 LocalDateTime end = start.plusMinutes(duration);
                 if (end.isAfter(date.atTime(ShowtimeRules.CLOSE_TIME))) {
                     continue;
