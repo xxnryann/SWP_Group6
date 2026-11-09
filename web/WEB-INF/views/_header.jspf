@@ -26,7 +26,7 @@
   <c:if test="${dashboardModule or railModule}">
     <link rel="stylesheet" href="${ctx}/assets/css/dashboard.css">
   </c:if>
-  <link rel="stylesheet" href="${ctx}/assets/css/modern.css?v=20261104">
+  <link rel="stylesheet" href="${ctx}/assets/css/modern.css?v=20261108-1">
 </head>
 <%-- Trang nội bộ theo vai trò (admin/manager/staff/customer) dùng sidebar riêng nên
      không hiện thanh nav công khai. Trang chủ "/" và các trang công khai giữ nguyên. --%>

@@ -143,6 +143,13 @@
                   <span class="review-date"><c:out value="${r.created_at}"/></span>
                 </div>
                 <c:if test="${not empty r.comment}"><p><c:out value="${r.comment}"/></p></c:if>
+                <c:if test="${sessionScope.authUser.role == 'CUSTOMER'}">
+                  <form method="post" action="${ctx}/movies/report-review" class="review-report-form">
+                    <input type="hidden" name="_csrf" value="${csrf}"><input type="hidden" name="reviewId" value="${r.review_id}"><input type="hidden" name="movieId" value="${movie.movieId}">
+                    <select name="reason" required><option value="">Báo cáo vi phạm</option><option>Spam</option><option>Ngôn từ thô tục</option><option>Nội dung không phù hợp</option></select>
+                    <button class="btn btn-outline btn-small" type="submit">Báo cáo</button>
+                  </form>
+                </c:if>
               </li>
             </c:forEach>
           </ul>
@@ -158,5 +165,4 @@
 
 <script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="../_footer.jspf" %>
-
 

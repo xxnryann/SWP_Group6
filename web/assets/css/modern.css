@@ -31,7 +31,7 @@ body.drawer-open { overflow: hidden; }
 .guest-header .logo { font-size: 21px; letter-spacing: -.055em; gap: 8px; }
 .guest-header .logo-mark { width: 37px; height: 37px; }
 .guest-header .topbar-nav { gap: 25px; justify-content: center; }
-.guest-header .topbar-nav a { font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; border-bottom-width: 2px; }
+.guest-header .topbar-nav a { font-size: 15.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; border-bottom-width: 3px; }
 .header-book { white-space: nowrap; gap: 18px; }
 .breadcrumb { background: transparent; border: 0; }
 .breadcrumb ol { padding-top: 17px; padding-bottom: 14px; font-size: 11px; }
@@ -250,7 +250,7 @@ body:has(.cinema-home) > .breadcrumb { display: none; }
   .site-header.role-header.guest-header .container { gap: 20px; }
   .guest-header .logo { font-size: 18px; }
   .guest-header .topbar-nav { gap: 15px; }
-  .guest-header .topbar-nav a { font-size: 12px; }
+  .guest-header .topbar-nav a { font-size: 15.5px; }
   .header-book { font-size: 12px; padding: 10px 14px; }
   .cinema-hero-copy { padding-left: 32px; }
   .hero-actions { gap: 15px; }
