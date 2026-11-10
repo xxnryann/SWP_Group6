@@ -162,13 +162,13 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 /* Bien the 4DX: ghe theo cum pod co nhan, hai cot thiet bi hieu ung, hang A co loi di trung tam. */
 .sp-4dx-top { max-width: none; justify-content: flex-end; margin: 0 0 16px; }
 .sp-4dx .sp-scroll { margin-top: 32px; padding-top: 12px; }
-.sp-4dx .sp-floor { gap: 16px; }
+.sp-4dx .sp-floor { gap: 12px; }
 .sp-4dx .sp-rows { flex: 0 0 auto; gap: 14px; }
 .sp-4dx .seat-row { gap: 12px; }
 .sp-4dx .row-label { width: 28px; font-size: 16px; color: #1e293b; }
 .sp-4dx .seat-row.row-VIP .row-label { color: #b45309; }
 .sp-4dx .seat-row.row-Couple .row-label { color: #be185d; }
-.sp-4dx-tower { flex: none; width: 96px; box-sizing: border-box; padding: 28px 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 16px;
+.sp-4dx-tower { flex: none; width: 76px; box-sizing: border-box; padding: 24px 4px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 16px;
                 border: 1px solid #e2e8f0; border-radius: 32px; background: rgba(248, 250, 252, .7); color: #334155; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-align: center; }
 .sp-4dx-tower span { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .sp-4dx-tower svg { width: 22px; height: 22px; fill: none; stroke: #1e293b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
