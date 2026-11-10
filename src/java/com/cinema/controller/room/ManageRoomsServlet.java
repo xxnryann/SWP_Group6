@@ -13,8 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 
 /**
  * Screening Room Management (Admin) — tạo phòng chiếu và thiết lập thông tin phòng (tên, loại phòng, sức chứa).
@@ -60,20 +58,10 @@ public class ManageRoomsServlet extends AdminBaseServlet {
                 showForm(req, resp, r);
             } else {
                 String keyword = Validator.trim(req.getParameter("q"));
-                LocalDate scheduleDate = LocalDate.now();
-                String dateValue = Validator.trim(req.getParameter("date"));
-                if (dateValue != null && !dateValue.isBlank()) {
-                    try {
-                        scheduleDate = LocalDate.parse(dateValue);
-                    } catch (DateTimeParseException e) {
-                        throw new IllegalArgumentException("Ngày xem lịch không hợp lệ.");
-                    }
-                }
-                req.setAttribute("rooms", RoomSort.apply(roomDAO.findAll(keyword, scheduleDate),
+                req.setAttribute("rooms", RoomSort.apply(roomDAO.findAll(keyword),
                         req.getParameter("room"), req.getParameter("type"), req.getParameter("capacity"),
                         req.getParameter("upcoming"), req.getParameter("status")));
                 req.setAttribute("keyword", keyword);
-                req.setAttribute("scheduleDate", scheduleDate);
                 req.setAttribute("roomTypes", RoomRules.ROOM_TYPES);
                 boolean limitReached = roomDAO.countAll() >= RoomRules.MAX_ROOMS;
                 req.setAttribute("roomLimitReached", limitReached);

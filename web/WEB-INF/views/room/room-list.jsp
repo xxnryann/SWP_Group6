@@ -2,11 +2,7 @@
 <c:set var="pageTitle" value="Phòng chiếu"/>
 <%@ include file="../layout/top.jspf" %>
 <style>
-  .slot { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--line); font-size: 13px; white-space: nowrap; }
-  .slot:last-child { border-bottom: 0; }
-  .slot b { color: var(--brand-700); font-variant-numeric: tabular-nums; }
   .room-actions { display: grid; grid-template-columns: repeat(2, auto); justify-content: end; gap: 6px; min-width: 220px; }
-  .slot .truncate { max-width: 150px; }
   .room-actions form, .room-actions form .btn { width: 100%; }
   .table td:first-child .cell-main { white-space: nowrap; }
   .toolbar .field.sm { flex: 0 1 150px; }
@@ -24,7 +20,6 @@
 <section class="card">
   <form method="get" action="${ctx}/admin/rooms" class="toolbar" role="search">
     <div class="field grow"><label for="q">Tên phòng</label><div class="input-group">${ic.search}<input id="q" type="search" name="q" placeholder="Tìm theo tên phòng" value="<c:out value='${keyword}'/>"></div></div>
-    <div class="field sm"><label for="fDate">Lịch ngày</label><input id="fDate" type="date" name="date" value="${scheduleDate}"></div>
     <div class="field sm"><label for="fRoom">Sắp xếp</label>
       <select id="fRoom" name="room" onchange="this.form.submit()">
         <option value="">Mặc định</option>
@@ -64,7 +59,7 @@
 
   <div class="table-wrap">
     <table class="table">
-      <thead><tr><th>Phòng</th><th>Loại</th><th class="num">Ghế</th><th>Lịch chiếu ${scheduleDate}</th><th class="num">Sắp tới</th><th>Trạng thái</th><th class="actions">Thao tác</th></tr></thead>
+      <thead><tr><th>Phòng</th><th>Loại</th><th class="num">Ghế</th><th class="num">Sắp tới</th><th>Trạng thái</th><th class="actions">Thao tác</th></tr></thead>
       <tbody>
         <c:forEach var="r" items="${rooms}">
           <tr>
@@ -74,12 +69,6 @@
               <c:choose>
                 <c:when test="${r.hasLayout}"><strong class="text-ink">${r.seatCount}</strong><span class="cell-sub">sức chứa ${r.capacity}</span><c:if test="${r.maintenanceCount > 0}"><span class="badge badge-warning mt-4">${r.maintenanceCount} bảo trì</span></c:if></c:when>
                 <c:otherwise><span class="badge badge-warning">Chưa có layout</span></c:otherwise>
-              </c:choose>
-            </td>
-            <td style="min-width:200px">
-              <c:choose>
-                <c:when test="${empty r.schedule}"><span class="muted text-sm">Không có suất chiếu</span></c:when>
-                <c:otherwise><c:forEach var="slot" items="${r.schedule}"><div class="slot"><b>${slot.scheduleTimeDisplay}</b><span class="truncate"><c:out value="${slot.movieTitle}"/></span></div></c:forEach></c:otherwise>
               </c:choose>
             </td>
             <td class="num"><a class="fw-700" href="${ctx}/admin/room-showtimes?roomId=${r.roomId}">${r.upcomingShowtimes}</a></td>
@@ -110,7 +99,7 @@
             </td>
           </tr>
         </c:forEach>
-        <c:if test="${empty rooms}"><tr><td colspan="7"><div class="empty"><div class="empty-icon">${ic.door}</div><p>Không có phòng chiếu phù hợp.</p></div></td></tr></c:if>
+        <c:if test="${empty rooms}"><tr><td colspan="6"><div class="empty"><div class="empty-icon">${ic.door}</div><p>Không có phòng chiếu phù hợp.</p></div></td></tr></c:if>
       </tbody>
     </table>
   </div>
