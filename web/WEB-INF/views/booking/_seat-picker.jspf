@@ -79,7 +79,7 @@
                         data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
                         data-zone="${seatZones[s.label]}"
                         ${s.available ? '' : 'disabled="disabled"'}
-                        onclick="toggleSeat(this)">${s.couple || planVariant != '' ? s.label : (s.color == 'RED' ? '✕' : s.seatNumber)}</button>
+                        onclick="toggleSeat(this)">${!s.couple && planVariant == '' && s.color == 'RED' ? '✕' : s.seatNumber}</button>
                 <c:if test="${closesPod}"></div></c:if>
                 <c:if test="${useWings && isAisle}"></div></c:if>
                 <c:if test="${isAisle}"><span class="sp-gap"></span></c:if>

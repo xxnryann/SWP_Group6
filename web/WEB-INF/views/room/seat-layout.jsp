@@ -94,7 +94,7 @@
                              data-zone="${seatZones[s.label]}">
                         <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm" aria-label="${s.label}"
                                <c:if test="${s.pairSeatId != null}">data-pair="${s.pairSeatId}"</c:if>>
-                        <span>${s.couple || planVariant != '' ? s.label : s.seatNumber}</span>
+                        <span>${s.seatNumber}</span>
                       </label>
                       <c:if test="${closesPod}"></div></c:if>
                       <c:if test="${useWings && isAisle}"></div></c:if>

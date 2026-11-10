@@ -93,8 +93,6 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-legend i.l-una { background: #fff; border-color: #94a3b8; }
 
 /* Bien the IMAX Recliner Lounge: ghe rong co tay vin, cum 2|6 voi mot hanh lang, hang VIP va suite co nen rieng. */
-.sp-imax .sp-screen { max-width: 1024px; }
-.sp-imax .sp-screen svg { height: 176px; }
 .sp-imax-top { max-width: none; margin: 0 0 16px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; align-items: center; }
 .sp-imax-view { display: inline-flex; align-items: center; gap: 6px; color: #0284c7; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
 .sp-imax-view i { width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; }
@@ -115,18 +113,13 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-imax .seat[data-zone="core"] { --seat-bg: #fef3c7; --seat-bd: #fbbf24; --seat-arm: #fcd34d; --seat-bar: #f59e0b; }
 .sp-imax .seat[data-zone="king"] { --seat-bg: linear-gradient(to bottom, #fef3c7, #fde68a); --seat-bd: #f59e0b; --seat-arm: #fbbf24; --seat-bar: #d97706; border-radius: 12px; box-shadow: 0 4px 12px -2px rgba(217, 119, 6, .35); }
 .sp-imax .seat[data-type="Couple"], .sp-imax .seat.t-Couple { --seat-bg: #fdf2f8; --seat-bd: #f472b6; --seat-bw: 2px; --seat-fg: #831843; --seat-bar: #f9a8d4; }
-.sp-imax button.seat, .sp-imax label.seat > span { padding-bottom: 6px; border-radius: 12px; font-size: 12px; font-weight: 700;
-    background: linear-gradient(var(--seat-arm), var(--seat-arm)) left 3px center / 6px 24px no-repeat,
-                linear-gradient(var(--seat-arm), var(--seat-arm)) right 3px center / 6px 24px no-repeat, var(--seat-bg); }
-.sp-imax .seat::before { content: ""; position: absolute; left: 12px; right: 12px; bottom: 6px; height: 4px; border-radius: 99px; background: var(--seat-bar); z-index: 1; pointer-events: none; }
-.sp-imax .seat:not(.pair-l):not(.pair-r)::after { content: ""; position: absolute; top: 5px; right: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--seat-bar); z-index: 1; pointer-events: none; }
-.sp-imax .seat[data-zone="king"]:not(.pair-l):not(.pair-r)::after { content: "♛"; top: 3px; right: auto; left: 10px; width: auto; height: auto; border-radius: 0; background: none; color: #b45309; font-size: 10px; line-height: 1; }
+/* Ghe chi la mot o vuong co so ghe: khong ve tay vin, thanh dem hay cham trang tri. */
+.sp-imax button.seat, .sp-imax label.seat > span { border-radius: 12px; font-size: 13px; font-weight: 700; background: var(--seat-bg); }
 
-.sp-imax button.seat.selected, .sp-imax button.seat.selected[data-type], .sp-imax label.seat > input:checked + span { --seat-bg: #1d4ed8; --seat-bd: #1d4ed8; --seat-fg: #fff; --seat-arm: #3b82f6; --seat-bar: #bfdbfe; background-image: linear-gradient(#3b82f6, #3b82f6), linear-gradient(#3b82f6, #3b82f6); }
-.sp-imax .seat[data-zone="king"].selected:not(.pair-l):not(.pair-r)::after { color: #fff; }
+.sp-imax button.seat.selected, .sp-imax button.seat.selected[data-type], .sp-imax label.seat > input:checked + span { --seat-bg: #1d4ed8; --seat-bd: #1d4ed8; --seat-fg: #fff; background-image: none; }
 .sp-imax button.seat.YELLOW { --seat-bg: #fef3c7; --seat-bd: #f59e0b; --seat-fg: #92400e; --seat-arm: #fde68a; --seat-bar: #fbbf24; --seat-bw: 1px; }
 .sp-imax button.seat.RED { --seat-bg: #e2e8f0; --seat-bd: #cbd5e1; --seat-bw: 1px; --seat-fg: #64748b; --seat-arm: #cbd5e1; --seat-bar: #94a3b8; opacity: .8; box-shadow: none; }
-.sp-imax button.seat.RED:not(.pair-l):not(.pair-r)::after { content: "✕"; top: 3px; right: 6px; left: auto; width: auto; height: auto; border-radius: 0; background: none; color: #94a3b8; font-size: 10px; line-height: 1; }
+.sp-imax button.seat.RED:not(.pair-l):not(.pair-r)::after { content: "✕"; position: absolute; top: 4px; right: 6px; color: #94a3b8; font-size: 10px; line-height: 1; pointer-events: none; }
 .sp-imax button.seat.GREY, .sp-imax label.seat.maint > span { --seat-bg: #e2e8f0; --seat-bd: #94a3b8; --seat-bw: 1px; --seat-fg: #64748b; --seat-arm: #cbd5e1; box-shadow: none;
     background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgba(100, 116, 139, .25) 4px 6px); }
 
@@ -138,13 +131,10 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-imax label.seat.pair-l:hover > span, .sp-imax label.seat.pair-r:hover > span { transform: none; }
 .sp-imax button.seat.pair-l.selected, .sp-imax button.seat.pair-r.selected,
 .sp-imax label.seat.pair-l > input:checked + span, .sp-imax label.seat.pair-r > input:checked + span { box-shadow: none; }
-.sp-imax button.seat.pair-l, .sp-imax label.seat.pair-l > span { background: var(--seat-bg); padding: 0 0 8px 12px; border-radius: 16px 0 0 16px; border-right-width: 0; font-weight: 800; }
-.sp-imax button.seat.pair-r, .sp-imax label.seat.pair-r > span { background: var(--seat-bg); padding: 0 12px 8px 0; border-radius: 0 16px 16px 0; border-left-width: 0; font-weight: 800; }
-.sp-imax .seat.pair-l::before { left: 16px; right: 0; bottom: 7px; height: 6px; }
-.sp-imax .seat.pair-r::before { left: 0; right: 16px; bottom: 7px; height: 6px; }
-.sp-imax .seat.pair-l::after { content: "SUITE"; top: 19px; right: -16px; transform: none; color: #db2777; font-size: 8px; font-weight: 800; letter-spacing: .05em; }
-.sp-imax .seat.pair-l.RED::after { content: "ĐÃ ĐẶT"; right: -18px; color: #64748b; }
-.sp-imax .seat.pair-l.selected::after { color: #fff; }
+.sp-imax button.seat.pair-l, .sp-imax label.seat.pair-l > span { padding: 0 0 0 14px; border-radius: 16px 0 0 16px; border-right-width: 0; font-weight: 800; }
+.sp-imax button.seat.pair-r, .sp-imax label.seat.pair-r > span { padding: 0 14px 0 0; border-radius: 0 16px 16px 0; border-left-width: 0; font-weight: 800; }
+.sp-imax .seat.pair-l:not(.RED)::after { content: none; }
+.sp-imax .seat.pair-l.RED::after { content: "ĐÃ ĐẶT"; right: -18px; color: #64748b; font-size: 8px; font-weight: 800; letter-spacing: .05em; }
 
 .sp-imax .sp-gap { width: 64px; flex-direction: column; align-items: center; gap: 3px; }
 .sp-imax .seat-row .sp-gap::before { width: auto; height: auto; border-radius: 0; background: none; color: #38bdf8; font-size: 14px; line-height: 1; }
@@ -171,12 +161,9 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 
 /* Bien the 4DX: ghe theo cum pod co nhan, hai cot thiet bi hieu ung, hang A co loi di trung tam. */
 .sp-4dx-top { max-width: none; justify-content: flex-end; margin: 0 0 16px; }
-.sp-4dx .sp-screen svg { height: 56px; }
-.sp-4dx .sp-screen-label { display: inline-flex; align-items: center; gap: 8px; margin-top: 2px; letter-spacing: .18em; }
-.sp-4dx .sp-screen-label i { width: 8px; height: 8px; border-radius: 50%; background: #2563eb; }
 .sp-4dx .sp-scroll { margin-top: 32px; padding-top: 12px; }
 .sp-4dx .sp-floor { gap: 16px; }
-.sp-4dx .sp-rows { flex: 0 0 auto; gap: 22px; }
+.sp-4dx .sp-rows { flex: 0 0 auto; gap: 14px; }
 .sp-4dx .seat-row { gap: 12px; }
 .sp-4dx .row-label { width: 28px; font-size: 16px; color: #1e293b; }
 .sp-4dx .seat-row.row-VIP .row-label { color: #b45309; }
@@ -186,31 +173,20 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-4dx-tower span { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .sp-4dx-tower svg { width: 22px; height: 22px; fill: none; stroke: #1e293b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-.sp-4dx .sp-pod { position: relative; display: flex; gap: 6px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgba(15, 23, 42, .06); }
-.sp-4dx .sp-pod::before { content: attr(data-pod); position: absolute; top: -9px; left: 12px; z-index: 2; padding: 1px 6px; border-radius: 4px; background: #475569; color: #fff; font-size: 8px; font-weight: 700; line-height: 1.4; letter-spacing: .03em; white-space: nowrap; }
-.sp-4dx .sp-pod-VIP { background: rgba(255, 251, 235, .7); border-color: #fcd34d; }
-.sp-4dx .sp-pod-VIP::before { background: #d97706; }
-.sp-4dx .sp-pod-gold { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(252, 211, 77, .5), 0 4px 8px -2px rgba(217, 119, 6, .25); }
-.sp-4dx .sp-pod-gold::before { background: #b45309; border-radius: 99px; }
-.sp-4dx .sp-pod-Couple { gap: 8px; padding: 10px; border: 2px solid #f9a8d4; border-radius: 16px; background: linear-gradient(to right, #fdf2f8, rgba(252, 231, 243, .7)); }
-.sp-4dx .sp-pod-Couple::before { background: #be185d; }
-.sp-4dx .sp-pod-Couple.sp-pod-gold { border-color: #ec4899; box-shadow: 0 0 0 2px rgba(249, 168, 212, .45), 0 4px 8px -2px rgba(219, 39, 119, .25); }
-.sp-4dx .sp-pod-Couple.sp-pod-gold::before { background: #db2777; content: "♥ " attr(data-pod); }
-/* 5 cum doi rong dung bang 3 cum don + 2 ranh de hang F thang mep voi cac hang tren. */
-.sp-4dx .row-Couple .sp-pod:not(:nth-last-child(2)) { margin-right: 11px; }
+/* Pod chi con la nhom ghe vo hinh: khong khung, khong nen, khong nhan "POD ...". */
+.sp-4dx .sp-pod { display: flex; gap: 6px; }
+/* 5 cap ghe doi (102px) + khoang cach = 3 cum don (194px) + 2 ranh, de hang F thang mep voi cac hang tren. */
+.sp-4dx .row-Couple .sp-pod:not(:nth-last-child(2)) { margin-right: 30px; }
 
 .sp-4dx .seat { --seat-bg: #fff; --seat-bd: #cbd5e1; --seat-bw: 2px; --seat-fg: #1e293b; --seat-arm: #e2e8f0; --seat-bar: #cbd5e1; width: 44px; height: 48px; }
 .sp-4dx .seat[data-type="VIP"], .sp-4dx .seat.t-VIP { --seat-bg: #fffbeb; --seat-bd: #f59e0b; --seat-fg: #451a03; --seat-arm: #fcd34d; --seat-bar: #f59e0b; }
 .sp-4dx .seat[data-zone="core"] { --seat-bg: #fef3c7; --seat-arm: #fbbf24; }
 .sp-4dx .seat[data-type="Couple"], .sp-4dx .seat.t-Couple { --seat-bg: #fdf2f8; --seat-bd: #ec4899; --seat-fg: #500724; --seat-arm: #f9a8d4; --seat-bar: #ec4899; }
 .sp-4dx .seat[data-type="Couple"][data-zone="core"], .sp-4dx .seat.t-Couple[data-zone="core"] { --seat-bg: #fce7f3; --seat-arm: #f472b6; --seat-bar: #db2777; }
-.sp-4dx button.seat, .sp-4dx label.seat > span { padding-bottom: 8px; border-radius: 8px; font-size: 12px; font-weight: 700;
-    background: linear-gradient(var(--seat-arm), var(--seat-arm)) left 3px top 8px / 4px 20px no-repeat,
-                linear-gradient(var(--seat-arm), var(--seat-arm)) right 3px top 8px / 4px 20px no-repeat, var(--seat-bg); }
-.sp-4dx .seat::before { content: ""; position: absolute; left: 6px; right: 6px; bottom: 5px; height: 6px; border-radius: 99px; background: var(--seat-bar); z-index: 1; pointer-events: none; }
+/* Ghe chi la mot o vuong co so ghe: khong ve tay vin hay thanh dem. */
+.sp-4dx button.seat, .sp-4dx label.seat > span { border-radius: 8px; font-size: 13px; font-weight: 700; background: var(--seat-bg); }
 
-.sp-4dx button.seat.selected, .sp-4dx button.seat.selected[data-type][data-zone], .sp-4dx label.seat > input:checked + span { --seat-bg: #1d4ed8; --seat-bd: #1d4ed8; --seat-fg: #fff; --seat-arm: #3b82f6; background-image: linear-gradient(#3b82f6, #3b82f6), linear-gradient(#3b82f6, #3b82f6); }
-.sp-4dx button.seat.selected::before { background: #bfdbfe; }
+.sp-4dx button.seat.selected, .sp-4dx button.seat.selected[data-type][data-zone], .sp-4dx label.seat > input:checked + span { --seat-bg: #1d4ed8; --seat-bd: #1d4ed8; --seat-fg: #fff; background-image: none; }
 .sp-4dx button.seat.YELLOW[data-type][data-zone] { --seat-bg: #fef3c7; --seat-bd: #f59e0b; --seat-fg: #92400e; --seat-arm: #fde68a; --seat-bar: #fbbf24; }
 .sp-4dx button.seat.RED[data-type][data-zone] { --seat-bg: #e2e8f0; --seat-bd: #cbd5e1; --seat-fg: #94a3b8; --seat-arm: transparent; --seat-bar: transparent; padding: 14px 0 0; font-size: 10px; opacity: 1; }
 .sp-4dx button.seat.RED::after { content: "✕"; position: absolute; top: 5px; left: 0; right: 0; transform: none; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1; pointer-events: none; }
@@ -228,16 +204,12 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-4dx .seat-row .sp-gap::before { content: "||"; width: auto; height: auto; border-radius: 0; background: none; color: #94a3b8; font-size: 12px; font-weight: 700; line-height: 1; }
 .sp-4dx .sp-line[data-row="C"] .sp-gap::before, .sp-4dx .sp-line[data-row="D"] .sp-gap::before, .sp-4dx .sp-line[data-row="E"] .sp-gap::before { color: #f59e0b; }
 /* Khe hang A rong bang cum giua + 2 ranh de hai pod thang cot voi hang B-E. */
-.sp-4dx .sp-line[data-row="A"] .sp-gap { width: 284px; }
+.sp-4dx .sp-line[data-row="A"] .sp-gap { width: 266px; }
 .sp-4dx .sp-line[data-row="A"] .seat-row .sp-gap::before { content: "↑ LỐI ĐI TRUNG TÂM"; padding: 6px 16px; border-radius: 8px; background: rgba(239, 246, 255, .8); border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 12px; letter-spacing: .05em; white-space: nowrap; }
 
 /* Bien the 3D: khan dai hinh quat, hai canh nghieng theo tung hang, den LED o hanh lang. */
 .sp-3d-top { max-width: none; margin: 0 0 16px; align-items: center; }
 .sp-3d-focus { background: #0f172a; border-color: #0f172a; color: #fff; font-weight: 600; }
-.sp-3d .sp-screen svg { height: 96px; }
-.sp-3d .sp-screen-label { display: inline-flex; align-items: center; gap: 10px; margin-top: -8px; position: relative; padding: 8px 20px;
-                          background: linear-gradient(to right, #0f172a, #1e293b, #0f172a); border-color: #334155; color: #fff; }
-.sp-3d .sp-screen-label i { width: 8px; height: 8px; border-radius: 50%; background: #60a5fa; }
 .sp-3d .sp-scroll { margin-top: 32px; padding-top: 14px; }
 .sp-3d .sp-floor { justify-content: center; }
 .sp-3d .sp-rows { gap: 14px; }
@@ -261,8 +233,8 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-3d .seat[data-type="VIP"], .sp-3d .seat.t-VIP { --seat-bg: #fffbeb; --seat-bd: #fcd34d; --seat-fg: #78350f; --seat-bar: #fbbf24; }
 .sp-3d .seat[data-type="Couple"], .sp-3d .seat.t-Couple { --seat-bg: #fff1f2; --seat-bd: #fda4af; --seat-fg: #9f1239; }
 .sp-3d .seat[data-zone="king"] { --seat-bg: linear-gradient(to bottom, #fbbf24, #f59e0b); --seat-bd: #d97706; --seat-fg: #fff; --seat-bar: #fff; border-radius: 8px; box-shadow: 0 0 0 2px #fcd34d; }
-.sp-3d button.seat, .sp-3d label.seat > span { padding-top: 8px; font-size: 11px; font-weight: 700; }
-.sp-3d .seat::before { content: ""; position: absolute; top: 5px; left: 11px; width: 14px; height: 3px; border-radius: 99px; background: var(--seat-bar); z-index: 1; pointer-events: none; }
+/* Ghe chi la mot o vuong co so ghe: khong ve thanh tua lung. */
+.sp-3d button.seat, .sp-3d label.seat > span { font-size: 12px; font-weight: 700; }
 .sp-3d .sp-gap { width: 40px; }
 .sp-3d .seat-row .sp-gap::before { width: 8px; height: 28px; border-radius: 99px; background: radial-gradient(circle, #3b82f6 0 3px, #eff6ff 3.5px); border: 1px solid #bfdbfe; box-sizing: border-box; }
 .sp-3d button.seat.YELLOW { --seat-bg: #fef3c7; --seat-bd: #f59e0b; --seat-fg: #92400e; --seat-bar: #fbbf24; --seat-bw: 1px; }
