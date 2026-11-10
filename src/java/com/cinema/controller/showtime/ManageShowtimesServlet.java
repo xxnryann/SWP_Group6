@@ -303,66 +303,14 @@ public class ManageShowtimesServlet extends BaseServlet {
             return;
         }
         try {
-            java.util.Map<String, StringBuilder> byRoom = new java.util.LinkedHashMap<>();
-            for (String room : showtimeDAO.findActiveRoomNames()) {
-                byRoom.put(room, new StringBuilder());
-            }
-            java.time.format.DateTimeFormatter hm = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
-            for (Showtime s : showtimeDAO.findScheduleForDate(date)) {
-                StringBuilder shows = byRoom.computeIfAbsent(s.getRoomName(), k -> new StringBuilder());
-                if (shows.length() > 0) {
-                    shows.append(',');
-                }
-                LocalDateTime start = s.getStartsAt();
-                shows.append("{\"id\":").append(s.getShowtimeId())
-                        .append(",\"title\":").append(json(s.getMovieTitle()))
-                        .append(",\"start\":\"").append(start.format(hm))
-                        .append("\",\"end\":\"").append(s.getEndTimeOnly())
-                        .append("\",\"slotEnd\":\"").append(s.getSlotEndTimeOnly())
-                        .append("\",\"tickets\":").append(s.getPurchasedTicketCount()).append('}');
-            }
-            StringBuilder out = new StringBuilder("{\"open\":\"").append(ShowtimeRules.OPEN_TIME)
-                    .append("\",\"close\":\"").append(ShowtimeRules.CLOSE_TIME).append("\",\"rooms\":[");
-            boolean first = true;
-            for (java.util.Map.Entry<String, StringBuilder> e : byRoom.entrySet()) {
-                if (!first) {
-                    out.append(',');
-                }
-                first = false;
-                out.append("{\"room\":").append(json(e.getKey())).append(",\"shows\":[").append(e.getValue()).append("]}");
-            }
-            out.append("]}");
+            String body = com.cinema.util.showtime.RoomScheduleJson.build(showtimeDAO, date);
             response.setContentType("application/json;charset=UTF-8");
             response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-            response.getWriter().write(out.toString());
+            response.getWriter().write(body);
         } catch (SQLException e) {
             getServletContext().log("Unable to load room schedule.", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải lịch phòng.");
         }
-    }
-
-    /** Chuỗi JSON có escape ký tự đặc biệt. */
-    private static String json(String value) {
-        if (value == null) {
-            return "null";
-        }
-        StringBuilder sb = new StringBuilder("\"");
-        for (char ch : value.toCharArray()) {
-            switch (ch) {
-                case '"': sb.append("\\\""); break;
-                case '\\': sb.append("\\\\"); break;
-                case '\n': sb.append("\\n"); break;
-                case '\r': sb.append("\\r"); break;
-                case '\t': sb.append("\\t"); break;
-                default:
-                    if (ch < 0x20 || ch == '<' || ch == '>' || ch == '&') {
-                        sb.append(String.format("\\u%04x", (int) ch));
-                    } else {
-                        sb.append(ch);
-                    }
-            }
-        }
-        return sb.append('"').toString();
     }
 
     private void writeAvailableTimes(HttpServletRequest request, HttpServletResponse response)

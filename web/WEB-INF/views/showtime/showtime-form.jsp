@@ -47,11 +47,11 @@
       <div class="room-schedule-head">
         <h2 id="room-schedule-title">Lịch các phòng <span id="room-schedule-date"></span></h2>
         <ul class="room-schedule-legend">
-          <li><i class="rs-swatch rs-busy"></i>Đã có suất</li>
-          <li><i class="rs-swatch rs-free"></i>Trống</li>
-          <li><i class="rs-swatch rs-past-show"></i>Suất đã qua</li>
-          <li><i class="rs-swatch rs-past"></i>Giờ đã qua</li>
-          <li><i class="rs-swatch rs-candidate-swatch"></i>Suất đang chọn</li>
+          <li><i class="tl-swatch tl-busy"></i>Đã có suất</li>
+          <li><i class="tl-swatch tl-free"></i>Trống</li>
+          <li><i class="tl-swatch tl-past-show"></i>Suất đã qua</li>
+          <li><i class="tl-swatch tl-past"></i>Giờ đã qua</li>
+          <li><i class="tl-swatch tl-candidate-swatch"></i>Suất đang chọn</li>
         </ul>
       </div>
       <p class="muted" id="room-schedule-status">Đang tải lịch phòng…</p>
@@ -63,6 +63,8 @@
     <button class="btn btn-primary" type="submit">${ic.check}Lưu suất chiếu</button>
   </div>
 </form>
-<link rel="stylesheet" href="${ctx}/assets/css/showtime-form.css?v=20261110-3">
-<script src="${ctx}/assets/js/showtime-form.js?v=20261110-10" defer></script>
+<link rel="stylesheet" href="${ctx}/assets/css/room-schedule.css?v=20261110-3">
+<link rel="stylesheet" href="${ctx}/assets/css/showtime-form.css?v=20261110-5">
+<script src="${ctx}/assets/js/room-schedule.js?v=20261110-1" defer></script>
+<script src="${ctx}/assets/js/showtime-form.js?v=20261110-11" defer></script>
 <%@ include file="../layout/bottom.jspf" %>
