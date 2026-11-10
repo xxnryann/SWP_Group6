@@ -1,6 +1,7 @@
 package com.cinema.controller.room;
 
 import com.cinema.dao.RoomDAO;
+import com.cinema.dao.SeatDAO;
 import com.cinema.model.Room;
 import com.cinema.util.room.RoomRuleException;
 import com.cinema.util.room.RoomRules;
@@ -12,8 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 
 /**
  * Screening Room Management (Admin) — tạo phòng chiếu và thiết lập thông tin phòng (tên, loại phòng, sức chứa).
@@ -30,6 +29,7 @@ import java.time.format.DateTimeParseException;
 public class ManageRoomsServlet extends AdminBaseServlet {
 
     private final RoomDAO roomDAO = new RoomDAO();
+    private final SeatDAO seatDAO = new SeatDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -39,9 +39,13 @@ public class ManageRoomsServlet extends AdminBaseServlet {
         String action = req.getParameter("action");
         try {
             if ("new".equals(action)) {
+                if (roomDAO.countAll() >= RoomRules.MAX_ROOMS) {
+                    resp.sendRedirect(req.getContextPath() + "/admin/rooms?limit=full");
+                    return;
+                }
                 Room r = new Room();
-                r.setRoomType("2D");
-                r.setCapacity(50);
+                r.setRoomType(RoomRules.ROOM_TYPE_2D);
+                r.setCapacity(RoomRules.FIXED_2D_CAPACITY);
                 r.setStatus(RoomRules.ROOM_ACTIVE);
                 showForm(req, resp, r);
             } else if ("edit".equals(action)) {
@@ -54,20 +58,10 @@ public class ManageRoomsServlet extends AdminBaseServlet {
                 showForm(req, resp, r);
             } else {
                 String keyword = Validator.trim(req.getParameter("q"));
-                LocalDate scheduleDate = LocalDate.now();
-                String dateValue = Validator.trim(req.getParameter("date"));
-                if (dateValue != null && !dateValue.isBlank()) {
-                    try {
-                        scheduleDate = LocalDate.parse(dateValue);
-                    } catch (DateTimeParseException e) {
-                        throw new IllegalArgumentException("Ngày xem lịch không hợp lệ.");
-                    }
-                }
-                req.setAttribute("rooms", RoomSort.apply(roomDAO.findAll(keyword, scheduleDate),
+                req.setAttribute("rooms", RoomSort.apply(roomDAO.findAll(keyword),
                         req.getParameter("room"), req.getParameter("type"), req.getParameter("capacity"),
                         req.getParameter("upcoming"), req.getParameter("status")));
                 req.setAttribute("keyword", keyword);
-                req.setAttribute("scheduleDate", scheduleDate);
                 req.setAttribute("roomTypes", RoomRules.ROOM_TYPES);
                 boolean limitReached = roomDAO.countAll() >= RoomRules.MAX_ROOMS;
                 req.setAttribute("roomLimitReached", limitReached);
@@ -132,6 +126,9 @@ public class ManageRoomsServlet extends AdminBaseServlet {
         boolean capacityLocked = editing && existing.isHasLayout();
         if (capacityLocked) {
             capacityStr = String.valueOf(existing.getSeatCount());
+        } else if (RoomRules.isFixedLayout(type)) {
+            // Mỗi loại phòng có sức chứa cố định — lấy từ RoomRules, không tin giá trị form gửi lên.
+            capacityStr = String.valueOf(RoomRules.fixedCapacity(type));
         }
 
         String error = RoomRules.validateRoom(name, type, capacityStr, status);
@@ -163,11 +160,20 @@ public class ManageRoomsServlet extends AdminBaseServlet {
         try {
             if (editing) {
                 roomDAO.update(r);
-                flash(req, "success", "Đã cập nhật phòng \"" + name + "\".");
+                if (RoomRules.isFixedLayout(type) && !capacityLocked) {
+                    applyFixedLayout(req, id, type, "Đã cập nhật phòng \"" + name + "\" với layout chuẩn " + type + ".");
+                } else {
+                    flash(req, "success", "Đã cập nhật phòng \"" + name + "\".");
+                }
                 resp.sendRedirect(req.getContextPath() + "/admin/rooms");
             } else {
                 int newId = roomDAO.insert(r);
-                flash(req, "success", "Đã tạo phòng \"" + name + "\". Hãy thiết lập layout ghế cho phòng.");
+                if (RoomRules.isFixedLayout(type)) {
+                    applyFixedLayout(req, newId, type, "Đã tạo phòng \"" + name + "\" với layout chuẩn " + type + " ("
+                            + RoomRules.fixedCapacity(type) + " ghế).");
+                } else {
+                    flash(req, "success", "Đã tạo phòng \"" + name + "\". Hãy thiết lập layout ghế cho phòng.");
+                }
                 resp.sendRedirect(req.getContextPath() + "/admin/seats?roomId=" + newId);
             }
         } catch (RoomRuleException e) {
@@ -180,6 +186,17 @@ public class ManageRoomsServlet extends AdminBaseServlet {
             } else {
                 throw e;
             }
+        }
+    }
+
+    /** Tạo ghế theo layout chuẩn của loại phòng (giữ seat_id của ghế còn dùng). */
+    private void applyFixedLayout(HttpServletRequest req, int roomId, String roomType, String successMessage)
+            throws SQLException {
+        try {
+            seatDAO.applyLayoutKeepingSeats(roomId, seatDAO.fixedSpecs(roomType));
+            flash(req, "success", successMessage);
+        } catch (RoomRuleException e) {
+            flash(req, "error", e.getMessage());
         }
     }
 
@@ -222,6 +239,15 @@ public class ManageRoomsServlet extends AdminBaseServlet {
         req.setAttribute("cinemas", roomDAO.findCinemas());
         req.setAttribute("roomTypes", RoomRules.ROOM_TYPES);
         req.setAttribute("capacityLocked", room.getRoomId() > 0 && room.isHasLayout());
+        // Sức chứa cố định theo loại phòng — room-form.jsp dùng để tự điền và khóa ô "Sức chứa".
+        req.setAttribute("fixedCapacity2d", RoomRules.FIXED_2D_CAPACITY);
+        req.setAttribute("fixedCapacity3d", RoomRules.FIXED_3D_CAPACITY);
+        req.setAttribute("fixedCapacityImax", RoomRules.FIXED_IMAX_CAPACITY);
+        req.setAttribute("fixedCapacity4dx", RoomRules.FIXED_4DX_CAPACITY);
+        req.setAttribute("fixedSummary2d", RoomRules.fixedSummary(RoomRules.ROOM_TYPE_2D));
+        req.setAttribute("fixedSummary3d", RoomRules.fixedSummary(RoomRules.ROOM_TYPE_3D));
+        req.setAttribute("fixedSummaryImax", RoomRules.fixedSummary(RoomRules.ROOM_TYPE_IMAX));
+        req.setAttribute("fixedSummary4dx", RoomRules.fixedSummary(RoomRules.ROOM_TYPE_4DX));
         req.setAttribute("pageTitle", room.getRoomId() > 0 ? "Sửa phòng chiếu" : "Thêm phòng chiếu");
         req.setAttribute("parentTitle", "Quản lý phòng chiếu");
         req.setAttribute("parentUrl", req.getContextPath() + "/admin/rooms");

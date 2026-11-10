@@ -1,8 +1,5 @@
 package com.cinema.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Phòng chiếu — Screening Room Management (Admin).
  * Khớp bảng Room: room_type IN ('2D','3D','IMAX','4DX'), status IN ('Active','Closed'), capacity > 0.
@@ -21,7 +18,6 @@ public class Room {
     private int seatCount;
     private int maintenanceCount;
     private int upcomingShowtimes;
-    private List<Showtime> schedule = new ArrayList<>();
 
     public int getRoomId() { return roomId; }
     public void setRoomId(int roomId) { this.roomId = roomId; }
@@ -52,11 +48,6 @@ public class Room {
 
     public int getUpcomingShowtimes() { return upcomingShowtimes; }
     public void setUpcomingShowtimes(int upcomingShowtimes) { this.upcomingShowtimes = upcomingShowtimes; }
-
-    public List<Showtime> getSchedule() { return schedule; }
-    public void setSchedule(List<Showtime> schedule) {
-        this.schedule = schedule == null ? new ArrayList<>() : schedule;
-    }
 
     public boolean isActive() { return "Active".equals(status); }
 

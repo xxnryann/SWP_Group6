@@ -43,7 +43,7 @@ public class RoomShowtimesServlet extends AdminBaseServlet {
             return;
         }
         try {
-            List<Room> rooms = roomDAO.findAll(null, null);
+            List<Room> rooms = roomDAO.findAll(null);
             Integer roomId = intParam(req, "roomId");
             Room room = null;
             for (Room r : rooms) {
