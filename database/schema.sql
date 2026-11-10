@@ -56,6 +56,11 @@ GO
 ALTER DATABASE [CinemaWebDB] SET COMPATIBILITY_LEVEL = 150;
 GO
 
+-- SQL Server Express bat AUTO_CLOSE mac dinh: app khong dung connection pool nen DB
+-- lien tuc bi dong/mo lai, moi lan mo phai recovery (co the > 60s) -> request bi timeout.
+ALTER DATABASE [CinemaWebDB] SET AUTO_CLOSE OFF;
+GO
+
 ALTER DATABASE [CinemaWebDB] SET ANSI_NULLS ON;
 GO
 
@@ -589,7 +594,11 @@ CREATE TABLE dbo.Voucher (
     valid_to DATE NOT NULL,
     status VARCHAR(10) NOT NULL CONSTRAINT DF_Voucher_Status DEFAULT 'Allowed',
     created_by INT NULL,
+    -- 1 = voucher den bu (vd. DENBU25): khong cong khai, chi dung duoc khi khach con luot cap trong VoucherGrant
+    is_compensation BIT NOT NULL CONSTRAINT DF_Voucher_Compensation DEFAULT 0,
+    grant_valid_days INT NULL,   -- voucher den bu: so ngay hieu luc cua moi luot cap
     CONSTRAINT FK_Voucher_Creator FOREIGN KEY (created_by) REFERENCES dbo.Account(account_id),
+    CONSTRAINT CK_Voucher_GrantDays CHECK (grant_valid_days IS NULL OR grant_valid_days > 0),
     CONSTRAINT CK_Voucher_Dates CHECK (valid_to >= valid_from),
     CONSTRAINT CK_Voucher_Type CHECK (discount_type IN ('Percent','Amount')),
     CONSTRAINT CK_Voucher_Value CHECK (discount_value > 0),
@@ -850,6 +859,25 @@ CREATE TABLE dbo.VoucherUsage (
 );
 GO
 
+-- Luot voucher den bu cap cho khach (moi don bi huy suat chieu = 1 luot, co han rieng).
+CREATE TABLE dbo.VoucherGrant (
+    grant_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_VoucherGrant PRIMARY KEY,
+    voucher_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    booking_id INT NULL,                 -- don bi huy da sinh ra luot nay
+    granted_at DATETIME2(7) NOT NULL CONSTRAINT DF_VoucherGrant_Granted DEFAULT SYSDATETIME(),
+    expires_at DATE NOT NULL,
+    used_booking_id INT NULL,            -- don da dung luot nay (NULL = chua dung)
+    used_at DATETIME2(7) NULL,
+    CONSTRAINT FK_VoucherGrant_Voucher FOREIGN KEY (voucher_id) REFERENCES dbo.Voucher(voucher_id),
+    CONSTRAINT FK_VoucherGrant_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
+    CONSTRAINT FK_VoucherGrant_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
+    CONSTRAINT FK_VoucherGrant_UsedBooking FOREIGN KEY (used_booking_id) REFERENCES dbo.Booking(booking_id)
+);
+GO
+CREATE INDEX IX_VoucherGrant_Customer ON dbo.VoucherGrant(customer_id, voucher_id, expires_at);
+GO
+
 CREATE TABLE dbo.MyPointTransaction (
     txn_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MyPointTransaction PRIMARY KEY,
     customer_id INT NOT NULL,
@@ -1058,7 +1086,7 @@ BEGIN
     DECLARE @customer_id INT, @status VARCHAR(15), @subtotal DECIMAL(12,0);
     DECLARE @vid INT, @type VARCHAR(10), @val DECIMAL(12,2), @maxd DECIMAL(12,0), @min_order DECIMAL(12,0),
             @min_spent DECIMAL(14,0), @limit INT, @used INT, @per INT, @vstatus VARCHAR(10), @from DATE, @to DATE,
-            @disc DECIMAL(12,0);
+            @disc DECIMAL(12,0), @is_comp BIT;
 
     SELECT @customer_id = customer_id, @status = status, @subtotal = ticket_total + combo_total
     FROM dbo.Booking WHERE booking_id = @booking_id;
@@ -1067,17 +1095,22 @@ BEGIN
 
     SELECT @vid = voucher_id, @type = discount_type, @val = discount_value, @maxd = max_discount,
            @min_order = min_order_amount, @min_spent = min_cumulative_spending, @limit = usage_limit,
-           @used = used_count, @per = per_customer_limit, @vstatus = status, @from = valid_from, @to = valid_to
+           @used = used_count, @per = per_customer_limit, @vstatus = status, @from = valid_from, @to = valid_to,
+           @is_comp = is_compensation
     FROM dbo.Voucher WHERE code = @code;
 
     IF @vid IS NULL THROW 50032, N'Mã voucher không tồn tại.', 1;
+    -- Voucher den bu: chi dung duoc khi khach con luot cap chua dung, chua het han.
+    IF @is_comp = 1 AND NOT EXISTS (SELECT 1 FROM dbo.VoucherGrant WHERE voucher_id = @vid AND customer_id = @customer_id
+                                    AND used_booking_id IS NULL AND expires_at >= CAST(SYSDATETIME() AS DATE))
+        THROW 50039, N'Bạn không có lượt voucher đền bù nào còn hiệu lực.', 1;
     IF @vstatus <> 'Allowed' THROW 50033, N'Voucher không còn ở trạng thái cho phép sử dụng.', 1;
     IF CAST(SYSDATETIME() AS DATE) NOT BETWEEN @from AND @to THROW 50034, N'Voucher chưa đến hoặc đã quá hạn.', 1;
-    IF @used >= @limit THROW 50035, N'Voucher đã hết lượt sử dụng.', 1;
+    IF @is_comp = 0 AND @used >= @limit THROW 50035, N'Voucher đã hết lượt sử dụng.', 1;
     IF (SELECT total_spent FROM dbo.Customer WHERE customer_id = @customer_id) < @min_spent
         THROW 50036, N'Chi tiêu tích lũy chưa đạt mức tối thiểu để dùng voucher.', 1;
     IF @subtotal < @min_order THROW 50037, N'Giá trị đơn hàng chưa đạt mức tối thiểu của voucher.', 1;
-    IF (SELECT COUNT(*) FROM dbo.VoucherUsage WHERE voucher_id = @vid AND customer_id = @customer_id) >= @per
+    IF @is_comp = 0 AND (SELECT COUNT(*) FROM dbo.VoucherUsage WHERE voucher_id = @vid AND customer_id = @customer_id) >= @per
         THROW 50038, N'Bạn đã dùng hết số lần cho phép của voucher này.', 1;
 
     SET @disc = CASE @type WHEN 'Percent' THEN @subtotal * @val / 100 ELSE @val END;
@@ -1145,8 +1178,14 @@ BEGIN
         IF @voucher_id IS NOT NULL
         BEGIN
             INSERT INTO dbo.VoucherUsage(voucher_id, booking_id, customer_id) VALUES (@voucher_id, @booking_id, @customer_id);
+            -- Voucher den bu: tru 1 luot cap (luot sap het han dung truoc); khong bao gio chuyen sang 'Used'.
+            WITH g AS (SELECT TOP 1 * FROM dbo.VoucherGrant
+                       WHERE voucher_id = @voucher_id AND customer_id = @customer_id AND used_booking_id IS NULL
+                         AND expires_at >= CAST(SYSDATETIME() AS DATE)
+                       ORDER BY expires_at, grant_id)
+            UPDATE g SET used_booking_id = @booking_id, used_at = SYSDATETIME();
             UPDATE dbo.Voucher SET used_count = used_count + 1,
-                   status = CASE WHEN used_count + 1 >= usage_limit THEN 'Used' ELSE status END
+                   status = CASE WHEN is_compensation = 0 AND used_count + 1 >= usage_limit THEN 'Used' ELSE status END
             WHERE voucher_id = @voucher_id;
         END
 
@@ -1614,6 +1653,12 @@ GO
 /* ----------------------------------------------------------------------------
    UC: Now-Showing Movie Cancellation Alert
    @confirm = 0: chi canh bao. @confirm = 1: xac nhan huy, hoan tien, gui email.
+   Hoan tien = quy doi ra MyPoint (khach khong tu huy duoc ve; chi hoan khi rap huy suat chieu):
+     gia tri hoan = tien da thanh toan + gia tri MyPoint da dung (= tien ve + combo - giam voucher)
+     diem hoan    = FLOOR(gia tri hoan / gia tri 1 diem).
+   Den bu: moi don bi huy cua khach co tai khoan duoc cap 1 luot voucher den bu (Voucher.is_compensation = 1,
+   vd. DENBU25 - Manager chinh muc giam / so ngay hieu luc o trang Voucher; tat voucher thi khong cap).
+   Khach vang lai tai quay (customer_id NULL): nhan lai tien mat tai quay.
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_CancelMovie @movie_id INT, @manager_id INT, @confirm BIT = 0 AS
 BEGIN
@@ -1632,38 +1677,58 @@ BEGIN
 
     BEGIN TRAN;
 
-    -- Cac don da thanh toan thuoc cac suat se bi huy: tinh so tien con phai hoan, diem va voucher can tra.
-    SELECT b.booking_id, b.customer_id, b.voucher_id, b.points_used,
-           CAST(b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) FROM dbo.Payment p
-                                         WHERE p.booking_id = b.booking_id), 0) AS DECIMAL(12,0)) AS remaining,
+    DECLARE @pt_value INT = (SELECT TOP 1 point_value_vnd FROM dbo.MyPointConfig
+                             WHERE is_active = 1 ORDER BY effective_from DESC, config_id DESC);
+    DECLARE @today DATE = CAST(SYSDATETIME() AS DATE);
+    DECLARE @comp_id INT, @comp_code VARCHAR(30), @comp_text NVARCHAR(100), @comp_exp DATE;
+    SELECT TOP 1 @comp_id = voucher_id, @comp_code = code,
+           @comp_text = CASE WHEN discount_type = 'Percent' THEN N'giảm ' + FORMAT(discount_value, '0.##') + N'%'
+                             ELSE N'giảm ' + FORMAT(discount_value, 'N0', 'vi-VN') + N' đ' END,
+           @comp_exp = DATEADD(DAY, ISNULL(grant_valid_days, 30), @today)
+    FROM dbo.Voucher WHERE is_compensation = 1 AND status = 'Allowed' ORDER BY voucher_id;
+    IF ISNULL(@pt_value, 0) <= 0 SET @pt_value = 1;
+
+    -- Cac don da thanh toan thuoc cac suat se bi huy: so tien con lai, diem hoan, diem da tich, voucher can tra.
+    SELECT b.booking_id, b.booking_code, b.showtime_id, b.customer_id, b.voucher_id, r.remaining,
+           CAST(FLOOR((r.remaining + b.points_discount) / @pt_value) AS INT) AS refund_points,
            ISNULL((SELECT SUM(m.points) FROM dbo.MyPointTransaction m
                    WHERE m.booking_id = b.booking_id AND m.txn_type = 'Earn'), 0) AS earned
     INTO #bk
     FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id
+    CROSS APPLY (SELECT CAST(b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) FROM dbo.Payment p
+                                                      WHERE p.booking_id = b.booking_id), 0) AS DECIMAL(12,0)) AS remaining) r
     WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME() AND b.status = 'Paid';
 
+    -- Cap 1 luot voucher den bu cho moi don bi huy cua khach co tai khoan.
+    IF @comp_id IS NOT NULL
+        INSERT INTO dbo.VoucherGrant(voucher_id, customer_id, booking_id, expires_at)
+        SELECT @comp_id, customer_id, booking_id, @comp_exp FROM #bk WHERE customer_id IS NOT NULL;
+
     INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, movie_id, booking_id)
-    SELECT DISTINCT b.customer_id, 'MovieCancelled', N'Thông báo hủy suất chiếu',
-           N'Suất chiếu bạn đã đặt bị hủy, vé sẽ được hoàn tiền.', s.showtime_id, @movie_id, b.booking_id
-    FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id
-    WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME()
-      AND b.status = 'Paid' AND b.customer_id IS NOT NULL;
+    SELECT customer_id, 'MovieCancelled', N'Thông báo hủy suất chiếu',
+           N'Suất chiếu của đơn ' + booking_code + N' đã bị hủy do sự cố. Giá trị đơn (tiền vé, combo và MyPoint đã dùng) '
+           + N'đã được quy đổi thành ' + CAST(refund_points AS NVARCHAR(12)) + N' điểm MyPoint. '
+           + CASE WHEN @comp_id IS NULL THEN N''
+                  ELSE N'Bạn nhận 1 lượt voucher đền bù ' + @comp_code + N' (' + @comp_text + N'), dùng đến '
+                       + CONVERT(NVARCHAR(10), @comp_exp, 103) + N'.' END,
+           showtime_id, @movie_id, booking_id
+    FROM #bk WHERE customer_id IS NOT NULL;
 
     -- Hoan tien chi ghi o MOT cho: dong thanh toan goc ghi nhan da hoan het (khong them dong Payment moi).
     UPDATE p SET p.refunded_amount = p.amount, p.status = 'Refunded'
     FROM dbo.Payment p JOIN #bk k ON k.booking_id = p.booking_id WHERE p.status = 'Success';
 
-    -- Tra lai MyPoint da dung, thu hoi diem da tich, giam chi tieu tich luy (khong de am).
+    -- Hoan diem quy doi (da gom MyPoint da dung), thu hoi diem da tich, giam chi tieu tich luy (khong de am).
     INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points)
-    SELECT customer_id, booking_id, 'Adjust', points_used FROM #bk WHERE customer_id IS NOT NULL AND points_used > 0;
+    SELECT customer_id, booking_id, 'Adjust', refund_points FROM #bk WHERE customer_id IS NOT NULL AND refund_points > 0;
     INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points)
     SELECT customer_id, booking_id, 'Adjust', -earned FROM #bk WHERE customer_id IS NOT NULL AND earned > 0;
     UPDATE c SET
-        c.my_point_balance = CASE WHEN c.my_point_balance + x.points_used - x.earned < 0 THEN 0
-                                  ELSE c.my_point_balance + x.points_used - x.earned END,
+        c.my_point_balance = CASE WHEN c.my_point_balance + x.refund_points - x.earned < 0 THEN 0
+                                  ELSE c.my_point_balance + x.refund_points - x.earned END,
         c.total_spent = CASE WHEN c.total_spent > x.remaining THEN c.total_spent - x.remaining ELSE 0 END
     FROM dbo.Customer c
-    JOIN (SELECT customer_id, SUM(points_used) AS points_used, SUM(earned) AS earned, SUM(remaining) AS remaining
+    JOIN (SELECT customer_id, SUM(refund_points) AS refund_points, SUM(earned) AS earned, SUM(remaining) AS remaining
           FROM #bk WHERE customer_id IS NOT NULL GROUP BY customer_id) x ON x.customer_id = c.customer_id;
 
     -- Tra luot voucher.
@@ -1673,6 +1738,9 @@ BEGIN
     JOIN (SELECT voucher_id, COUNT(*) AS n FROM #bk WHERE voucher_id IS NOT NULL GROUP BY voucher_id) x
          ON x.voucher_id = v.voucher_id;
     DELETE u FROM dbo.VoucherUsage u JOIN #bk k ON k.booking_id = u.booking_id;
+    -- Don bi huy tung dung luot voucher den bu -> tra lai luot do cho khach.
+    UPDATE g SET g.used_booking_id = NULL, g.used_at = NULL
+    FROM dbo.VoucherGrant g JOIN #bk k ON k.booking_id = g.used_booking_id;
 
     UPDATE bc SET bc.cancelled_at = SYSDATETIME()
     FROM dbo.BookingCombo bc JOIN #bk k ON k.booking_id = bc.booking_id WHERE bc.cancelled_at IS NULL;
@@ -1862,7 +1930,8 @@ BEGIN
     FROM dbo.Voucher v
     CROSS JOIN dbo.Customer c
     JOIN dbo.Account a ON a.account_id = c.customer_id
-    WHERE v.code = @code AND v.status = 'Allowed' AND v.valid_to >= CAST(SYSDATETIME() AS DATE)
+    WHERE v.code = @code AND v.is_compensation = 0   -- voucher den bu khong gui hang loat
+      AND v.status = 'Allowed' AND v.valid_to >= CAST(SYSDATETIME() AS DATE)
       AND v.used_count < v.usage_limit
       AND a.status = 'Active' AND c.total_spent >= v.min_cumulative_spending AND c.receive_promo_email = 1
       AND (SELECT COUNT(*) FROM dbo.VoucherUsage u WHERE u.voucher_id = v.voucher_id AND u.customer_id = c.customer_id) < v.per_customer_limit
@@ -2032,6 +2101,8 @@ GO
    02/11/2026  Đổi ghế: cùng loại ghế, đổi cả cặp ghế đôi, báo cho khách (SeatChanged)
    02/11/2026  Hủy combo: BookingCombo.cancelled_at, sp_CancelCombo, thông báo ComboCancelled
    03/11/2026  Email: Customer.receive_promo_email (khách tắt/bật email phim mới, ưu đãi); REMINDER_HOURS_BEFORE
+   10/11/2026  Hủy suất chiếu (sp_CancelMovie): hoàn bằng MyPoint = (tiền vé + combo - voucher) / giá trị 1 điểm,
+               kèm 1 lượt voucher đền bù (DENBU25: Voucher.is_compensation, VoucherGrant); khách không tự hủy vé/combo trên web
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
    

@@ -4,13 +4,14 @@
 <div class="page-head">
   <div><a class="btn btn-ghost btn-sm mb-8" href="${ctx}/manage/movies">${ic.chevronLeft}Quản lý phim</a><h1>Hủy phim &amp; hoàn tiền</h1><p class="text-ink fw-600"><c:out value="${movie.title}"/></p></div>
 </div>
-<div class="alert alert-error mb-24">${ic.alert}<span><strong>Hành động này không thể hoàn tác.</strong> Các suất chiếu tương lai sẽ bị hủy, vé chưa sử dụng được hoàn tiền, MyPoint và voucher được hoàn lại, phim chuyển sang ngừng chiếu.</span></div>
+<div class="alert alert-error mb-24">${ic.alert}<span><strong>Hành động này không thể hoàn tác.</strong> Các suất chiếu tương lai sẽ bị hủy; giá trị mỗi đơn đã bán (tiền vé, combo và MyPoint đã dùng, không tính voucher) được quy đổi thành MyPoint, mỗi đơn được cấp 1 lượt voucher đền bù (cấu hình voucher DENBU25 tại trang Voucher); lượt voucher đã dùng được trả lại và phim chuyển sang ngừng chiếu.</span></div>
 
 <section class="stats mb-24">
   <div class="stat"><div class="stat-icon">${ic.calendar}</div><div class="stat-label">Suất chiếu bị hủy</div><div class="stat-value"><c:out value="${cancelShowtimes.size()}"/></div></div>
-  <div class="stat"><div class="stat-icon accent">${ic.ticket}</div><div class="stat-label">Vé sẽ hoàn tiền</div><div class="stat-value"><c:out value="${cancelTickets}"/></div></div>
-  <div class="stat"><div class="stat-icon success">${ic.users}</div><div class="stat-label">Khách nhận hoàn tiền</div><div class="stat-value"><c:out value="${cancelSummary.customerCount}"/></div></div>
-  <div class="stat"><div class="stat-icon danger">${ic.wallet}</div><div class="stat-label">Tổng tiền hoàn dự kiến</div><div class="stat-value money"><c:out value="${cancelSummary.refundAmount}"/> đ</div></div>
+  <div class="stat"><div class="stat-icon accent">${ic.ticket}</div><div class="stat-label">Vé đã bán bị hủy</div><div class="stat-value"><c:out value="${cancelTickets}"/></div></div>
+  <div class="stat"><div class="stat-icon success">${ic.users}</div><div class="stat-label">Khách nhận hoàn điểm</div><div class="stat-value"><c:out value="${cancelSummary.customerCount}"/></div></div>
+  <div class="stat"><div class="stat-icon danger">${ic.coins}</div><div class="stat-label">MyPoint hoàn dự kiến</div><div class="stat-value"><c:out value="${cancelSummary.refundPoints}"/> điểm</div><div class="stat-meta">Giá trị quy đổi <c:out value="${cancelSummary.refundAmount}"/> đ</div></div>
+  <div class="stat"><div class="stat-icon">${ic.ticket}</div><div class="stat-label">Lượt voucher đền bù sẽ cấp</div><div class="stat-value"><c:out value="${cancelSummary.compVouchers}"/></div></div>
 </section>
 
 <div class="split" style="grid-template-columns:minmax(0,1fr) 380px">
@@ -32,7 +33,7 @@
   </section>
   <section class="card sticky">
     <form method="post" action="${ctx}/manage/movies"
-          data-confirm="Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundAmount} đồng cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?">
+          data-confirm="Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundPoints} điểm MyPoint + ${cancelSummary.compVouchers} lượt voucher đền bù cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?">
       <div class="card-body form">
         <input type="hidden" name="_csrf" value="${csrf}">
         <input type="hidden" name="action" value="cancelMovie">

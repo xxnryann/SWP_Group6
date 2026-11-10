@@ -10,7 +10,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,39 +116,16 @@ public class MovieDAO {
 
     public List<Movie> findAllForShowtime() throws SQLException {
         List<Movie> movies = new ArrayList<>();
+        // Chỉ phim còn phát hành: bỏ phim đã ngừng chiếu (sp/DAO lưu suất cũng chặn 'Stopped').
         String sql = "SELECT d.*, 0 AS active_ticket_count FROM dbo.vw_MovieDetail d "
-                + "WHERE (end_date IS NULL OR end_date >= CAST(GETDATE() AS DATE)) "
+                + "WHERE d.status <> 'Stopped' "
+                + "AND (end_date IS NULL OR end_date >= CAST(GETDATE() AS DATE)) "
                 + "ORDER BY title";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql);
                 ResultSet result = statement.executeQuery()) {
             while (result.next()) {
                 movies.add(map(result));
-            }
-        }
-        return movies;
-    }
-
-    /**
-     * Các phim đang được phát hành vào một ngày cụ thể (dùng để xếp lịch tự động).
-     *
-     * @param date ngày cần xếp lịch
-     */
-    public List<Movie> findAllForDate(LocalDate date) throws SQLException {
-        List<Movie> movies = new ArrayList<>();
-        String sql = "SELECT d.*, 0 AS active_ticket_count FROM dbo.vw_MovieDetail d "
-                + "WHERE status <> 'Stopped' "
-                + "AND release_date <= ? "
-                + "AND (end_date IS NULL OR end_date >= ?) "
-                + "ORDER BY title";
-        try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setDate(1, Date.valueOf(date));
-            statement.setDate(2, Date.valueOf(date));
-            try (ResultSet result = statement.executeQuery()) {
-                while (result.next()) {
-                    movies.add(map(result));
-                }
             }
         }
         return movies;
@@ -258,14 +234,24 @@ public class MovieDAO {
     }
 
     public java.util.Map<String, Object> cancelSummary(int movieId) throws SQLException {
-            String sql = "SELECT COUNT(DISTINCT t.ticket_id) AS ticket_count, "
-                    + "COALESCE(SUM(DISTINCT b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) "
-                    + "FROM dbo.Payment p WHERE p.booking_id = b.booking_id), 0)), 0) AS refund_amount, "
-                    + "COUNT(DISTINCT b.customer_id) AS customer_count "
+            // Cùng công thức với sp_CancelMovie: giá trị hoàn = tiền đã trả còn lại + MyPoint đã dùng
+            // (không tính voucher), quy ra điểm theo giá trị 1 điểm; mỗi đơn của khách có tài khoản nhận 1 voucher đền bù.
+            String sql = "WITH pt AS (SELECT TOP 1 point_value_vnd AS v FROM dbo.MyPointConfig "
+                    + "WHERE is_active = 1 ORDER BY effective_from DESC, config_id DESC), "
+                    + "bk AS (SELECT b.booking_id, b.customer_id, "
+                    + "b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) FROM dbo.Payment p "
+                    + "WHERE p.booking_id = b.booking_id), 0) + b.points_discount AS refund_value "
                     + "FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id "
-                    + "JOIN dbo.Ticket t ON t.booking_id = b.booking_id "
                     + "WHERE s.movie_id = ? AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME() "
-                    + "AND b.status = 'Paid' AND t.status = 'Booked'";
+                    + "AND b.status = 'Paid') "
+                    + "SELECT (SELECT COUNT(*) FROM dbo.Ticket t JOIN bk ON bk.booking_id = t.booking_id "
+                    + "WHERE t.status = 'Booked') AS ticket_count, "
+                    + "COALESCE(SUM(bk.refund_value), 0) AS refund_amount, "
+                    + "COALESCE(SUM(CASE WHEN bk.customer_id IS NOT NULL THEN "
+                    + "FLOOR(bk.refund_value / NULLIF(pt.v, 0)) END), 0) AS refund_points, "
+                    + "CASE WHEN EXISTS (SELECT 1 FROM dbo.Voucher WHERE is_compensation = 1 AND status = 'Allowed') "
+                    + "THEN COUNT(bk.customer_id) ELSE 0 END AS comp_vouchers, "
+                    + "COUNT(DISTINCT bk.customer_id) AS customer_count FROM bk LEFT JOIN pt ON 1 = 1";
             try (Connection connection = DBContext.getConnection();
                     PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setInt(1, movieId);
@@ -274,6 +260,8 @@ public class MovieDAO {
                     java.util.Map<String, Object> summary = new java.util.HashMap<>();
                     summary.put("ticketCount", result.getInt("ticket_count"));
                     summary.put("refundAmount", result.getBigDecimal("refund_amount"));
+                    summary.put("refundPoints", result.getLong("refund_points"));
+                    summary.put("compVouchers", result.getInt("comp_vouchers"));
                     summary.put("customerCount", result.getInt("customer_count"));
                     return summary;
                 }

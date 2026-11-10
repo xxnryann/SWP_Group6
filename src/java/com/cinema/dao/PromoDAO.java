@@ -17,9 +17,18 @@ public class PromoDAO {
     /* ---------------- Voucher ---------------- */
 
     public List<Map<String, Object>> vouchers() throws SQLException {
-        return Rows.query("SELECT voucher_id, code, description, discount_type, discount_value, max_discount, "
-                + "min_order_amount, min_cumulative_spending, usage_limit, used_count, per_customer_limit, "
-                + "valid_from, valid_to, status FROM Voucher ORDER BY voucher_id DESC");
+        return Rows.query("SELECT v.voucher_id, v.code, v.description, v.discount_type, v.discount_value, v.max_discount, "
+                + "v.min_order_amount, v.min_cumulative_spending, v.usage_limit, v.used_count, v.per_customer_limit, "
+                + "v.valid_from, v.valid_to, v.status, v.is_compensation, v.grant_valid_days, "
+                + "(SELECT COUNT(*) FROM VoucherGrant g WHERE g.voucher_id = v.voucher_id) AS grants_issued, "
+                + "(SELECT COUNT(*) FROM VoucherGrant g WHERE g.voucher_id = v.voucher_id "
+                + "AND g.used_booking_id IS NOT NULL) AS grants_used "
+                + "FROM Voucher v ORDER BY v.is_compensation DESC, v.voucher_id DESC");
+    }
+
+    /** Voucher đền bù: số ngày hiệu lực của mỗi lượt cấp cho khách khi rạp hủy suất chiếu. */
+    public void setGrantValidDays(int id, int days) throws SQLException {
+        exec("UPDATE Voucher SET grant_valid_days = ? WHERE voucher_id = ? AND is_compensation = 1", days, id);
     }
 
     public Map<String, Object> voucher(int id) throws SQLException {
@@ -66,8 +75,10 @@ public class PromoDAO {
 
     /** Xóa voucher chưa từng được dùng; trả false nếu đã có lượt dùng. */
     public boolean deleteVoucher(int id) throws SQLException {
+        // Voucher đền bù (DENBU25) không xóa được: dùng "Tắt" để ngừng cấp.
         if (!Rows.query("SELECT 1 AS x FROM VoucherUsage WHERE voucher_id = ? "
-                + "UNION SELECT 1 FROM Booking WHERE voucher_id = ?", id, id).isEmpty()) {
+                + "UNION SELECT 1 FROM Booking WHERE voucher_id = ? "
+                + "UNION SELECT 1 FROM Voucher WHERE voucher_id = ? AND is_compensation = 1", id, id, id).isEmpty()) {
             return false;
         }
         exec("DELETE FROM Voucher WHERE voucher_id = ?", id);

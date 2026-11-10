@@ -60,20 +60,25 @@ public class ManageReviewServlet extends BaseServlet {
         if (!requireRole(request, response, MovieAccess.ROLE_MANAGER)) return;
         if (!csrfOk(request, response)) return;
         try {
-            if (!"delete-comment".equals(request.getParameter("action"))) {
+            String action = request.getParameter("action");
+            int reviewId = safeId(request.getParameter("id"));
+            if ("unhide-comment".equals(action)) {
+                reviewDAO.unhideComment(reviewId);
+                flash(request, "success", "Đã hiện lại bình luận.");
+            } else if ("hide-comment".equals(action)) {
+                String reason = trimToNull(request.getParameter("reason"));
+                if (reason == null || reason.length() > 500) {
+                    throw new IllegalArgumentException("Lý do ẩn bắt buộc và tối đa 500 ký tự.");
+                }
+                Map<String, Object> review = reviewDAO.findForModeration(reviewId);
+                if (review == null) throw new IllegalStateException("Bình luận không tồn tại.");
+                reviewDAO.hideComment(reviewId, currentUser(request).getUserId(), reason);
+                insertNotification((Integer) review.get("customer_id"), (Integer) review.get("movie_id"), reason);
+                flash(request, "success", "Đã ẩn bình luận và gửi thông báo cho khách hàng.");
+            } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
             }
-            String reason = trimToNull(request.getParameter("reason"));
-            if (reason == null || reason.length() > 500) {
-                throw new IllegalArgumentException("Lý do xóa bắt buộc và tối đa 500 ký tự.");
-            }
-            int reviewId = safeId(request.getParameter("id"));
-            Map<String, Object> review = reviewDAO.findForDeletion(reviewId);
-            if (review == null) throw new IllegalStateException("Bình luận không tồn tại hoặc đã được xóa.");
-            reviewDAO.deleteComment(reviewId, currentUser(request).getUserId(), reason);
-            insertNotification((Integer) review.get("customer_id"), (Integer) review.get("movie_id"), reason);
-            flash(request, "success", "Đã xóa bình luận và gửi thông báo cho khách hàng.");
         } catch (IllegalArgumentException | IllegalStateException e) {
             flash(request, "error", e.getMessage());
         } catch (SQLException e) {
@@ -89,7 +94,7 @@ public class ManageReviewServlet extends BaseServlet {
                         "INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, movie_id, status) "
                                 + "VALUES (?, 'ReviewModerated', N'Bình luận đã được kiểm duyệt', ?, ?, 'InApp')")) {
             statement.setInt(1, customerId);
-            statement.setString(2, "Bình luận của bạn đã bị xóa vì lý do: " + reason);
+            statement.setString(2, "Bình luận của bạn đã bị ẩn vì lý do: " + reason);
             statement.setInt(3, movieId);
             statement.executeUpdate();
         }

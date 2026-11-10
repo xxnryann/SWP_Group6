@@ -4,7 +4,7 @@
 <%@ include file="../layout/top.jspf" %>
 <div class="${isStaffRole ? '' : 'container'}">
   <div class="page-head">
-    <div><h1>Vé của tôi</h1><p>Vé điện tử có mã QR, dùng để vào phòng chiếu. Hủy vé trước giờ chiếu ít nhất ${cancelHours} giờ để được hoàn tiền.</p></div>
+    <div><h1>Vé của tôi</h1><p>Vé điện tử có mã QR, dùng để vào phòng chiếu. Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền; nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher đền bù.</p></div>
     <a class="btn btn-primary" href="${ctx}/showtimes">${ic.ticket}Đặt vé mới</a>
   </div>
   <%@ include file="../layout/account-nav.jspf" %>
@@ -39,16 +39,7 @@
                   <c:choose>
                     <c:when test="${o.comboCancelledOnly}"><span class="note">Combo đã được hủy. Vé của đơn vẫn còn hiệu lực.</span></c:when>
                     <c:when test="${o.cancelled}"><span class="note">Đơn đã được hủy nên combo không còn hiệu lực.</span></c:when>
-                    <c:when test="${o.canCancel}">
-                      <form method="post" action="${ctx}/account/tickets" data-confirm="Hủy toàn bộ combo của đơn này? Vé của đơn vẫn được giữ nguyên.">
-                        <input type="hidden" name="_csrf" value="${csrf}">
-                        <input type="hidden" name="action" value="cancelCombo">
-                        <input type="hidden" name="bookingId" value="${o.bookingId}">
-                        <input type="hidden" name="page" value="${page}">
-                        <button class="btn btn-sm btn-danger" type="submit">${ic.x}Hủy combo</button>
-                      </form>
-                    </c:when>
-                    <c:otherwise><span class="note">Đã quá thời hạn hủy combo: phải hủy trước giờ chiếu ít nhất ${cancelHours} giờ.</span></c:otherwise>
+                    <c:otherwise><span class="note">Combo đã thanh toán không thể hủy/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị combo được hoàn thành MyPoint.</span></c:otherwise>
                   </c:choose>
                 </div>
               </article>
@@ -86,20 +77,8 @@
               </dl>
               <div class="eticket-foot">
                 <c:choose>
-                  <c:when test="${t.canCancel}">
-                    <c:set var="cancelMsg" value="${empty t.pairLabel ? 'Hủy vé '.concat(t.seatDisplay) : 'Đây là ghế đôi: sẽ hủy cả cặp '.concat(t.seatDisplay).concat(' và ').concat(t.pairLabel)}? Tiền vé sẽ được hoàn lại."/>
-                    <form method="post" action="${ctx}/account/tickets" data-confirm="<c:out value='${cancelMsg}'/>">
-                      <input type="hidden" name="_csrf" value="${csrf}">
-                      <input type="hidden" name="action" value="cancel">
-                      <input type="hidden" name="ticketId" value="${t.ticketId}">
-                      <input type="hidden" name="page" value="${page}">
-                      <button class="btn btn-sm btn-danger" type="submit">${ic.x}Hủy vé</button>
-                    </form>
-                    <c:if test="${not empty t.pairLabel}"><span class="note">Ghế đôi bán theo cặp: hủy vé này sẽ hủy luôn ghế <c:out value="${t.pairLabel}"/>.</span></c:if>
-                  </c:when>
                   <c:when test="${t.active}">
-                    <button class="btn btn-sm" type="button" disabled>Hủy vé</button>
-                    <span class="note">Đã quá thời hạn hủy (trước giờ chiếu ${cancelHours} giờ). Vui lòng liên hệ rạp để được hỗ trợ.</span>
+                    <span class="note">Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher đền bù.</span>
                   </c:when>
                   <c:when test="${t.expired}"><span class="note">Vé đã quá thời gian chiếu nên không còn hiệu lực.</span></c:when>
                   <c:when test="${t.used}">

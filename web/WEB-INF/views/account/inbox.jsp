@@ -41,7 +41,7 @@
           <c:choose>
             <c:when test="${n.notif_type == 'ETicket'}"><c:set var="tone" value="success"/><c:set var="icon" value="${ic.ticket}"/><c:set var="itemTitle" value="Đặt vé thành công"/></c:when>
             <c:when test="${n.notif_type == 'TicketCancelled' or n.notif_type == 'ComboCancelled'}"><c:set var="tone" value="danger"/><c:set var="icon" value="${ic.x}"/><c:set var="itemTitle" value="${n.subject}"/></c:when>
-            <c:when test="${n.notif_type == 'MovieCancelled'}"><c:set var="tone" value="danger"/><c:set var="icon" value="${ic.alert}"/><c:set var="itemTitle" value="Phim bị hủy, bạn sẽ được hoàn tiền"/></c:when>
+            <c:when test="${n.notif_type == 'MovieCancelled'}"><c:set var="tone" value="danger"/><c:set var="icon" value="${ic.alert}"/><c:set var="itemTitle" value="Suất chiếu bị hủy, bạn được hoàn MyPoint"/></c:when>
             <c:when test="${n.notif_type == 'SeatChanged'}"><c:set var="tone" value="accent"/><c:set var="icon" value="${ic.swap}"/><c:set var="itemTitle" value="${n.subject}"/></c:when>
             <c:when test="${n.notif_type == 'ReviewReminder'}"><c:set var="tone" value="success"/><c:set var="icon" value="${ic.star}"/><c:set var="itemTitle" value="${n.subject}"/></c:when>
             <c:when test="${n.notif_type == 'ReviewModerated'}"><c:set var="tone" value=""/><c:set var="icon" value="${ic.message}"/><c:set var="itemTitle" value="${n.subject}"/></c:when>
@@ -77,7 +77,7 @@
                 <c:when test="${n.notif_type == 'SeatChanged'}"><p>Phim <strong><c:out value="${n.title}"/></strong>: <c:out value="${n.body}"/></p></c:when>
                 <c:when test="${n.notif_type == 'TicketCancelled' or n.notif_type == 'ComboCancelled'}"><p><c:out value="${n.body}"/> Phim: <strong><c:out value="${n.title}"/></strong>.</p></c:when>
                 <c:when test="${n.notif_type == 'ETicket'}"><p>Bạn đã đặt vé thành công phim <strong><c:out value="${n.title}"/></strong>.</p></c:when>
-                <c:when test="${n.notif_type == 'MovieCancelled'}"><p>Phim <strong><c:out value="${n.title}"/></strong> bạn đã đặt bị hủy. Tiền vé sẽ được hoàn lại cho bạn.</p></c:when>
+                <c:when test="${n.notif_type == 'MovieCancelled'}"><p>Phim <strong><c:out value="${n.title}"/></strong> bạn đã đặt bị hủy. <c:out value="${n.body}"/> Xem tại <a href="${ctx}/account/points">Điểm MyPoint</a>.</p></c:when>
                 <c:when test="${n.notif_type == 'ReviewReminder'}">
                   <p>Bạn vừa xem xong phim <strong><c:out value="${n.title}"/></strong>.</p>
                   <c:choose>

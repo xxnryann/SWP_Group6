@@ -138,9 +138,19 @@ public class VoucherServlet extends BaseServlet {
         if (dao.voucherCodeExists(code, id)) throw new IllegalArgumentException("Mã voucher đã tồn tại.");
 
         int creator = accountDAO.findAccountIdByEmail(currentUser(req).getEmail());
+        java.util.Map<String, Object> existing = id > 0 ? dao.voucher(id) : null;
+        boolean compensation = existing != null && Boolean.TRUE.equals(existing.get("is_compensation"));
+        Integer grantDays = null;
+        if (compensation) {
+            grantDays = positiveInt(req.getParameter("grantValidDays"), "Số ngày hiệu lực mỗi lượt đền bù");
+        }
         dao.saveVoucher(id, code, description, type, value, maxDiscount, minOrder, minSpent, usageLimit,
                 perCustomer, from, to, status, creator == 0 ? 2 : creator);
-        queueVoucherEmail(code);
+        if (compensation) {
+            dao.setGrantValidDays(id, grantDays);   // voucher đền bù không gửi email hàng loạt
+        } else {
+            queueVoucherEmail(code);
+        }
         flash(req, "success", id == 0 ? "Đã thêm voucher " + code + "." : "Đã cập nhật voucher " + code + ".");
     }
 

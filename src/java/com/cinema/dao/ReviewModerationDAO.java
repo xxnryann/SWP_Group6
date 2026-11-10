@@ -83,7 +83,7 @@ public class ReviewModerationDAO {
 
     public List<Map<String, Object>> findNowShowingMovieSummaries() throws SQLException {
         return Rows.query("SELECT m.movie_id, m.title, COUNT(r.review_id) AS review_count, "
-                + "AVG(CAST(r.rating AS DECIMAL(4,2))) AS average_rating "
+                + "CAST(AVG(CAST(r.rating AS DECIMAL(4,2))) AS DECIMAL(3,1)) AS average_rating "
                 + "FROM dbo.Movie m JOIN dbo.Review r ON r.movie_id = m.movie_id "
                 + "WHERE m.status = 'NowShowing' "
                 + "GROUP BY m.movie_id, m.title ORDER BY m.title");
@@ -107,21 +107,35 @@ public class ReviewModerationDAO {
         return all.toArray();
     }
 
-    public void deleteComment(int reviewId, int managerId, String reason) throws SQLException {
-        String sql = "UPDATE dbo.Review SET comment = NULL, moderated_at = SYSDATETIME(), "
-                + "moderated_by = ?, moderation_reason = ? WHERE review_id = ? AND comment IS NOT NULL";
+    /** Ẩn bình luận vi phạm: GIỮ nội dung (có thể hiện lại), chỉ đánh dấu đã kiểm duyệt; điểm sao giữ nguyên. */
+    public void hideComment(int reviewId, int managerId, String reason) throws SQLException {
+        String sql = "UPDATE dbo.Review SET moderated_at = SYSDATETIME(), moderated_by = ?, moderation_reason = ? "
+                + "WHERE review_id = ? AND comment IS NOT NULL AND moderated_at IS NULL";
         try (Connection connection = DBContext.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, managerId);
             statement.setString(2, reason);
             statement.setInt(3, reviewId);
             if (statement.executeUpdate() == 0) {
-                throw new IllegalStateException("Bình luận không tồn tại hoặc đã được xóa.");
+                throw new IllegalStateException("Bình luận không tồn tại hoặc đã được ẩn.");
             }
         }
     }
 
-    public Map<String, Object> findForDeletion(int reviewId) throws SQLException {
+    /** Hiện lại bình luận đã ẩn. */
+    public void unhideComment(int reviewId) throws SQLException {
+        String sql = "UPDATE dbo.Review SET moderated_at = NULL, moderated_by = NULL, moderation_reason = NULL "
+                + "WHERE review_id = ? AND comment IS NOT NULL AND moderated_at IS NOT NULL";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reviewId);
+            if (statement.executeUpdate() == 0) {
+                throw new IllegalStateException("Bình luận không tồn tại hoặc đang hiển thị.");
+            }
+        }
+    }
+
+    public Map<String, Object> findForModeration(int reviewId) throws SQLException {
         List<Map<String, Object>> rows = Rows.query("SELECT review_id, customer_id, movie_id, comment "
                 + "FROM dbo.Review WHERE review_id = ? AND comment IS NOT NULL", reviewId);
         return rows.isEmpty() ? null : rows.get(0);

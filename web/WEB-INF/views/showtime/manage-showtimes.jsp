@@ -3,9 +3,8 @@
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="../layout/top.jspf" %>
 <div class="page-head">
-  <div><h1>Quản lý lịch chiếu</h1><p>Thêm từng suất, hoặc sinh lịch tự động cho cả ngày theo phòng và phim đang phát hành.</p></div>
+  <div><h1>Quản lý lịch chiếu</h1><p>Các suất chưa tới giờ chiếu; suất đã bắt đầu được ẩn và không thể sửa/xóa.</p></div>
   <div class="cluster">
-    <a class="btn" href="${ctx}/manage/showtimes?action=generate">${ic.sparkles}Sinh lịch tự động</a>
     <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">${ic.plus}Thêm suất chiếu</a>
   </div>
 </div>
@@ -42,6 +41,7 @@
             </td>
             <td class="actions">
               <c:choose>
+                <c:when test="${showtime.started}"><button class="btn btn-xs" type="button" disabled title="Suất chiếu đã bắt đầu, không thể sửa hoặc xóa">${ic.lock}Đã bắt đầu</button></c:when>
                 <c:when test="${showtime.lockedByPurchasedTickets}"><button class="btn btn-xs" type="button" disabled title="Suất chiếu đã có ${showtime.purchasedTicketCount} vé được mua">${ic.lock}Sửa</button></c:when>
                 <c:otherwise><a class="btn btn-xs btn-soft" href="<c:out value='${editUrl}'/>">${ic.edit}Sửa</a></c:otherwise>
               </c:choose>
@@ -54,7 +54,7 @@
             </td>
           </tr>
         </c:forEach>
-        <c:if test="${empty showtimes}"><tr><td colspan="6"><div class="empty"><div class="empty-icon">${ic.calendar}</div><p><c:choose><c:when test="${isFiltered}">Không có suất chiếu nào khớp bộ lọc.</c:when><c:otherwise>Chưa có suất chiếu. Hãy thêm suất chiếu đầu tiên.</c:otherwise></c:choose></p></div></td></tr></c:if>
+        <c:if test="${empty showtimes}"><tr><td colspan="6"><div class="empty"><div class="empty-icon">${ic.calendar}</div><p><c:choose><c:when test="${isFiltered}">Không có suất chiếu nào khớp bộ lọc.</c:when><c:otherwise>Không có suất chiếu sắp tới. Hãy thêm suất chiếu mới.</c:otherwise></c:choose></p></div></td></tr></c:if>
       </tbody>
     </table>
   </div>

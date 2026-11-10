@@ -7,7 +7,7 @@
 <c:set var="escapedShowTime"><c:out value="${showtime.inputTime}"/></c:set>
 <%@ include file="../layout/top.jspf" %>
 <div class="page-head">
-  <div><a class="btn btn-ghost btn-sm mb-8" href="${ctx}/manage/showtimes">${ic.chevronLeft}Lịch chiếu</a><h1><c:out value="${pageTitle}"/></h1><p>Chọn phim, phòng và ngày; hệ thống chỉ hiện các giờ còn trống trong khung 09:00 – 23:00.</p></div>
+  <div><a class="btn btn-ghost btn-sm mb-8" href="${ctx}/manage/showtimes">${ic.chevronLeft}Lịch chiếu</a><h1><c:out value="${pageTitle}"/></h1><p>Suất chiếu trong khung 07:00 – 23:55; giữa 2 suất cùng phòng nghỉ tối thiểu 15 phút để dọn phòng (làm tròn lên mốc 5 phút).</p></div>
 </div>
 <form class="card" id="showtime-form" method="post" action="${ctx}/manage/showtimes" data-availability-url="${ctx}/manage/showtimes">
   <div class="card-body form-grid">
@@ -36,16 +36,33 @@
       </div>
     </div>
     <div class="field full">
-      <span class="label">Giờ bắt đầu<span class="req">*</span></span>
-      <div id="showTime" class="pill-checks" data-current-time="${escapedShowTime}"><span class="muted">Chọn phim, phòng và ngày trước</span></div>
-      <span class="hint" id="showtime-availability-message" role="status">Đang tải các giờ còn trống theo phòng đã chọn.</span>
-      <span class="hint fw-600" id="showtime-estimated-end"></span>
+      <span class="label">Giờ bắt đầu theo từng phòng<span class="req">*</span></span>
+      <c:set var="escapedCurrentRoom"><c:out value="${showtime.roomName}"/></c:set>
+      <div id="showTime" class="showtime-room-times" data-current-time="${escapedShowTime}" data-current-room="${escapedCurrentRoom}">
+        <p class="muted">Chọn phim, phòng và ngày để xem giờ trống của từng phòng.</p>
+      </div>
+      <span class="hint" id="showtime-availability-message" role="status"></span>
     </div>
+    <section class="room-schedule full" id="room-schedule" aria-labelledby="room-schedule-title">
+      <div class="room-schedule-head">
+        <h2 id="room-schedule-title">Lịch các phòng <span id="room-schedule-date"></span></h2>
+        <ul class="room-schedule-legend">
+          <li><i class="rs-swatch rs-busy"></i>Đã có suất</li>
+          <li><i class="rs-swatch rs-free"></i>Trống</li>
+          <li><i class="rs-swatch rs-past-show"></i>Suất đã qua</li>
+          <li><i class="rs-swatch rs-past"></i>Giờ đã qua</li>
+          <li><i class="rs-swatch rs-candidate-swatch"></i>Suất đang chọn</li>
+        </ul>
+      </div>
+      <p class="muted" id="room-schedule-status">Đang tải lịch phòng…</p>
+      <div class="room-schedule-scroll"><div class="room-schedule-board" id="room-schedule-board"></div></div>
+    </section>
   </div>
   <div class="card-foot">
     <a class="btn" href="${ctx}/manage/showtimes">Hủy</a>
     <button class="btn btn-primary" type="submit">${ic.check}Lưu suất chiếu</button>
   </div>
 </form>
-<script src="${ctx}/assets/js/showtime-form.js?v=20261109-3" defer></script>
+<link rel="stylesheet" href="${ctx}/assets/css/showtime-form.css?v=20261110-3">
+<script src="${ctx}/assets/js/showtime-form.js?v=20261110-10" defer></script>
 <%@ include file="../layout/bottom.jspf" %>

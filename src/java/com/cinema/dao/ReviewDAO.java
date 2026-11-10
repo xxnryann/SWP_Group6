@@ -13,7 +13,9 @@ import java.util.Map;
 public class ReviewDAO {
 
     public List<Map<String, Object>> findByMovie(int movieId) throws SQLException {
-        return Rows.query("SELECT r.review_id, r.rating, r.comment, r.created_at, a.full_name AS reviewer_name "
+        // Bình luận bị quản lý ẩn không hiển thị công khai (điểm sao vẫn giữ).
+        return Rows.query("SELECT r.review_id, r.rating, CASE WHEN r.moderated_at IS NULL THEN r.comment END AS comment, "
+                + "r.created_at, a.full_name AS reviewer_name "
                 + "FROM Review r JOIN Account a ON a.account_id = r.customer_id "
                 + "WHERE r.movie_id = ? ORDER BY r.created_at DESC", movieId);
     }

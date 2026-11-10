@@ -7,7 +7,7 @@
           ADMIN   : danh sach + loc nguoi dung, khoa / doi vai tro, phong chieu (tao, sua, dong/mo, xoa), so do ghe
                     (tao layout, doi loai hang, bao tri / mo lai ghe).
           MANAGER : phim (tao, sua, ngung, chieu lai, xoa, kiem tra rang buoc), suat chieu (tao, trung lich, xoa,
-                    sinh lich tu dong), tin tuc, voucher, gia ve (ngay le), cau hinh MyPoint.
+                    chan sua/xoa suat da bat dau), tin tuc, voucher, gia ve (ngay le), cau hinh MyPoint.
           STAFF   : combo (tao, sua, xoa), ban ve tai quay (giu ghe, thanh toan tien mat), soat ve, doi ghe,
                     hop thu email.
           PHAN QUYEN: moi vai tro bi chan (403) o trang cua vai tro khac.
@@ -320,24 +320,6 @@ $stB = Invoke-Sql "SELECT TOP 1 showtime_id FROM Showtime WHERE room_name=N'$roo
 Assert-Test ($stB -match '^\d+$' -and $stB -ne $stA) "tao lai suat o gio da co suat bi huy (flash: $($r.flashType) $($r.flash))"
 $null = Invoke-Sql "DELETE FROM Showtime WHERE showtime_id IN ($stA, $stB)"
 
-$genDate = (Get-Date).AddDays(40).ToString('yyyy-MM-dd')
-$genMovies = Invoke-Sql "SELECT COUNT(*) FROM Movie WHERE status<>'Stopped' AND release_date <= '$genDate' AND end_date >= '$genDate'"
-$gp = Get-Page $manager "/manage/showtimes?action=generate&date=$genDate"
-Assert-Test ($gp.StatusCode -eq 200 -and $gp.Content -match 'name="roomNames"') 'trang sinh lich tu dong mo duoc'
-if ([int]$genMovies -gt 0) {
-    $rooms = [regex]::Matches($gp.Content, 'name="roomNames" value="([^"]+)"') | ForEach-Object { $_.Groups[1].Value }
-    $mv = [regex]::Matches($gp.Content, 'name="movieIds" value="([^"]+)"') | ForEach-Object { $_.Groups[1].Value }
-    $tok = [regex]::Match($gp.Content, 'name="_csrf" value="([^"]+)"').Groups[1].Value
-    $body = "_csrf=$tok&action=generate&showDate=$genDate&openTime=09:00&" + (($rooms | ForEach-Object { 'roomNames=' + [uri]::EscapeDataString($_) }) -join '&') + '&' + (($mv | ForEach-Object { "movieIds=$_" }) -join '&')
-    $before = [int](Invoke-Sql "SELECT COUNT(*) FROM Showtime WHERE CAST(start_time AS date)='$genDate'")
-    $resp = Invoke-WebRequest "$BaseUrl/manage/showtimes" -Method Post -Body $body -ContentType 'application/x-www-form-urlencoded' -WebSession $manager -UseBasicParsing -MaximumRedirection 5
-    $after = [int](Invoke-Sql "SELECT COUNT(*) FROM Showtime WHERE CAST(start_time AS date)='$genDate'")
-    Assert-Test ($after -gt $before) "sinh lich tu dong tao $($after - $before) suat cho $genDate"
-    Assert-Test ([int](Invoke-Sql "SELECT COUNT(*) FROM Showtime a JOIN Showtime b ON a.room_name=b.room_name AND a.showtime_id<b.showtime_id AND CAST(a.start_time AS date)='$genDate' AND CAST(b.start_time AS date)='$genDate' AND a.start_time < DATEADD(MINUTE,15,b.end_time) AND b.start_time < DATEADD(MINUTE,15,a.end_time)") -eq 0) 'lich sinh ra khong co suat nao de len nhau'
-    Assert-Test ([int](Invoke-Sql "SELECT COUNT(*) FROM Showtime WHERE CAST(start_time AS date)='$genDate' AND (end_time > '$genDate 23:00:00' OR DATEPART(MINUTE,start_time)%15<>0)") -eq 0) 'moi suat ket thuc truoc 23:00 va nam tren luoi 15 phut'
-    $null = Invoke-Sql "DELETE FROM Showtime WHERE CAST(start_time AS date)='$genDate' AND created_by IS NULL AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.showtime_id=Showtime.showtime_id)"
-} else { Write-Host "  [INFO] khong co phim phat hanh ngay $genDate de thu sinh lich" }
-
 Write-Step "MANAGER - xoa phim thu"
 # Chi xoa duoc phim da ngung chieu (sp_DeleteMovie) -> ngung chieu truoc roi moi xoa.
 $null = Send-Form $manager '/manage/movies' @{ action = 'stop'; id = $movieId } '/manage/movies'
@@ -420,7 +402,6 @@ Write-Step "STAFF - ban ve tai quay"
 Assert-Test ((Get-Page $staff '/staff/counter').StatusCode -eq 200) 'trang ban ve tai quay mo duoc'
 $cSt = Invoke-Sql "SELECT TOP 1 s.showtime_id FROM Showtime s WHERE s.status='Scheduled' AND s.start_time > DATEADD(DAY,3,SYSDATETIME()) AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.showtime_id=s.showtime_id) ORDER BY s.start_time"
 if (-not ($cSt -match '^\d+$')) {
-    # khong co suat xa va trong -> tao nhanh bang trinh sinh lich cho mot ngay tuong lai
     Write-Host '  [INFO] khong co suat chieu xa va chua ban de thu ban ve tai quay'
 } else {
     $sp = Get-Page $staff "/staff/counter?action=seats&showtimeId=$cSt"

@@ -3,7 +3,7 @@
 <c:set var="pageTitle" value="Điểm MyPoint"/>
 <%@ include file="../layout/top.jspf" %>
 <div class="${isStaffRole ? '' : 'container'}">
-  <div class="page-head"><div><h1>Điểm MyPoint</h1><p>Tích điểm sau mỗi đơn và dùng điểm để giảm tiền ở lần đặt vé sau.</p></div></div>
+  <div class="page-head"><div><h1>Điểm MyPoint</h1><p>Tích điểm sau mỗi đơn và dùng điểm để giảm tiền ở lần đặt vé sau. Vé đã thanh toán không thể hủy/hoàn tiền do lỗi từ phía khách hàng; chỉ khi rạp hủy suất chiếu do sự cố, giá trị đơn mới được hoàn thành MyPoint kèm một lượt voucher đền bù.</p></div></div>
   <%@ include file="../layout/account-nav.jspf" %>
 
   <div class="split" style="grid-template-columns:minmax(0,1fr) 360px">
@@ -46,6 +46,7 @@
             <li>Mỗi đơn thanh toán thành công được cộng <strong><fmt:formatNumber value="${pointConfig.earnRatePercent}" maxFractionDigits="2"/>%</strong> giá trị đơn, quy ra điểm.</li>
             <li>1 điểm = <strong><fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> đ</strong>.</li>
             <li>Nhập điểm ở bước thanh toán: voucher áp trước, điểm áp sau trên số tiền còn lại.</li>
+            <li>Suất chiếu bị hủy do sự cố: hoàn (tiền vé + bắp nước + giá trị MyPoint đã dùng − phần giảm voucher) ÷ <fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> đ điểm, làm tròn xuống; điểm đã tích từ đơn bị hủy được thu hồi. Voucher đền bù xem tại tab <a href="${ctx}/account/vouchers">Voucher</a>.</li>
           </ol>
         </section>
       </c:if>

@@ -10,7 +10,9 @@
 
 <c:if test="${not empty form}">
   <section class="card mb-24">
-    <div class="card-head"><div><h2><c:out value="${empty form.voucher_id ? 'Thêm voucher mới' : 'Sửa voucher'}"/></h2></div></div>
+    <div class="card-head"><div><h2><c:out value="${empty form.voucher_id ? 'Thêm voucher mới' : 'Sửa voucher'}"/></h2>
+      <c:if test="${form.is_compensation}"><p>Voucher đền bù: mỗi khi rạp hủy suất chiếu, mỗi đơn bị ảnh hưởng được cấp 1 lượt dùng voucher này
+        (chỉ khách đó dùng được, không hiện công khai). Tổng số lượt / lượt mỗi khách không áp dụng cho voucher đền bù.</p></c:if></div></div>
     <form method="post" action="${ctx}/manager/vouchers">
       <div class="card-body form-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
         <input type="hidden" name="_csrf" value="${csrf}">
@@ -35,6 +37,9 @@
           </select></div>
         <div class="field"><label for="validFrom">Hiệu lực từ<span class="req">*</span></label><input id="validFrom" name="validFrom" type="date" required value="<c:out value='${form.valid_from}'/>"></div>
         <div class="field"><label for="validTo">Đến hết ngày<span class="req">*</span></label><input id="validTo" name="validTo" type="date" required value="<c:out value='${form.valid_to}'/>"></div>
+        <c:if test="${form.is_compensation}">
+          <div class="field"><label for="grantValidDays">Số ngày hiệu lực mỗi lượt đền bù<span class="req">*</span></label><input id="grantValidDays" name="grantValidDays" type="number" min="1" required value="<c:out value='${empty form.grant_valid_days ? 30 : form.grant_valid_days}'/>"></div>
+        </c:if>
         <div class="field"><label for="description">Mô tả</label><input id="description" name="description" type="text" maxlength="200" value="<c:out value='${form.description}'/>"></div>
       </div>
       <div class="card-foot">
@@ -54,7 +59,7 @@
         <tbody>
           <c:forEach var="v" items="${vouchers}">
             <tr>
-              <td><span class="voucher-code"><c:out value="${v.code}"/></span><span class="cell-sub" style="max-width:220px"><c:out value="${v.description}"/></span></td>
+              <td><span class="voucher-code"><c:out value="${v.code}"/></span><c:if test="${v.is_compensation}"> <span class="badge badge-brand">Voucher đền bù</span></c:if><span class="cell-sub" style="max-width:220px"><c:out value="${v.description}"/></span></td>
               <td class="nowrap">
                 <c:choose>
                   <c:when test="${v.discount_type == 'Percent'}"><strong class="text-ink"><fmt:formatNumber value="${v.discount_value}" maxFractionDigits="2"/>%</strong><c:if test="${not empty v.max_discount}"><span class="cell-sub">tối đa <fmt:formatNumber value="${v.max_discount}" groupingUsed="true"/>đ</span></c:if></c:when>
@@ -62,8 +67,16 @@
                 </c:choose>
               </td>
               <td class="text-sm">Đơn từ <fmt:formatNumber value="${v.min_order_amount}" groupingUsed="true"/>đ<span class="cell-sub">Chi tiêu từ <fmt:formatNumber value="${v.min_cumulative_spending}" groupingUsed="true"/>đ</span></td>
-              <td class="nowrap"><strong class="text-ink"><c:out value="${v.used_count}"/></strong>/<c:out value="${v.usage_limit}"/><span class="cell-sub"><c:out value="${v.per_customer_limit}"/> lượt/khách</span></td>
-              <td class="nowrap text-sm"><c:out value="${v.valid_from}"/><span class="cell-sub">→ <c:out value="${v.valid_to}"/></span></td>
+              <c:choose>
+                <c:when test="${v.is_compensation}">
+                  <td class="nowrap">Đã cấp <strong class="text-ink"><c:out value="${v.grants_issued}"/></strong> lượt<span class="cell-sub">đã dùng <c:out value="${v.grants_used}"/></span></td>
+                  <td class="nowrap text-sm">Mỗi lượt <c:out value="${v.grant_valid_days}"/> ngày<span class="cell-sub">kể từ khi cấp</span></td>
+                </c:when>
+                <c:otherwise>
+                  <td class="nowrap"><strong class="text-ink"><c:out value="${v.used_count}"/></strong>/<c:out value="${v.usage_limit}"/><span class="cell-sub"><c:out value="${v.per_customer_limit}"/> lượt/khách</span></td>
+                  <td class="nowrap text-sm"><c:out value="${v.valid_from}"/><span class="cell-sub">→ <c:out value="${v.valid_to}"/></span></td>
+                </c:otherwise>
+              </c:choose>
               <td>
                 <c:choose>
                   <c:when test="${v.status == 'Allowed'}"><span class="badge badge-success badge-dot">Đang áp dụng</span></c:when>
@@ -80,7 +93,7 @@
                   <input type="hidden" name="status" value="${v.status == 'Disabled' ? 'Allowed' : 'Disabled'}">
                   <button class="btn btn-xs" type="submit">${v.status == 'Disabled' ? 'Bật' : 'Tắt'}</button>
                 </form>
-                <c:if test="${v.used_count == 0}">
+                <c:if test="${v.used_count == 0 and not v.is_compensation}">
                   <form class="inline-form" method="post" action="${ctx}/manager/vouchers" data-confirm="Xóa voucher này?">
                     <input type="hidden" name="_csrf" value="${csrf}"><input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="${v.voucher_id}">
