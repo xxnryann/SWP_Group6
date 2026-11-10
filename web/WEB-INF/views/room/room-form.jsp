@@ -2,7 +2,8 @@
 <c:set var="pageTitle" value="${room.roomId > 0 ? 'Sửa phòng chiếu' : 'Thêm phòng chiếu'}"/>
 <%@ include file="../layout/top.jspf" %>
 <div class="page-head">
-  <div><a class="btn btn-ghost btn-sm mb-8" href="${ctx}/admin/rooms">${ic.chevronLeft}Danh sách phòng</a><h1><c:out value="${pageTitle}"/></h1><p>Phòng 2D, 3D, IMAX và 4DX dùng sơ đồ ghế cố định, hệ thống tự tạo ghế khi lưu.</p></div>
+  <div><a class="btn btn-ghost btn-sm mb-8" href="${ctx}/admin/rooms">${ic.chevronLeft}Danh sách phòng</a><h1><c:out value="${pageTitle}"/></h1>
+    <p>${room.roomId > 0 ? 'Phòng 2D, 3D, IMAX và 4DX dùng sơ đồ ghế cố định, hệ thống tự tạo ghế khi lưu.' : 'Bước 1/2 · Nhập thông tin phòng. Bước tiếp theo: chọn hoặc tạo layout ghế.'}</p></div>
 </div>
 <section class="card" style="max-width:820px">
   <form method="post" action="${ctx}/admin/rooms">
@@ -28,6 +29,14 @@
           <c:forEach var="t" items="${roomTypes}"><option value="${t}" ${t == room.roomType ? 'selected' : ''}>${t}</option></c:forEach>
         </select>
       </div>
+      <c:choose>
+      <c:when test="${room.roomId == 0}">
+      <div class="full">
+        <div class="alert alert-info">${ic.info}<span>Sức chứa được tính theo layout ghế bạn chọn ở bước 2: layout chuẩn của loại phòng,
+          một layout trong thư viện, hoặc layout mới tự tạo.</span></div>
+      </div>
+      </c:when>
+      <c:otherwise>
       <div class="field">
         <label for="f-cap">Sức chứa (số ghế)<span class="req">*</span></label>
         <input id="f-cap" type="number" name="capacity" min="1" max="500" required value="${room.capacity > 0 ? room.capacity : ''}" ${capacityLocked ? 'readonly' : ''}>
@@ -50,6 +59,8 @@
           </c:otherwise>
         </c:choose>
       </div>
+      </c:otherwise>
+      </c:choose>
       <c:if test="${room.roomId > 0}">
         <div class="field">
           <label for="f-status">Trạng thái</label>
@@ -63,11 +74,11 @@
     </div>
     <div class="card-foot">
       <a class="btn" href="${ctx}/admin/rooms">Hủy</a>
-      <button class="btn btn-primary" type="submit">${ic.check}${room.roomId > 0 ? 'Lưu thay đổi' : 'Tạo phòng'}</button>
+      <button class="btn btn-primary" type="submit">${room.roomId > 0 ? ic.check : ''}${room.roomId > 0 ? 'Lưu thay đổi' : 'Tiếp tục: chọn layout ghế →'}</button>
     </div>
   </form>
 </section>
-<c:if test="${not capacityLocked}">
+<c:if test="${not capacityLocked && room.roomId > 0}">
   <script>
     (function () {
       var type = document.getElementById('f-type'), cap = document.getElementById('f-cap'), free = document.getElementById('capHint');

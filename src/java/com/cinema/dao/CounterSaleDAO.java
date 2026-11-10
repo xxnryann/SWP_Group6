@@ -69,16 +69,24 @@ public class CounterSaleDAO {
 
     public List<ShowtimeInfo> findUpcomingShowtimes() throws SQLException {
         List<ShowtimeInfo> list = new ArrayList<>();
+        // Đếm ghế trống trực tiếp từ Seat/Ticket (cùng điều kiện màu GREEN của vw_SeatMap: ghế không bảo trì và
+        // không có vé đã đặt/đã dùng hoặc đang giữ chưa hết hạn). Không JOIN vw_SeatMap cho mọi suất: view có
+        // OUTER APPLY ... ORDER BY theo từng ghế, gom cho hàng trăm suất khiến SQL Server xin bộ nhớ rất lớn
+        // (chờ RESOURCE_SEMAPHORE nhiều phút) và trang bán vé tại quầy bị treo.
         String sql =
                 "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time, " +
-                        "       SUM(CASE WHEN sm.color = 'GREEN' THEN 1 ELSE 0 END) AS available_seats " +
+                        "       (SELECT COUNT(*) FROM Seat se " +
+                        "        WHERE se.room_id = s.room_id AND se.status <> 'Maintenance' " +
+                        "          AND NOT EXISTS (SELECT 1 FROM Ticket t JOIN Booking b ON b.booking_id = t.booking_id " +
+                        "                          WHERE t.showtime_id = s.showtime_id AND t.seat_id = se.seat_id " +
+                        "                            AND (t.status IN ('Booked','Used') " +
+                        "                                 OR (t.status = 'Held' AND b.payment_expires_at > SYSDATETIME())))" +
+                        "       ) AS available_seats " +
                         "FROM Showtime s " +
                         "JOIN Movie m ON m.movie_id = s.movie_id " +
                         "JOIN Room r ON r.room_id = s.room_id " +
                         "JOIN TimeSlot ts ON ts.slot_id = s.slot_id " +
-                        "LEFT JOIN vw_SeatMap sm ON sm.showtime_id = s.showtime_id " +
                         "WHERE s.status = 'Scheduled' AND s.start_time > SYSDATETIME() " +
-                        "GROUP BY s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time " +
                         "ORDER BY s.start_time";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);

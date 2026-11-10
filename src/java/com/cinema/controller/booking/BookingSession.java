@@ -127,7 +127,7 @@ public final class BookingSession {
                 legendByRow.put(lg.getRowLabel(), lg);
             }
         }
-        String roomType = service.getRoomType(showtimeId);
+        String roomType = RoomRules.layoutKind(service.getRoomType(showtimeId), service.usesCustomLayout(showtimeId));
         req.setAttribute("planVariant", RoomRules.planVariant(roomType));
         req.setAttribute("fixedLayout", RoomRules.isFixedLayout(roomType));
         req.setAttribute("coupleAisles", RoomRules.coupleAisles(roomType));

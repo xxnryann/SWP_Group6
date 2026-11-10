@@ -77,14 +77,16 @@
                 <div class="sp-line" data-row="${row.key}">
                   <div class="seat-row row-${rowType}">
                     <span class="row-label"><c:out value="${row.key}"/></span>
-                    <c:forEach var="s" items="${row.value}">
+                    <c:forEach var="s" items="${row.value}" varStatus="vs">
                       <c:set var="isAisle" value="${s.couple ? coupleAisles.contains(s.seatNumber) : fixedLayout && (s.seatNumber == aisleFromStart || (aisleFromEnd > 0 && s.seatNumber == row.value.size() - aisleFromEnd))}"/>
                       <c:set var="useWings" value="${planVariant == '3d' && !s.couple}"/>
                       <c:set var="opensPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 1 : s.seatNumber % 4 == 1)}"/>
                       <c:set var="closesPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 0 : (s.seatNumber % 4 == 0 || s.seatNumber == row.value.size()))}"/>
                       <c:if test="${opensPod}"><seat:podOpen row="${row.key}" number="${s.seatNumber}" couple="${s.couple}" seatType="${s.seatTypeName}" zone="${seatZones[s.label]}"/></c:if>
                       <c:if test="${useWings && s.seatNumber == 1}"><div class="sp-block sp-wing-l"></c:if>
-                      <label class="seat t-${s.seatTypeName}${s.couple ? (s.seatNumber % 2 == 1 ? ' pair-l' : ' pair-r') : ''}${s.maintenance ? ' maint' : ''}"
+                      <%-- Ghế trái của cặp: ghế đứng ngay sau nó chính là ghế cặp (ghế đôi có thể nằm giữa hàng). --%>
+                      <c:set var="nextSeat" value="${vs.last ? null : row.value[vs.index + 1]}"/>
+                      <label class="seat t-${s.seatTypeName}${s.couple ? (nextSeat != null && s.pairSeatId == nextSeat.seatId ? ' pair-l' : ' pair-r') : ''}${s.maintenance ? ' maint' : ''}"
                              title="${s.label} · ${s.seatTypeName}${s.maintenance ? ' · đang bảo trì' : ''}"
                              data-zone="${seatZones[s.label]}">
                         <input type="checkbox" name="seatIds" value="${s.seatId}" form="maintForm" aria-label="${s.label}"
@@ -99,7 +101,7 @@
                     </c:forEach>
                     <span class="row-label"><c:out value="${row.key}"/></span>
                   </div>
-                  <c:if test="${!fixedLayout}">
+                  <c:if test="${!fixedLayout && !customLayout}">
                     <form class="row-tools" method="post" action="${ctx}/admin/seats">
                       <input type="hidden" name="_csrf" value="${csrf}">
                       <input type="hidden" name="action" value="rowType">
@@ -143,6 +145,13 @@
 
       <%-- ================= Thiết lập layout ================= --%>
       <c:choose>
+        <c:when test="${customLayout}">
+          <div class="rm-panel">
+            <h2>Layout từ thư viện: <c:out value="${room.layoutName}"/></h2>
+            <p class="sub">Phòng được tạo theo layout tự thiết kế (${seatTotal} ghế). Sơ đồ đã chốt khi tạo phòng;
+              ở đây chỉ cần bảo trì / mở lại ghế.</p>
+          </div>
+        </c:when>
         <c:when test="${fixedLayout}">
           <div class="rm-panel">
             <h2>Layout cố định của rạp ${room.roomType}</h2>

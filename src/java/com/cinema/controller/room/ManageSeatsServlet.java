@@ -77,14 +77,16 @@ public class ManageSeatsServlet extends AdminBaseServlet {
                 }
             }
 
-            boolean fixedLayout = RoomRules.isFixedLayout(room.getRoomType());
+            String kind = RoomRules.layoutKind(room.getRoomType(), room.isCustomLayout());
+            boolean fixedLayout = RoomRules.isFixedLayout(kind);
             req.setAttribute("fixedLayout", fixedLayout);
+            req.setAttribute("customLayout", room.isCustomLayout());
             req.setAttribute("fixedSummary", RoomRules.fixedSummary(room.getRoomType()));
-            req.setAttribute("planVariant", RoomRules.planVariant(room.getRoomType()));
-            req.setAttribute("coupleAisles", RoomRules.coupleAisles(room.getRoomType()));
-            req.setAttribute("aisleFromStart", RoomRules.aisleFromStart(room.getRoomType()));
-            req.setAttribute("aisleFromEnd", RoomRules.aisleFromEnd(room.getRoomType()));
-            req.setAttribute("seatZones", RoomRules.seatZones(room.getRoomType()));
+            req.setAttribute("planVariant", RoomRules.planVariant(kind));
+            req.setAttribute("coupleAisles", RoomRules.coupleAisles(kind));
+            req.setAttribute("aisleFromStart", RoomRules.aisleFromStart(kind));
+            req.setAttribute("aisleFromEnd", RoomRules.aisleFromEnd(kind));
+            req.setAttribute("seatZones", RoomRules.seatZones(kind));
             if (fixedLayout) {
                 try {
                     req.setAttribute("layoutMatchesFixed",
@@ -156,6 +158,7 @@ public class ManageSeatsServlet extends AdminBaseServlet {
     // ---------- actions (ném RoomRuleException/IllegalArgumentException khi dữ liệu không hợp lệ) ----------
 
     private void applyFixed(HttpServletRequest req, Room room) throws SQLException, RoomRuleException {
+        requireNotCustom(room);
         if (!RoomRules.isFixedLayout(room.getRoomType())) {
             throw new RoomRuleException("Chỉ phòng 2D và IMAX mới dùng layout cố định.");
         }
@@ -164,7 +167,16 @@ public class ManageSeatsServlet extends AdminBaseServlet {
                 + RoomRules.fixedCapacity(room.getRoomType()) + " ghế) cho " + room.getRoomName() + ".");
     }
 
+    /** Phòng dùng layout từ thư viện: sơ đồ đã chốt khi tạo phòng, chỉ còn bảo trì ghế. */
+    private void requireNotCustom(Room room) throws RoomRuleException {
+        if (room.isCustomLayout()) {
+            throw new RoomRuleException("Phòng dùng layout \"" + room.getLayoutName()
+                    + "\" từ thư viện nên không thể thay đổi hàng ghế ở đây.");
+        }
+    }
+
     private void requireFreeLayout(Room room) throws RoomRuleException {
+        requireNotCustom(room);
         if (RoomRules.isFixedLayout(room.getRoomType())) {
             throw new RoomRuleException("Phòng " + room.getRoomType()
                     + " dùng layout cố định, không thể thay đổi hàng ghế.");

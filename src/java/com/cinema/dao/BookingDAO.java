@@ -67,6 +67,19 @@ public class BookingDAO {
         }
     }
 
+    /** Phòng của suất chiếu dùng layout tự tạo trong thư viện (Room.layout_id khác NULL). */
+    public boolean usesCustomLayout(int showtimeId) throws SQLException {
+        String sql = "SELECT CASE WHEN r.layout_id IS NULL THEN 0 ELSE 1 END "
+                + "FROM Showtime s JOIN Room r ON r.room_id = s.room_id WHERE s.showtime_id = ?";
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, showtimeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        }
+    }
+
     public String getRoomType(int showtimeId) throws SQLException {
         String sql = "SELECT r.room_type FROM Showtime s JOIN Room r ON r.room_id = s.room_id WHERE s.showtime_id = ?";
         try (Connection c = DBContext.getConnection();

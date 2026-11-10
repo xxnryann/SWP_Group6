@@ -13,6 +13,9 @@ public class Room {
     private String roomType;
     private int capacity;
     private String status;
+    /** null = layout chuẩn theo loại phòng; khác null = layout lấy từ thư viện SeatLayout. */
+    private Integer layoutId;
+    private String layoutName;
 
     // thống kê hiển thị
     private int seatCount;
@@ -39,6 +42,15 @@ public class Room {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Integer getLayoutId() { return layoutId; }
+    public void setLayoutId(Integer layoutId) { this.layoutId = layoutId; }
+
+    public String getLayoutName() { return layoutName; }
+    public void setLayoutName(String layoutName) { this.layoutName = layoutName; }
+
+    /** Phòng dùng layout tự tạo trong thư viện (không phải layout chuẩn của loại phòng). */
+    public boolean isCustomLayout() { return layoutId != null; }
 
     public int getSeatCount() { return seatCount; }
     public void setSeatCount(int seatCount) { this.seatCount = seatCount; }

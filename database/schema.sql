@@ -488,6 +488,22 @@ CREATE TABLE dbo.Cinema (
 );
 GO
 
+-- Thu vien layout ghe do Admin tao (dung lai cho nhieu phong).
+-- layout_data: moi hang 1 chuoi, cach nhau boi '/'; moi ky tu la 1 ghe trong DB:
+--   S = thuong, V = VIP, C = ghe doi (luon di theo cap "CC", ghep trai -> phai).
+CREATE TABLE dbo.SeatLayout (
+    layout_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_SeatLayout PRIMARY KEY,
+    layout_name NVARCHAR(100) NOT NULL CONSTRAINT UQ_SeatLayout_Name UNIQUE,
+    room_type VARCHAR(20) NULL,
+    seat_count INT NOT NULL,
+    layout_data NVARCHAR(MAX) NOT NULL,
+    created_by INT NULL,
+    created_at DATETIME2(7) NOT NULL CONSTRAINT DF_SeatLayout_Created DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_SeatLayout_Creator FOREIGN KEY (created_by) REFERENCES dbo.Account(account_id),
+    CONSTRAINT CK_SeatLayout_Count CHECK (seat_count > 0)
+);
+GO
+
 CREATE TABLE dbo.Room (
     room_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Room PRIMARY KEY,
     cinema_id INT NOT NULL,
@@ -495,7 +511,9 @@ CREATE TABLE dbo.Room (
     room_type VARCHAR(20) NULL CONSTRAINT DF_Room_Type DEFAULT '2D',
     capacity INT NOT NULL,
     status VARCHAR(12) NOT NULL CONSTRAINT DF_Room_Status DEFAULT 'Active',
+    layout_id INT NULL,   -- NULL = layout chuan theo loai phong; khac NULL = layout tu thu vien SeatLayout
     CONSTRAINT FK_Room_Cinema FOREIGN KEY (cinema_id) REFERENCES dbo.Cinema(cinema_id),
+    CONSTRAINT FK_Room_Layout FOREIGN KEY (layout_id) REFERENCES dbo.SeatLayout(layout_id),
     CONSTRAINT UQ_Room_Cinema_Name UNIQUE (cinema_id, room_name),
     CONSTRAINT CK_Room_Type CHECK (room_type IN ('2D','3D','IMAX','4DX')),
     CONSTRAINT CK_Room_Status CHECK (status IN ('Active','Closed')),
@@ -2103,6 +2121,7 @@ GO
    03/11/2026  Email: Customer.receive_promo_email (khách tắt/bật email phim mới, ưu đãi); REMINDER_HOURS_BEFORE
    10/11/2026  Hủy suất chiếu (sp_CancelMovie): hoàn bằng MyPoint = (tiền vé + combo - voucher) / giá trị 1 điểm,
                kèm 1 lượt voucher đền bù (DENBU25: Voucher.is_compensation, VoucherGrant); khách không tự hủy vé/combo trên web
+   10/11/2026  Thư viện layout ghế: bảng SeatLayout + Room.layout_id (NULL = layout chuẩn theo loại phòng)
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
    

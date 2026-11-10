@@ -1,0 +1,101 @@
+/* Thêm phòng chiếu — bước 2: chọn layout ghế + trình tạo layout. Ghế dùng lại seat-plan.css (kiểu phòng 2D). */
+.lp-section { margin-bottom: 20px; }
+.lp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+
+.lp-card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 14px; text-align: left;
+           background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-md); cursor: pointer;
+           font: inherit; color: inherit; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.lp-card:hover { border-color: var(--line-strong); box-shadow: var(--sh-md); transform: translateY(-2px); }
+.lp-card > input[type="radio"] { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; accent-color: var(--brand-600); }
+.lp-card:has(> input:checked) { border-color: var(--brand-600); box-shadow: 0 0 0 3px var(--brand-100); }
+.lp-info { display: flex; flex-direction: column; gap: 3px; padding-right: 22px; }
+.lp-title { color: var(--ink); font-weight: 700; font-size: 15px; }
+.lp-seats { color: var(--brand-700); font-weight: 700; font-size: 13.5px; }
+.lp-desc, .lp-muted { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.lp-badge, .lp-type { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; vertical-align: 2px; }
+.lp-badge { background: var(--accent-50); color: var(--accent-700); }
+.lp-type { background: var(--brand-50); color: var(--brand-700); }
+.lp-empty { color: var(--muted); font-size: 13.5px; padding: 0 24px 20px; margin: 0; }
+
+.lp-new { align-items: center; justify-content: center; min-height: 230px; border-style: dashed; text-align: center; background: var(--surface-2, #f8fafc); }
+.lp-new .lp-title { color: var(--brand-700); }
+.lp-plus { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--brand-50);
+           color: var(--brand-600); font-size: 32px; font-weight: 300; line-height: 1; }
+.lp-new:hover .lp-plus { background: var(--brand-600); color: #fff; }
+
+/* Bản xem trước thu nhỏ */
+.lp-thumb { display: flex; flex-direction: column; align-items: center; gap: 3px; height: 150px; padding: 10px 8px; overflow: hidden;
+            background: #f8fafc; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.lp-thumb .t-screen { width: 70%; height: 4px; margin-bottom: 7px; flex: none; border-radius: 0 0 50% 50%; background: linear-gradient(90deg, #93c5fd, #2563eb, #93c5fd); }
+.lp-thumb .t-body { display: flex; align-items: stretch; gap: 4px; flex: 1; min-height: 0; }
+.lp-thumb .t-aisle { flex: none; width: 4px; border-left: 1px dashed #cbd5e1; border-right: 1px dashed #cbd5e1; }
+.lp-thumb .t-rows { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.lp-thumb .t-row { display: flex; gap: 1px; }
+.lp-thumb .t-row i { display: block; width: var(--d, 6px); height: var(--d, 6px); border-radius: 1.5px; background: #cbd5e1; }
+.lp-thumb .t-row i.v { background: #fbbf24; }
+.lp-thumb .t-row i.c { background: #f9a8d4; }
+.lp-thumb .t-row i.c2 { width: calc(var(--d, 6px) * 2 + 1px); }
+.lp-thumb .t-row i.g { background: transparent; width: calc(var(--d, 6px) * .8); }
+
+.lp-actions { position: sticky; bottom: 12px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+              gap: 12px; padding: 14px 20px; margin-bottom: 24px; box-shadow: var(--sh-lg); }
+.lp-actions-btns { display: flex; gap: 10px; }
+
+/* Trình tạo layout */
+.le-size { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; margin-bottom: 18px; }
+.le-size .field { width: 150px; }
+.le-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; min-height: 36px; }
+.le-bulk { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#btnBulk[aria-pressed="true"] { --btn-bg: var(--brand-600); --btn-fg: #fff; --btn-bd: var(--brand-600); }
+.le-btn-vip { --btn-bg: #fffbeb; --btn-bd: #fbbf24; --btn-fg: #92400e; }
+.le-muted { color: var(--muted); font-size: 13px; }
+.le-tip { margin: 8px 0 18px; }
+.sp-legend i.l-aisle { width: 14px; border: 1px dashed #cbd5e1; background: rgba(248, 250, 252, .8); }
+
+.le-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 14px; }
+.le-stat { min-width: 104px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+           color: var(--muted); font-size: 12.5px; text-align: center; }
+.le-stat b { display: block; color: var(--ink); font-size: 20px; line-height: 1.2; }
+.le-stat.vip b { color: #b45309; }
+.le-stat.cpl b { color: #db2777; }
+.le-stat.una b { color: #64748b; }
+.le-stat.total { border-color: var(--brand-200); background: var(--brand-50); }
+.le-stat.total b { color: var(--brand-700); }
+.le-msg { margin-bottom: 14px; }
+
+.le-stage { position: relative; user-select: none; }
+.le-stage.bulk { cursor: crosshair; }
+.le-plan { margin-bottom: 0; }
+/* Khối ghế + 2 lối đi luôn căn giữa dưới màn hình; lối đi bám sát hai bên khối ghế. */
+.le-plan .sp-floor { justify-content: center; gap: 12px; }
+.le-plan .sp-rows { flex: none; }
+.le-plan .sp-aisle { pointer-events: none; min-height: 120px; }
+.le-plan .sp-line { width: auto; }
+.le-plan .seat-row { flex: none; }
+.le-plan button.seat { font-size: 11px; }
+.le-plan button.seat.t-Unassigned { border-style: dashed; }
+.le-plan button.seat.le-sel { --seat-bg: #1d4ed8; --seat-bd: #1d4ed8; --seat-fg: #fff; box-shadow: 0 0 0 3px rgba(29, 78, 216, .3); }
+.le-plan button.seat.le-sel.pair-l::after { color: #fff; }
+.le-plan button.seat.le-open { outline: 2px solid var(--brand-600); outline-offset: 2px; }
+.le-plan button.seat.le-missing { --seat-bd: #dc2626; --seat-bg: #fef2f2; --seat-bw: 2px; animation: le-blink 1s ease-in-out 3; }
+@keyframes le-blink { 50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, .35); } }
+.le-empty-row { color: var(--muted); font-size: 12px; }
+.le-marquee { position: absolute; z-index: 4; border: 1.5px dashed var(--brand-600); background: rgba(42, 79, 214, .08); border-radius: 4px; pointer-events: none; }
+
+.le-pop { position: absolute; z-index: 60; min-width: 190px; padding: 8px; background: var(--surface); border: 1px solid var(--line);
+          border-radius: var(--r-md); box-shadow: var(--sh-lg); }
+.le-pop h4 { margin: 2px 6px 6px; font-size: 13px; color: var(--ink); }
+.le-pop button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: 0; border-radius: 7px; background: none;
+                 font: 500 13.5px var(--font, inherit); color: var(--text); text-align: left; cursor: pointer; }
+.le-pop button:hover:not(:disabled) { background: var(--surface-3, #f1f5f9); }
+.le-pop button:disabled { color: var(--subtle); cursor: not-allowed; }
+.le-pop button.on { font-weight: 700; color: var(--brand-700); }
+.le-pop button i { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #cbd5e1; background: #f1f5f9; flex: none; }
+.le-pop button i.v { background: #fffbeb; border: 2px solid #fbbf24; }
+.le-pop button i.c { width: 24px; background: #fdf2f8; border: 2px solid #f9a8d4; }
+.le-pop hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+.le-pop .del { color: var(--danger); }
+.le-pop small { display: block; margin: 2px 8px 4px; color: var(--muted); font-size: 11.5px; }
+
+.le-save { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding-top: 18px; border-top: 1px solid var(--line); }
+.le-save .field { flex: 1; min-width: 240px; max-width: 420px; }
