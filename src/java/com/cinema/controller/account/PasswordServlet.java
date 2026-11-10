@@ -31,6 +31,11 @@ public class PasswordServlet extends BaseServlet {
         if (!csrfOk(req, resp)) {
             return;
         }
+        if ("ADMIN".equals(currentUser(req).getRole())) {
+            // Tài khoản admin không có chức năng đổi mật khẩu.
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
         String current = req.getParameter("currentPassword");
         String next = req.getParameter("newPassword");
         String confirm = req.getParameter("confirmPassword");

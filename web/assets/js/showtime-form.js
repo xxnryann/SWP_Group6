@@ -95,9 +95,9 @@
     g.chips.replaceChildren();
     var d = duration();
     g.customTimes.slice().sort().forEach(function (t) {
-      var chip = el('span', 'time-chip', ampm(toMin(t)) + ' – ' + ampm(toMin(t) + d)
+      var chip = el('span', 'custom-chip', ampm(toMin(t)) + ' – ' + ampm(toMin(t) + d)
         + ' (thực tế ' + ampm(toMin(t) + blockMinutes(d)) + ')');
-      var remove = el('button', 'time-chip-remove', '×');
+      var remove = el('button', 'custom-chip-remove', '×');
       remove.type = 'button';
       remove.title = 'Bỏ giờ ' + t;
       remove.addEventListener('click', function () {
@@ -156,7 +156,7 @@
     customRow.appendChild(period);
     customRow.appendChild(add);
     box.appendChild(customRow);
-    var chips = el('div', 'time-chips');
+    var chips = el('div', 'custom-chips');
     box.appendChild(chips);
     var note = el('small', 'room-times-note');
     box.appendChild(note);

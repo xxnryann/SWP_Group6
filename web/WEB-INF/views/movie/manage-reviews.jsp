@@ -1,104 +1,109 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Kiểm duyệt đánh giá"/>
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
-<%@ include file="../_header.jspf" %>
-<main class="page"><div class="container">
-  <section class="movie-page-heading">
-    <div><h1>Kiểm duyệt đánh giá</h1>
-      <p class="sub">Chỉ ẩn bình luận vi phạm (có thể hiện lại); điểm sao của khách hàng luôn được giữ nguyên.</p></div>
-  </section>
-  <div class="review-stats">
-    <div class="review-stat-counts">
-      <div class="review-stat-card review-stat-count"><span>Tổng đánh giá phim đang chiếu</span><strong>${summaryTotal}</strong></div>
-      <div class="review-stat-card review-stat-count"><span>Bình luận đang hiển thị</span><strong>${summaryComments}</strong></div>
-    </div>
-    <div class="review-stat-card review-stat-movies">
-      <span>Điểm trung bình theo phim</span>
-      <ul class="movie-rating-list">
-        <c:forEach var="movieSummary" items="${movieSummaries}">
-          <li>
-            <strong class="movie-rating-title"><c:out value="${movieSummary.title}"/></strong>
-            <span class="movie-rating-score">★ ${movieSummary.average_rating}<small>/5</small></span>
-            <span class="movie-rating-count">${movieSummary.review_count} đánh giá</span>
-          </li>
-        </c:forEach>
-        <c:if test="${empty movieSummaries}"><li class="movie-rating-empty">Chưa có đánh giá nào.</li></c:if>
-      </ul>
+<%@ include file="../layout/top.jspf" %>
+<div class="page-head">
+  <div><h1>Kiểm duyệt đánh giá</h1><p>Chỉ ẩn bình luận vi phạm (có thể hiện lại); điểm sao của khách hàng luôn được giữ nguyên.</p></div>
+</div>
+
+<div class="split mb-24" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,2fr)">
+  <div class="stat"><div class="stat-icon">${ic.star}</div><div class="stat-label">Tổng đánh giá phim đang chiếu</div><div class="stat-value">${summaryTotal}</div></div>
+  <div class="stat"><div class="stat-icon success">${ic.message}</div><div class="stat-label">Bình luận đang hiển thị</div><div class="stat-value">${summaryComments}</div></div>
+  <div class="card card-pad">
+    <p class="stat-label mb-8">Điểm trung bình theo phim</p>
+    <div class="stack" style="--gap:6px;max-height:120px;overflow:auto">
+      <c:forEach var="movieSummary" items="${movieSummaries}">
+        <div class="kv" style="padding:4px 0"><span class="truncate"><c:out value="${movieSummary.title}"/></span><strong><span class="stars">★</span> ${movieSummary.average_rating}/5 <span class="muted text-xs fw-600">(${movieSummary.review_count})</span></strong></div>
+      </c:forEach>
     </div>
   </div>
-  <form class="panel filter-panel" method="get" action="${ctx}/manage/reviews">
-    <div class="field field-wide">
-      <label for="f-movie">Phim đang chiếu</label>
-      <select id="f-movie" name="movie"><option value="">Tất cả phim</option><c:forEach var="movieOption" items="${reviewMovies}"><option value="${movieOption.movie_id}" <c:if test="${filterMovie == movieOption.movie_id}">selected</c:if>><c:out value="${movieOption.title}"/></option></c:forEach></select>
+</div>
+
+<section class="card">
+  <form class="toolbar" method="get" action="${ctx}/manage/reviews">
+    <div class="field grow">
+      <label for="fMovie">Phim đang chiếu</label>
+      <select id="fMovie" name="movie"><option value="">Tất cả phim</option><c:forEach var="movieOption" items="${reviewMovies}"><option value="${movieOption.movie_id}" ${filterMovie == movieOption.movie_id ? 'selected' : ''}><c:out value="${movieOption.title}"/></option></c:forEach></select>
     </div>
-    <div class="field">
-      <label for="f-rating">Số sao</label>
-      <select id="f-rating" name="rating"><option value="">Tất cả sao</option><c:forEach var="n" begin="1" end="5"><option value="${n}" <c:if test="${filterRating == n}">selected</c:if>>${n} sao</option></c:forEach></select>
-    </div>
-    <div class="field">
-      <label for="f-from">Từ ngày</label>
-      <input id="f-from" type="date" name="from" value="${filterFrom}">
-    </div>
-    <div class="field">
-      <label for="f-to">Đến ngày</label>
-      <input id="f-to" type="date" name="to" value="${filterTo}">
-    </div>
-    <div class="field">
-      <label for="f-status">Trạng thái</label>
-      <select id="f-status" name="status"><option value="">Tất cả trạng thái</option><option value="visible" <c:if test="${filterStatus == 'visible'}">selected</c:if>>Đang hiển thị</option><option value="deleted" <c:if test="${filterStatus == 'deleted'}">selected</c:if>>Đã ẩn bởi quản lý</option><option value="reported" <c:if test="${filterStatus == 'reported'}">selected</c:if>>Có báo cáo</option></select>
-    </div>
-    <div class="filter-panel-actions">
-      <button class="btn btn-primary" type="submit">Lọc</button>
-      <c:if test="${not empty filterMovie or not empty filterRating or not empty filterFrom or not empty filterTo or not empty filterStatus}"><a class="btn btn-outline" href="${ctx}/manage/reviews">Xóa lọc</a></c:if>
-    </div>
+    <div class="field"><label for="fRating">Số sao</label>
+      <select id="fRating" name="rating"><option value="">Tất cả</option><c:forEach var="n" begin="1" end="5"><option value="${n}" ${filterRating == n ? 'selected' : ''}>${n} sao</option></c:forEach></select></div>
+    <div class="field"><label for="fFrom">Từ ngày</label><input id="fFrom" type="date" name="from" value="${filterFrom}"></div>
+    <div class="field"><label for="fTo">Đến ngày</label><input id="fTo" type="date" name="to" value="${filterTo}"></div>
+    <div class="field"><label for="fStatus">Trạng thái</label>
+      <select id="fStatus" name="status"><option value="">Tất cả</option><option value="visible" ${filterStatus == 'visible' ? 'selected' : ''}>Đang hiển thị</option><option value="deleted" ${filterStatus == 'deleted' ? 'selected' : ''}>Đã ẩn bởi quản lý</option><option value="reported" ${filterStatus == 'reported' ? 'selected' : ''}>Có báo cáo</option></select></div>
+    <button class="btn btn-primary" type="submit">${ic.filter}Lọc</button>
+    <a class="btn btn-ghost" href="${ctx}/manage/reviews">Xóa lọc</a>
   </form>
-  <div class="table-wrap"><table class="data">
-    <thead><tr><th>Phim</th><th>Khách hàng</th><th>Đánh giá sao</th><th>Bình luận</th><th>Trạng thái</th><th>Báo cáo</th><th>Ngày đánh giá</th><th>Người xử lý</th><th>Thao tác</th></tr></thead>
-    <tbody>
-      <c:forEach var="review" items="${reviews}">
-        <tr>
-          <td><strong><c:out value="${review.movie_title}"/></strong></td>
-          <td><c:out value="${review.customer_name}"/></td>
-          <td><span class="review-stars"><c:forEach begin="1" end="${review.rating}">★</c:forEach><c:forEach begin="${review.rating + 1}" end="5">☆</c:forEach></span></td>
-          <td><c:choose>
-            <c:when test="${not empty review.comment}"><details><summary>Xem bình luận</summary><p><c:out value="${review.comment}"/></p>
-              <c:if test="${not empty review.moderation_reason}"><p class="muted">Lý do ẩn: <c:out value="${review.moderation_reason}"/></p></c:if></details></c:when>
-            <c:when test="${not empty review.moderated_at}"><em>Nội dung đã bị xóa trước đây</em></c:when>
-            <c:otherwise><em>Không có bình luận</em></c:otherwise>
-          </c:choose></td>
-          <td><c:choose><c:when test="${not empty review.moderated_at}"><span class="chip">Đã ẩn bởi quản lý</span></c:when><c:otherwise><span class="chip chip-success">Đang hiển thị</span></c:otherwise></c:choose></td>
-          <td><c:out value="${review.report_count}"/></td>
-          <td><c:out value="${review.created_at}"/></td>
-          <td><c:out value="${review.moderated_by}"/> <c:out value="${review.moderated_at}"/></td>
-          <td>
-            <c:if test="${not empty review.comment}">
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Phim / Khách hàng</th><th>Sao</th><th>Bình luận</th><th>Trạng thái</th><th class="num">Báo cáo</th><th>Ngày</th><th class="actions">Thao tác</th></tr></thead>
+      <tbody>
+        <c:forEach var="review" items="${reviews}">
+          <tr>
+            <td><span class="cell-main"><c:out value="${review.movie_title}"/></span><span class="cell-sub"><c:out value="${review.customer_name}"/></span></td>
+            <td class="nowrap"><span class="stars"><c:forEach begin="1" end="${review.rating}">★</c:forEach><span class="off"><c:forEach begin="${review.rating + 1}" end="5">★</c:forEach></span></span></td>
+            <td class="text-sm" style="max-width:320px">
               <c:choose>
-                <c:when test="${empty review.moderated_at}">
-                  <form method="post" action="${ctx}/manage/reviews" onsubmit="var r=prompt('Nhập lý do ẩn bình luận (spam, ngôn từ thô tục, nội dung vi phạm...):'); if (!r || !r.trim()) return false; this.reason.value=r.trim(); return true;">
-                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
-                    <input type="hidden" name="action" value="hide-comment">
-                    <input type="hidden" name="id" value="${review.review_id}">
-                    <input type="hidden" name="reason">
-                    <button class="btn btn-danger btn-small review-action" type="submit">Ẩn bình luận</button>
-                  </form>
-                </c:when>
-                <c:otherwise>
-                  <form method="post" action="${ctx}/manage/reviews" onsubmit="return confirm('Hiện lại bình luận này cho mọi người xem?');">
-                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
-                    <input type="hidden" name="action" value="unhide-comment">
-                    <input type="hidden" name="id" value="${review.review_id}">
-                    <button class="btn btn-outline btn-small review-action" type="submit">Hiện lại</button>
-                  </form>
-                </c:otherwise>
+                <c:when test="${not empty review.comment}"><c:out value="${review.comment}"/>
+                  <c:if test="${not empty review.moderated_at and not empty review.moderation_reason}"><span class="cell-sub">Lý do ẩn: <c:out value="${review.moderation_reason}"/></span></c:if></c:when>
+                <c:when test="${not empty review.moderated_at}"><em class="muted">Nội dung đã bị xóa trước đây</em></c:when>
+                <c:otherwise><em class="muted">Không có bình luận</em></c:otherwise>
               </c:choose>
-            </c:if>
-          </td>
-        </tr>
-      </c:forEach>
-      <c:if test="${empty reviews}"><tr><td colspan="9">Chưa có đánh giá nào.</td></tr></c:if>
-    </tbody>
-  </table></div>
-  <c:if test="${reviewPageCount > 1}"><nav class="pagination"><c:forEach var="p" begin="1" end="${reviewPageCount}"><c:url var="pageUrl" value="/manage/reviews"><c:param name="page" value="${p}"/><c:param name="movie" value="${filterMovie}"/><c:param name="rating" value="${filterRating}"/><c:param name="from" value="${filterFrom}"/><c:param name="to" value="${filterTo}"/><c:param name="status" value="${filterStatus}"/></c:url><a class="btn btn-small ${p == reviewCurrentPage ? 'btn-primary' : 'btn-outline'}" href="${pageUrl}">${p}</a></c:forEach></nav></c:if>
-</div></main>
-<%@ include file="../_footer.jspf" %>
+            </td>
+            <td>
+              <c:choose>
+                <c:when test="${not empty review.moderated_at}"><span class="badge badge-warning">Đã ẩn</span><span class="cell-sub"><c:out value="${review.moderated_by}"/> · <c:out value="${review.moderated_at}"/></span></c:when>
+                <c:otherwise><span class="badge badge-success badge-dot">Hiển thị</span></c:otherwise>
+              </c:choose>
+            </td>
+            <td class="num"><span class="badge ${review.report_count gt 0 ? 'badge-warning' : ''}"><c:out value="${review.report_count}"/></span></td>
+            <td class="muted text-sm nowrap"><c:out value="${review.created_at}"/></td>
+            <td class="actions">
+              <c:if test="${not empty review.comment}">
+                <c:choose>
+                  <c:when test="${empty review.moderated_at}">
+                    <form method="post" action="${ctx}/manage/reviews" class="js-moderate">
+                      <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                      <input type="hidden" name="action" value="hide-comment">
+                      <input type="hidden" name="id" value="${review.review_id}">
+                      <input type="hidden" name="reason">
+                      <button class="btn btn-xs btn-danger nowrap" type="submit">Ẩn bình luận</button>
+                    </form>
+                  </c:when>
+                  <c:otherwise>
+                    <form method="post" action="${ctx}/manage/reviews" data-confirm="Hiện lại bình luận này cho mọi người xem?">
+                      <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                      <input type="hidden" name="action" value="unhide-comment">
+                      <input type="hidden" name="id" value="${review.review_id}">
+                      <button class="btn btn-xs nowrap" type="submit">Hiện lại</button>
+                    </form>
+                  </c:otherwise>
+                </c:choose>
+              </c:if>
+            </td>
+          </tr>
+        </c:forEach>
+        <c:if test="${empty reviews}"><tr><td colspan="7"><div class="empty"><div class="empty-icon">${ic.message}</div><p>Chưa có đánh giá nào.</p></div></td></tr></c:if>
+      </tbody>
+    </table>
+  </div>
+</section>
+<c:if test="${reviewPageCount > 1}">
+  <nav class="pager" aria-label="Phân trang đánh giá">
+    <c:forEach var="p" begin="1" end="${reviewPageCount}">
+      <c:url var="pageUrl" value="/manage/reviews"><c:param name="page" value="${p}"/><c:param name="movie" value="${filterMovie}"/><c:param name="rating" value="${filterRating}"/><c:param name="from" value="${filterFrom}"/><c:param name="to" value="${filterTo}"/><c:param name="status" value="${filterStatus}"/></c:url>
+      <a class="${p == reviewCurrentPage ? 'active' : ''}" href="<c:out value='${pageUrl}'/>">${p}</a>
+    </c:forEach>
+  </nav>
+</c:if>
+<script>
+  document.querySelectorAll('form.js-moderate').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      var r = prompt('Nhập lý do ẩn bình luận (spam, ngôn từ thô tục, nội dung vi phạm...):');
+      if (!r || !r.trim()) { e.preventDefault(); return; }
+      f.reason.value = r.trim();
+    });
+  });
+</script>
+<%@ include file="../layout/bottom.jspf" %>

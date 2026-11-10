@@ -1,53 +1,30 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Cổng thanh toán (giả lập)"/>
-<c:set var="ctx" value="${pageContext.request.contextPath}"/>
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cổng thanh toán giả lập · CineStar</title>
-  <link rel="stylesheet" href="${ctx}/assets/css/cinema.css">
-  <style>
-    .mock-qr { margin: 18px auto 6px; text-align: center; }
-    .mock-qr img { width: 240px; height: 240px; padding: 10px; border: 1px solid var(--slate-200); border-radius: 12px; background: #fff; }
-    .mock-qr p { margin: 8px 0 0; color: var(--slate-500); font-size: 13px; }
-    .uip-line { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0;
-                border-top: 1px solid var(--slate-100); font-size: 14.5px; }
-  </style>
-</head>
-<body>
-<main class="page"><div class="container">
-  <div class="card" style="max-width:560px;margin:0 auto">
-    <p class="eyebrow">MÔI TRƯỜNG THỬ NGHIỆM</p>
-    <h2>Cổng thanh toán giả lập — VNPAY</h2>
-    <p class="sub">Trang này chỉ dùng cho môi trường dev, không có giá trị tiền thật.</p>
-
-    <div class="uip-line"><span>Mã đơn</span><span><strong><c:out value="${txnRef}"/></strong></span></div>
-    <div class="uip-line"><span>Nội dung</span><span><c:out value="${orderInfo}"/></span></div>
-    <div class="uip-line"><span>Số tiền</span>
-         <span><strong>${amount} VNĐ</strong></span></div>
-
-    <c:if test="${not empty qrDataUri}">
-      <div class="mock-qr">
-        <img src="${qrDataUri}" alt="Mã QR thanh toán VNPAY (giả lập)">
-        <p>Quét mã QR bằng ứng dụng ngân hàng để thanh toán (giả lập).<br>
-           Hoặc bấm nút bên dưới để xác nhận ngay trên máy này.</p>
-      </div>
-    </c:if>
-
-    <form method="post" action="${ctx}/mock/payment" style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap">
+<c:set var="pageTitle" value="Cổng thanh toán giả lập"/>
+<c:set var="layout" value="bare"/>
+<%@ include file="../layout/top.jspf" %>
+<div class="container container-sm" style="padding-top:40px">
+  <section class="card">
+    <div class="card-head">
+      <div><span class="badge badge-warning">Môi trường thử nghiệm</span><h2 class="mt-8">Cổng thanh toán giả lập · VNPAY</h2><p>Trang này chỉ dùng cho môi trường dev, không có giá trị tiền thật.</p></div>
+    </div>
+    <div class="card-body">
+      <div class="kv"><span>Mã đơn</span><strong><c:out value="${txnRef}"/></strong></div>
+      <div class="kv"><span>Nội dung</span><strong><c:out value="${orderInfo}"/></strong></div>
+      <div class="kv total"><span>Số tiền</span><strong>${amount} đ</strong></div>
+      <c:if test="${not empty qrDataUri}">
+        <div class="text-center mt-24">
+          <img src="${qrDataUri}" alt="Mã QR thanh toán VNPAY (giả lập)" style="width:220px;height:220px;margin:0 auto;padding:10px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff">
+          <p class="muted text-sm mt-8">Quét mã QR bằng ứng dụng ngân hàng (giả lập), hoặc bấm nút bên dưới để xác nhận ngay.</p>
+        </div>
+      </c:if>
+    </div>
+    <form class="card-foot" method="post" action="${ctx}/mock/payment">
       <c:forEach var="p" items="${params}">
         <input type="hidden" name="<c:out value='${p.key}'/>" value="<c:out value='${p.value}'/>">
       </c:forEach>
-      <button class="btn btn-cta" type="submit" name="decision" value="success">Thanh toán</button>
-      <button class="btn btn-outline" type="submit" name="decision" value="cancel">Huỷ giao dịch</button>
+      <button class="btn" type="submit" name="decision" value="cancel">Hủy giao dịch</button>
+      <button class="btn btn-primary" type="submit" name="decision" value="success">${ic.check}Thanh toán</button>
     </form>
-  </div>
-</div></main>
-</body>
-</html>
-
-
-
+  </section>
+</div>
+<%@ include file="../layout/bottom.jspf" %>

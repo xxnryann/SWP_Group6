@@ -1,7 +1,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="seat" tagdir="/WEB-INF/tags" %>
 <c:set var="pageTitle" value="Layout ghế · ${room.roomName}"/>
-<%@ include file="../_header.jspf" %>
+<%@ include file="../layout/top.jspf" %>
 <style>
   .rm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
   .rm-head h1 { margin: 0; }
@@ -34,11 +34,6 @@
   .rm-empty { text-align: center; padding: 30px 10px; color: var(--slate-500); }
   @media (max-width: 720px) { .layout-grid { grid-template-columns: 1fr 1fr; } .layout-grid > :last-child { grid-column: 1 / -1; } }
 </style>
-<main>
-  <section class="page">
-    <div class="container">
-      <div class="dash-layout">
-        <div>
       <div class="rm-head">
         <div>
           <h1><c:out value="${room.roomName}"/> <span class="chip"><c:out value="${room.roomType}"/></span></h1>
@@ -217,11 +212,6 @@
       </div>
         </c:otherwise>
       </c:choose>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
 
 <script>
 (function () {
@@ -371,7 +361,7 @@
   });
 })();
 </script>
-<%@ include file="../_footer.jspf" %>
+<%@ include file="../layout/bottom.jspf" %>
 
 
 

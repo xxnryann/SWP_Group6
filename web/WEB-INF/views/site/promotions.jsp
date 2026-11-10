@@ -1,27 +1,26 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Khuyến mãi"/>
-<%@ include file="../_header.jspf" %>
-<fmt:setLocale value="vi_VN"/>
-<main class="container page">
-  <section class="movie-page-heading">
-    <div>
-      <p class="eyebrow">CINESTAR CINEMAS</p>
-      <h1>Khuyến mãi</h1>
-    </div>
-  </section>
-
+<c:set var="mainClass" value="main-flush"/>
+<%@ include file="../layout/top.jspf" %>
+<section class="hero-band">
+  <div class="container">
+    <span class="eyebrow">Xem phim vui hơn</span>
+    <h1>Khuyến mãi</h1>
+    <p>Voucher đang áp dụng. Nhập mã ở bước thanh toán để được giảm giá.</p>
+  </div>
+</section>
+<div class="container mt-32">
   <c:choose>
     <c:when test="${empty vouchers}">
-      <div class="movie-list-empty"><p>Hiện chưa có voucher nào đang áp dụng.</p></div>
+      <div class="card empty"><div class="empty-icon">${ic.gift}</div><h3>Hiện chưa có voucher nào</h3><p>Quay lại sau để không bỏ lỡ ưu đãi mới nhé.</p></div>
     </c:when>
     <c:otherwise>
       <%@ include file="../_voucher_grid.jspf" %>
       <c:if test="${empty sessionScope.authUser}">
-        <p class="voucher-hint"><a href="${ctx}/login">Đăng nhập</a> để dùng voucher khi đặt vé.</p>
+        <div class="alert alert-info mt-24">${ic.info}<span><a class="fw-600" href="${ctx}/login">Đăng nhập</a> để dùng voucher khi đặt vé.</span></div>
       </c:if>
     </c:otherwise>
   </c:choose>
-</main>
-<%@ include file="../_footer.jspf" %>
+</div>
+<div style="height:56px"></div>
+<%@ include file="../layout/bottom.jspf" %>

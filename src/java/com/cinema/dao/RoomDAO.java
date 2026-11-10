@@ -2,6 +2,7 @@ package com.cinema.dao;
 
 import com.cinema.model.Cinema;
 import com.cinema.model.Room;
+import com.cinema.model.RoomShowtime;
 import com.cinema.model.Showtime;
 import com.cinema.util.DBContext;
 import com.cinema.util.room.RoomRuleException;
@@ -273,5 +274,53 @@ public class RoomDAO {
             ps.setInt(1, id);
             ps.executeUpdate();
         }
+    }
+
+    /**
+     * Các suất chiếu của một phòng (trang Admin "Lịch phòng chiếu").
+     * scope: "upcoming" = suất chưa kết thúc và chưa hủy (tăng dần theo giờ),
+     *        "past"     = suất đã kết thúc hoặc đã hủy (giảm dần),
+     *        còn lại    = tất cả (tăng dần).
+     */
+    public List<RoomShowtime> findShowtimes(int roomId, String scope) throws SQLException {
+        String where;
+        String order;
+        if ("upcoming".equals(scope)) {
+            where = "AND s.status = 'Scheduled' AND s.end_time > SYSDATETIME() ";
+            order = "ORDER BY s.start_time ASC";
+        } else if ("past".equals(scope)) {
+            where = "AND (s.status <> 'Scheduled' OR s.end_time <= SYSDATETIME()) ";
+            order = "ORDER BY s.start_time DESC";
+        } else {
+            where = "";
+            order = "ORDER BY s.start_time ASC";
+        }
+        String sql = "SELECT s.showtime_id, s.movie_id, m.title, m.duration_minutes, m.age_rating, "
+                + " s.start_time, s.end_time, s.status, "
+                + " (SELECT COUNT(*) FROM Ticket t WHERE t.showtime_id = s.showtime_id "
+                + "     AND t.status IN ('Booked', 'Used')) AS sold "
+                + "FROM Showtime s JOIN Movie m ON m.movie_id = s.movie_id "
+                + "WHERE s.room_id = ? " + where + order;
+        List<RoomShowtime> list = new ArrayList<>();
+        try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, roomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    RoomShowtime st = new RoomShowtime();
+                    st.setShowtimeId(rs.getInt("showtime_id"));
+                    st.setMovieId(rs.getInt("movie_id"));
+                    st.setMovieTitle(rs.getString("title"));
+                    st.setDurationMinutes(rs.getInt("duration_minutes"));
+                    st.setAgeRating(rs.getString("age_rating"));
+                    st.setStartTime(rs.getTimestamp("start_time").toLocalDateTime());
+                    st.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());
+                    st.setStatus(rs.getString("status"));
+                    st.setSoldTickets(rs.getInt("sold"));
+                    list.add(st);
+                }
+            }
+        }
+        return list;
     }
 }

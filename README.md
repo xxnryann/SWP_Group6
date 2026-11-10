@@ -132,7 +132,7 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 - **VNPAY 2.1.0** — HMAC-SHA512, so sánh hash constant-time, `vnp_Amount` ×100, `vnp_OrderInfo` không dấu.
 - **Cổng thật (mặc định)** — `vnpay.paymentUrl` trỏ tới `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`. Dùng khoá Sandbox do VNPAY cấp ở `vnpay.partnerCode` (mã TmnCode) và `vnpay.secretKey` (chuỗi bí mật tạo checksum).
 - **Cổng giả lập nội bộ (fallback)** — bật bằng `vnpay.mockGateway=true`, hoặc tự động khi `vnpay.secretKey` rỗng. Trả về đúng tập tham số + chữ ký hợp lệ nên luồng test tự động được y hệt cổng thật, không tốn phí Sandbox.
-- **Hủy & hoàn** — khách **không** tự hủy vé/combo đã thanh toán (lỗi từ phía khách không được hoàn). Chỉ khi Manager hủy phim/suất chiếu do sự cố (`sp_CancelMovie`), giá trị mỗi đơn = tiền vé + bắp nước + MyPoint đã dùng (không tính phần giảm voucher) được quy ra MyPoint theo giá trị 1 điểm, và khách được cấp 1 lượt **voucher đền bù DENBU25** (mặc định giảm 25.000đ, mỗi lượt hạn 30 ngày — Manager chỉnh ở trang Voucher, tắt thì không cấp; bảng `VoucherGrant`, chỉ khách được cấp mới áp được, không hiện công khai). DB cũ: chạy `database/migrate_cancel_compensation.sql` rồi đồng bộ procedure.
+- **Hủy & hoàn** — khách **không** tự hủy vé/combo đã thanh toán (lỗi từ phía khách không được hoàn). Chỉ khi Manager hủy phim/suất chiếu do sự cố (`sp_CancelMovie`), giá trị mỗi đơn = tiền vé + bắp nước + MyPoint đã dùng (không tính phần giảm voucher) được quy ra MyPoint theo giá trị 1 điểm, và khách được cấp 1 lượt **voucher đền bù DENBU25** (mặc định giảm 25.000đ, mỗi lượt hạn 30 ngày — Manager chỉnh ở trang Voucher, tắt thì không cấp; bảng `VoucherGrant`, chỉ khách được cấp mới áp được, không hiện công khai). DB cũ: tạo lại bằng `drop.sql` → `schema.sql` → `seed.sql`.
 - **Idempotency** — Return URL và webhook cùng gọi `OnlineBookingService.confirmGatewayPayment`. Đơn đã `Paid` trả về thành công nhưng **không phát vé lần 2**.
 - **Đối soát** — số tiền cổng báo lệch tổng tiền đơn ⇒ không cấp vé, ghi cảnh báo.
 - **Webhook trả** `RspCode`: `00` đã cập nhật · `97` chữ ký sai (không retry) · `99` lỗi hệ thống (VNPAY retry tối đa 10 lần).
@@ -331,8 +331,9 @@ Menu theo vai trò (mỗi role **chỉ** thấy chức năng của role đó):
 | `admin@cinema.vn` | `ADMIN` | `123456` |
 | `manager@cinema.vn` | `MANAGER` | `123456` |
 | `staff@cinema.vn` | `STAFF` | `123456` |
-| `khach1@gmail.com` | `CUSTOMER` | `123456` |
-| `khach2@gmail.com` | `CUSTOMER` | `123456` |
+| `dungcaohung2410+khach1@gmail.com` | `CUSTOMER` | `123456` |
+| `dungcaohung2410+khach2@gmail.com` | `CUSTOMER` | `123456` |
+| `dungcaohung2410+khach3@gmail.com` | `CUSTOMER` | `123456` |
 
 ---
 
@@ -368,7 +369,7 @@ powershell -ExecutionPolicy Bypass -File scripts\test-admin-manager-staff.ps1
 | `test-smoke.ps1` | Mọi trang chính của 5 vai trò (guest/customer/staff/manager/admin) trả HTTP 200; 4 URL dashboard trả 200 đúng vai trò; sai vai trò ⇒ 403; đăng nhập ⇒ chuyển đúng dashboard; `/booking/*` chưa đăng nhập ⇒ 302 về `/login` | `SMOKE TEST PASS` |
 | `test-admin-manager-staff.ps1` | ADMIN: người dùng, phòng, sơ đồ ghế · MANAGER: phim, suất chiếu (trùng lịch, sinh tự động), tin tức, voucher, giá vé, MyPoint · STAFF: combo, bán vé tại quầy, soát vé, đổi ghế, hộp thư email · mỗi vai trò vào trang vai trò khác ⇒ 403 | `TAT CA BUOC PASS` |
 
-Tài khoản seed: `khach1@gmail.com` / `123456`.
+Tài khoản seed: `dungcaohung2410+khach1@gmail.com` / `123456`.
 
 ---
 

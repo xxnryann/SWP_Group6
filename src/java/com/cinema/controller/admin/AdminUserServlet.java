@@ -1,8 +1,10 @@
 package com.cinema.controller.admin;
 
 import com.cinema.controller.BaseServlet;
+import com.cinema.controller.filter.AuditFilter;
 import com.cinema.dao.UserDAO;
 import com.cinema.model.User;
+import com.cinema.util.SecurityUtil;
 import com.cinema.util.Validator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Set;
 
-/** User Account Management – list users, block / unblock, change role (ADMIN only, see AdminFilter). */
+/** User Account Management – list users, block / unblock, reset password (ADMIN only, see AdminFilter). */
 @WebServlet("/admin/users")
 public class AdminUserServlet extends BaseServlet {
 
@@ -61,10 +63,18 @@ public class AdminUserServlet extends BaseServlet {
             if (target == null) {
                 flash(req, "error", "Không tìm thấy tài khoản.");
             } else if (target.getUserId() == currentUser(req).getUserId()) {
-                flash(req, "error", "Bạn không thể thay đổi quyền hoặc khóa chính tài khoản của mình.");
-            } else if ("role".equals(action) && ROLES.contains(value)) {
-                dao.updateRole(targetId, value);
-                flash(req, "success", "Đã đổi quyền của " + target.getEmail() + " thành " + value + ".");
+                flash(req, "error", "Bạn không thể khóa hoặc đặt lại mật khẩu cho chính tài khoản của mình. Hãy đổi mật khẩu ở trang Thông tin cá nhân.");
+            } else if ("password".equals(action)) {
+                String pw = req.getParameter("newPassword");
+                if (!Validator.isStrongPassword(pw)) {
+                    flash(req, "error", Validator.PASSWORD_RULE);
+                } else if (!pw.equals(req.getParameter("confirmPassword"))) {
+                    flash(req, "error", "Mật khẩu xác nhận không khớp.");
+                } else {
+                    dao.updatePassword(targetId, SecurityUtil.hashPassword(pw));
+                    req.setAttribute(AuditFilter.DETAIL_ATTR, "Đặt lại mật khẩu cho " + target.getEmail());
+                    flash(req, "success", "Đã đổi mật khẩu của " + target.getEmail() + ".");
+                }
             } else if ("status".equals(action) && ("ACTIVE".equals(value) || "BLOCKED".equals(value))) {
                 if ("PENDING".equals(target.getStatus())) {
                     flash(req, "error", "Tài khoản chưa xác thực OTP, không thể khóa/mở.");

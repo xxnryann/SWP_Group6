@@ -76,8 +76,8 @@ function Wait-Until([scriptblock]$check, [int]$seconds = 100) {
 $admin = New-BookingSession -BaseUrl $BaseUrl -Email 'admin@cinema.vn'
 $manager = New-BookingSession -BaseUrl $BaseUrl -Email 'manager@cinema.vn'
 $staff = New-BookingSession -BaseUrl $BaseUrl -Email 'staff@cinema.vn'
-$customer = New-BookingSession -BaseUrl $BaseUrl -Email 'khach1@gmail.com'
-$cust = [int](Scalar "SELECT account_id FROM dbo.Account WHERE email='khach1@gmail.com';")
+$customer = New-BookingSession -BaseUrl $BaseUrl -Email 'dungcaohung2410+khach1@gmail.com'
+$cust = [int](Scalar "SELECT account_id FROM dbo.Account WHERE email='dungcaohung2410+khach1@gmail.com';")
 
 # Moc de don du lieu test sinh ra.
 $notif0 = [int](Scalar 'SELECT ISNULL(MAX(notif_id),0) FROM dbo.EmailNotification;')

@@ -1,48 +1,28 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Điểm MyPoint"/>
-<c:set var="parentTitle" value="Tài khoản"/>
-<c:set var="parentUrl" value="${pageContext.request.contextPath}/account/profile"/>
-<c:set var="activeNav" value="points"/>
-<%@ include file="../_header.jspf" %>
-<c:set var="accountTab" value="points"/>
-<main class="page"><div class="container">
-  <%@ include file="_account_tabs.jspf" %>
-  <div class="account-grid">
-    <section class="panel">
-      <h2>Điểm MyPoint</h2>
-      <p class="sub">Vé đã thanh toán không thể hủy/hoàn tiền do lỗi từ phía khách hàng; chỉ khi rạp hủy suất chiếu do sự cố, giá trị đơn mới được hoàn thành MyPoint kèm một lượt voucher đền bù.</p>
-      <p class="sub">Số điểm hiện có: <strong><c:out value="${points}"/></strong></p>
-      <c:if test="${not empty pointConfig}">
-        <div class="panel" style="margin:18px 0 24px;background:var(--slate-50)">
-          <h3>Cách tích điểm &amp; dùng điểm</h3>
-          <ol class="sub" style="padding-left:22px;line-height:1.8">
-            <li>Cách tích: mỗi đơn thanh toán thành công được cộng
-              <strong><fmt:formatNumber value="${pointConfig.earnRatePercent}" maxFractionDigits="2"/>%</strong>
-              giá trị đơn, quy ra điểm theo giá trị 1 điểm.</li>
-            <li>Quy đổi: 1 điểm = <strong><fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> VNĐ</strong>.</li>
-            <li>Cách dùng: nhập điểm ở bước thanh toán khi đặt vé; voucher áp trước, điểm áp sau trên số tiền còn lại,
-              dùng được toàn bộ điểm đang có.</li>
-            <li>Hoàn điểm khi suất chiếu bị hủy do sự cố: số điểm hoàn = (tiền vé + bắp nước + giá trị MyPoint đã dùng − phần giảm voucher)
-              ÷ <fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> VNĐ, làm tròn xuống.
-              Điểm đã tích từ đơn bị hủy sẽ được thu hồi. Voucher đền bù xem tại tab <a href="${ctx}/account/vouchers">Voucher</a>.</li>
-          </ol>
-        </div>
-      </c:if>
+<%@ include file="../layout/top.jspf" %>
+<div class="${isStaffRole ? '' : 'container'}">
+  <div class="page-head"><div><h1>Điểm MyPoint</h1><p>Tích điểm sau mỗi đơn và dùng điểm để giảm tiền ở lần đặt vé sau. Vé đã thanh toán không thể hủy/hoàn tiền do lỗi từ phía khách hàng; chỉ khi rạp hủy suất chiếu do sự cố, giá trị đơn mới được hoàn thành MyPoint kèm một lượt voucher đền bù.</p></div></div>
+  <%@ include file="../layout/account-nav.jspf" %>
+
+  <div class="split" style="grid-template-columns:minmax(0,1fr) 360px">
+    <section class="card">
+      <div class="card-head"><div><h2>Lịch sử điểm</h2><p>Các lần cộng và trừ điểm gần đây</p></div></div>
       <c:choose>
         <c:when test="${empty history}">
-          <p class="sub">Chưa có giao dịch điểm nào.</p>
+          <div class="empty"><div class="empty-icon">${ic.coins}</div><h3>Chưa có giao dịch điểm</h3><p>Đặt vé đầu tiên để bắt đầu tích điểm.</p></div>
         </c:when>
         <c:otherwise>
           <div class="table-wrap">
-            <table class="data">
-              <thead><tr><th>Thời gian</th><th>Nội dung</th><th>Điểm</th></tr></thead>
+            <table class="table">
+              <thead><tr><th>Thời gian</th><th>Nội dung</th><th class="num">Điểm</th></tr></thead>
               <tbody>
               <c:forEach var="p" items="${history}">
                 <tr>
-                  <td><c:out value="${p.createdAt.toLocalDate()}"/> <c:out value="${p.createdAt.toLocalTime().toString().substring(0,5)}"/></td>
+                  <td class="nowrap muted text-sm"><c:out value="${p.createdAt.toLocalDate()}"/> <c:out value="${p.createdAt.toLocalTime().toString().substring(0,5)}"/></td>
                   <td><c:out value="${p.reason}"/></td>
-                  <td><strong><c:if test="${p.points > 0}">+</c:if><c:out value="${p.points}"/></strong></td>
+                  <td class="num"><span class="badge ${p.points > 0 ? 'badge-success' : 'badge-danger'}"><c:if test="${p.points > 0}">+</c:if><c:out value="${p.points}"/></span></td>
                 </tr>
               </c:forEach>
               </tbody>
@@ -51,8 +31,26 @@
         </c:otherwise>
       </c:choose>
     </section>
+
+    <aside class="stack sticky" style="--gap:16px">
+      <div class="stat featured">
+        <div class="stat-icon">${ic.coins}</div>
+        <div class="stat-label">Số điểm hiện có</div>
+        <div class="stat-value" style="font-size:40px"><fmt:formatNumber value="${points}" groupingUsed="true"/></div>
+        <c:if test="${not empty pointConfig}"><div class="stat-meta">≈ <fmt:formatNumber value="${points * pointConfig.pointValueVnd}" groupingUsed="true"/> đ khi dùng để thanh toán</div></c:if>
+      </div>
+      <c:if test="${not empty pointConfig}">
+        <section class="card card-pad">
+          <h3 class="mb-16" style="font-size:var(--fs-h4)">Cách tích và dùng điểm</h3>
+          <ol class="steps">
+            <li>Mỗi đơn thanh toán thành công được cộng <strong><fmt:formatNumber value="${pointConfig.earnRatePercent}" maxFractionDigits="2"/>%</strong> giá trị đơn, quy ra điểm.</li>
+            <li>1 điểm = <strong><fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> đ</strong>.</li>
+            <li>Nhập điểm ở bước thanh toán: voucher áp trước, điểm áp sau trên số tiền còn lại.</li>
+            <li>Suất chiếu bị hủy do sự cố: hoàn (tiền vé + bắp nước + giá trị MyPoint đã dùng − phần giảm voucher) ÷ <fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> đ điểm, làm tròn xuống; điểm đã tích từ đơn bị hủy được thu hồi. Voucher đền bù xem tại tab <a href="${ctx}/account/vouchers">Voucher</a>.</li>
+          </ol>
+        </section>
+      </c:if>
+    </aside>
   </div>
-</div></main>
-<%@ include file="../_footer.jspf" %>
-
-
+</div>
+<%@ include file="../layout/bottom.jspf" %>

@@ -1,0 +1,37 @@
+<%@ page pageEncoding="UTF-8" %>
+<%-- Thẻ phim dùng chung. Trước khi include đặt:
+       mv      : Movie
+       mvNext  : (tùy chọn) nhãn suất gần nhất
+       mvCta   : 'buy' = nút Mua vé mở popup lịch chiếu (cần movie-showtimes.js),
+                 'showtimes' = link tới trang lịch chiếu, còn lại = Xem chi tiết --%>
+<c:url var="mvUrl" value="/movies/detail"><c:param name="id" value="${mv.movieId}"/></c:url>
+<article class="movie-card">
+  <a class="poster" href="<c:out value='${mvUrl}'/>" aria-label="Xem chi tiết <c:out value='${mv.title}'/>">
+    <c:choose>
+      <c:when test="${not empty mv.posterDisplayUrl}"><img src="${mv.uploadedPoster ? ctx : ''}<c:out value='${mv.posterDisplayUrl}'/>" alt="" loading="lazy"></c:when>
+      <c:otherwise><span class="poster-ph">${ic.film}</span></c:otherwise>
+    </c:choose>
+    <span class="age age-${mv.ageRating}"><c:out value="${mv.ageRating}"/></span>
+    <span class="poster-overlay">
+      <c:choose>
+        <c:when test="${mv.status == 'Upcoming'}"><span class="badge badge-accent">Khởi chiếu <c:out value="${mv.releaseDate.dayOfMonth}/${mv.releaseDate.monthValue}"/></span></c:when>
+        <c:when test="${mv.status == 'NowShowing'}"><span class="badge badge-success badge-dot">Đang chiếu</span></c:when>
+        <c:otherwise><span class="badge">Đã kết thúc</span></c:otherwise>
+      </c:choose>
+      <span class="btn btn-light btn-sm">${ic.eye}Xem chi tiết</span>
+    </span>
+  </a>
+  <div>
+    <h3><a class="text-ink" href="<c:out value='${mvUrl}'/>"><c:out value="${mv.title}"/></a></h3>
+    <div class="movie-meta mt-4">
+      <span><c:out value="${mv.durationMinutes}"/> phút</span>
+      <c:if test="${not empty mv.genres}"><span class="truncate" style="max-width:150px"><c:out value="${mv.genres}"/></span></c:if>
+    </div>
+    <c:if test="${not empty mvNext}"><div class="movie-meta mt-4"><span class="text-brand fw-600">${ic.clock}</span><span>Suất gần nhất: <strong class="text-ink"><c:out value="${mvNext}"/></strong></span></div></c:if>
+  </div>
+  <c:choose>
+    <c:when test="${mvCta == 'buy'}"><button type="button" class="btn btn-primary btn-block js-buy-ticket" data-movie-id="${mv.movieId}">${ic.ticket}Mua vé</button></c:when>
+    <c:when test="${mvCta == 'showtimes'}"><a class="btn btn-primary btn-block" href="${ctx}/showtimes">${ic.ticket}Mua vé</a></c:when>
+    <c:otherwise><a class="btn btn-block" href="<c:out value='${mvUrl}'/>">Xem chi tiết</a></c:otherwise>
+  </c:choose>
+</article>

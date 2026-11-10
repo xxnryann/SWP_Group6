@@ -1,0 +1,68 @@
+<%@ page pageEncoding="UTF-8" %>
+<%-- Khung trang UI v2 (phần đóng): đóng main, footer công khai, modal dùng chung, JS chung. --%>
+<c:choose>
+<c:when test="${appShell}">
+    </main>
+  </div>
+</div>
+</c:when>
+<c:when test="${layout == 'bare'}">
+</main>
+</c:when>
+<c:otherwise>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <a class="brand brand-light" href="${ctx}/home"><%@ include file="../_logo-mark.jspf" %><span>Cine<b>Star</b> Cinemas</span></a>
+        <p>Rạp chiếu phim hiện đại với âm thanh Dolby Atmos và hình ảnh sắc nét, mang đến trải nghiệm điện ảnh trọn vẹn cho mọi khán giả.</p>
+        <a class="footer-hotline" href="tel:1900636807">${ic.phone}Hotline 1900 636807</a>
+      </div>
+      <div>
+        <h4>Khám phá</h4>
+        <ul>
+          <li><a href="${ctx}/showtimes">Lịch chiếu</a></li>
+          <li><a href="${ctx}/movies">Phim đang chiếu</a></li>
+          <li><a href="${ctx}/pricing">Bảng giá vé</a></li>
+          <li><a href="${ctx}/promotions">Khuyến mãi</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Tài khoản</h4>
+        <ul>
+          <li><a href="${ctx}/account/tickets">Vé của tôi</a></li>
+          <li><a href="${ctx}/account/points">Điểm MyPoint</a></li>
+          <li><a href="${ctx}/account/inbox">Hộp thư</a></li>
+          <li><a href="${ctx}/register">Đăng ký thành viên</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Hỗ trợ</h4>
+        <ul>
+          <li><a href="${ctx}/news">Tin tức &amp; sự kiện</a></li>
+          <li><a href="#" data-toast="Trang câu hỏi thường gặp đang được cập nhật.">Câu hỏi thường gặp</a></li>
+          <li><a href="#" data-toast="Chính sách hoàn vé: hủy trước giờ chiếu theo quy định của rạp.">Quy định hoàn vé</a></li>
+          <li><a href="mailto:support@cinestar.local">support@cinestar.local</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 CineStar Cinemas.</span>
+      <span>Dự án mô phỏng phục vụ học tập, không phải website chính thức của CineStar.</span>
+    </div>
+  </div>
+</footer>
+</c:otherwise>
+</c:choose>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-dialog">
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody"></p>
+    <div class="modal-actions"><button class="btn" type="button" data-modal-close>Đóng</button></div>
+  </div>
+</div>
+<script src="${ctx}/assets/js/app.js?v=3"></script>
+</body>
+</html>
