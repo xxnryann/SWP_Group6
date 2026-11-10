@@ -1,63 +1,34 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Đặt vé — Chọn ghế"/>
-<%@ include file="../_header.jspf" %>
-<style>
-  .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
-  .uip-step { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 99px;
-              background: var(--slate-100); color: var(--slate-500); font-weight: 700; font-size: 13.5px; }
-  .uip-step .uip-num { width: 22px; height: 22px; border-radius: 50%; background: var(--slate-300); color: #fff;
-                       display: grid; place-items: center; font-size: 12.5px; }
-  .uip-step.active { background: #dbeafe; color: var(--brand); }
-  .uip-step.active .uip-num { background: var(--brand); }
-  .uip-step.done { background: #d1fae5; color: var(--success); }
-  .uip-step.done .uip-num { background: var(--success); }
-  .uip-arrow { color: var(--slate-300); font-weight: 800; }
-  .uip-movie-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
-  .uip-movie-bar h1 { margin: 0 10px 0 0; font-size: 24px; }
-  .uip-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-  .uip-count { font-size: 15px; }
-  .uip-total { font-size: 15px; }
-  .uip-total b { color: var(--brand); }
-</style>
-<main>
-  <section class="page">
-    <div class="container">
-      <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">2</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step"><span class="uip-num">3</span> Thanh toán</span>
-      </div>
+<c:set var="pageTitle" value="Chọn ghế"/>
+<%@ include file="../layout/top.jspf" %>
+<div class="container">
+  <nav class="stepper" aria-label="Các bước đặt vé">
+    <span class="step done"><b>${ic.check}</b>Chọn suất chiếu</span><span class="bar done"></span>
+    <span class="step active" aria-current="step"><b>2</b>Chọn ghế</span><span class="bar"></span>
+    <span class="step"><b>3</b>Combo &amp; thanh toán</span>
+  </nav>
 
-      <div class="uip-movie-bar">
-        <h1><c:out value="${showtime.title}"/></h1>
-        <span class="chip">🎬 <c:out value="${showtime.roomName}"/></span>
-        <span class="chip">🕒 ${showtime.startTimeLabel}</span>
-      </div>
+  <div class="booking-head">
+    <h1><c:out value="${showtime.title}"/></h1>
+    <span class="badge badge-brand">${ic.door}<c:out value="${showtime.roomName}"/></span>
+    <span class="badge">${ic.clock}${showtime.startTimeLabel}</span>
+    <a class="btn btn-ghost btn-sm" href="${ctx}/showtimes" style="margin-left:auto">${ic.chevronLeft}Đổi suất chiếu</a>
+  </div>
 
-      <c:if test="${not empty error}">
-        <p class="alert alert-error"><c:out value="${error}"/></p>
-      </c:if>
+  <c:if test="${not empty error}"><div class="alert alert-error mb-16" role="alert">${ic.alert}<span><c:out value="${error}"/></span></div></c:if>
 
-      <%@ include file="_seat-picker.jspf" %>
+  <%@ include file="_seat-picker.jspf" %>
 
-      <form method="post" action="${ctx}/booking/seats" onsubmit="return checkSeats()">
-        <input type="hidden" name="_csrf" value="${csrf}">
-        <input type="hidden" name="showtimeId" value="${showtime.showtimeId}">
-        <input type="hidden" id="seatIds" name="seatIds" value="">
-        <div class="uip-actions">
-          <span class="uip-count">Đã chọn: <strong id="selCount">0</strong> ghế</span>
-          <span class="uip-total">Tạm tính: <strong id="selTotal">0</strong> VNĐ</span>
-          <button class="btn btn-cta" type="submit">Giữ ghế &amp; sang thanh toán →</button>
-          <a class="btn btn-outline" href="${ctx}/showtimes">← Đổi suất chiếu</a>
-        </div>
-      </form>
+  <form method="post" action="${ctx}/booking/seats" onsubmit="return checkSeats()">
+    <input type="hidden" name="_csrf" value="${csrf}">
+    <input type="hidden" name="showtimeId" value="${showtime.showtimeId}">
+    <input type="hidden" id="seatIds" name="seatIds" value="">
+    <div class="checkout-bar">
+      <div><span class="label">Ghế đã chọn</span><strong><span id="selCount" class="seats-picked">0</span> ghế</strong></div>
+      <div class="grow"><span class="label">Tạm tính</span><strong><span id="selTotal">0</span> đ</strong></div>
+      <button class="btn btn-accent btn-lg" type="submit">Giữ ghế &amp; tiếp tục ${ic.arrowRight}</button>
     </div>
-  </section>
-</main>
+  </form>
+</div>
 <%@ include file="_seat-picker-script.jspf" %>
-<%@ include file="../_footer.jspf" %>
-
-
-
+<%@ include file="../layout/bottom.jspf" %>

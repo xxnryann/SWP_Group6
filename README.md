@@ -332,8 +332,9 @@ Menu theo vai trò (mỗi role **chỉ** thấy chức năng của role đó):
 | `admin@cinema.vn` | `ADMIN` | `123456` |
 | `manager@cinema.vn` | `MANAGER` | `123456` |
 | `staff@cinema.vn` | `STAFF` | `123456` |
-| `khach1@gmail.com` | `CUSTOMER` | `123456` |
-| `khach2@gmail.com` | `CUSTOMER` | `123456` |
+| `dungcaohung2410+khach1@gmail.com` | `CUSTOMER` | `123456` |
+| `dungcaohung2410+khach2@gmail.com` | `CUSTOMER` | `123456` |
+| `dungcaohung2410+khach3@gmail.com` | `CUSTOMER` | `123456` |
 
 ---
 
@@ -369,7 +370,7 @@ powershell -ExecutionPolicy Bypass -File scripts\test-admin-manager-staff.ps1
 | `test-smoke.ps1` | Mọi trang chính của 5 vai trò (guest/customer/staff/manager/admin) trả HTTP 200; 4 URL dashboard trả 200 đúng vai trò; sai vai trò ⇒ 403; đăng nhập ⇒ chuyển đúng dashboard; `/booking/*` chưa đăng nhập ⇒ 302 về `/login` | `SMOKE TEST PASS` |
 | `test-admin-manager-staff.ps1` | ADMIN: người dùng, phòng, sơ đồ ghế · MANAGER: phim, suất chiếu (trùng lịch, sinh tự động), tin tức, voucher, giá vé, MyPoint · STAFF: combo, bán vé tại quầy, soát vé, đổi ghế, hộp thư email · mỗi vai trò vào trang vai trò khác ⇒ 403 | `TAT CA BUOC PASS` |
 
-Tài khoản seed: `khach1@gmail.com` / `123456`.
+Tài khoản seed: `dungcaohung2410+khach1@gmail.com` / `123456`.
 
 ---
 

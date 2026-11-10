@@ -1,33 +1,26 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="${news.title}"/>
-<%@ include file="../_header.jspf" %>
+<%@ include file="../layout/top.jspf" %>
 <style>
-  .uip-article { max-width: 820px; }
-  .uip-article h1 { font-size: 34px; margin: 10px 0 12px; }
-  .uip-meta { color: var(--slate-500); font-size: 14px; display: flex; gap: 10px; flex-wrap: wrap;
-              padding-bottom: 20px; border-bottom: 1px solid var(--slate-200); margin-bottom: 24px; }
-  .uip-hero-img { width: 100%; border-radius: 14px; margin-bottom: 24px; box-shadow: var(--shadow); }
-  .uip-content { font-size: 16.5px; line-height: 1.9; color: var(--slate-800); white-space: pre-line; }
-  .uip-back { display: inline-block; margin: 28px 0 4px; font-weight: 700; }
+  .article h1 { font-size: 38px; line-height: 1.2; margin: 14px 0 14px; }
+  .article .cover { width: 100%; border-radius: var(--r-xl); margin: 24px 0; box-shadow: var(--sh-md); }
+  .article .content { font-size: 17px; line-height: 1.85; color: var(--text); white-space: pre-line; }
 </style>
-<main>
-  <section class="page">
-    <div class="container uip-article">
-      <a class="uip-back" href="${ctx}/news">← Tất cả tin tức</a>
-      <article>
-        <span class="chip">Tin tức</span>
-        <h1><c:out value="${news.title}"/></h1>
-        <p class="uip-meta"><span>✍ Tác giả: <strong><c:out value="${news.authorName}"/></strong></span><span>·</span><span>🕒 ${news.createdAtLabel}</span></p>
-        <c:if test="${not empty news.thumbnailUrl}">
-          <img class="uip-hero-img" src="${news.thumbnailUrl.startsWith('/') ? pageContext.request.contextPath : ''}<c:out value='${news.thumbnailUrl}'/>" alt="<c:out value='${news.title}'/>">
-        </c:if>
-        <div class="uip-content"><c:out value="${news.content}"/></div>
-      </article>
-      <a class="uip-back" href="${ctx}/news">← Tất cả tin tức</a>
+<div class="container container-sm">
+  <a class="btn btn-ghost btn-sm" href="${ctx}/news">${ic.chevronLeft}Tất cả tin tức</a>
+  <article class="article mt-16">
+    <span class="badge badge-brand">Tin tức</span>
+    <h1><c:out value="${news.title}"/></h1>
+    <div class="person">
+      <span class="avatar"><c:out value="${empty news.authorName ? 'C' : news.authorName.substring(0, 1)}"/></span>
+      <div><span class="cell-main"><c:out value="${news.authorName}"/></span><span class="cell-sub">${news.createdAtLabel}</span></div>
     </div>
-  </section>
-</main>
-<%@ include file="../_footer.jspf" %>
-
-
-
+    <c:if test="${not empty news.thumbnailUrl}">
+      <img class="cover" src="${news.thumbnailUrl.startsWith('/') ? ctx : ''}<c:out value='${news.thumbnailUrl}'/>" alt="<c:out value='${news.title}'/>">
+    </c:if>
+    <div class="content"><c:out value="${news.content}"/></div>
+  </article>
+  <hr class="divider">
+  <a class="btn" href="${ctx}/news">${ic.chevronLeft}Xem các tin khác</a>
+</div>
+<%@ include file="../layout/bottom.jspf" %>

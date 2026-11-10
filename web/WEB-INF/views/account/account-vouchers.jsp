@@ -1,22 +1,14 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Voucher"/>
-<c:set var="parentTitle" value="Tài khoản"/>
-<c:set var="parentUrl" value="${pageContext.request.contextPath}/account/profile"/>
-<%@ include file="../_header.jspf" %>
-<c:set var="accountTab" value="vouchers"/>
-<main class="page"><div class="container">
-  <%@ include file="_account_tabs.jspf" %>
-  <section class="panel">
-    <h2>Voucher hiện có</h2>
-    <c:choose>
-      <c:when test="${empty vouchers}">
-        <p class="sub">Hiện chưa có voucher nào đang áp dụng.</p>
-      </c:when>
-      <c:otherwise>
-        <%@ include file="../_voucher_grid.jspf" %>
-      </c:otherwise>
-    </c:choose>
-  </section>
-</div></main>
-<%@ include file="../_footer.jspf" %>
+<%@ include file="../layout/top.jspf" %>
+<div class="${isStaffRole ? '' : 'container'}">
+  <div class="page-head"><div><h1>Voucher của tôi</h1><p>Voucher đang áp dụng cho tài khoản của bạn. Nhập mã ở bước thanh toán.</p></div></div>
+  <%@ include file="../layout/account-nav.jspf" %>
+  <c:choose>
+    <c:when test="${empty vouchers}">
+      <div class="card empty"><div class="empty-icon">${ic.tag}</div><h3>Chưa có voucher nào</h3><p>Voucher mới sẽ xuất hiện ở đây và trong hộp thư của bạn.</p></div>
+    </c:when>
+    <c:otherwise><%@ include file="../_voucher_grid.jspf" %></c:otherwise>
+  </c:choose>
+</div>
+<%@ include file="../layout/bottom.jspf" %>

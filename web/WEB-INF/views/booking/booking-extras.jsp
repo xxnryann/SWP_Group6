@@ -1,220 +1,165 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<c:set var="pageTitle" value="Đặt vé — Combo & ưu đãi"/>
-<%@ include file="../_header.jspf" %>
-<style>
-  .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
-  .uip-step { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 99px;
-              background: var(--slate-100); color: var(--slate-500); font-weight: 700; font-size: 13.5px; }
-  .uip-step .uip-num { width: 22px; height: 22px; border-radius: 50%; background: var(--slate-300); color: #fff;
-                       display: grid; place-items: center; font-size: 12.5px; }
-  .uip-step.active { background: #dbeafe; color: var(--brand); }
-  .uip-step.active .uip-num { background: var(--brand); }
-  .uip-step.done { background: #d1fae5; color: var(--success); }
-  .uip-step.done .uip-num { background: var(--success); }
-  .uip-arrow { color: var(--slate-300); font-weight: 800; }
-  .uip-layout { display: grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
-  .uip-sec { margin-bottom: 20px; padding: 24px 26px; }
-  .uip-sec h2 { font-size: 17px; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
-  .uip-sec h2 .uip-n { width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff;
-                       display: grid; place-items: center; font-size: 14px; flex: none; }
-  .uip-inline-form { display: flex; gap: 8px; flex-wrap: wrap; }
-  .uip-inline-form input { padding: 10px 13px; border: 1px solid var(--slate-300); border-radius: var(--radius);
-                           font: 14.5px var(--font); outline: none; background: #fff; }
-  .uip-inline-form input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.18); }
-  .uip-inline-form input[type=search], .uip-inline-form input[type=text] { flex: 1; min-width: 190px; }
-  .uip-inline-form input[type=number] { width: 150px; }
-  .uip-qty { width: 84px; padding: 8px 10px; border: 1px solid var(--slate-300); border-radius: 8px;
-             font: 14.5px var(--font); outline: none; }
-  .uip-qty:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.18); }
-  .uip-summary { position: sticky; top: 96px; padding: 24px 26px; }
-  .uip-summary h2 { font-size: 17px; margin: 0 0 4px; }
-  .uip-code { font-family: ui-monospace, Consolas, monospace; font-weight: 800; color: var(--brand); font-size: 17px; }
-  .uip-movie { color: var(--slate-600); font-size: 14px; margin: 6px 0 14px; }
-  .uip-line { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0;
-              border-top: 1px solid var(--slate-100); font-size: 14.5px; }
-  .uip-line .uip-neg { color: var(--success); font-weight: 700; }
-  .uip-total { display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
-               border-top: 2px solid var(--slate-200); margin-top: 8px; padding-top: 14px; }
-  .uip-total .uip-amt { color: var(--cta); font-weight: 800; font-size: 25px; }
-  .uip-payer { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 14px; }
-  .uip-payer span { display: block; color: var(--slate-500); font-size: 13px; margin-bottom: 2px; }
-  .uip-payer strong { word-break: break-word; }
-  .uip-hint { margin: 10px 0 0; font-size: 13px; color: var(--slate-500); }
-  .uip-voucher-list { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-  .uip-voucher-list th, .uip-voucher-list td { padding: 8px; border-bottom: 1px solid var(--slate-100); text-align: left; }
-  .uip-voucher-list tbody tr { cursor: pointer; }
-  .uip-voucher-list tbody tr:hover { background: var(--slate-50); }
-  .uip-voucher-code { font-family: ui-monospace, Consolas, monospace; font-weight: 800; color: var(--brand); }
-  .uip-point-value { color: var(--success); font-weight: 700; }
-  .uip-qty-stepper { display: inline-flex; align-items: center; gap: 8px; }
-  .uip-qty-stepper button { width: 30px; height: 30px; border: 1px solid var(--slate-300); border-radius: 50%;
-                            background: #fff; color: var(--brand); font-size: 18px; line-height: 1; cursor: pointer; }
-  .uip-qty-stepper button:hover { background: var(--slate-100); }
-  .uip-qty-value { min-width: 22px; text-align: center; font-weight: 700; }
-  .uip-seat-line { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-                   margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--slate-200); }
-  .uip-seat-type { font-weight: 800; text-transform: uppercase; }
-  .uip-seat-type small { font-weight: 500; text-transform: none; color: var(--slate-500); }
-  @media (max-width: 640px) { .uip-payer { grid-template-columns: 1fr; } }
-  .uip-next { margin-top: 18px; }
-  .uip-nav { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
-  @media (max-width: 960px) { .uip-layout { grid-template-columns: 1fr; } .uip-summary { position: static; } }
-</style>
+<c:set var="pageTitle" value="Combo & thanh toán"/>
+<%@ include file="../layout/top.jspf" %>
 <fmt:setLocale value="vi_VN"/>
-<main>
-  <section class="page">
-    <div class="container">
-      <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">3</span> Thanh toán</span>
-      </div>
+<style>
+  .sec-num { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--brand-50); color: var(--brand-700); font-weight: 700; font-size: 14px; flex: none; }
+  .combo-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .combo-row:last-child { border-bottom: 0; }
+  .combo-row img, .combo-row .ph { width: 56px; height: 56px; border-radius: var(--r-md); object-fit: cover; background: var(--accent-50); color: var(--accent-700); display: grid; place-items: center; }
+  .combo-row .ph svg { width: 26px; height: 26px; }
+  .qty { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: var(--r-pill); }
+  .qty button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--surface-3); color: var(--ink); font-size: 18px; line-height: 1; }
+  .qty button:hover { background: var(--brand-50); color: var(--brand-700); }
+  .qty .uip-qty-value { min-width: 26px; text-align: center; font-weight: 700; }
+  .voucher-pick tbody tr { cursor: pointer; }
+  .voucher-pick tbody tr:hover { background: var(--brand-50); }
+  .inline-form { display: flex; gap: 10px; flex-wrap: wrap; }
+  .inline-form .field { flex: 1 1 200px; }
+  .pay-notice { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: 16px; background: rgba(11, 19, 36, .55); }
+  .pay-notice-box { width: min(760px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); overflow: hidden; }
+  .pay-notice-box h3 { padding: 18px 24px; border-bottom: 1px solid var(--line); font-size: 18px; }
+  .pay-notice-body { padding: 18px 24px; overflow-y: auto; font-size: 14.5px; line-height: 1.6; color: var(--text); }
+  .pay-notice-body p { margin: 0 0 10px; }
+  .pay-notice-body ul { margin: 0 0 6px 20px; padding: 0; }
+  .pay-notice-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--line); background: var(--surface-2); }
+</style>
+<div class="container">
+  <nav class="stepper" aria-label="Các bước đặt vé">
+    <span class="step done"><b>${ic.check}</b>Chọn suất chiếu</span><span class="bar done"></span>
+    <span class="step done"><b>${ic.check}</b>Chọn ghế</span><span class="bar done"></span>
+    <span class="step active" aria-current="step"><b>3</b>Combo &amp; thanh toán</span>
+  </nav>
 
-      <div class="uip-layout">
-        <div>
-          <div class="card uip-sec">
-            <h2><span class="uip-n">👤</span> Thông tin thanh toán</h2>
-            <div class="uip-payer">
-              <div><span>Họ tên</span><strong><c:out value="${not empty payer.fullName ? payer.fullName : sessionScope.authUser.fullName}"/></strong></div>
-              <div><span>Số điện thoại</span><strong><c:out value="${empty payer.phone ? 'Chưa cập nhật' : payer.phone}"/></strong></div>
-              <div><span>Email</span><strong><c:out value="${not empty payer.email ? payer.email : booking.customerEmail}"/></strong></div>
-            </div>
-            <c:if test="${empty payer.phone}">
-              <p class="uip-hint">Bạn chưa có số điện thoại. <a href="${ctx}/account/profile">Cập nhật trong thông tin cá nhân</a>.</p>
-            </c:if>
+  <div class="split">
+    <div class="stack" style="--gap:20px">
+      <section class="card">
+        <div class="card-head"><div class="cluster" style="--gap:12px"><span class="sec-num">${ic.user}</span><h2>Thông tin thanh toán</h2></div></div>
+        <div class="card-body">
+          <dl class="grid grid-3" style="--gap:14px">
+            <div><dt class="muted text-xs">Họ tên</dt><dd class="fw-600 text-ink" style="margin:2px 0 0"><c:out value="${not empty payer.fullName ? payer.fullName : sessionScope.authUser.fullName}"/></dd></div>
+            <div><dt class="muted text-xs">Số điện thoại</dt><dd class="fw-600 text-ink" style="margin:2px 0 0"><c:out value="${empty payer.phone ? 'Chưa cập nhật' : payer.phone}"/></dd></div>
+            <div><dt class="muted text-xs">Email</dt><dd class="fw-600 text-ink" style="margin:2px 0 0;word-break:break-all"><c:out value="${not empty payer.email ? payer.email : booking.customerEmail}"/></dd></div>
+          </dl>
+          <c:if test="${empty payer.phone}"><p class="hint mt-8">Bạn chưa có số điện thoại. <a href="${ctx}/account/profile">Cập nhật trong thông tin cá nhân</a>.</p></c:if>
+          <div class="mt-16">
             <c:forEach var="g" items="${seatGroups}">
-              <div class="uip-seat-line">
-                <span class="uip-seat-type">Ghế <c:out value="${g.type_vi}"/>
-                  <small>(<c:out value="${g.seats}"/>)</small></span>
-                <span><c:out value="${g.qty}"/> x <fmt:formatNumber value="${g.unit_price}" pattern="#,##0"/></span>
-                <strong>= <fmt:formatNumber value="${g.line_total}" pattern="#,##0"/> VNĐ</strong>
+              <div class="kv">
+                <span>Ghế <strong class="text-ink"><c:out value="${g.type_vi}"/></strong> <span class="muted">(<c:out value="${g.seats}"/>)</span></span>
+                <span><c:out value="${g.qty}"/> × <fmt:formatNumber value="${g.unit_price}" pattern="#,##0"/> = <strong><fmt:formatNumber value="${g.line_total}" pattern="#,##0"/> đ</strong></span>
               </div>
             </c:forEach>
           </div>
-
-          <div class="card uip-sec">
-            <h2><span class="uip-n">1</span> Combo bắp nước (tùy chọn)</h2>
-            <form method="post" action="${ctx}/booking/extras">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="updateCombos">
-              <div class="table-wrap" style="margin-bottom:14px">
-                <table class="data" style="min-width:0">
-                  <thead><tr><th>Combo</th><th>Giá (VNĐ)</th><th>Số lượng</th></tr></thead>
-                  <tbody>
-                    <c:forEach var="cb" items="${combos}">
-                      <tr>
-                        <td>
-                          <c:choose>
-                            <c:when test="${cb.hasImage()}"><img src="<c:out value='${cb.imageUrl}'/>"
-                              alt="<c:out value='${cb.comboName}'/>" style="width:52px;height:52px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:8px"></c:when>
-                            <c:otherwise><span style="font-size:28px;vertical-align:middle;margin-right:8px">🍿</span></c:otherwise>
-                          </c:choose>
-                          <strong><c:out value="${cb.comboName}"/></strong><br>
-                          <small style="color:var(--slate-500)"><c:out value="${cb.description}"/></small>
-                        </td>
-                        <td>${cb.priceLabel}</td>
-                        <td>
-                          <input type="hidden" name="comboId" value="${cb.comboId}">
-                          <span class="uip-qty-stepper">
-                            <button type="button" data-qty-action="decrease" aria-label="Giảm số lượng">−</button>
-                            <input type="hidden" name="qty" value="${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}">
-                            <span class="uip-qty-value">${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}</span>
-                            <button type="button" data-qty-action="increase" aria-label="Tăng số lượng">+</button>
-                          </span>
-                        </td>
-                      </tr>
-                    </c:forEach>
-                  </tbody>
-                </table>
-              </div>
-              <button class="btn btn-outline" type="submit">Cập nhật combo</button>
-            </form>
-          </div>
-
-          <div class="card uip-sec">
-            <h2><span class="uip-n">2</span> Voucher</h2>
-            <form method="post" action="${ctx}/booking/extras" class="uip-inline-form">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="applyVoucher">
-              <input type="text" name="voucherCode" placeholder="Mã voucher (nếu có)" maxlength="30">
-              <button class="btn btn-outline" type="submit">Áp dụng</button>
-            </form>
-            <strong style="display:block;margin-top:18px">VOUCHER CỦA BẠN</strong>
-            <table class="uip-voucher-list">
-              <thead><tr><th>Mã voucher</th><th>Nội dung voucher</th><th>Ngày hết hạn</th></tr></thead>
-              <tbody>
-                <c:forEach var="v" items="${vouchers}">
-                  <tr data-voucher-code="<c:out value='${v.code}'/>">
-                    <td class="uip-voucher-code"><c:out value="${v.code}"/></td>
-                    <td><c:out value="${v.description}"/></td>
-                    <td><c:out value="${v.valid_to_txt}"/></td>
-                  </tr>
-                </c:forEach>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="card uip-sec">
-            <h2><span class="uip-n">3</span> Điểm</h2>
-            <p>Điểm hiện có: <strong>${pointBalance}</strong></p>
-            <form method="post" action="${ctx}/booking/extras" class="uip-inline-form">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="applyPoints">
-              <input id="pointsInput" type="number" name="points" min="0" max="${pointBalance}" value="${booking.pointsUsed}"
-                     placeholder="Nhập điểm">
-              <button class="btn btn-outline" type="submit">Đổi điểm</button>
-            </form>
-            <p>Số tiền được giảm = <span class="uip-point-value" id="pointsDiscountPreview">0</span> VNĐ</p>
-            <p class="uip-hint"><em>Áp voucher sẽ xóa điểm đã dùng, hãy áp voucher trước rồi mới đổi điểm.</em></p>
-            <p style="margin-top:12px">Đã giảm: voucher <strong>${booking.voucherDiscountLabel} VNĐ</strong>,
-               MyPoint <strong>${booking.pointsDiscountLabel} VNĐ</strong> (${booking.pointsUsed} điểm).</p>
-          </div>
         </div>
+      </section>
 
-        <aside class="card uip-summary">
-          <h2>Tóm tắt đơn</h2>
-          <div>Mã đơn: <span class="uip-code"><c:out value="${booking.bookingCode}"/></span></div>
-          <p class="uip-movie">🎬 <strong><c:out value="${booking.movieTitle}"/></strong><br>
-             <c:out value="${booking.roomName}"/> — ${booking.startTimeLabel}<br>
-             Ghế: <strong><c:out value="${booking.seatLabelText}"/></strong></p>
-          <div class="uip-line"><span>Tiền vé</span><span>${booking.ticketTotalLabel} VNĐ</span></div>
-          <div class="uip-line"><span>Tiền combo</span><span>${booking.comboTotalLabel} VNĐ</span></div>
-          <c:if test="${booking.voucherDiscount > 0}">
-            <div class="uip-line"><span>Giảm voucher</span>
-                 <span class="uip-neg">− ${booking.voucherDiscountLabel} VNĐ</span></div>
-          </c:if>
-          <c:if test="${booking.pointsDiscount > 0}">
-            <div class="uip-line"><span>Giảm MyPoint</span>
-                 <span class="uip-neg">− ${booking.pointsDiscountLabel} VNĐ</span></div>
-          </c:if>
-          <div class="uip-total"><span><strong>Tổng phải trả</strong></span>
-               <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNĐ</small></span></div>
-
-          <div class="uip-next uip-nav">
-            <form method="post" action="${ctx}/booking/extras"
-                  onsubmit="return confirm('Quay lại chọn ghế? Ghế đang giữ sẽ được trả lại.');">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="back">
-              <button class="btn btn-outline btn-block" type="submit">← Quay lại</button>
-            </form>
-            <form id="nextForm" method="post" action="${ctx}/booking/extras">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="next">
-              <button class="btn btn-cta btn-block" type="submit">Tiếp tục thanh toán →</button>
-            </form>
+      <section class="card">
+        <div class="card-head"><div class="cluster" style="--gap:12px"><span class="sec-num">1</span><div><h2>Combo bắp nước</h2><p>Không bắt buộc</p></div></div></div>
+        <form method="post" action="${ctx}/booking/extras">
+          <div class="card-body" style="padding-top:6px;padding-bottom:6px">
+            <input type="hidden" name="_csrf" value="${csrf}">
+            <input type="hidden" name="action" value="updateCombos">
+            <c:forEach var="cb" items="${combos}">
+              <div class="combo-row">
+                <c:choose>
+                  <c:when test="${cb.hasImage()}"><img src="<c:out value='${cb.imageUrl}'/>" alt=""></c:when>
+                  <c:otherwise><span class="ph">${ic.popcorn}</span></c:otherwise>
+                </c:choose>
+                <div><strong class="text-ink"><c:out value="${cb.comboName}"/></strong><span class="cell-sub"><c:out value="${cb.description}"/></span></div>
+                <strong class="text-ink money">${cb.priceLabel}</strong>
+                <span class="qty uip-qty-stepper">
+                  <input type="hidden" name="comboId" value="${cb.comboId}">
+                  <button type="button" data-qty-action="decrease" aria-label="Giảm số lượng <c:out value='${cb.comboName}'/>">−</button>
+                  <input type="hidden" name="qty" value="${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}">
+                  <span class="uip-qty-value">${comboQty[cb.comboId] != null ? comboQty[cb.comboId] : 0}</span>
+                  <button type="button" data-qty-action="increase" aria-label="Tăng số lượng <c:out value='${cb.comboName}'/>">+</button>
+                </span>
+              </div>
+            </c:forEach>
           </div>
-        </aside>
-      </div>
+          <div class="card-foot"><button class="btn btn-soft" type="submit">${ic.refresh}Cập nhật combo</button></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div class="cluster" style="--gap:12px"><span class="sec-num">2</span><h2>Voucher</h2></div></div>
+        <div class="card-body">
+          <form method="post" action="${ctx}/booking/extras" class="inline-form">
+            <input type="hidden" name="_csrf" value="${csrf}">
+            <input type="hidden" name="action" value="applyVoucher">
+            <div class="field"><label class="sr-only" for="voucherCode">Mã voucher</label>
+              <div class="input-group">${ic.tag}<input id="voucherCode" type="text" name="voucherCode" placeholder="Nhập mã voucher" maxlength="30"></div></div>
+            <button class="btn btn-primary" type="submit">Áp dụng</button>
+          </form>
+          <c:if test="${not empty vouchers}">
+            <p class="label mt-16 mb-8">Voucher của bạn <span class="muted fw-600 text-xs">(bấm để chọn)</span></p>
+            <div class="table-wrap" style="border:1px solid var(--line);border-radius:var(--r-md)">
+              <table class="table voucher-pick">
+                <thead><tr><th>Mã</th><th>Nội dung</th><th>Hết hạn</th></tr></thead>
+                <tbody>
+                  <c:forEach var="v" items="${vouchers}">
+                    <tr data-voucher-code="<c:out value='${v.code}'/>">
+                      <td><span class="voucher-code"><c:out value="${v.code}"/></span></td>
+                      <td class="text-sm"><c:out value="${v.description}"/></td>
+                      <td class="nowrap muted text-sm"><c:out value="${v.valid_to_txt}"/></td>
+                    </tr>
+                  </c:forEach>
+                </tbody>
+              </table>
+            </div>
+          </c:if>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div class="cluster" style="--gap:12px"><span class="sec-num">3</span><div><h2>Điểm MyPoint</h2><p>Bạn đang có <strong class="text-ink">${pointBalance}</strong> điểm</p></div></div></div>
+        <div class="card-body">
+          <form method="post" action="${ctx}/booking/extras" class="inline-form">
+            <input type="hidden" name="_csrf" value="${csrf}">
+            <input type="hidden" name="action" value="applyPoints">
+            <div class="field"><label class="sr-only" for="pointsInput">Số điểm dùng</label>
+              <input id="pointsInput" type="number" name="points" min="0" max="${pointBalance}" value="${booking.pointsUsed}" placeholder="Nhập số điểm"></div>
+            <button class="btn btn-primary" type="submit">Đổi điểm</button>
+          </form>
+          <p class="mt-8 text-sm">Số tiền được giảm ≈ <strong class="text-success" id="pointsDiscountPreview">0</strong> đ</p>
+          <div class="alert alert-info mt-16">${ic.info}<span>Áp voucher sẽ xóa điểm đã dùng, nên áp voucher trước rồi mới đổi điểm. Đã giảm: voucher <strong>${booking.voucherDiscountLabel} đ</strong>, MyPoint <strong>${booking.pointsDiscountLabel} đ</strong> (${booking.pointsUsed} điểm).</span></div>
+        </div>
+      </section>
     </div>
-  </section>
-</main>
+
+    <aside class="card sticky">
+      <div class="card-head"><div><h2>Tóm tắt đơn</h2><p>Mã đơn <span class="voucher-code"><c:out value="${booking.bookingCode}"/></span></p></div></div>
+      <div class="card-body">
+        <h3 style="font-size:17px"><c:out value="${booking.movieTitle}"/></h3>
+        <div class="movie-meta mt-4"><span><c:out value="${booking.roomName}"/></span><span>${booking.startTimeLabel}</span></div>
+        <p class="mt-8 text-sm">Ghế: <strong class="text-ink"><c:out value="${booking.seatLabelText}"/></strong></p>
+        <hr class="divider" style="margin:16px 0 6px">
+        <div class="kv"><span>Tiền vé</span><strong>${booking.ticketTotalLabel} đ</strong></div>
+        <div class="kv"><span>Tiền combo</span><strong>${booking.comboTotalLabel} đ</strong></div>
+        <c:if test="${booking.voucherDiscount > 0}"><div class="kv"><span>Giảm voucher</span><strong class="text-success">− ${booking.voucherDiscountLabel} đ</strong></div></c:if>
+        <c:if test="${booking.pointsDiscount > 0}"><div class="kv"><span>Giảm MyPoint</span><strong class="text-success">− ${booking.pointsDiscountLabel} đ</strong></div></c:if>
+        <div class="kv total"><span>Tổng phải trả</span><strong>${booking.totalAmountLabel} đ</strong></div>
+      </div>
+      <div class="card-foot" style="display:grid;grid-template-columns:1fr 1.5fr">
+        <form method="post" action="${ctx}/booking/extras" data-confirm="Quay lại chọn ghế? Ghế đang giữ sẽ được trả lại.">
+          <input type="hidden" name="_csrf" value="${csrf}">
+          <input type="hidden" name="action" value="back">
+          <button class="btn btn-block" type="submit">${ic.chevronLeft}Quay lại</button>
+        </form>
+        <form id="nextForm" method="post" action="${ctx}/booking/extras">
+          <input type="hidden" name="_csrf" value="${csrf}">
+          <input type="hidden" name="action" value="next">
+          <button class="btn btn-accent btn-block" type="submit">Thanh toán ${ic.arrowRight}</button>
+        </form>
+      </div>
+    </aside>
+  </div>
+</div>
 
 <div class="pay-notice" id="payNotice" role="dialog" aria-modal="true" aria-labelledby="payNoticeTitle" hidden>
   <div class="pay-notice-box">
-    <h3 id="payNoticeTitle">THÔNG BÁO</h3>
+    <h3 id="payNoticeTitle">Lưu ý trước khi thanh toán</h3>
     <div class="pay-notice-body">
       <p>Chào mừng Quý khách hàng đến với Hệ thống Bán Vé Online của chuỗi Rạp Chiếu Phim CINESTAR CINEMAS!</p>
       <p>Xin cảm ơn và chúc Quý khách hàng có những giây phút xem phim tuyệt vời tại CINESTAR CINEMAS!</p>
@@ -239,25 +184,11 @@
       </ul>
     </div>
     <div class="pay-notice-actions">
-      <button type="button" class="btn btn-outline" id="payNoticeClose">Đóng</button>
-      <button type="button" class="btn btn-cta" id="payNoticeOk">Đồng ý và tiếp tục</button>
+      <button type="button" class="btn" id="payNoticeClose">Đóng</button>
+      <button type="button" class="btn btn-accent" id="payNoticeOk">Đồng ý và tiếp tục</button>
     </div>
   </div>
 </div>
-<style>
-  .pay-notice { position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,.55);
-                display: flex; align-items: center; justify-content: center; padding: 16px; }
-  .pay-notice[hidden] { display: none; }
-  .pay-notice-box { background: #fff; border-radius: 10px; width: 100%; max-width: 760px; max-height: 90vh;
-                    display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
-  .pay-notice-box h3 { margin: 0; padding: 16px 24px; text-align: center; font-size: 20px; color: var(--brand);
-                       border-bottom: 1px solid var(--slate-200); }
-  .pay-notice-body { padding: 16px 24px; overflow-y: auto; font-size: 14.5px; line-height: 1.55; color: var(--slate-700, #334155); }
-  .pay-notice-body p { margin: 0 0 10px; }
-  .pay-notice-body ul { margin: 0 0 6px 20px; padding: 0; }
-  .pay-notice-actions { display: flex; justify-content: center; gap: 12px; padding: 14px 24px;
-                        border-top: 1px solid var(--slate-200); }
-</style>
 <script>
 (function () {
   var form = document.getElementById('nextForm'), box = document.getElementById('payNotice');
@@ -267,15 +198,13 @@
     e.preventDefault();
     box.hidden = false;
     box.querySelector('.pay-notice-body').scrollTop = 0;
+    document.getElementById('payNoticeOk').focus();
   });
   document.getElementById('payNoticeClose').addEventListener('click', function () { box.hidden = true; });
   document.getElementById('payNoticeOk').addEventListener('click', function () { confirmed = true; form.submit(); });
   box.addEventListener('click', function (e) { if (e.target === box) box.hidden = true; });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') box.hidden = true; });
-})();
-</script>
-<script>
-(function () {
+
   document.querySelectorAll('.uip-qty-stepper').forEach(function (stepper) {
     var input = stepper.querySelector('input[name="qty"]');
     var output = stepper.querySelector('.uip-qty-value');
@@ -285,28 +214,20 @@
       var value = parseInt(input.value || '0', 10);
       value += button.dataset.qtyAction === 'increase' ? 1 : -1;
       value = Math.max(0, Math.min(99, value));
-      input.value = value;
-      output.textContent = value;
+      input.value = value; output.textContent = value;
     });
   });
   var voucherInput = document.querySelector('input[name="voucherCode"]');
   document.querySelectorAll('[data-voucher-code]').forEach(function (row) {
-    row.addEventListener('click', function () {
-      if (voucherInput) voucherInput.value = row.dataset.voucherCode;
-    });
+    row.addEventListener('click', function () { if (voucherInput) { voucherInput.value = row.dataset.voucherCode; voucherInput.focus(); } });
   });
   var pointsInput = document.getElementById('pointsInput');
   var pointPreview = document.getElementById('pointsDiscountPreview');
   var pointValue = ${not empty pointConfig ? pointConfig.pointValueVnd : 0};
   function updatePointPreview() {
-    if (pointsInput && pointPreview) {
-      pointPreview.textContent = (Math.max(0, parseInt(pointsInput.value || '0', 10)) * pointValue).toLocaleString('vi-VN');
-    }
+    if (pointsInput && pointPreview) pointPreview.textContent = (Math.max(0, parseInt(pointsInput.value || '0', 10)) * pointValue).toLocaleString('vi-VN');
   }
-  if (pointsInput) {
-    pointsInput.addEventListener('input', updatePointPreview);
-    updatePointPreview();
-  }
+  if (pointsInput) { pointsInput.addEventListener('input', updatePointPreview); updatePointPreview(); }
 })();
 </script>
-<%@ include file="../_footer.jspf" %>
+<%@ include file="../layout/bottom.jspf" %>

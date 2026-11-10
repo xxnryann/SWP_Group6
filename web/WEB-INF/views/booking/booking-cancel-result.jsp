@@ -1,26 +1,20 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Thanh toán không thành công"/>
-<%@ include file="../_header.jspf" %>
-<main>
-  <section class="page">
-    <div class="container">
-      <div class="card" style="max-width:640px;margin:0 auto;text-align:center">
-        <h2>Thanh toán không thành công</h2>
-        <p class="sub">
-          <c:choose>
-            <c:when test="${not empty flashMsg}"><c:out value="${flashMsg}"/></c:when>
-            <c:otherwise>Đơn đặt vé của bạn đã được huỷ và ghế đã được trả lại.</c:otherwise>
-          </c:choose>
-        </p>
-        <div style="margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <a class="btn btn-cta" href="${ctx}/showtimes">Chọn suất chiếu khác</a>
-          <a class="btn btn-outline" href="${ctx}/account/tickets">Lịch sử vé của tôi</a>
-        </div>
-      </div>
+<%@ include file="../layout/top.jspf" %>
+<div class="container container-sm">
+  <div class="card empty" style="margin:40px 0;padding:48px 28px">
+    <div class="empty-icon" style="background:var(--danger-50);color:var(--danger)">${ic.x}</div>
+    <h3>Thanh toán không thành công</h3>
+    <p>
+      <c:choose>
+        <c:when test="${not empty flashMsg}"><c:out value="${flashMsg}"/></c:when>
+        <c:otherwise>Đơn đặt vé của bạn đã được hủy và ghế đã được trả lại.</c:otherwise>
+      </c:choose>
+    </p>
+    <div class="cluster mt-8" style="justify-content:center">
+      <a class="btn btn-primary" href="${ctx}/showtimes">${ic.calendar}Chọn suất chiếu khác</a>
+      <a class="btn" href="${ctx}/account/tickets">${ic.ticket}Vé của tôi</a>
     </div>
-  </section>
-</main>
-<%@ include file="../_footer.jspf" %>
-
-
-
+  </div>
+</div>
+<%@ include file="../layout/bottom.jspf" %>

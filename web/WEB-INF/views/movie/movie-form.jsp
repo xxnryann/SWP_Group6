@@ -1,168 +1,146 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
-    <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-        <c:choose>
-            <c:when test="${rescheduleMovie}">
-                <c:set var="pageTitle" value="Lên lịch chiếu lại" /></c:when>
-            <c:when test="${movie.movieId == 0}">
-                <c:set var="pageTitle" value="Thêm phim" /></c:when>
-            <c:otherwise>
-                <c:set var="pageTitle" value="Sửa phim" /></c:otherwise>
-        </c:choose>
-        <c:set var="escapedCsrf">
-            <c:out value="${csrf}" /></c:set>
-        <c:set var="escapedMovieId">
-            <c:out value="${movie.movieId}" /></c:set>
-        <c:set var="escapedTitle">
-            <c:out value="${movie.title}" /></c:set>
-        <c:set var="escapedOriginalTitle">
-            <c:out value="${movie.originalTitle}" /></c:set>
-        <c:set var="escapedDirector">
-            <c:out value="${movie.director}" /></c:set>
-        <c:set var="escapedMainCast">
-            <c:out value="${movie.mainCast}" /></c:set>
-        <c:set var="escapedDuration">
-            <c:out value="${movie.durationMinutes}" /></c:set>
-        <c:set var="escapedAgeRating">
-            <c:out value="${movie.ageRating}" /></c:set>
-        <c:set var="escapedLanguage">
-            <c:out value="${movie.spokenLanguage}" /></c:set>
-        <c:set var="escapedCountry">
-            <c:out value="${movie.country}" /></c:set>
-        <c:set var="escapedReleaseDate">
-            <c:out value="${movie.releaseDate}" /></c:set>
-        <c:set var="escapedEndDate">
-            <c:out value="${movie.endDate}" /></c:set>
-        <c:set var="escapedPosterUrl">
-            <c:out value="${posterExternalUrl}" /></c:set>
-        <c:set var="escapedTrailerUrl">
-            <c:out value="${movie.trailerUrl}" /></c:set>
-        <c:set var="posterSrc">
-            <c:out value="${movie.posterDisplayUrl}" /></c:set>
-        <%@ include file="../_header.jspf" %>
+﻿<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:choose>
+  <c:when test="${rescheduleMovie}"><c:set var="pageTitle" value="Lên lịch chiếu lại"/></c:when>
+  <c:when test="${movie.movieId == 0}"><c:set var="pageTitle" value="Thêm phim"/></c:when>
+  <c:otherwise><c:set var="pageTitle" value="Sửa phim"/></c:otherwise>
+</c:choose>
+<c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
+<c:set var="escapedMovieId"><c:out value="${movie.movieId}"/></c:set>
+<c:set var="escapedTitle"><c:out value="${movie.title}"/></c:set>
+<c:set var="escapedOriginalTitle"><c:out value="${movie.originalTitle}"/></c:set>
+<c:set var="escapedDirector"><c:out value="${movie.director}"/></c:set>
+<c:set var="escapedMainCast"><c:out value="${movie.mainCast}"/></c:set>
+<c:set var="escapedDuration"><c:out value="${movie.durationMinutes}"/></c:set>
+<c:set var="escapedLanguage"><c:out value="${movie.spokenLanguage}"/></c:set>
+<c:set var="escapedCountry"><c:out value="${movie.country}"/></c:set>
+<c:set var="escapedReleaseDate"><c:out value="${movie.releaseDate}"/></c:set>
+<c:set var="escapedEndDate"><c:out value="${movie.endDate}"/></c:set>
+<c:set var="escapedPosterUrl"><c:out value="${posterExternalUrl}"/></c:set>
+<c:set var="escapedTrailerUrl"><c:out value="${movie.trailerUrl}"/></c:set>
+<%@ include file="../layout/top.jspf" %>
+<style>
+  .genre-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .genre-checkboxes .check { padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); font-size: 14px; }
+  .genre-checkboxes .check:has(input:checked) { border-color: var(--brand-500); background: var(--brand-50); color: var(--brand-700); }
+  .genre-checkboxes .check input { margin-top: 1px; }
+  .section-title { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding-top: 6px; color: var(--ink); font-size: 15px; font-weight: 700; }
+  .section-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+</style>
+<div class="page-head">
+  <div>
+    <a class="btn btn-ghost btn-sm mb-8" href="${ctx}/manage/movies">${ic.chevronLeft}Danh sách phim</a>
+    <h1><c:out value="${pageTitle}"/></h1>
+    <p>
+      <c:choose>
+        <c:when test="${rescheduleMovie}"><strong class="text-ink"><c:out value="${movie.title}"/></strong> — chọn ngày bắt đầu, ngày kết thúc cho đợt chiếu lại.</c:when>
+        <c:otherwise>Các trường có dấu <span class="req">*</span> là bắt buộc. Ngày kết thúc mặc định sau một tháng kể từ ngày khởi chiếu.</c:otherwise>
+      </c:choose>
+    </p>
+  </div>
+</div>
 
-            <main class="container page">
-                <section class="movie-page-heading">
-                    <div>
-                        <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
-                        <h1>
-                            <c:out value="${pageTitle}" />
-                        </h1>
-                        <p class="sub">
-                            <c:choose>
-                                <c:when test="${rescheduleMovie}"><strong><c:out value="${movie.title}"/></strong> — chọn ngày bắt đầu, ngày kết thúc và trạng thái cho đợt chiếu lại.</c:when>
-                                <c:otherwise>Ngày kết thúc mặc định sau một tháng kể từ ngày khởi chiếu; bạn có thể chỉnh sửa ngày này.</c:otherwise>
-                            </c:choose>
-                        </p>
-                    </div>
-                </section>
-                <form id="movie-form" class="panel movie-form" action="${ctx}/manage/movies" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
-                    <input type="hidden" name="action" value="save">
-                    <input type="hidden" name="id" value="${escapedMovieId}">
-                    <c:if test="${rescheduleMovie}"><input type="hidden" name="reschedule" value="true"></c:if>
+<form id="movie-form" class="card" action="${ctx}/manage/movies" method="post" enctype="multipart/form-data">
+  <div class="card-body form-grid">
+    <input type="hidden" name="_csrf" value="${escapedCsrf}">
+    <input type="hidden" name="action" value="save">
+    <input type="hidden" name="id" value="${escapedMovieId}">
+    <c:if test="${rescheduleMovie}"><input type="hidden" name="reschedule" value="true"></c:if>
 
-                    <div class="movie-form-grid">
-                        <c:if test="${not rescheduleMovie}">
-                            <div class="field">
-                                <label for="title">Tên phim *</label>
-                                <input id="title" name="title" type="text" maxlength="200" required value="${escapedTitle}">
-                                <small class="field-hint">(Bắt buộc, từ 2 ký tự, không chỉ nhập khoảng trắng.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="originalTitle">Tên gốc</label>
-                                <input id="originalTitle" name="originalTitle" type="text" maxlength="200" value="${escapedOriginalTitle}">
-                                <small class="field-hint">(Tùy chọn, tối đa 200 ký tự.)</small>
-                            </div>
-                            <div class="field movie-form-full">
-                                <label for="synopsis">Tóm tắt nội dung</label>
-                                <textarea id="synopsis" name="synopsis" rows="5" maxlength="2000"><c:out value="${movie.synopsis}"/></textarea>
-                                <small class="field-hint">(Tùy chọn, tối đa 2.000 ký tự.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="director">Đạo diễn</label>
-                                <input id="director" name="director" type="text" maxlength="100" pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedDirector}">
-                                <small class="field-hint">(Tùy chọn, tối đa 100 ký tự; chỉ chữ, số và dấu câu cơ bản.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="mainCast">Diễn viên chính</label>
-                                <input id="mainCast" name="mainCast" type="text" maxlength="500" pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedMainCast}">
-                                <small class="field-hint">(Tùy chọn, tối đa 500 ký tự; ngăn cách nhiều diễn viên bằng dấu phẩy.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="durationMinutes">Thời lượng (phút) *</label>
-                                <input id="durationMinutes" name="durationMinutes" type="number" min="1" max="150" required value="${escapedDuration}">
-                                <small class="field-hint">(Bắt buộc, số nguyên từ 1 đến 150 phút.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="ageRating">Phân loại tuổi *</label>
-                                <select id="ageRating" name="ageRating" required>
+    <c:if test="${not rescheduleMovie}">
+      <div class="section-title">Thông tin chung</div>
+      <div class="field">
+        <label for="title">Tên phim<span class="req">*</span></label>
+        <input id="title" name="title" type="text" maxlength="200" required value="${escapedTitle}">
+        <span class="hint">Từ 2 ký tự, không chỉ nhập khoảng trắng.</span>
+      </div>
+      <div class="field">
+        <label for="originalTitle">Tên gốc</label>
+        <input id="originalTitle" name="originalTitle" type="text" maxlength="200" value="${escapedOriginalTitle}">
+        <span class="hint">Tối đa 200 ký tự.</span>
+      </div>
+      <div class="field full">
+        <label for="synopsis">Tóm tắt nội dung</label>
+        <textarea id="synopsis" name="synopsis" rows="4" maxlength="2000"><c:out value="${movie.synopsis}"/></textarea>
+        <span class="hint">Tối đa 2.000 ký tự.</span>
+      </div>
+      <div class="field">
+        <label for="director">Đạo diễn</label>
+        <input id="director" name="director" type="text" maxlength="100" pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedDirector}">
+        <span class="hint">Chỉ chữ, số và dấu câu cơ bản.</span>
+      </div>
+      <div class="field">
+        <label for="mainCast">Diễn viên chính</label>
+        <input id="mainCast" name="mainCast" type="text" maxlength="500" pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedMainCast}">
+        <span class="hint">Ngăn cách nhiều diễn viên bằng dấu phẩy.</span>
+      </div>
+      <div class="field">
+        <label for="durationMinutes">Thời lượng (phút)<span class="req">*</span></label>
+        <input id="durationMinutes" name="durationMinutes" type="number" min="1" max="150" required value="${escapedDuration}">
+        <span class="hint">Số nguyên từ 1 đến 150.</span>
+      </div>
+      <div class="field">
+        <label for="ageRating">Phân loại tuổi<span class="req">*</span></label>
+        <select id="ageRating" name="ageRating" required>
           <option value="">Chọn phân loại</option>
-          <option value="P" <c:if test="${movie.ageRating == 'P'}">selected</c:if>>P - Phổ biến</option>
-          <option value="K" <c:if test="${movie.ageRating == 'K'}">selected</c:if>>K - Có người giám hộ</option>
-          <option value="T13" <c:if test="${movie.ageRating == 'T13'}">selected</c:if>>T13 - Từ 13 tuổi</option>
-          <option value="T16" <c:if test="${movie.ageRating == 'T16'}">selected</c:if>>T16 - Từ 16 tuổi</option>
-          <option value="T18" <c:if test="${movie.ageRating == 'T18'}">selected</c:if>>T18 - Từ 18 tuổi</option>
+          <option value="P" ${movie.ageRating == 'P' ? 'selected' : ''}>P - Phổ biến</option>
+          <option value="K" ${movie.ageRating == 'K' ? 'selected' : ''}>K - Có người giám hộ</option>
+          <option value="T13" ${movie.ageRating == 'T13' ? 'selected' : ''}>T13 - Từ 13 tuổi</option>
+          <option value="T16" ${movie.ageRating == 'T16' ? 'selected' : ''}>T16 - Từ 16 tuổi</option>
+          <option value="T18" ${movie.ageRating == 'T18' ? 'selected' : ''}>T18 - Từ 18 tuổi</option>
         </select>
-                                <small class="field-hint">(Bắt buộc, chọn P, K, T13, T16 hoặc T18.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="spokenLanguage">Ngôn ngữ</label>
-                                <input id="spokenLanguage" name="spokenLanguage" type="text" maxlength="50" required pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedLanguage}">
-                                <small class="field-hint">(Bắt buộc, tối đa 50 ký tự; ví dụ: Tiếng Việt, English.)</small>
-                            </div>
-                            <div class="field">
-                                <label for="country">Quốc gia</label>
-                                <input id="country" name="country" type="text" maxlength="50" required pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedCountry}">
-                                <small class="field-hint">(Bắt buộc, tối đa 50 ký tự; ví dụ: Việt Nam, Hoa Kỳ.)</small>
-                            </div>
-                        </c:if>
-                        <div class="field">
-                            <label for="releaseDate"><c:out value="${rescheduleMovie ? 'Ngày bắt đầu chiếu lại *' : 'Ngày khởi chiếu *'}"/></label>
-                            <input id="releaseDate" name="releaseDate" type="date" required value="${escapedReleaseDate}" <c:if test="${not empty minReleaseDate}">min="${minReleaseDate}"</c:if>>
-                            <small class="field-hint">(Bắt buộc; phim mới không được chọn ngày trong quá khứ.)</small>
-                        </div>
-                        <div class="field">
-                            <label for="endDate"><c:out value="${rescheduleMovie ? 'Ngày kết thúc đợt chiếu lại *' : 'Ngày kết thúc'}"/></label>
-                            <input id="endDate" name="endDate" type="date" value="${escapedEndDate}" <c:if test="${rescheduleMovie}">required</c:if>>
-                            <small class="field-hint">(Tùy chọn; nếu nhập thì phải từ ngày khởi chiếu trở đi.)</small>
-                        </div>
-                        <c:if test="${not rescheduleMovie}">
-                            <div class="field movie-form-full">
-                                <span class="field-label">Thể loại *</span>
-                                <small class="field-hint">(Bắt buộc chọn ít nhất một thể loại. Nếu chưa có, hãy <a href="${ctx}/manage/genres">tạo thể loại</a> trước.)</small>
-                                <div class="genre-checkboxes">
-                                    <c:forEach var="genre" items="${genres}">
-                                        <c:set var="escapedGenreId">
-                                            <c:out value="${genre.genreId}" /></c:set>
-                                        <label class="check">
-              <input type="checkbox" name="genreIds" value="${escapedGenreId}" <c:if test="${genre.selected}">checked</c:if>>
-              <span><c:out value="${genre.genreName}"/></span>
-            </label>
-                                    </c:forEach>
-                                </div>
-                            </div>
-                            <div class="field movie-form-full">
-                                <label for="posterUrl">Link poster (tùy chọn)</label>
-                                <input id="posterUrl" name="posterUrl" type="url" maxlength="500" value="${escapedPosterUrl}" placeholder="https://...">
-                                <small class="field-hint">Dán link ảnh trực tiếp (JPG, PNG, WEBP...).</small>
-                            </div>
-                        <div class="field movie-form-full">
-                            <label for="trailerUrl">Link YouTube trailer (tùy chọn)</label>
-                            <input id="trailerUrl" name="trailerUrl" type="url" maxlength="500" value="${escapedTrailerUrl}" placeholder="https://www.youtube.com/watch?v=...">
-                            <small class="field-hint">Dán link YouTube để xem trước trực tiếp; hỗ trợ link youtube.com, youtu.be và Shorts.</small>
-                            <div id="trailer-url-preview" class="movie-embed movie-form-trailer-preview" hidden>
-                                <iframe id="trailer-url-frame" title="Xem trước trailer" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                            </div>
-                        </div>
-                        </c:if>
-                    </div>
-                    <div class="movie-form-actions">
-                        <a class="btn btn-outline" href="${ctx}/manage/movies">Hủy</a>
-                        <button class="btn btn-primary" type="submit">Lưu phim</button>
-                    </div>
-                </form>
-            </main>
-            <script src="${ctx}/assets/js/movie-form.js" defer></script>
+      </div>
+      <div class="field">
+        <label for="spokenLanguage">Ngôn ngữ<span class="req">*</span></label>
+        <input id="spokenLanguage" name="spokenLanguage" type="text" maxlength="50" required pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedLanguage}" placeholder="Tiếng Việt">
+      </div>
+      <div class="field">
+        <label for="country">Quốc gia<span class="req">*</span></label>
+        <input id="country" name="country" type="text" maxlength="50" required pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedCountry}" placeholder="Việt Nam">
+      </div>
+      <div class="section-title">Lịch chiếu</div>
+    </c:if>
 
+    <div class="field">
+      <label for="releaseDate"><c:out value="${rescheduleMovie ? 'Ngày bắt đầu chiếu lại' : 'Ngày khởi chiếu'}"/><span class="req">*</span></label>
+      <input id="releaseDate" name="releaseDate" type="date" required value="${escapedReleaseDate}" <c:if test="${not empty minReleaseDate}">min="${minReleaseDate}"</c:if>>
+      <span class="hint">Phim mới không được chọn ngày trong quá khứ.</span>
+    </div>
+    <div class="field">
+      <label for="endDate"><c:out value="${rescheduleMovie ? 'Ngày kết thúc đợt chiếu lại' : 'Ngày kết thúc'}"/><c:if test="${rescheduleMovie}"><span class="req">*</span></c:if></label>
+      <input id="endDate" name="endDate" type="date" value="${escapedEndDate}" <c:if test="${rescheduleMovie}">required</c:if>>
+      <span class="hint">Nếu nhập thì phải từ ngày khởi chiếu trở đi.</span>
+    </div>
 
-            <%@ include file="../_footer.jspf" %>
+    <c:if test="${not rescheduleMovie}">
+      <div class="field full">
+        <span class="label">Thể loại<span class="req">*</span></span>
+        <span class="hint">Chọn ít nhất một thể loại. Chưa có thì <a href="${ctx}/manage/genres">tạo thể loại</a> trước.</span>
+        <div class="genre-checkboxes">
+          <c:forEach var="genre" items="${genres}">
+            <label class="check"><input type="checkbox" name="genreIds" value="<c:out value='${genre.genreId}'/>" ${genre.selected ? 'checked' : ''}><span><c:out value="${genre.genreName}"/></span></label>
+          </c:forEach>
+        </div>
+      </div>
+      <div class="section-title">Hình ảnh &amp; trailer</div>
+      <div class="field full">
+        <label for="posterUrl">Link poster</label>
+        <div class="input-group">${ic.image}<input id="posterUrl" name="posterUrl" type="url" maxlength="500" value="${escapedPosterUrl}" placeholder="https://..."></div>
+        <span class="hint">Dán link ảnh trực tiếp (JPG, PNG, WEBP...).</span>
+      </div>
+      <div class="field full">
+        <label for="trailerUrl">Link YouTube trailer</label>
+        <div class="input-group">${ic.play}<input id="trailerUrl" name="trailerUrl" type="url" maxlength="500" value="${escapedTrailerUrl}" placeholder="https://www.youtube.com/watch?v=..."></div>
+        <span class="hint">Hỗ trợ link youtube.com, youtu.be và Shorts. Xem trước hiện ngay bên dưới.</span>
+        <div id="trailer-url-preview" class="video-frame mt-8" style="max-width:560px" hidden>
+          <iframe id="trailer-url-frame" title="Xem trước trailer" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+    </c:if>
+  </div>
+  <div class="card-foot">
+    <a class="btn" href="${ctx}/manage/movies">Hủy</a>
+    <button class="btn btn-primary" type="submit">${ic.check}Lưu phim</button>
+  </div>
+</form>
+<script src="${ctx}/assets/js/movie-form.js" defer></script>
+<%@ include file="../layout/bottom.jspf" %>

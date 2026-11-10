@@ -132,7 +132,7 @@ foreach ($path in @('/', '/movies', '/showtimes', '/pricing', '/news', '/login',
 }
 
 Write-Host "`n=== CUSTOMER ===" -ForegroundColor Cyan
-$customer = New-LoggedSession -Email 'khach1@gmail.com'
+$customer = New-LoggedSession -Email 'dungcaohung2410+khach1@gmail.com'
 foreach ($path in @('/dashboard/customer', '/account/profile', '/account/tickets', '/account/points', '/account/password')) {
     Test-Page -Url ($BaseUrl + $path) -Session $customer -Label 'CUSTOMER'
 }
@@ -171,7 +171,7 @@ Test-Status -Url ($BaseUrl + '/dashboard/manager') -Expected 200 -Session $admin
 
 Write-Host "`n=== DASHBOARD: DANG NHAP THEO VAI TRO ===" -ForegroundColor Cyan
 $dashboardByRole = @{
-    'khach1@gmail.com'    = '/dashboard/customer'
+    'dungcaohung2410+khach1@gmail.com'    = '/dashboard/customer'
     'staff@cinema.vn'     = '/dashboard/staff'
     'manager@cinema.vn'   = '/dashboard/manager'
     'admin@cinema.vn'     = '/dashboard/admin'
