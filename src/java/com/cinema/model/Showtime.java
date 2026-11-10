@@ -112,6 +112,15 @@ public class Showtime {
                 ? "Scheduled" : "Pending";
     }
 
+    /** Suất đã tới giờ bắt đầu (đang chiếu hoặc đã chiếu xong) — không được sửa/xóa nữa. */
+    public boolean isStarted() {
+        return startsAt != null && !startsAt.isAfter(LocalDateTime.now());
+    }
+
+    public boolean getStarted() {
+        return isStarted();
+    }
+
     public String getEndDisplay() {
         return startsAt == null ? "" : startsAt.plusMinutes(movieDurationMinutes).format(DISPLAY_FORMAT);
     }

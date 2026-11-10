@@ -14,8 +14,7 @@ import java.sql.SQLException;
  *
  * <ul>
  *   <li>GET /account/tickets → danh sách vé (mỗi vé 1 thẻ 1 mã QR)</li>
- *   <li>POST /account/tickets (action=cancel) → huỷ 1 vé còn hiệu lực</li>
- *   <li>POST /account/tickets (action=cancelCombo) → huỷ toàn bộ combo của 1 đơn</li>
+ *   <li>Khách không tự huỷ vé/combo đã thanh toán; chỉ Manager huỷ suất chiếu mới hoàn MyPoint + voucher bù trừ.</li>
  * </ul>
  */
 @WebServlet("/account/tickets")
@@ -68,43 +67,11 @@ public class TicketHistoryServlet extends BaseServlet {
         req.setCharacterEncoding("UTF-8");
 
         String action = com.cinema.util.Validator.trim(req.getParameter("action"));
-        if ("cancel".equals(action)) {
-            doCancel(req, resp);
-            return;
-        }
-        if ("cancelCombo".equals(action)) {
-            doCancelCombo(req, resp);
-            return;
+        if ("cancel".equals(action) || "cancelCombo".equals(action)) {
+            // Rule: vé/combo đã thanh toán không thể hủy do lỗi từ phía khách hàng.
+            // Chỉ Manager hủy suất chiếu (sự cố) mới hoàn MyPoint + voucher bù trừ.
+            flash(req, "error", "Vé và sản phẩm đã thanh toán thành công không thể hủy/đổi trả/hoàn tiền.");
         }
         resp.sendRedirect(req.getContextPath() + "/account/tickets");
-    }
-
-    private void doCancelCombo(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        int bookingId;
-        try {
-            bookingId = Integer.parseInt(com.cinema.util.Validator.trim(req.getParameter("bookingId")));
-        } catch (NumberFormatException e) {
-            bookingId = 0;
-        }
-        TicketService.CancelResult result = service.cancelCombo(bookingId, currentUser(req).getEmail());
-        flash(req, result.isSuccess() ? "success" : "error", result.getMessage());
-        resp.sendRedirect(req.getContextPath() + "/account/tickets?tab=combos&page=" + Math.max(requestedPage(req), 1));
-    }
-
-    /** Huỷ một vé. Vé hết hạn / đã dùng / của người khác → bị từ chối. */
-    private void doCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        int ticketId;
-        try {
-            ticketId = Integer.parseInt(com.cinema.util.Validator.trim(req.getParameter("ticketId")));
-        } catch (NumberFormatException e) {
-            ticketId = 0;
-        }
-
-        TicketService.CancelResult result = service.cancelTicket(
-                ticketId, currentUser(req).getEmail(),
-                com.cinema.util.Validator.trim(req.getParameter("reason")));
-
-        flash(req, result.isSuccess() ? "success" : "error", result.getMessage());
-        resp.sendRedirect(req.getContextPath() + "/account/tickets?page=" + Math.max(requestedPage(req), 1));
     }
 }

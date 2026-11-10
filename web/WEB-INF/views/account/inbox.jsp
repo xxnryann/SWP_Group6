@@ -113,7 +113,8 @@
                   <p>Bạn đã đặt vé thành công phim <strong><c:out value="${n.title}"/></strong>.</p>
                 </c:when>
                 <c:when test="${n.notif_type == 'MovieCancelled'}">
-                  <p>Phim <strong><c:out value="${n.title}"/></strong> bạn đã đặt bị hủy. Tiền vé sẽ được hoàn lại cho bạn.</p>
+                  <p>Phim <strong><c:out value="${n.title}"/></strong> bạn đã đặt bị hủy. <c:out value="${n.body}"/>
+                     Xem tại <a href="${ctx}/account/points">Điểm MyPoint</a>.</p>
                 </c:when>
                 <c:when test="${n.notif_type == 'ReviewReminder'}">
                   <p>Bạn vừa xem xong phim <strong><c:out value="${n.title}"/></strong>.</p>

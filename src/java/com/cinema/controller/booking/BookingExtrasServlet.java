@@ -156,7 +156,7 @@ public class BookingExtrasServlet extends BaseServlet {
         req.setAttribute("pointConfig", pointConfig);
         req.setAttribute("pointBalance", balance);
         try {
-            req.setAttribute("vouchers", PromotionsServlet.activeVouchers());
+            req.setAttribute("vouchers", PromotionsServlet.activeVouchersFor(accountId));
         } catch (java.sql.SQLException e) {
             req.setAttribute("vouchers", java.util.Collections.emptyList());
         }

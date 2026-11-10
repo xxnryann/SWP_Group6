@@ -83,7 +83,7 @@ public class ReviewModerationDAO {
 
     public List<Map<String, Object>> findNowShowingMovieSummaries() throws SQLException {
         return Rows.query("SELECT m.movie_id, m.title, COUNT(r.review_id) AS review_count, "
-                + "AVG(CAST(r.rating AS DECIMAL(4,2))) AS average_rating "
+                + "CAST(AVG(CAST(r.rating AS DECIMAL(4,2))) AS DECIMAL(3,1)) AS average_rating "
                 + "FROM dbo.Movie m JOIN dbo.Review r ON r.movie_id = m.movie_id "
                 + "WHERE m.status = 'NowShowing' "
                 + "GROUP BY m.movie_id, m.title ORDER BY m.title");

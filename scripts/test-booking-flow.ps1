@@ -133,8 +133,8 @@ $qrResp = Invoke-WebRequest -Uri "$BaseUrl$qrUrl" -WebSession $session -UseBasic
 Assert-Test ($qrResp.Headers['Content-Type'] -like 'image/png*') 'QR tra ve anh PNG'
 Assert-Test ($qrResp.RawContentLength -gt 200) "QR co noi dung that (bytes: $($qrResp.RawContentLength))"
 
-# Ve moi phai co nut "Huy ve" (con hieu luc) -> chuc nang huy ve dang bat
-$cancelForms = ([regex]::Matches($tickets.Content, 'name="ticketId"')).Count
-Assert-Test ($cancelForms -ge 1) "ve moi hien thi nut 'Huy ve' (thuoc: $cancelForms)"
+# Rule: khach khong tu huy ve da thanh toan -> trang ve khong co form huy ve
+$cancelForms = ([regex]::Matches($tickets.Content, 'name="action" value="cancel"')).Count
+Assert-Test ($cancelForms -eq 0) "ve da thanh toan khong co nut 'Huy ve' (thuoc: $cancelForms)"
 
 exit (Write-Result)

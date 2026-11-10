@@ -15,25 +15,29 @@
       <a class="btn btn-outline" href="${ctx}/manage/genres">Quản lý thể loại</a>
     </div>
   </section>
-  <form class="panel movie-manage-filters" method="get" action="${ctx}/manage/movies">
-    <label>Trạng thái
-      <select name="status">
+  <form class="panel filter-panel" method="get" action="${ctx}/manage/movies">
+    <div class="field">
+      <label for="f-status">Trạng thái</label>
+      <select id="f-status" name="status">
         <option value="">Tất cả</option>
         <option value="NowShowing" ${selectedStatus == 'NowShowing' ? 'selected' : ''}>Đang chiếu</option>
         <option value="Upcoming" ${selectedStatus == 'Upcoming' ? 'selected' : ''}>Sắp chiếu</option>
         <option value="Stopped" ${selectedStatus == 'Stopped' ? 'selected' : ''}>Ngừng chiếu</option>
       </select>
-    </label>
-    <label>Thể loại
-      <select name="genre">
+    </div>
+    <div class="field">
+      <label for="f-genre">Thể loại</label>
+      <select id="f-genre" name="genre">
         <option value="">Tất cả</option>
         <c:forEach var="genre" items="${genres}">
           <option value="${genre.genreId}" ${selectedGenre == genre.genreId ? 'selected' : ''}><c:out value="${genre.genreName}"/></option>
         </c:forEach>
       </select>
-    </label>
-    <button class="btn btn-primary btn-small" type="submit">Lọc</button>
-    <a class="btn btn-outline btn-small" href="${ctx}/manage/movies">Xóa lọc</a>
+    </div>
+    <div class="filter-panel-actions">
+      <button class="btn btn-primary" type="submit">Lọc</button>
+      <c:if test="${not empty param.status or not empty param.genre}"><a class="btn btn-outline" href="${ctx}/manage/movies">Xóa lọc</a></c:if>
+    </div>
   </form>
   <div class="dash-layout">
     <div>

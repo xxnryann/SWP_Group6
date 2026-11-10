@@ -130,17 +130,7 @@
                     <c:choose>
                       <c:when test="${o.comboCancelledOnly}"><p class="tk-note">Combo đã được huỷ. Vé của đơn vẫn còn hiệu lực.</p></c:when>
                       <c:when test="${o.cancelled}"><p class="tk-note">Đơn đã được huỷ nên combo không còn hiệu lực.</p></c:when>
-                      <c:when test="${o.canCancel}">
-                        <form class="tk-actions" method="post" action="${pageContext.request.contextPath}/account/tickets"
-                              onsubmit="return confirm('Huỷ toàn bộ combo của đơn này? Vé của đơn vẫn được giữ nguyên.');">
-                          <input type="hidden" name="_csrf" value="${csrf}">
-                          <input type="hidden" name="action" value="cancelCombo">
-                          <input type="hidden" name="bookingId" value="${o.bookingId}">
-                          <input type="hidden" name="page" value="${page}">
-                          <button class="tk-cancel" type="submit">Huỷ combo</button>
-                        </form>
-                      </c:when>
-                      <c:otherwise><p class="tk-note">Đã quá thời hạn huỷ combo: phải huỷ trước giờ chiếu ít nhất ${cancelHours} giờ.</p></c:otherwise>
+                      <c:otherwise><p class="tk-note">Combo đã thanh toán không thể hủy/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị combo được hoàn thành MyPoint.</p></c:otherwise>
                     </c:choose>
                   </article>
                 </c:forEach>
@@ -192,21 +182,8 @@
 
                 <div class="tk-actions">
                   <c:choose>
-                    <c:when test="${t.canCancel}">
-                      <form method="post" action="${pageContext.request.contextPath}/account/tickets"
-                            onsubmit="return confirm('${empty t.pairLabel ? 'Huỷ vé '.concat(t.seatDisplay) : 'Đây là ghế đôi: sẽ huỷ cả cặp '.concat(t.seatDisplay).concat(' và ').concat(t.pairLabel)}? Tiền vé sẽ được hoàn lại.');">
-                        <input type="hidden" name="_csrf" value="${csrf}">
-                        <input type="hidden" name="action" value="cancel">
-                        <input type="hidden" name="ticketId" value="${t.ticketId}">
-                        <input type="hidden" name="page" value="${page}">
-                        <button class="tk-cancel" type="submit">Huỷ vé</button>
-                        <c:if test="${not empty t.pairLabel}"><p class="tk-note">Ghế đôi bán theo cặp: huỷ vé này sẽ huỷ luôn ghế <c:out value="${t.pairLabel}"/>.</p></c:if>
-                      </form>
-                    </c:when>
                     <c:when test="${t.active}">
-                      <%-- Còn hiệu lực nhưng đã quá thời hạn huỷ -> không cho huỷ --%>
-                      <button class="tk-cancel" type="button" disabled>Huỷ vé</button>
-                      <p class="tk-note">Đã quá thời hạn huỷ vé: phải huỷ trước giờ chiếu ít nhất ${cancelHours} giờ. Vui lòng liên hệ rạp để được hỗ trợ.</p>
+                      <p class="tk-note">Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher bù trừ.</p>
                     </c:when>
                     <c:when test="${t.expired}">
                       <p class="tk-note">Vé đã quá thời gian chiếu nên không còn hiệu lực.</p>

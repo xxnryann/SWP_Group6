@@ -5,13 +5,15 @@
 <main class="page"><div class="container">
   <section class="panel">
     <h2>Hủy phim &amp; hoàn tiền: <c:out value="${movie.title}"/></h2>
-    <p class="sub">Hành động này không thể hoàn tác. Các suất chiếu tương lai sẽ bị hủy, vé chưa sử dụng được hoàn tiền, MyPoint/voucher được hoàn lại và phim chuyển sang trạng thái ngừng chiếu.</p>
+    <p class="sub">Hành động này không thể hoàn tác. Các suất chiếu tương lai sẽ bị hủy; giá trị mỗi đơn đã bán (tiền vé, combo và MyPoint đã dùng, không tính voucher) được quy đổi thành MyPoint, mỗi đơn nhận thêm 1 voucher bù trừ dành riêng cho khách (giảm 50.000đ, hạn 30 ngày); lượt voucher đã dùng được trả lại và phim chuyển sang trạng thái ngừng chiếu.</p>
 
     <div class="admin-kpis">
       <div class="admin-kpi"><span>Suất chiếu bị hủy</span><strong><c:out value="${cancelShowtimes.size()}"/></strong></div>
-      <div class="admin-kpi"><span>Vé đã bán sẽ hoàn tiền</span><strong><c:out value="${cancelTickets}"/></strong></div>
-      <div class="admin-kpi"><span>Khách hàng nhận hoàn tiền</span><strong><c:out value="${cancelSummary.customerCount}"/></strong></div>
-      <div class="admin-kpi"><span>Tổng tiền hoàn dự kiến</span><strong><c:out value="${cancelSummary.refundAmount}"/> đ</strong></div>
+      <div class="admin-kpi"><span>Vé đã bán bị hủy</span><strong><c:out value="${cancelTickets}"/></strong></div>
+      <div class="admin-kpi"><span>Khách hàng nhận hoàn điểm</span><strong><c:out value="${cancelSummary.customerCount}"/></strong></div>
+      <div class="admin-kpi"><span>MyPoint hoàn dự kiến</span><strong><c:out value="${cancelSummary.refundPoints}"/> điểm</strong></div>
+      <div class="admin-kpi"><span>Giá trị quy đổi</span><strong><c:out value="${cancelSummary.refundAmount}"/> đ</strong></div>
+      <div class="admin-kpi"><span>Voucher bù trừ sẽ phát</span><strong><c:out value="${cancelSummary.compVouchers}"/></strong></div>
     </div>
 
     <c:choose>
@@ -32,7 +34,7 @@
     </c:choose>
 
     <form method="post" action="${ctx}/manage/movies" class="movie-cancel-actions"
-          onsubmit="return confirm('Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundAmount} đồng cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?');">
+          onsubmit="return confirm('Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundPoints} điểm MyPoint + ${cancelSummary.compVouchers} voucher bù trừ cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?');">
       <input type="hidden" name="_csrf" value="${csrf}">
       <input type="hidden" name="action" value="cancelMovie">
       <input type="hidden" name="id" value="${movie.movieId}">

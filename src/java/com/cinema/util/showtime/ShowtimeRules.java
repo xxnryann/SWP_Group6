@@ -9,10 +9,10 @@ import java.time.LocalTime;
  */
 public final class ShowtimeRules {
     
-    /** Giờ mở cửa rạp mặc định (9h00). */
+    /** Giờ sớm nhất được bắt đầu suất chiếu (07h00). */
     public static final LocalTime OPEN_TIME = LocalTime.of(7, 0);
-    
-    /** Giờ đóng cửa rạp mặc định (23h00, khớp script CSDL và lịch mẫu). */
+
+    /** Giờ đóng cửa: phim của suất cuối phải kết thúc trước 23h55. */
     public static final LocalTime CLOSE_TIME = LocalTime.of(23, 55);
     
     /** Thời gian từ khi bộ phim kết thúc đến khi suất tiếp theo bắt đầu (15 phút). */

@@ -295,40 +295,6 @@ public class TicketDAO {
     }
 
     /**
-     * Huỷ MỘT vé đã thanh toán (UC19 / BF-09).
-     *
-     * <p>Gọi {@code sp_CancelTicket} — procedure kiểm tra ownership (vé phải
-     * thuộc đơn của khách đang đăng nhập), trạng thái vé, thời hạn huỷ, rồi
-     * hoàn tiền cho đúng 1 vé và trả lại MyPoint/voucher khi đơn không còn
-     * vé hiệu lực nào.</p>
-     *
-     * @param ticketId  vé cần huỷ
-     * @param accountId account_id của khách đang đăng nhập
-     * @param reason    lý do huỷ (tuỳ chọn)
-     * @throws SQLException message tiếng Việt từ procedure khi nghiệp vụ không cho phép
-     */
-    public void cancelTicket(int ticketId, int accountId, String reason) throws SQLException {
-        String sql = "{call sp_CancelTicket(?, ?, ?)}";
-        try (Connection c = DBContext.getConnection();
-             CallableStatement cs = c.prepareCall(sql)) {
-            cs.setInt(1, ticketId);
-            cs.setInt(2, accountId);
-            cs.setString(3, reason == null ? null : reason);
-            cs.execute();
-        }
-    }
-
-    /** Huỷ toàn bộ combo của một đơn; {@code sp_CancelCombo} kiểm tra chủ đơn, thời hạn và hoàn tiền. */
-    public void cancelCombo(int bookingId, int accountId) throws SQLException {
-        try (Connection c = DBContext.getConnection();
-             CallableStatement cs = c.prepareCall("{call sp_CancelCombo(?, ?)}")) {
-            cs.setInt(1, bookingId);
-            cs.setInt(2, accountId);
-            cs.execute();
-        }
-    }
-
-    /**
      * Lịch sử biến động MyPoint của khách.
      *
      * @param email email của người dùng đang đăng nhập
@@ -338,6 +304,8 @@ public class TicketDAO {
         String sql = "SELECT p.txn_id, p.points, p.created_at, "
                 + "CASE WHEN p.txn_type = 'Earn' AND p.booking_id IS NULL THEN N'Thưởng đánh giá phim' "
                 + "WHEN p.txn_type = 'Earn' THEN N'Tích điểm đơn ' WHEN p.txn_type = 'Redeem' THEN N'Dùng điểm cho đơn ' "
+                + "WHEN p.txn_type = 'Adjust' AND p.points > 0 AND p.booking_id IS NOT NULL THEN N'Hoàn điểm đơn bị hủy ' "
+                + "WHEN p.txn_type = 'Adjust' AND p.points < 0 AND p.booking_id IS NOT NULL THEN N'Thu hồi điểm đã tích của đơn ' "
                 + "ELSE N'Điều chỉnh điểm' END + COALESCE(b.booking_code, '') AS reason "
                 + "FROM MyPointTransaction p "
                 + "JOIN Account a ON a.account_id = p.customer_id "

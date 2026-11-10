@@ -132,6 +132,7 @@ Mở `http://localhost:<cổng-Tomcat>/<context>/` (mặc định cổng 8080 v�
 - **VNPAY 2.1.0** — HMAC-SHA512, so sánh hash constant-time, `vnp_Amount` ×100, `vnp_OrderInfo` không dấu.
 - **Cổng thật (mặc định)** — `vnpay.paymentUrl` trỏ tới `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`. Dùng khoá Sandbox do VNPAY cấp ở `vnpay.partnerCode` (mã TmnCode) và `vnpay.secretKey` (chuỗi bí mật tạo checksum).
 - **Cổng giả lập nội bộ (fallback)** — bật bằng `vnpay.mockGateway=true`, hoặc tự động khi `vnpay.secretKey` rỗng. Trả về đúng tập tham số + chữ ký hợp lệ nên luồng test tự động được y hệt cổng thật, không tốn phí Sandbox.
+- **Hủy & hoàn** — khách **không** tự hủy vé/combo đã thanh toán (lỗi từ phía khách không được hoàn). Chỉ khi Manager hủy phim/suất chiếu do sự cố (`sp_CancelMovie`), giá trị mỗi đơn = tiền vé + bắp nước + MyPoint đã dùng (không tính phần giảm voucher) được quy ra MyPoint theo giá trị 1 điểm, và khách nhận 1 **voucher bù trừ cá nhân** `BU-<mã đơn>` (giảm 50.000đ, 1 lần, hạn 30 ngày; `Voucher.owner_customer_id` — chỉ chủ đơn áp được). DB cũ: chạy `database/migrate_cancel_compensation.sql` rồi đồng bộ procedure.
 - **Idempotency** — Return URL và webhook cùng gọi `OnlineBookingService.confirmGatewayPayment`. Đơn đã `Paid` trả về thành công nhưng **không phát vé lần 2**.
 - **Đối soát** — số tiền cổng báo lệch tổng tiền đơn ⇒ không cấp vé, ghi cảnh báo.
 - **Webhook trả** `RspCode`: `00` đã cập nhật · `97` chữ ký sai (không retry) · `99` lỗi hệ thống (VNPAY retry tối đa 10 lần).
@@ -179,21 +180,21 @@ Lịch chiếu được xếp theo từng phòng, không còn 5 khung giờ cố
 
 | Quy tắc | Giá trị | Nơi enforce |
 |---|---|---|
-| Giờ mở cửa / đóng cửa | 09:00 – 23:00 | `ShowtimeRules.OPEN_TIME` / `CLOSE_TIME`, `save()` + `insertBatch()` |
+| Giờ mở cửa / đóng cửa | 09:00 – 23:00 | `ShowtimeRules.OPEN_TIME` / `CLOSE_TIME`, `ShowtimeDAO.save()` |
 | Giờ kết thúc suất chiếu | `giờ bắt đầu + thời lượng phim` | `ShowtimeDAO.save`, trigger `trg_Showtime_SyncDaoCompatibility` |
 | Khoảng cách giữa 2 suất cùng phòng | 15 phút (dọn phòng) | `ShowtimeRules.TURNOVER_MINUTES`, `validateMovieAndRoomConflict` |
 | Bước chọn giờ bắt đầu | mốc tròn 15 phút | `ShowtimeRules.isOnGrid`, `findAvailableStartTimes` |
 
-Một phim có thể có nhiều suất ở **các phòng khác nhau với giờ khác nhau** — `ShowtimePlanner` xoay vòng phim và lệch chỉ số giữa các phòng (`index = (roomIndex + step) % movies.size()`) nên khách có nhiều lựa chọn hơn.
+Một phim có thể có nhiều suất ở **các phòng khác nhau với giờ khác nhau**; Manager tự thêm từng suất.
 
 `dbo.TimeSlot` giờ là **khung giá** (Sáng 00:00–12:00, Chiều 12:00–18:00, Tối 18:00–23:59) chứ không phải suất chiếu; `slot_id` của một suất được suy ra từ giờ bắt đầu nên `fn_GetTicketPrice` và `dbo.TicketPrice` giữ nguyên cách tính.
 
-Manager tạo lịch theo một trong hai cách:
+Manager quản lý lịch chiếu:
 
 | Cách | URL | Mô tả |
 |---|---|---|
-| Sinh lịch tự động | `/manage/showtimes?action=generate` | Chọn ngày + giờ mở cửa + phòng + phim; hệ thống xếp liên tục đến giờ đóng cửa |
 | Thêm/sửa từng suất | `/manage/showtimes?action=new` | Nhập từng suất, giờ bắt đầu chọn từ danh sách mốc 15 phút còn trống |
+| Danh sách | `/manage/showtimes` | Chỉ hiện suất chưa tới giờ chiếu (tính cả giờ, phút); suất đã bắt đầu bị ẩn và bị chặn Sửa/Xóa ở server |
 
 ### 2.7. Tối ưu truy vấn
 
@@ -202,7 +203,6 @@ Manager tạo lịch theo một trong hai cách:
 | Gộp 3 truy vấn chi tiết đơn (booking + vé + combo) vào **1 connection** | `BookingDAO.findOnlineBooking(Connection, int)` | Tiết kiệm 2 round-trip mỗi lần mở màn hình combo/thanh toán |
 | Tra mã đơn → đọc chi tiết trong cùng connection | `BookingDAO.findOnlineBookingByCode` | Return URL / IPN chỉ cần 1 connection thay vì 2 |
 | Gộp 4 truy vấn kiểm tra lịch chiếu (phim + phòng + lịch cùng ngày) vào **1 connection** | `ShowtimeDAO.findAvailableStartTimes` | Giảm 4 round-trip xuống 1 khi mở form lập lịch |
-| Xếp lịch tự động dùng hàm thuần (không JDBC) + ghi cả ngày trong **1 transaction** | `ShowtimePlanner.plan`, `ShowtimeDAO.insertBatch` | Sinh lịch cho nhiều phòng chỉ tốn 1 connection; hoặc ghi hết, hoặc không ghi gì |
 | Cache cấu hình MyPoint **có TTL 5 phút** | `OnlineBookingService.getPointConfig()` | Bỏ 1 vòng truy vấn DB mỗi lần mở màn hình combo, vẫn tự nhận cấu hình mới khi Manager sửa |
 | Cache cấu hình VNPAY trong bộ nhớ | `VNPayProperties.load()` | Không dựng lại map cấu hình ở mỗi request |
 | Throttle 2 giây cho `sp_ReleaseExpiredHolds` | `OnlineBookingService.releaseExpiredHolds()` | Không dồn 3 lệnh `UPDATE` thừa mỗi lần bấm chuột |
@@ -235,7 +235,7 @@ src/java/com/cinema/
 └── util/                  # DBContext, EmailService, Validator, RequestParams…
     ├── movie/             # Upload media, kiểm tra dữ liệu phim
     ├── room/              # Quy tắc phòng chiếu
-    └── showtime/          # ShowtimeRules (15 phút) + ShowtimePlanner (sinh lịch)
+    └── showtime/          # ShowtimeRules (15 phút)
 
 web/
 ├── WEB-INF/views/         # JSP + JSTL (không scriptlet); gốc chỉ có phần dùng chung (_header, _footer, error...)
@@ -273,7 +273,6 @@ scripts/                   # Build, deploy, test (PowerShell)
 | `/admin/users`, `/admin/rooms`, `/admin/seats` | Admin | Quản lý người dùng, phòng, sơ đồ ghế |
 | `/staff/counter`, `/staff/combo` | Staff | Bán vé / combo tại quầy |
 | `/manage/movies`, `/manage/showtimes` | Manager | Quản lý phim, lịch chiếu |
-| `/manage/showtimes?action=generate` | Manager | Sinh lịch chiếu tự động cho một ngày |
 | `/manager/news` | Manager | Quản lý tin tức |
 
 ### 4.1. Dashboard theo vai trò
@@ -319,7 +318,7 @@ Menu theo vai trò (mỗi role **chỉ** thấy chức năng của role đó):
 | Vai trò | Menu dọc |
 |---|---|
 | `ADMIN` | Tổng quan · Người dùng · Phòng chiếu · Sơ đồ ghế · Báo cáo vận hành |
-| `MANAGER` | Tổng quan · Quản lý phim · Lịch chiếu · Sinh lịch tự động · Quản lý tin tức |
+| `MANAGER` | Tổng quan · Quản lý phim · Lịch chiếu · Quản lý tin tức |
 | `STAFF` | Tổng quan · Bán vé tại quầy · Quản lý combo |
 | `CUSTOMER` | Tổng quan · Lịch chiếu · Phim đang chiếu · Lịch sử vé · Điểm MyPoint · Thông tin cá nhân · Đổi mật khẩu · **Bảng giá vé** · **Tin tức** |
 

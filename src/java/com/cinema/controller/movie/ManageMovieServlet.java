@@ -159,8 +159,8 @@ public class ManageMovieServlet extends BaseServlet {
                 }
                 movieDAO.cancelMovie(parseId(request.getParameter("id")), managerId);
                 movieDAO.recordCancellationReason(parseId(request.getParameter("id")), managerId, reason);
-                flash(request, "success", "Đã hủy phim: các suất sắp chiếu bị hủy, vé đã bán được hoàn tiền "
-                        + "và khách hàng sẽ nhận email thông báo.");
+                flash(request, "success", "Đã hủy phim: các suất sắp chiếu bị hủy, giá trị vé đã bán được hoàn "
+                        + "thành MyPoint kèm voucher bù trừ cho mỗi đơn, khách hàng sẽ nhận email thông báo.");
             } else if ("stop".equals(action)) {
                 int id = parseId(request.getParameter("id"));
                 movieDAO.stop(id);

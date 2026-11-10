@@ -3,11 +3,9 @@ package com.cinema.controller.showtime;
 import com.cinema.controller.BaseServlet;
 import com.cinema.dao.MovieDAO;
 import com.cinema.dao.ShowtimeDAO;
-import com.cinema.model.Movie;
 import com.cinema.model.Showtime;
 import com.cinema.model.User;
 import com.cinema.util.movie.MovieAccess;
-import com.cinema.util.showtime.ShowtimePlanner;
 import com.cinema.util.showtime.ShowtimeRules;
 import com.cinema.util.showtime.ShowtimeUtil;
 import jakarta.servlet.ServletException;
@@ -107,7 +105,8 @@ public class ManageShowtimesServlet extends BaseServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if (!isManager(request)) {
-            if ("available-times".equals(request.getParameter("action"))) {
+            if ("available-times".equals(request.getParameter("action"))
+                    || "room-schedule".equals(request.getParameter("action"))) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
                         "Phiên đăng nhập quản lý đã hết hạn. Vui lòng đăng nhập lại.");
                 return;
@@ -123,8 +122,8 @@ public class ManageShowtimesServlet extends BaseServlet {
             writeAvailableTimes(request, response);
             return;
         }
-        if ("generate".equals(request.getParameter("action"))) {
-            showGenerateForm(request, response);
+        if ("room-schedule".equals(request.getParameter("action"))) {
+            writeRoomSchedule(request, response);
             return;
         }
         try {
@@ -133,6 +132,11 @@ public class ManageShowtimesServlet extends BaseServlet {
                 Showtime showtime = idValue == null ? new Showtime() : showtimeDAO.findById(ShowtimeUtil.parseId(idValue));
                 if (showtime == null) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+                if (showtime.getShowtimeId() > 0 && showtime.isStarted()) {
+                    flash(request, "error", "Suất chiếu đã bắt đầu hoặc đã diễn ra, không thể sửa.");
+                    response.sendRedirect(request.getContextPath() + "/manage/showtimes");
                     return;
                 }
                 if (showtime.getShowtimeId() > 0 && showtime.isLockedByPurchasedTickets()) {
@@ -150,7 +154,14 @@ public class ManageShowtimesServlet extends BaseServlet {
                 forward(request, response, "showtime/showtime-form");
                 return;
             }
-            request.setAttribute("showtimes", filterShowtimes(request, showtimeDAO.findAllForManagement()));
+            // Chỉ hiện suất chưa tới giờ chiếu: suất đã bắt đầu không còn sửa/xóa được nên ẩn khỏi danh sách.
+            List<Showtime> upcoming = new ArrayList<>();
+            for (Showtime s : showtimeDAO.findAllForManagement()) {
+                if (!s.isStarted()) {
+                    upcoming.add(s);
+                }
+            }
+            request.setAttribute("showtimes", filterShowtimes(request, upcoming));
             request.setAttribute("pageTitle", "Quản lý lịch chiếu");
             forward(request, response, "showtime/manage-showtimes");
         } catch (IllegalArgumentException e) {
@@ -179,30 +190,52 @@ public class ManageShowtimesServlet extends BaseServlet {
         try {
             String action = request.getParameter("action");
             if ("save".equals(action)) {
-                String[] rooms = request.getParameterValues("roomName");
-                String[] times = request.getParameterValues("showTime");
-                if (rooms == null || rooms.length == 0 || times == null || times.length == 0) {
-                    throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng và một giờ chiếu.");
+                // Mỗi giờ gắn với đúng phòng của nó: slot = "Tên phòng|HH:mm" (giờ gợi ý + giờ nhập tay theo phòng).
+                java.util.LinkedHashSet<String> slots = new java.util.LinkedHashSet<>();
+                for (String raw : request.getParameterValues("slot") == null
+                        ? new String[0] : request.getParameterValues("slot")) {
+                    if (raw != null && raw.contains("|") && !raw.trim().endsWith("|")) {
+                        slots.add(raw.trim());
+                    }
+                }
+                if (slots.isEmpty()) {
+                    throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng và một giờ chiếu cho phòng đó.");
                 }
                 String id = request.getParameter("id");
                 if (id != null && !id.isBlank()) {
-                    showtimeDAO.save(readShowtime(request, rooms[0], times[0], id));
+                    if (slots.size() != 1) {
+                        throw new IllegalArgumentException("Khi sửa, chỉ chọn một phòng và một giờ chiếu.");
+                    }
+                    String[] slot = slots.iterator().next().split("\\|", 2);
+                    requireNotStarted(ShowtimeUtil.parseId(id), "sửa");
+                    showtimeDAO.save(readShowtime(request, slot[0], slot[1], id));
                     flash(request, "success", "Đã lưu suất chiếu.");
                 } else {
                     int created = 0;
-                    for (String room : rooms) {
-                        for (String time : times) {
-                            showtimeDAO.save(readShowtime(request, room, time, null));
+                    List<String> failures = new ArrayList<>();
+                    for (String value : slots) {
+                        String[] slot = value.split("\\|", 2);
+                        try {
+                            showtimeDAO.save(readShowtime(request, slot[0], slot[1], null));
                             created++;
+                        } catch (IllegalArgumentException | SQLException e) {
+                            String reason = e instanceof SQLException
+                                    && (((SQLException) e).getErrorCode() == 2601 || ((SQLException) e).getErrorCode() == 2627)
+                                    ? "Phòng đã có suất chiếu bắt đầu đúng giờ này." : e.getMessage();
+                            failures.add(slot[0] + " " + slot[1] + ": " + reason);
                         }
                     }
-                    flash(request, "success", "Đã tạo " + created + " suất chiếu.");
+                    if (failures.isEmpty()) {
+                        flash(request, "success", "Đã tạo " + created + " suất chiếu.");
+                    } else {
+                        flash(request, "error", (created > 0 ? "Đã tạo " + created
+                                + " suất chiếu. " : "") + "Không tạo được: " + String.join("; ", failures));
+                    }
                 }
-            } else if ("generate".equals(action)) {
-                int created = generateSchedule(request);
-                flash(request, "success", "Đã tạo " + created + " suất chiếu.");
             } else if ("delete".equals(action)) {
-                showtimeDAO.delete(ShowtimeUtil.parseId(request.getParameter("id")));
+                int deleteId = ShowtimeUtil.parseId(request.getParameter("id"));
+                requireNotStarted(deleteId, "xóa");
+                showtimeDAO.delete(deleteId);
                 flash(request, "success", "Đã xóa suất chiếu.");
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -211,7 +244,7 @@ public class ManageShowtimesServlet extends BaseServlet {
         } catch (IllegalArgumentException | DateTimeParseException e) {
             flash(request, "error", e.getMessage());
         } catch (SQLException e) {
-            getServletContext().log("Unable to save, generate or delete showtime.", e);
+            getServletContext().log("Unable to save or delete showtime.", e);
             // 2601 / 2627: vi phạm khoá duy nhất (phòng đã có suất bắt đầu đúng giờ này) -> báo bằng tiếng Việt thay vì lỗi SQL.
             String reason = e.getErrorCode() == 2601 || e.getErrorCode() == 2627
                     ? "Phòng đã có suất chiếu bắt đầu đúng giờ này." : e.getMessage();
@@ -247,100 +280,89 @@ public class ManageShowtimesServlet extends BaseServlet {
         return showtime;
     }
 
-    /** Mở form sinh lịch tự động cho một ngày. */
-    private void showGenerateForm(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        try {
-            LocalDate defaultDate = LocalDate.now().plusDays(1);
-            String dateValue = request.getParameter("date");
-            if (dateValue != null && !dateValue.isBlank()) {
-                defaultDate = LocalDate.parse(dateValue);
-            }
-            request.setAttribute("rooms", showtimeDAO.findActiveRoomNames());
-            request.setAttribute("movies", movieDAO.findAllForDate(defaultDate));
-            request.setAttribute("defaultDate", defaultDate);
-            request.setAttribute("todayDate", LocalDate.now());
-            request.setAttribute("openTime", ShowtimeRules.OPEN_TIME);
-            request.setAttribute("closeTime", ShowtimeRules.CLOSE_TIME);
-            request.setAttribute("turnoverMinutes", ShowtimeRules.TURNOVER_MINUTES);
-            request.setAttribute("pageTitle", "Sinh lịch chiếu tự động");
-            forward(request, response, "showtime/showtime-generate");
-        } catch (DateTimeParseException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Ngày không hợp lệ.");
-        } catch (SQLException e) {
-            getServletContext().log("Unable to load showtime generator form.", e);
-            flash(request, "error", "Không thể tải dữ liệu lịch chiếu: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/manage/showtimes");
+    /** Chặn sửa/xóa suất đã bắt đầu (tính theo cả giờ, phút) — chỉ suất trong tương lai mới được thay đổi. */
+    private void requireNotStarted(int showtimeId, String verb) throws SQLException {
+        Showtime existing = showtimeDAO.findById(showtimeId);
+        if (existing == null) {
+            throw new IllegalArgumentException("Không tìm thấy suất chiếu.");
+        }
+        if (existing.isStarted()) {
+            throw new IllegalArgumentException("Suất chiếu đã bắt đầu hoặc đã diễn ra, không thể " + verb + ".");
         }
     }
 
     /**
-     * Sinh lịch chiếu tự động cho ngày được chọn.
-     *
-     * <p>Mỗi phòng được xếp suất liên tục: suất sau bắt đầu 15 phút sau khi
-     * suất trước kết thúc, phim xoay vòn và lệch nhau giữa các phòng nên cùng
-     * một phim xuất hiện ở nhiều phòng với các giờ khác nhau.</p>
+     * Lịch các phòng trong một ngày (JSON) để form thêm/sửa suất chiếu vẽ timeline:
+     * {"open":"07:00","close":"23:55","rooms":[{"room":"Phòng 1","shows":[{"id":1,"title":"...",
+     * "start":"09:15","end":"10:55","slotEnd":"11:10"}]}]}. slotEnd = kết thúc phim + dọn phòng.
      */
-    private int generateSchedule(HttpServletRequest request) throws SQLException {
-        LocalDate date = LocalDate.parse(ShowtimeUtil.requiredText(
-                request.getParameter("showDate"), "Ngày chiếu không hợp lệ.", 10));
-        if (date.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày chiếu không được nằm trong quá khứ.");
+    private void writeRoomSchedule(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        LocalDate date = parseDate(request.getParameter("date"));
+        if (date == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Ngày chiếu không hợp lệ.");
+            return;
         }
-        LocalTime openTime = ShowtimeRules.OPEN_TIME;
-        String openValue = request.getParameter("openTime");
-        if (openValue != null && !openValue.isBlank()) {
-            openTime = LocalTime.parse(openValue);
-            if (openTime.isBefore(ShowtimeRules.OPEN_TIME) || openTime.isAfter(ShowtimeRules.CLOSE_TIME)) {
-                throw new IllegalArgumentException("Giờ mở cửa phải nằm trong khoảng "
-                        + ShowtimeRules.OPEN_TIME + " – " + ShowtimeRules.CLOSE_TIME + ".");
+        try {
+            java.util.Map<String, StringBuilder> byRoom = new java.util.LinkedHashMap<>();
+            for (String room : showtimeDAO.findActiveRoomNames()) {
+                byRoom.put(room, new StringBuilder());
             }
-        }
-
-        List<String> rooms = readSelectedValues(request, "roomNames");
-        if (rooms.isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng chiếu.");
-        }
-        List<Integer> movieIds = new ArrayList<>();
-        for (String value : readSelectedValues(request, "movieIds")) {
-            movieIds.add(ShowtimeUtil.parseId(value));
-        }
-        if (movieIds.isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng chọn ít nhất một phim.");
-        }
-
-        List<Movie> available = movieDAO.findAllForDate(date);
-        List<Movie> selected = new ArrayList<>();
-        for (Movie movie : available) {
-            if (movieIds.contains(movie.getMovieId())) {
-                selected.add(movie);
+            java.time.format.DateTimeFormatter hm = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+            for (Showtime s : showtimeDAO.findScheduleForDate(date)) {
+                StringBuilder shows = byRoom.computeIfAbsent(s.getRoomName(), k -> new StringBuilder());
+                if (shows.length() > 0) {
+                    shows.append(',');
+                }
+                LocalDateTime start = s.getStartsAt();
+                shows.append("{\"id\":").append(s.getShowtimeId())
+                        .append(",\"title\":").append(json(s.getMovieTitle()))
+                        .append(",\"start\":\"").append(start.format(hm))
+                        .append("\",\"end\":\"").append(s.getEndTimeOnly())
+                        .append("\",\"slotEnd\":\"").append(s.getSlotEndTimeOnly())
+                        .append("\",\"tickets\":").append(s.getPurchasedTicketCount()).append('}');
             }
+            StringBuilder out = new StringBuilder("{\"open\":\"").append(ShowtimeRules.OPEN_TIME)
+                    .append("\",\"close\":\"").append(ShowtimeRules.CLOSE_TIME).append("\",\"rooms\":[");
+            boolean first = true;
+            for (java.util.Map.Entry<String, StringBuilder> e : byRoom.entrySet()) {
+                if (!first) {
+                    out.append(',');
+                }
+                first = false;
+                out.append("{\"room\":").append(json(e.getKey())).append(",\"shows\":[").append(e.getValue()).append("]}");
+            }
+            out.append("]}");
+            response.setContentType("application/json;charset=UTF-8");
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            response.getWriter().write(out.toString());
+        } catch (SQLException e) {
+            getServletContext().log("Unable to load room schedule.", e);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải lịch phòng.");
         }
-        if (selected.isEmpty()) {
-            throw new IllegalArgumentException("Không có phim nào đang phát hành phù hợp với ngày đã chọn.");
-        }
-
-        List<Showtime> planned = ShowtimePlanner.plan(date, openTime, rooms, selected,
-                showtimeDAO.findOccupiedSlots(date));
-        if (planned.isEmpty()) {
-            throw new IllegalArgumentException("Không thể xếp lịch: các phòng đã kín suất trong ngày.");
-        }
-        return showtimeDAO.insertBatch(planned);
     }
 
-    /** Đọc các giá trị đã chọn của một nhóm checkbox. */
-    private List<String> readSelectedValues(HttpServletRequest request, String name) {
-        String[] raw = request.getParameterValues(name);
-        List<String> values = new ArrayList<>();
-        if (raw == null) {
-            return values;
+    /** Chuỗi JSON có escape ký tự đặc biệt. */
+    private static String json(String value) {
+        if (value == null) {
+            return "null";
         }
-        for (String value : raw) {
-            if (value != null && !value.isBlank()) {
-                values.add(value.trim());
+        StringBuilder sb = new StringBuilder("\"");
+        for (char ch : value.toCharArray()) {
+            switch (ch) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                default:
+                    if (ch < 0x20 || ch == '<' || ch == '>' || ch == '&') {
+                        sb.append(String.format("\\u%04x", (int) ch));
+                    } else {
+                        sb.append(ch);
+                    }
             }
         }
-        return values;
+        return sb.append('"').toString();
     }
 
     private void writeAvailableTimes(HttpServletRequest request, HttpServletResponse response)

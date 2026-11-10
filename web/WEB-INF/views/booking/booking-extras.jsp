@@ -148,7 +148,8 @@
               <tbody>
                 <c:forEach var="v" items="${vouchers}">
                   <tr data-voucher-code="<c:out value='${v.code}'/>">
-                    <td class="uip-voucher-code"><c:out value="${v.code}"/></td>
+                    <td class="uip-voucher-code"><c:out value="${v.code}"/>
+                      <c:if test="${v.is_personal == 1}"><br><small style="color:#92400e;font-family:inherit">Dành riêng cho bạn</small></c:if></td>
                     <td><c:out value="${v.description}"/></td>
                     <td><c:out value="${v.valid_to_txt}"/></td>
                   </tr>
@@ -220,7 +221,7 @@
       <p>Xin cảm ơn và chúc Quý khách hàng có những giây phút xem phim tuyệt vời tại CINESTAR CINEMAS!</p>
       <p><strong>Sau đây là một số lưu ý trước khi thanh toán trực tuyến:</strong></p>
       <p>1. Thẻ phải được kích hoạt chức năng thanh toán trực tuyến, và có đủ hạn mức/ số dư để thanh toán. Quý khách cần nhập chính xác thông tin thẻ (tên chủ thẻ, số thẻ, ngày hết hạn, số CVC, OTP,...).</p>
-      <p>2. Vé và hàng hóa đã thanh toán thành công không thể hủy/đổi trả/hoàn tiền vì bất kỳ lý do gì. CineStar Cinemas chỉ thực hiện hoàn tiền trong trường hợp thẻ của Quý khách đã bị trừ tiền nhưng hệ thống của CineStar không ghi nhận việc đặt vé/đơn hàng của Quý khách, và Quý khách không nhận được xác nhận đặt vé/đơn hàng thành công.</p>
+      <p>2. <strong>Vé xem phim và sản phẩm đã thanh toán thành công không thể hủy/đổi trả/hoàn tiền vì bất kỳ lý do gì do lỗi từ phía của khách hàng.</strong> Ngoài trường hợp suất chiếu bị hủy do sự cố (mục 7), CineStar Cinemas chỉ thực hiện hoàn tiền trong trường hợp thẻ của Quý khách đã bị trừ tiền nhưng hệ thống của CineStar không ghi nhận việc đặt vé/đơn hàng của Quý khách, và Quý khách không nhận được xác nhận đặt vé/đơn hàng thành công.</p>
       <p>3. Trong vòng 30 phút kể từ khi thanh toán thành công, CineStar Cinemas sẽ gửi Quý khách mã xác nhận thông tin vé/đơn hàng qua email của Quý khách. Nếu Quý khách cần hỗ trợ hay thắc mắc, khiếu nại về xác nhận mã vé/đơn hàng thì vui lòng phản hồi về Fanpage Facebook CineStar Cinemas trong vòng 60 phút kể từ khi thanh toán vé thành công. Sau khoảng thời gian trên, CineStar Cinemas sẽ không chấp nhận giải quyết bất kỳ khiếu nại nào.</p>
       <p>4. CineStar Cinemas không chịu trách nhiệm trong trường hợp thông tin địa chỉ email, số điện thoại Quý khách nhập không chính xác dẫn đến không nhận được thư xác nhận. Vui lòng kiểm tra kỹ các thông tin này trước khi thực hiện thanh toán. CineStar Cinemas không hỗ trợ xử lý và không chịu trách nhiệm trong trường hợp đã gửi thư xác nhận mã vé/đơn hàng đến địa chỉ email của Quý khách nhưng vì một lý do nào đó mà Quý khách không thể đến xem phim.</p>
       <p>5. Vui lòng kiểm tra thông tin xác nhận vé cẩn thận và ghi nhớ mã đặt vé/đơn hàng. Khi đến nhận vé/hàng hóa tại Quầy vé của CineStar Cinemas, Quý khách cũng cần mang theo giấy tờ tùy thân như Căn cước công dân/Chứng minh nhân dân, Thẻ học sinh, Thẻ sinh viên hoặc hộ chiếu.</p>
@@ -229,14 +230,7 @@
       <p>Giờ chiếu phim cho trẻ em dưới 13 tuổi tại tất cả các cụm rạp CineStar Cinemas kết thúc trước 22 giờ.</p>
       <p>Giờ chiếu phim cho trẻ em dưới 16 tuổi tại tất cả các cụm rạp CineStar Cinemas kết thúc trước 23 giờ.</p>
       <p>Lưu ý, Ban Quản Lý tại các cụm rạp chiếu phim CineStar Cinemas có quyền kiểm tra và từ chối yêu cầu xem phim của Quý khách hàng nếu Quý khách hàng không tuân thủ quy định về độ tuổi xem phim.</p>
-      <p>7. Vì một số sự cố kỹ thuật bất khả kháng, suất chiếu có thể bị huỷ để đảm bảo an toàn tối đa cho khách hàng, CineStar Cinemas sẽ thực hiện hoàn trả số tiền giao dịch về tài khoản mà Quý khách đã thực hiện mua vé. CineStar Cinemas sẽ liên hệ với Quý khách qua các thông tin liên hệ trong mục Thông tin thành viên để thông báo và xác nhận.</p>
-      <p>Sau khi đã xác nhận, tùy theo từng loại tài khoản mà Quý khách sử dụng và tuỳ theo chính sách của các ngân hàng mà việc hoàn tiền sẽ có thời gian khác nhau:</p>
-      <ul>
-        <li>Thẻ quốc tế: trong vòng 30 ngày làm việc</li>
-        <li>Thẻ nội địa: trong vòng 7 ngày làm việc</li>
-        <li>Ứng dụng di động: 1-2 ngày làm việc</li>
-        <li>Ví điện tử: 7-14 ngày làm việc</li>
-      </ul>
+      <p>7. Vì một số sự cố kỹ thuật bất khả kháng, suất chiếu có thể bị huỷ để đảm bảo an toàn tối đa cho khách hàng. Khi đó toàn bộ giá trị đơn (tiền vé, bắp nước và MyPoint đã dùng; không tính phần giảm từ voucher) được hoàn thành <strong>điểm MyPoint</strong> vào tài khoản của Quý khách, kèm một <strong>voucher bù trừ</strong> dành riêng cho Quý khách. CineStar Cinemas sẽ thông báo qua Hộp thư và email trong mục Thông tin thành viên.</p>
     </div>
     <div class="pay-notice-actions">
       <button type="button" class="btn btn-outline" id="payNoticeClose">Đóng</button>

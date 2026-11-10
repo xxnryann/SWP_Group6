@@ -12,7 +12,6 @@
     </div>
     <div class="movie-actions movie-actions-row">
       <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">Thêm suất chiếu</a>
-      <a class="btn btn-soft" href="${ctx}/manage/showtimes?action=generate">Sinh lịch tự động</a>
     </div>
   </section>
   <div class="dash-layout">
@@ -64,12 +63,21 @@
             </td>
             <td><c:out value="${showtime.roomName}"/></td>
             <td><c:choose>
+              <c:when test="${showtime.managementStatus != 'Cancelled' and showtime.started}">Đang chiếu</c:when>
               <c:when test="${showtime.managementStatus == 'Scheduled'}">Đang mở</c:when>
               <c:when test="${showtime.managementStatus == 'Pending'}">Chờ</c:when>
               <c:when test="${showtime.managementStatus == 'Maintenance'}">Bảo trì</c:when>
               <c:otherwise>Đã hủy</c:otherwise>
             </c:choose></td>
             <td class="movie-actions">
+              <c:choose>
+                <c:when test="${showtime.started}">
+                  <button class="btn btn-soft btn-small" type="button" disabled
+                          title="Suất chiếu đã bắt đầu, không thể sửa hoặc xóa">Sửa</button>
+                  <button class="btn btn-danger btn-small" type="button" disabled
+                          title="Suất chiếu đã bắt đầu, không thể sửa hoặc xóa">Xóa</button>
+                </c:when>
+                <c:otherwise>
               <c:choose>
                 <c:when test="${showtime.lockedByPurchasedTickets}">
                   <button class="btn btn-soft btn-small" type="button" disabled
@@ -83,10 +91,12 @@
                 <input type="hidden" name="id" value="${escapedId}">
                 <button class="btn btn-danger btn-small" type="submit">Xóa</button>
               </form>
+                </c:otherwise>
+              </c:choose>
             </td>
           </tr>
         </c:forEach>
-        <c:if test="${empty showtimes}"><tr><td colspan="6"><c:choose><c:when test="${isFiltered}">Không có suất chiếu nào khớp bộ lọc.</c:when><c:otherwise>Chưa có suất chiếu. Hãy thêm suất chiếu đầu tiên.</c:otherwise></c:choose></td></tr></c:if>
+        <c:if test="${empty showtimes}"><tr><td colspan="6"><c:choose><c:when test="${isFiltered}">Không có suất chiếu nào khớp bộ lọc.</c:when><c:otherwise>Không có suất chiếu sắp tới. Hãy thêm suất chiếu mới.</c:otherwise></c:choose></td></tr></c:if>
       </tbody>
     </table>
   </div>

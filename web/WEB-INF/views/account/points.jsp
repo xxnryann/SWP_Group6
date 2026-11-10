@@ -11,6 +11,7 @@
   <div class="account-grid">
     <section class="panel">
       <h2>Điểm MyPoint</h2>
+      <p class="sub">Vé đã thanh toán không thể hủy/hoàn tiền do lỗi từ phía khách hàng; chỉ khi rạp hủy suất chiếu do sự cố, giá trị đơn mới được hoàn thành MyPoint kèm voucher bù trừ.</p>
       <p class="sub">Số điểm hiện có: <strong><c:out value="${points}"/></strong></p>
       <c:if test="${not empty pointConfig}">
         <div class="panel" style="margin:18px 0 24px;background:var(--slate-50)">
@@ -22,6 +23,9 @@
             <li>Quy đổi: 1 điểm = <strong><fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> VNĐ</strong>.</li>
             <li>Cách dùng: nhập điểm ở bước thanh toán khi đặt vé; voucher áp trước, điểm áp sau trên số tiền còn lại,
               dùng được toàn bộ điểm đang có.</li>
+            <li>Hoàn điểm khi suất chiếu bị hủy do sự cố: số điểm hoàn = (tiền vé + bắp nước + giá trị MyPoint đã dùng − phần giảm voucher)
+              ÷ <fmt:formatNumber value="${pointConfig.pointValueVnd}" groupingUsed="true"/> VNĐ, làm tròn xuống.
+              Điểm đã tích từ đơn bị hủy sẽ được thu hồi. Voucher bù trừ xem tại tab <a href="${ctx}/account/vouchers">Voucher</a>.</li>
           </ol>
         </div>
       </c:if>
