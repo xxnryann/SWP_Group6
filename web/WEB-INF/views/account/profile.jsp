@@ -61,15 +61,15 @@
             <c:if test="${not empty errors.phone}"><div class="error-text"><c:out value="${errors.phone}"/></div></c:if>
           </div>
           <div class="field ${not empty errors.idNumber ? 'has-error' : ''}">
-            <label for="idNumber"><span class="req">*</span> CMND/HỘ CHIẾU</label>
-            <input id="idNumber" name="idNumber" type="text" maxlength="12" required placeholder="CMND/CCCD/Hộ chiếu" value="<c:out value='${profile.idNumber}'/>">
+            <label for="idNumber">CMND/HỘ CHIẾU</label>
+            <input id="idNumber" name="idNumber" type="text" maxlength="12" placeholder="CMND/CCCD/Hộ chiếu" value="<c:out value='${profile.idNumber}'/>">
             <c:if test="${not empty errors.idNumber}"><div class="error-text"><c:out value="${errors.idNumber}"/></div></c:if>
           </div>
         </div>
         <div class="row">
           <div class="field ${not empty errors.dob ? 'has-error' : ''}">
-            <label for="dob"><span class="req">*</span> NGÀY SINH</label>
-            <input id="dob" name="dob" type="date" required value="<c:out value='${profile.dateOfBirth}'/>">
+            <label for="dob">NGÀY SINH</label>
+            <input id="dob" name="dob" type="date" value="<c:out value='${profile.dateOfBirth}'/>">
             <c:if test="${not empty errors.dob}"><div class="error-text"><c:out value="${errors.dob}"/></div></c:if>
           </div>
           <div class="field">
@@ -106,10 +106,13 @@
             <p class="sub">Email vé điện tử, huỷ vé và nhắc lịch chiếu vẫn luôn được gửi.</p>
           </div>
         </c:if>
-        <p class="pw-link"><a href="#password" id="pwOpenLink">Đổi mật khẩu?</a></p>
+        <c:if test="${sessionScope.authUser.role != 'ADMIN'}">
+          <p class="pw-link"><a href="#password" id="pwOpenLink">Đổi mật khẩu?</a></p>
+        </c:if>
         <div class="profile-actions"><button class="btn btn-primary btn-update" type="submit">CẬP NHẬT</button></div>
       </form>
     </div>
+    <c:if test="${sessionScope.authUser.role != 'ADMIN'}">
     <form class="panel" id="password" method="post" action="${pageContext.request.contextPath}/account/password" novalidate ${passwordOpen ? '' : 'hidden'}>
       <h2>Đổi mật khẩu</h2>
       <input type="hidden" name="_csrf" value="${csrf}">
@@ -143,6 +146,7 @@
       </div>
       <button class="btn btn-cta" type="submit">Cập nhật mật khẩu</button>
     </form>
+    </c:if>
   </div>
 </div></main>
 <script src="${pageContext.request.contextPath}/assets/js/vn-locations.js"></script>

@@ -6,8 +6,6 @@
   .sys-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 20px; border-bottom: 1px solid #e2e8f0; }
   .sys-tab { padding: 10px 16px; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; }
   .sys-tab.is-active { color: #1d4ed8; border-bottom-color: #1d4ed8; }
-  .sys-config { display: grid; gap: 14px; max-width: 560px; }
-  .sys-hint { color: #64748b; font-size: 13px; margin-top: 4px; }
   .sys-filter { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
   .sys-filter .field { margin: 0; }
   .sys-path { word-break: break-all; font-size: 13px; }
@@ -16,7 +14,6 @@
   <section class="panel">
     <h2>Quản lý hệ thống</h2>
     <nav class="sys-tabs" aria-label="Quản lý hệ thống">
-      <a class="sys-tab ${tab == 'config' ? 'is-active' : ''}" href="${ctx}/admin/system?tab=config">Cấu hình chung</a>
       <a class="sys-tab ${tab == 'backup' ? 'is-active' : ''}" href="${ctx}/admin/system?tab=backup">Sao lưu dữ liệu</a>
       <a class="sys-tab ${tab == 'logs' ? 'is-active' : ''}" href="${ctx}/admin/system?tab=logs">Nhật ký hệ thống</a>
     </nav>
@@ -24,28 +21,6 @@
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 
     <c:choose>
-      <c:when test="${tab == 'config'}">
-        <form method="post" action="${ctx}/admin/system" class="sys-config">
-          <input type="hidden" name="_csrf" value="${csrf}">
-          <input type="hidden" name="action" value="saveConfig">
-          <c:forEach var="cfg" items="${configs}">
-            <c:set var="range" value="${configRanges[cfg.config_key]}"/>
-            <div class="field">
-              <label for="${cfg.config_key}"><c:out value="${cfg.description}"/></label>
-              <c:choose>
-                <c:when test="${not empty range}">
-                  <input id="${cfg.config_key}" name="${cfg.config_key}" type="number" required
-                         min="${range[0]}" max="${range[1]}" value="<c:out value='${cfg.config_value}'/>">
-                  <p class="sys-hint">Từ ${range[0]} đến ${range[1]}</p>
-                </c:when>
-                <c:otherwise><input id="${cfg.config_key}" type="text" disabled value="<c:out value='${cfg.config_value}'/>"></c:otherwise>
-              </c:choose>
-            </div>
-          </c:forEach>
-          <div><button class="btn btn-primary" type="submit">Lưu cấu hình</button></div>
-        </form>
-      </c:when>
-
       <c:when test="${tab == 'backup'}">
         <p class="sub">Tạo bản sao lưu đầy đủ của CSDL. File được lưu trong thư mục sao lưu của SQL Server, không chặn người dùng đang thao tác.</p>
         <form method="post" action="${ctx}/admin/system" onsubmit="return confirm('Sao lưu CSDL ngay bây giờ?');" style="margin:14px 0 20px">

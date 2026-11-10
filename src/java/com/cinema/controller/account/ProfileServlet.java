@@ -66,14 +66,11 @@ public class ProfileServlet extends BaseServlet {
             errors.put("phone", "Số điện thoại phải gồm 10 số (bắt đầu 0) hoặc +84.");
         }
         LocalDate dob = Validator.parseDob(dobStr);
-        if (dobStr.isEmpty()) {
-            errors.put("dob", "Vui lòng nhập ngày sinh.");
-        } else if (dob == null) {
+        // Chỉ họ tên, email, SĐT là bắt buộc; ngày sinh và CMND để trống được, có nhập thì phải đúng định dạng.
+        if (!dobStr.isEmpty() && dob == null) {
             errors.put("dob", "Ngày sinh không hợp lệ.");
         }
-        if (idNumber.isEmpty()) {
-            errors.put("idNumber", "Vui lòng nhập CMND/CCCD/Hộ chiếu.");
-        } else if (!Validator.isIdNumber(idNumber)) {
+        if (!idNumber.isEmpty() && !Validator.isIdNumber(idNumber)) {
             errors.put("idNumber", "CMND gồm 9 số, CCCD gồm 12 số, hộ chiếu gồm 1 chữ cái và 7 số.");
         }
         if (province.length() > 100 || district.length() > 100) {
@@ -106,7 +103,7 @@ public class ProfileServlet extends BaseServlet {
                 return;
             }
             dao.updateProfile(id, fullName, phone, dob, GENDERS.contains(gender) ? gender : null,
-                    idNumber, province.isEmpty() ? null : province, district.isEmpty() ? null : district,
+                    idNumber.isEmpty() ? null : idNumber, province.isEmpty() ? null : province, district.isEmpty() ? null : district,
                     address.isEmpty() ? null : address, receivePromo);
             User fresh = dao.findById(id);
             req.getSession().setAttribute(SESSION_USER, sessionCopy(fresh));
