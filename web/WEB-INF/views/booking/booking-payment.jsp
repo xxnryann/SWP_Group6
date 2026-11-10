@@ -1,115 +1,81 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="pageTitle" value="Đặt vé — Thanh toán"/>
-<%@ include file="../_header.jspf" %>
+<c:set var="pageTitle" value="Thanh toán"/>
+<%@ include file="../layout/top.jspf" %>
 <style>
-  .uip-steps { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
-  .uip-step { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 99px;
-              background: var(--slate-100); color: var(--slate-500); font-weight: 700; font-size: 13.5px; }
-  .uip-step .uip-num { width: 22px; height: 22px; border-radius: 50%; background: var(--slate-300); color: #fff;
-                       display: grid; place-items: center; font-size: 12.5px; }
-  .uip-step.active { background: #dbeafe; color: var(--brand); }
-  .uip-step.active .uip-num { background: var(--brand); }
-  .uip-step.done { background: #d1fae5; color: var(--success); }
-  .uip-step.done .uip-num { background: var(--success); }
-  .uip-arrow { color: var(--slate-300); font-weight: 800; }
-  .uip-layout { display: grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
-  .uip-summary { position: sticky; top: 96px; padding: 24px 26px; }
-  .uip-summary h2 { font-size: 17px; margin: 0 0 4px; }
-  .uip-code { font-family: ui-monospace, Consolas, monospace; font-weight: 800; color: var(--brand); font-size: 17px; }
-  .uip-movie { color: var(--slate-600); font-size: 14px; margin: 6px 0 14px; }
-  .uip-line { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0;
-              border-top: 1px solid var(--slate-100); font-size: 14.5px; }
-  .uip-line .uip-neg { color: var(--success); font-weight: 700; }
-  .uip-total { display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
-               border-top: 2px solid var(--slate-200); margin-top: 8px; padding-top: 14px; }
-  .uip-total .uip-amt { color: var(--cta); font-weight: 800; font-size: 25px; }
-  .uip-countdown { text-align: center; padding: 16px; margin-bottom: 18px; }
-  .uip-countdown .uip-clock { font-size: 38px; font-weight: 800; color: var(--cta);
-                             font-variant-numeric: tabular-nums; letter-spacing: 1px; }
-  .uip-countdown .uip-label { color: var(--slate-500); font-size: 13.5px; }
-  .uip-pay { margin-top: 18px; }
-  .uip-cancel { text-align: center; margin-top: 12px; }
-  @media (max-width: 960px) { .uip-layout { grid-template-columns: 1fr; } .uip-summary { position: static; } }
+  .countdown { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: var(--r-lg); background: var(--accent-50); border: 1px solid #fde3b0; }
+  .countdown .clock { font-size: 34px; font-weight: 800; color: var(--accent-700); font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1; }
+  .countdown svg { width: 28px; height: 28px; color: var(--accent-700); }
+  .countdown.expired { background: var(--danger-50); border-color: #f6c9cb; }
+  .countdown.expired .clock, .countdown.expired svg { color: var(--danger); }
+  .pay-method { display: flex; align-items: center; gap: 14px; padding: 16px; border: 2px solid var(--brand-500); border-radius: var(--r-lg); background: var(--brand-50); }
+  .pay-method .logo { display: grid; place-items: center; width: 52px; height: 36px; border-radius: var(--r-sm); background: #fff; color: #005baa; font-weight: 800; font-size: 13px; letter-spacing: -.02em; box-shadow: var(--sh-xs); }
+  .pay-method .logo b { color: #ed1c24; }
 </style>
-<main>
-  <section class="page">
-    <div class="container">
-      <div class="uip-steps">
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn suất chiếu</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step done"><span class="uip-num">✓</span> Chọn ghế</span>
-        <span class="uip-arrow">→</span>
-        <span class="uip-step active"><span class="uip-num">3</span> Thanh toán</span>
-      </div>
+<div class="container">
+  <nav class="stepper" aria-label="Các bước đặt vé">
+    <span class="step done"><b>${ic.check}</b>Chọn suất chiếu</span><span class="bar done"></span>
+    <span class="step done"><b>${ic.check}</b>Chọn ghế</span><span class="bar done"></span>
+    <span class="step active" aria-current="step"><b>3</b>Combo &amp; thanh toán</span>
+  </nav>
 
-      <div class="uip-layout">
-        <div class="card">
-          <h2>Thanh toán đơn vé</h2>
-
-          <div class="uip-countdown">
-            <div class="uip-clock" id="clock"><c:out value="${remainingSeconds}"/></div>
-            <div class="uip-label">giây còn lại để thanh toán (ghế được giữ tối đa ${paymentWindowMinutes} phút)</div>
-          </div>
-
-          <div class="uip-line"><span>Phim</span><span><strong><c:out value="${booking.movieTitle}"/></strong></span></div>
-          <div class="uip-line"><span>Phòng</span><span><c:out value="${booking.roomName}"/></span></div>
-          <div class="uip-line"><span>Suất chiếu</span><span>${booking.startTimeLabel}</span></div>
-          <div class="uip-line"><span>Ghế</span><span><strong><c:out value="${booking.seatLabelText}"/></strong></span></div>
-          <div class="uip-line"><span>Số vé</span><span>${booking.ticketCodes.size()}</span></div>
-
-          <form class="uip-pay" method="post" action="${ctx}/booking/payment">
-            <input type="hidden" name="_csrf" value="${csrf}">
-            <input type="hidden" name="action" value="pay">
-            <button class="btn btn-cta btn-block" type="submit" id="payBtn">Thanh toán qua VNPAY</button>
-          </form>
-
-          <p style="margin-top:12px"><a class="btn btn-outline btn-block" href="${ctx}/booking/extras">← Quay lại</a></p>
-
-          <div class="uip-cancel">
-            <form method="post" action="${ctx}/booking/payment"
-                  onsubmit="return confirm('Huỷ đơn này? Ghế đã giữ sẽ được trả lại.');">
-              <input type="hidden" name="_csrf" value="${csrf}">
-              <input type="hidden" name="action" value="cancel">
-              <button class="btn-link" type="submit" style="color:var(--danger)">Huỷ đơn này</button>
-            </form>
-          </div>
+  <div class="split">
+    <section class="card">
+      <div class="card-head"><div><h2>Thanh toán đơn vé</h2><p>Ghế được giữ tối đa ${paymentWindowMinutes} phút</p></div></div>
+      <div class="card-body stack" style="--gap:20px">
+        <div class="countdown" id="countdownBox" role="timer" aria-live="off">
+          ${ic.clock}
+          <div><div class="clock" id="clock"><c:out value="${remainingSeconds}"/></div><div class="muted text-sm mt-4">thời gian còn lại để thanh toán</div></div>
         </div>
-
-        <aside class="card uip-summary">
-          <h2>Tóm tắt đơn</h2>
-          <div>Mã đơn: <span class="uip-code"><c:out value="${booking.bookingCode}"/></span></div>
-          <div class="uip-line"><span>Tiền vé</span><span>${booking.ticketTotalLabel} VNĐ</span></div>
-          <div class="uip-line"><span>Tiền combo</span><span>${booking.comboTotalLabel} VNĐ</span></div>
-          <c:if test="${booking.voucherDiscount > 0}">
-            <div class="uip-line"><span>Giảm voucher</span>
-                 <span class="uip-neg">− ${booking.voucherDiscountLabel} VNĐ</span></div>
-          </c:if>
-          <c:if test="${booking.pointsDiscount > 0}">
-            <div class="uip-line"><span>Giảm MyPoint</span>
-                 <span class="uip-neg">− ${booking.pointsDiscountLabel} VNĐ</span></div>
-          </c:if>
-          <div class="uip-total"><span><strong>Tổng phải trả</strong></span>
-               <span class="uip-amt">${booking.totalAmountLabel} <small style="font-size:14px">VNĐ</small></span></div>
-        </aside>
+        <div>
+          <div class="kv"><span>Phim</span><strong><c:out value="${booking.movieTitle}"/></strong></div>
+          <div class="kv"><span>Phòng</span><strong><c:out value="${booking.roomName}"/></strong></div>
+          <div class="kv"><span>Suất chiếu</span><strong>${booking.startTimeLabel}</strong></div>
+          <div class="kv"><span>Ghế</span><strong><c:out value="${booking.seatLabelText}"/></strong></div>
+          <div class="kv"><span>Số vé</span><strong>${booking.ticketCodes.size()}</strong></div>
+        </div>
+        <div>
+          <p class="label mb-8">Phương thức thanh toán</p>
+          <div class="pay-method"><span class="logo">VN<b>PAY</b></span><div><strong class="text-ink">Ví VNPAY / thẻ ATM / QR ngân hàng</strong><span class="cell-sub">Bạn sẽ được chuyển sang cổng thanh toán VNPAY</span></div>${ic.checkCircle}</div>
+        </div>
+        <form method="post" action="${ctx}/booking/payment" data-loading>
+          <input type="hidden" name="_csrf" value="${csrf}">
+          <input type="hidden" name="action" value="pay">
+          <button class="btn btn-accent btn-lg btn-block" type="submit" id="payBtn">${ic.lock}Thanh toán ${booking.totalAmountLabel} đ qua VNPAY</button>
+        </form>
+        <div class="cluster between">
+          <a class="btn btn-ghost" href="${ctx}/booking/extras">${ic.chevronLeft}Quay lại</a>
+          <form method="post" action="${ctx}/booking/payment" data-confirm="Hủy đơn này? Ghế đã giữ sẽ được trả lại.">
+            <input type="hidden" name="_csrf" value="${csrf}">
+            <input type="hidden" name="action" value="cancel">
+            <button class="btn btn-ghost text-danger" type="submit">${ic.x}Hủy đơn này</button>
+          </form>
+        </div>
       </div>
-    </div>
-  </section>
-</main>
+    </section>
+
+    <aside class="card sticky">
+      <div class="card-head"><div><h2>Tóm tắt đơn</h2><p>Mã đơn <span class="voucher-code"><c:out value="${booking.bookingCode}"/></span></p></div></div>
+      <div class="card-body">
+        <div class="kv"><span>Tiền vé</span><strong>${booking.ticketTotalLabel} đ</strong></div>
+        <div class="kv"><span>Tiền combo</span><strong>${booking.comboTotalLabel} đ</strong></div>
+        <c:if test="${booking.voucherDiscount > 0}"><div class="kv"><span>Giảm voucher</span><strong class="text-success">− ${booking.voucherDiscountLabel} đ</strong></div></c:if>
+        <c:if test="${booking.pointsDiscount > 0}"><div class="kv"><span>Giảm MyPoint</span><strong class="text-success">− ${booking.pointsDiscountLabel} đ</strong></div></c:if>
+        <div class="kv total"><span>Tổng phải trả</span><strong>${booking.totalAmountLabel} đ</strong></div>
+        <p class="hint mt-16">${ic.shield} Giao dịch được xử lý qua VNPAY. CineStar không lưu thông tin thẻ của bạn.</p>
+      </div>
+    </aside>
+  </div>
+</div>
 <script>
   (function () {
-    let remaining = Number('<c:out value="${remainingSeconds}"/>') || 0;
-    const clock = document.getElementById('clock');
-    const payBtn = document.getElementById('payBtn');
+    var remaining = Number('<c:out value="${remainingSeconds}"/>') || 0;
+    var clock = document.getElementById('clock'), payBtn = document.getElementById('payBtn'), box = document.getElementById('countdownBox');
     function render() {
-      const m = Math.floor(remaining / 60);
-      const s = remaining % 60;
+      var m = Math.floor(remaining / 60), s = remaining % 60;
       clock.textContent = m + ':' + String(s).padStart(2, '0');
       if (remaining <= 0) {
-        clock.textContent = '0:00';
-        if (payBtn) {
-          payBtn.disabled = true;
-          payBtn.textContent = 'Đã hết thời gian thanh toán';
-        }
+        clock.textContent = '0:00'; box.classList.add('expired');
+        if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Đã hết thời gian thanh toán'; }
         return;
       }
       remaining -= 1;
@@ -118,7 +84,4 @@
     render();
   })();
 </script>
-<%@ include file="../_footer.jspf" %>
-
-
-
+<%@ include file="../layout/bottom.jspf" %>

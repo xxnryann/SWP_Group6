@@ -1,0 +1,181 @@
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%--
+  Khung trang UI v2 (phần mở). Trang dùng:
+    <c:set var="pageTitle" value="..."/>          tiêu đề tab + breadcrumb khung quản trị
+    <c:set var="pageCss" value="seat-plan.css"/>   (tùy chọn) thêm 1 file CSS riêng trong assets/css
+    <c:set var="layout" value="bare"/>              (tùy chọn) "bare" = không header/footer (trang in vé...)
+    <%@ include file="../layout/top.jspf" %> ... <%@ include file="../layout/bottom.jspf" %>
+  Nhân viên (ADMIN/MANAGER/STAFF) ở khu nội bộ dùng khung sidebar; khách và khách vãng lai dùng header công khai.
+--%>
+<%@ include file="icons.jspf" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="me" value="${sessionScope.authUser}"/>
+<c:set var="myRole" value="${me.role}"/>
+<c:choose>
+  <c:when test="${myRole == 'ADMIN'}"><c:set var="roleDashboardPath" value="/dashboard/admin"/><c:set var="roleLabel" value="Quản trị viên"/></c:when>
+  <c:when test="${myRole == 'MANAGER'}"><c:set var="roleDashboardPath" value="/dashboard/manager"/><c:set var="roleLabel" value="Quản lý rạp"/></c:when>
+  <c:when test="${myRole == 'STAFF'}"><c:set var="roleDashboardPath" value="/dashboard/staff"/><c:set var="roleLabel" value="Nhân viên"/></c:when>
+  <c:when test="${myRole == 'CUSTOMER'}"><c:set var="roleDashboardPath" value="/dashboard/customer"/><c:set var="roleLabel" value="Thành viên"/></c:when>
+  <c:otherwise><c:set var="roleDashboardPath" value="/home"/></c:otherwise>
+</c:choose>
+<c:set var="isStaffRole" value="${myRole == 'ADMIN' or myRole == 'MANAGER' or myRole == 'STAFF'}"/>
+<c:set var="appShell" value="${isStaffRole and roleModule and layout != 'public'}"/>
+<c:set var="initial" value="${empty me.fullName ? '?' : fn:toUpperCase(fn:substring(fn:trim(me.fullName), 0, 1))}"/>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2a4fd6">
+  <title><c:out value="${pageTitle}"/> · CineStar Cinemas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
+  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=3">
+  <c:if test="${not empty pageCss}"><link rel="stylesheet" href="${ctx}/assets/css/${pageCss}?v=3"></c:if>
+</head>
+<body class="${appShell ? 'is-app' : 'is-site'} ${bodyClass}" data-user="<c:out value='${me.fullName}'/>">
+<a class="skip-link" href="#main">Bỏ qua điều hướng</a>
+<div class="toast-stack" id="toastStack" aria-live="polite"
+     data-flash-type="<c:out value='${flashType}'/>" data-flash="<c:out value='${flashMsg}'/>"></div>
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+<c:choose>
+<%-- ======================= KHUNG QUẢN TRỊ (sidebar) ======================= --%>
+<c:when test="${appShell}">
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Menu quản trị">
+    <a class="brand" href="${ctx}${roleDashboardPath}" aria-label="CineStar - Tổng quan"><%@ include file="../_logo-mark.jspf" %><span>Cine<b>Star</b></span></a>
+    <nav class="side-nav" id="sideNav">
+      <a href="${ctx}${roleDashboardPath}">${ic.dashboard}<span>Tổng quan</span></a>
+      <c:choose>
+        <c:when test="${myRole == 'ADMIN'}">
+          <div class="side-label">Quản trị</div>
+          <a href="${ctx}/admin/users">${ic.users}<span>Người dùng</span></a>
+          <a href="${ctx}/admin/rooms">${ic.door}<span>Phòng chiếu</span></a>
+          <a href="${ctx}/admin/room-showtimes">${ic.calendar}<span>Lịch phòng chiếu</span></a>
+          <a href="${ctx}/admin/system">${ic.settings}<span>Quản lý hệ thống</span></a>
+        </c:when>
+        <c:when test="${myRole == 'MANAGER'}">
+          <div class="side-label">Nội dung</div>
+          <a href="${ctx}/manage/movies">${ic.film}<span>Quản lý phim</span></a>
+          <a href="${ctx}/manage/showtimes">${ic.calendar}<span>Lịch chiếu</span></a>
+          <a href="${ctx}/manage/reviews">${ic.message}<span>Kiểm duyệt đánh giá</span></a>
+          <a href="${ctx}/manager/news">${ic.news}<span>Tin tức</span></a>
+          <div class="side-label">Kinh doanh</div>
+          <a href="${ctx}/manager/prices">${ic.wallet}<span>Giá vé</span></a>
+          <a href="${ctx}/manager/vouchers">${ic.tag}<span>Voucher</span></a>
+          <a href="${ctx}/manager/mypoint">${ic.coins}<span>MyPoint</span></a>
+        </c:when>
+        <c:when test="${myRole == 'STAFF'}">
+          <div class="side-label">Tại quầy</div>
+          <a href="${ctx}/staff/counter">${ic.store}<span>Bán vé tại quầy</span></a>
+          <a href="${ctx}/staff/checkin">${ic.scan}<span>Soát vé</span></a>
+          <a href="${ctx}/staff/seat-change">${ic.swap}<span>Đổi ghế</span></a>
+          <a href="${ctx}/staff/combo">${ic.popcorn}<span>Quản lý combo</span></a>
+        </c:when>
+      </c:choose>
+      <div class="side-label">Trang khách</div>
+      <a href="${ctx}/showtimes" data-nomatch>${ic.globe}<span>Xem trang đặt vé</span></a>
+    </nav>
+    <div class="side-foot">
+      <a class="side-user" href="${ctx}/account/profile">
+        <span class="avatar avatar-sm"><c:choose><c:when test="${not empty me.avatarUrl}"><img src="${ctx}${me.avatarUrl}" alt=""></c:when><c:otherwise>${initial}</c:otherwise></c:choose></span>
+        <div><strong><c:out value="${me.fullName}"/></strong><span>${roleLabel}</span></div>
+      </a>
+      <form method="post" action="${ctx}/logout">
+        <input type="hidden" name="_csrf" value="${csrf}">
+        <button class="btn btn-ghost btn-sm btn-block" type="submit" style="justify-content:flex-start">${ic.logout}Đăng xuất</button>
+      </form>
+    </div>
+  </aside>
+  <div class="app-main">
+    <header class="app-topbar">
+      <button class="btn btn-icon btn-sm btn-ghost side-toggle" type="button" id="sideToggle" aria-label="Mở menu" aria-controls="sidebar" aria-expanded="false">${ic.menu}</button>
+      <div class="crumbs"><span>${roleLabel}</span>${ic.chevronRight}<strong><c:out value="${pageTitle}"/></strong></div>
+      <a class="btn btn-ghost btn-sm" href="${ctx}/home">${ic.home}<span class="hide-sm">Trang chủ</span></a>
+    </header>
+    <main class="app-content" id="main">
+</c:when>
+
+<%-- ======================= TRANG TRẦN (không khung) ======================= --%>
+<c:when test="${layout == 'bare'}">
+<main class="main" id="main">
+</c:when>
+
+<%-- ======================= HEADER CÔNG KHAI ======================= --%>
+<c:otherwise>
+<header class="site-header" id="siteHeader">
+  <div class="container">
+    <a class="brand" href="${ctx}/home" aria-label="CineStar Cinemas - Trang chủ"><%@ include file="../_logo-mark.jspf" %><span>Cine<b>Star</b></span></a>
+    <nav class="nav" id="mainNav" aria-label="Điều hướng chính">
+      <a href="${ctx}/showtimes">Lịch chiếu</a>
+      <a href="${ctx}/movies">Phim</a>
+      <a href="${ctx}/pricing">Giá vé</a>
+      <a href="${ctx}/promotions">Khuyến mãi</a>
+      <a href="${ctx}/news">Tin tức</a>
+    </nav>
+    <div class="header-actions">
+      <c:choose>
+        <c:when test="${not empty me}">
+          <div class="user-menu" id="userMenu">
+            <button type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="avatar avatar-sm"><c:choose><c:when test="${not empty me.avatarUrl}"><img src="${ctx}${me.avatarUrl}" alt=""></c:when><c:otherwise>${initial}</c:otherwise></c:choose></span>
+              <span class="hide-md truncate" style="max-width:140px"><c:out value="${me.fullName}"/></span>
+              <span class="chev">${ic.chevronDown}</span>
+            </button>
+            <div class="menu" role="menu">
+              <div class="menu-head"><strong><c:out value="${me.fullName}"/></strong><span><c:out value="${me.email}"/></span></div>
+              <c:choose>
+                <c:when test="${isStaffRole}">
+                  <a href="${ctx}${roleDashboardPath}" role="menuitem">${ic.dashboard}Bảng điều khiển</a>
+                  <a href="${ctx}/account/profile" role="menuitem">${ic.user}Thông tin cá nhân</a>
+                </c:when>
+                <c:otherwise>
+                  <a href="${ctx}/dashboard/customer" role="menuitem">${ic.dashboard}Tổng quan</a>
+                  <a href="${ctx}/account/tickets" role="menuitem">${ic.ticket}Vé của tôi</a>
+                  <a href="${ctx}/account/inbox" role="menuitem">${ic.inbox}Hộp thư</a>
+                  <a href="${ctx}/account/points" role="menuitem">${ic.coins}Điểm &amp; voucher</a>
+                  <a href="${ctx}/account/profile" role="menuitem">${ic.user}Thông tin cá nhân</a>
+                </c:otherwise>
+              </c:choose>
+              <hr>
+              <form method="post" action="${ctx}/logout">
+                <input type="hidden" name="_csrf" value="${csrf}">
+                <button class="menu-item danger" type="submit" role="menuitem">${ic.logout}Đăng xuất</button>
+              </form>
+            </div>
+          </div>
+        </c:when>
+        <c:otherwise>
+          <a class="btn btn-ghost hide-md" href="${ctx}/login">Đăng nhập</a>
+        </c:otherwise>
+      </c:choose>
+      <a class="btn btn-primary hide-md" href="${ctx}/showtimes">${ic.ticket}Đặt vé</a>
+      <button class="menu-btn" type="button" id="menuBtn" aria-label="Mở menu" aria-controls="drawer" aria-expanded="false">${ic.menu}</button>
+    </div>
+  </div>
+</header>
+<aside class="drawer" id="drawer" aria-label="Menu di động" aria-hidden="true" inert>
+  <div class="drawer-head">
+    <a class="brand" href="${ctx}/home"><%@ include file="../_logo-mark.jspf" %><span>Cine<b>Star</b></span></a>
+    <button class="btn btn-icon btn-sm btn-ghost" type="button" id="drawerClose" aria-label="Đóng menu">${ic.x}</button>
+  </div>
+  <a href="${ctx}/showtimes">Lịch chiếu</a><a href="${ctx}/movies">Phim</a><a href="${ctx}/pricing">Giá vé</a>
+  <a href="${ctx}/promotions">Khuyến mãi</a><a href="${ctx}/news">Tin tức</a>
+  <hr class="divider">
+  <c:choose>
+    <c:when test="${not empty me}">
+      <a href="${ctx}${roleDashboardPath}">Bảng điều khiển</a>
+      <a href="${ctx}/account/profile">Thông tin cá nhân</a>
+    </c:when>
+    <c:otherwise>
+      <a href="${ctx}/login">Đăng nhập</a><a href="${ctx}/register">Đăng ký</a>
+    </c:otherwise>
+  </c:choose>
+  <a class="btn btn-primary mt-16" href="${ctx}/showtimes">Đặt vé ngay</a>
+</aside>
+<main class="main ${mainClass}" id="main">
+</c:otherwise>
+</c:choose>

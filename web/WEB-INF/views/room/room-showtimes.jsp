@@ -1,6 +1,6 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Lịch phòng chiếu"/>
-<%@ include file="../_header.jspf" %>
+<%@ include file="../layout/top.jspf" %>
 <style>
   .rs-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
   .rs-head h1 { margin: 0; }
@@ -63,9 +63,6 @@
     .rs-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 </style>
-<main>
-  <section class="page">
-    <div class="container">
       <div class="rs-head">
         <div>
           <h1>Lịch phòng chiếu</h1>
@@ -198,7 +195,4 @@
       </div>
         </c:otherwise>
       </c:choose>
-    </div>
-  </section>
-</main>
-<%@ include file="../_footer.jspf" %>
+<%@ include file="../layout/bottom.jspf" %>
