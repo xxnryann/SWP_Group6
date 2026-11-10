@@ -7,7 +7,13 @@
   <div class="dash-layout">
     <div>
   <section class="panel">
-    <h2>Quản lý tài khoản &amp; phân quyền</h2>
+    <h2>Quản lý tài khoản</h2>
+    <style>
+      .user-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+      .pw-reset > summary { list-style: none; cursor: pointer; }
+      .pw-reset > summary::-webkit-details-marker { display: none; }
+      .pw-reset-form { display: grid; gap: 6px; margin-top: 8px; min-width: 200px; }
+    </style>
 
     <form method="get" action="${ctx}/admin/users" class="row" style="margin-bottom:16px">
       <div class="field">
@@ -48,30 +54,12 @@
                 <td><c:out value="${u.fullName}"/><c:if test="${isSelf}"> <span class="badge">Bạn</span></c:if></td>
                 <td><c:out value="${u.email}"/></td>
                 <td><c:out value="${u.phone}"/></td>
-                <td>
-                  <c:choose>
-                    <c:when test="${isSelf}"><c:out value="${u.role}"/></c:when>
-                    <c:otherwise>
-                      <form method="post" action="${ctx}/admin/users" style="display:flex;gap:6px">
-                        <input type="hidden" name="_csrf" value="${csrf}">
-                        <input type="hidden" name="action" value="role">
-                        <input type="hidden" name="userId" value="${u.userId}">
-                        <input type="hidden" name="q" value="<c:out value='${q}'/>">
-                        <input type="hidden" name="fRole" value="${fRole}">
-                        <input type="hidden" name="fStatus" value="${fStatus}">
-                        <select name="value" aria-label="Quyền">
-                          <c:forEach var="r" items="CUSTOMER,STAFF,MANAGER,ADMIN">
-                            <option value="${r}" ${u.role == r ? 'selected' : ''}>${r}</option>
-                          </c:forEach>
-                        </select>
-                        <button class="btn btn-soft" type="submit">Lưu</button>
-                      </form>
-                    </c:otherwise>
-                  </c:choose>
-                </td>
+                <td><c:out value="${u.role}"/></td>
                 <td><c:out value="${u.status}"/></td>
                 <td>
-                  <c:if test="${not isSelf and u.status != 'PENDING'}">
+                  <c:if test="${not isSelf}">
+                  <div class="user-actions">
+                  <c:if test="${u.status != 'PENDING'}">
                     <form method="post" action="${ctx}/admin/users">
                       <input type="hidden" name="_csrf" value="${csrf}">
                       <input type="hidden" name="action" value="status">
@@ -84,6 +72,25 @@
                         ${u.status == 'BLOCKED' ? 'Mở khóa' : 'Khóa'}
                       </button>
                     </form>
+                  </c:if>
+                    <details class="pw-reset">
+                      <summary class="btn btn-soft">Đổi mật khẩu</summary>
+                      <form method="post" action="${ctx}/admin/users" class="pw-reset-form">
+                        <input type="hidden" name="_csrf" value="${csrf}">
+                        <input type="hidden" name="action" value="password">
+                        <input type="hidden" name="userId" value="${u.userId}">
+                        <input type="hidden" name="q" value="<c:out value='${q}'/>">
+                        <input type="hidden" name="fRole" value="${fRole}">
+                        <input type="hidden" name="fStatus" value="${fStatus}">
+                        <input name="newPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="72"
+                               pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}" title="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và số."
+                               placeholder="Mật khẩu mới" aria-label="Mật khẩu mới cho ${u.email}">
+                        <input name="confirmPassword" type="password" autocomplete="new-password" required maxlength="72"
+                               placeholder="Nhập lại mật khẩu" aria-label="Nhập lại mật khẩu cho ${u.email}">
+                        <button class="btn btn-primary" type="submit">Lưu mật khẩu</button>
+                      </form>
+                    </details>
+                  </div>
                   </c:if>
                 </td>
               </tr>
