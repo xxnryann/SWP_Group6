@@ -4,8 +4,8 @@
 <c:set var="pageTitle" value="MyPoint"/>
 <%@ include file="../_header.jspf" %>
 <main class="page"><div class="container">
+  <h1>Cấu hình điểm thưởng MyPoint</h1>
   <section class="panel">
-    <h2>Cấu hình điểm thưởng MyPoint</h2>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 

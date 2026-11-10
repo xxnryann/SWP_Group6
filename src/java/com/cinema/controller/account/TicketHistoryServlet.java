@@ -14,7 +14,7 @@ import java.sql.SQLException;
  *
  * <ul>
  *   <li>GET /account/tickets → danh sách vé (mỗi vé 1 thẻ 1 mã QR)</li>
- *   <li>Khách không tự huỷ vé/combo đã thanh toán; chỉ Manager huỷ suất chiếu mới hoàn MyPoint + voucher bù trừ.</li>
+ *   <li>Khách không tự huỷ vé/combo đã thanh toán; chỉ Manager huỷ suất chiếu mới hoàn MyPoint + voucher đền bù.</li>
  * </ul>
  */
 @WebServlet("/account/tickets")
@@ -69,7 +69,7 @@ public class TicketHistoryServlet extends BaseServlet {
         String action = com.cinema.util.Validator.trim(req.getParameter("action"));
         if ("cancel".equals(action) || "cancelCombo".equals(action)) {
             // Rule: vé/combo đã thanh toán không thể hủy do lỗi từ phía khách hàng.
-            // Chỉ Manager hủy suất chiếu (sự cố) mới hoàn MyPoint + voucher bù trừ.
+            // Chỉ Manager hủy suất chiếu (sự cố) mới hoàn MyPoint + voucher đền bù.
             flash(req, "error", "Vé và sản phẩm đã thanh toán thành công không thể hủy/đổi trả/hoàn tiền.");
         }
         resp.sendRedirect(req.getContextPath() + "/account/tickets");

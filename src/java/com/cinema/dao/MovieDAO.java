@@ -235,7 +235,7 @@ public class MovieDAO {
 
     public java.util.Map<String, Object> cancelSummary(int movieId) throws SQLException {
             // Cùng công thức với sp_CancelMovie: giá trị hoàn = tiền đã trả còn lại + MyPoint đã dùng
-            // (không tính voucher), quy ra điểm theo giá trị 1 điểm; mỗi đơn của khách có tài khoản nhận 1 voucher bù trừ.
+            // (không tính voucher), quy ra điểm theo giá trị 1 điểm; mỗi đơn của khách có tài khoản nhận 1 voucher đền bù.
             String sql = "WITH pt AS (SELECT TOP 1 point_value_vnd AS v FROM dbo.MyPointConfig "
                     + "WHERE is_active = 1 ORDER BY effective_from DESC, config_id DESC), "
                     + "bk AS (SELECT b.booking_id, b.customer_id, "
@@ -249,7 +249,8 @@ public class MovieDAO {
                     + "COALESCE(SUM(bk.refund_value), 0) AS refund_amount, "
                     + "COALESCE(SUM(CASE WHEN bk.customer_id IS NOT NULL THEN "
                     + "FLOOR(bk.refund_value / NULLIF(pt.v, 0)) END), 0) AS refund_points, "
-                    + "COUNT(bk.customer_id) AS comp_vouchers, "
+                    + "CASE WHEN EXISTS (SELECT 1 FROM dbo.Voucher WHERE is_compensation = 1 AND status = 'Allowed') "
+                    + "THEN COUNT(bk.customer_id) ELSE 0 END AS comp_vouchers, "
                     + "COUNT(DISTINCT bk.customer_id) AS customer_count FROM bk LEFT JOIN pt ON 1 = 1";
             try (Connection connection = DBContext.getConnection();
                     PreparedStatement statement = connection.prepareStatement(sql)) {

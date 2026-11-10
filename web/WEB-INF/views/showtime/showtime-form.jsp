@@ -8,10 +8,9 @@
 <c:set var="escapedShowTime"><c:out value="${showtime.inputTime}"/></c:set>
 <%@ include file="../_header.jspf" %>
 
-<main class="container page">
+<main class="page"><div class="container">
   <section class="movie-page-heading">
     <div>
-      <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1><c:out value="${pageTitle}"/></h1>
       <p class="sub">Suất chiếu trong khung 07:00 – 23:55; giữa 2 suất cùng phòng nghỉ tối thiểu 15 phút để dọn phòng (làm tròn lên mốc 5 phút).</p>
     </div>
@@ -73,7 +72,7 @@
       <button class="btn btn-primary" type="submit">Lưu suất chiếu</button>
     </div>
   </form>
-</main>
+</div></main>
 
 <script src="${ctx}/assets/js/showtime-form.js?v=20261110-9" defer></script>
 <%@ include file="../_footer.jspf" %>

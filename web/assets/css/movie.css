@@ -50,6 +50,7 @@
 .review-filters select[name="movie"] { min-width: 220px; }
 .review-filters select[name="rating"], .review-filters select[name="status"] { min-width: 145px; }
 .review-filters .btn-small { min-height: 36px; font-size: 13px; }
+.review-action, .data .chip { white-space: nowrap; }
 .review-report-form { display: flex; gap: 6px; margin-top: 8px; }
 .movie-form-trailer-preview { max-width: 720px; margin-top: 12px; }
 @media (max-width: 760px) { .review-stats { grid-template-columns: 1fr; } .review-stat-counts { grid-template-columns: 1fr 1fr; } }

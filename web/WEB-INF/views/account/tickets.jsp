@@ -183,7 +183,7 @@
                 <div class="tk-actions">
                   <c:choose>
                     <c:when test="${t.active}">
-                      <p class="tk-note">Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher bù trừ.</p>
+                      <p class="tk-note">Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher đền bù.</p>
                     </c:when>
                     <c:when test="${t.expired}">
                       <p class="tk-note">Vé đã quá thời gian chiếu nên không còn hiệu lực.</p>

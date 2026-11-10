@@ -3,8 +3,8 @@
 <c:set var="pageTitle" value="Quản lý giá vé"/>
 <%@ include file="../_header.jspf" %>
 <main class="page"><div class="container">
+  <h1>Quản lý giá vé</h1>
   <section class="panel">
-    <h2>Quản lý giá vé</h2>
 
     <c:if test="${not empty error}"><p class="alert alert-error"><c:out value="${error}"/></p></c:if>
 

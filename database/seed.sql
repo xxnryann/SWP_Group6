@@ -206,6 +206,14 @@ INSERT dbo.Voucher(code, description, discount_type, discount_value, max_discoun
     ('WELCOME10', N'Giảm 10% (tối đa 30k) cho khách chi tiêu từ 1 triệu', 'Percent', 10.00, 30000, 50000, 1000000, 100, 1, 1, '2026-10-17', '2026-12-17', 'Allowed', 2);
 GO
 
+-- Voucher den bu: cap 1 luot cho khach moi khi rap huy suat chieu (sp_CancelMovie). Khong cong khai.
+INSERT dbo.Voucher(code, description, discount_type, discount_value, max_discount, min_order_amount,
+                   min_cumulative_spending, usage_limit, used_count, per_customer_limit, valid_from, valid_to, status,
+                   created_by, is_compensation, grant_valid_days) VALUES
+    ('DENBU25', N'Voucher đền bù 25.000đ khi rạp hủy suất chiếu', 'Amount', 25000, NULL, 0, 0, 1000000, 0, 1,
+     '2026-01-01', '2099-12-31', 'Allowed', 2, 1, 30);
+GO
+
 INSERT dbo.MyPointConfig(earn_rate_percent, point_value_vnd, max_redeem_percent, effective_from, is_active, updated_by) VALUES
     (5.00, 1000, 100.00, '2026-10-18', 1, 2);
 GO

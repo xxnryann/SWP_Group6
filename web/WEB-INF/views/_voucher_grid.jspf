@@ -22,7 +22,7 @@
       </div>
       <div class="voucher-body">
         <p class="voucher-code"><c:out value="${v.code}"/></p>
-        <c:if test="${v.is_personal == 1}"><p class="voucher-personal">Dành riêng cho bạn</p></c:if>
+        <c:if test="${v.is_personal == 1}"><p class="voucher-personal">Voucher đền bù · dành riêng cho bạn</p></c:if>
         <p class="voucher-desc"><c:out value="${v.description}"/></p>
         <ul class="voucher-terms">
           <c:if test="${v.discount_type == 'Percent' and not empty v.max_discount}">
@@ -34,9 +34,12 @@
           <c:if test="${not empty v.min_cumulative_spending and v.min_cumulative_spending > 0}">
             <li>Dành cho khách chi tiêu từ <fmt:formatNumber value="${v.min_cumulative_spending}" pattern="#,##0"/>đ</li>
           </c:if>
-          <li>Hạn dùng: <c:out value="${v.valid_from_txt}"/> – <c:out value="${v.valid_to_txt}"/></li>
+          <c:choose>
+            <c:when test="${v.is_personal == 1}"><li>Hạn dùng lượt gần nhất: đến <c:out value="${v.valid_to_txt}"/></li></c:when>
+            <c:otherwise><li>Hạn dùng: <c:out value="${v.valid_from_txt}"/> – <c:out value="${v.valid_to_txt}"/></li></c:otherwise>
+          </c:choose>
           <c:if test="${not empty v.usage_limit}">
-            <li>Còn <c:out value="${v.usage_limit - v.used_count}"/> lượt</li>
+            <li>${v.is_personal == 1 ? "Bạn còn " : "Còn "}<c:out value="${v.usage_limit - v.used_count}"/> lượt</li>
           </c:if>
         </ul>
       </div>

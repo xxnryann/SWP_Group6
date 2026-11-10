@@ -7,7 +7,6 @@
 <main class="page"><div class="container">
   <section class="movie-page-heading">
     <div>
-      <p class="eyebrow">KHU VỰC QUẢN LÝ</p>
       <h1>Quản lý phim</h1>
     </div>
     <div>

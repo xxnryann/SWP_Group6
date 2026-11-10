@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Khách không tự huỷ vé/combo đã thanh toán (rule: không hoàn tiền do lỗi từ phía khách hàng).
  * Chỉ khi Manager huỷ suất chiếu do sự cố ({@code sp_CancelMovie}) giá trị đơn mới được hoàn
- * thành MyPoint kèm voucher bù trừ.</p>
+ * thành MyPoint kèm voucher đền bù.</p>
  */
 public class TicketService {
 

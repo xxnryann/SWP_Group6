@@ -3,9 +3,9 @@
 <c:set var="pageTitle" value="Hủy phim"/>
 <%@ include file="../_header.jspf" %>
 <main class="page"><div class="container">
+  <h1>Hủy phim &amp; hoàn tiền: <c:out value="${movie.title}"/></h1>
   <section class="panel">
-    <h2>Hủy phim &amp; hoàn tiền: <c:out value="${movie.title}"/></h2>
-    <p class="sub">Hành động này không thể hoàn tác. Các suất chiếu tương lai sẽ bị hủy; giá trị mỗi đơn đã bán (tiền vé, combo và MyPoint đã dùng, không tính voucher) được quy đổi thành MyPoint, mỗi đơn nhận thêm 1 voucher bù trừ dành riêng cho khách (giảm 50.000đ, hạn 30 ngày); lượt voucher đã dùng được trả lại và phim chuyển sang trạng thái ngừng chiếu.</p>
+    <p class="sub">Hành động này không thể hoàn tác. Các suất chiếu tương lai sẽ bị hủy; giá trị mỗi đơn đã bán (tiền vé, combo và MyPoint đã dùng, không tính voucher) được quy đổi thành MyPoint, mỗi đơn được cấp 1 lượt voucher đền bù (cấu hình voucher DENBU25 tại trang Voucher); lượt voucher đã dùng được trả lại và phim chuyển sang trạng thái ngừng chiếu.</p>
 
     <div class="admin-kpis">
       <div class="admin-kpi"><span>Suất chiếu bị hủy</span><strong><c:out value="${cancelShowtimes.size()}"/></strong></div>
@@ -13,7 +13,7 @@
       <div class="admin-kpi"><span>Khách hàng nhận hoàn điểm</span><strong><c:out value="${cancelSummary.customerCount}"/></strong></div>
       <div class="admin-kpi"><span>MyPoint hoàn dự kiến</span><strong><c:out value="${cancelSummary.refundPoints}"/> điểm</strong></div>
       <div class="admin-kpi"><span>Giá trị quy đổi</span><strong><c:out value="${cancelSummary.refundAmount}"/> đ</strong></div>
-      <div class="admin-kpi"><span>Voucher bù trừ sẽ phát</span><strong><c:out value="${cancelSummary.compVouchers}"/></strong></div>
+      <div class="admin-kpi"><span>Lượt voucher đền bù sẽ cấp</span><strong><c:out value="${cancelSummary.compVouchers}"/></strong></div>
     </div>
 
     <c:choose>
@@ -34,7 +34,7 @@
     </c:choose>
 
     <form method="post" action="${ctx}/manage/movies" class="movie-cancel-actions"
-          onsubmit="return confirm('Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundPoints} điểm MyPoint + ${cancelSummary.compVouchers} voucher bù trừ cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?');">
+          onsubmit="return confirm('Sẽ hủy ${cancelSummary.ticketCount} vé và hoàn ${cancelSummary.refundPoints} điểm MyPoint + ${cancelSummary.compVouchers} voucher đền bù cho ${cancelSummary.customerCount} khách. Bạn có chắc chắn?');">
       <input type="hidden" name="_csrf" value="${csrf}">
       <input type="hidden" name="action" value="cancelMovie">
       <input type="hidden" name="id" value="${movie.movieId}">

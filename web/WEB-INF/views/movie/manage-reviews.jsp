@@ -5,8 +5,8 @@
 <%@ include file="../_header.jspf" %>
 <main class="page"><div class="container">
   <section class="movie-page-heading">
-    <div><p class="eyebrow">KHU VỰC QUẢN LÝ</p><h1>Kiểm duyệt đánh giá</h1>
-      <p class="sub">Chỉ được xóa bình luận vi phạm; điểm sao của khách hàng luôn được giữ nguyên.</p></div>
+    <div><h1>Kiểm duyệt đánh giá</h1>
+      <p class="sub">Chỉ ẩn bình luận vi phạm (có thể hiện lại); điểm sao của khách hàng luôn được giữ nguyên.</p></div>
   </section>
   <div class="review-stats">
     <div class="review-stat-counts">
@@ -46,7 +46,7 @@
     </div>
     <div class="field">
       <label for="f-status">Trạng thái</label>
-      <select id="f-status" name="status"><option value="">Tất cả trạng thái</option><option value="visible" <c:if test="${filterStatus == 'visible'}">selected</c:if>>Đang hiển thị</option><option value="deleted" <c:if test="${filterStatus == 'deleted'}">selected</c:if>>Đã xóa bởi quản lý</option><option value="reported" <c:if test="${filterStatus == 'reported'}">selected</c:if>>Có báo cáo</option></select>
+      <select id="f-status" name="status"><option value="">Tất cả trạng thái</option><option value="visible" <c:if test="${filterStatus == 'visible'}">selected</c:if>>Đang hiển thị</option><option value="deleted" <c:if test="${filterStatus == 'deleted'}">selected</c:if>>Đã ẩn bởi quản lý</option><option value="reported" <c:if test="${filterStatus == 'reported'}">selected</c:if>>Có báo cáo</option></select>
     </div>
     <div class="filter-panel-actions">
       <button class="btn btn-primary" type="submit">Lọc</button>
@@ -61,20 +61,37 @@
           <td><strong><c:out value="${review.movie_title}"/></strong></td>
           <td><c:out value="${review.customer_name}"/></td>
           <td><span class="review-stars"><c:forEach begin="1" end="${review.rating}">★</c:forEach><c:forEach begin="${review.rating + 1}" end="5">☆</c:forEach></span></td>
-          <td><c:choose><c:when test="${not empty review.comment}"><details><summary>Xem bình luận</summary><p><c:out value="${review.comment}"/></p></details></c:when><c:otherwise><em>Nội dung đã ẩn</em></c:otherwise></c:choose></td>
-          <td><c:choose><c:when test="${not empty review.moderated_at}">Đã xóa bởi quản lý</c:when><c:otherwise>Đang hiển thị</c:otherwise></c:choose></td>
+          <td><c:choose>
+            <c:when test="${not empty review.comment}"><details><summary>Xem bình luận</summary><p><c:out value="${review.comment}"/></p>
+              <c:if test="${not empty review.moderation_reason}"><p class="muted">Lý do ẩn: <c:out value="${review.moderation_reason}"/></p></c:if></details></c:when>
+            <c:when test="${not empty review.moderated_at}"><em>Nội dung đã bị xóa trước đây</em></c:when>
+            <c:otherwise><em>Không có bình luận</em></c:otherwise>
+          </c:choose></td>
+          <td><c:choose><c:when test="${not empty review.moderated_at}"><span class="chip">Đã ẩn bởi quản lý</span></c:when><c:otherwise><span class="chip chip-success">Đang hiển thị</span></c:otherwise></c:choose></td>
           <td><c:out value="${review.report_count}"/></td>
           <td><c:out value="${review.created_at}"/></td>
           <td><c:out value="${review.moderated_by}"/> <c:out value="${review.moderated_at}"/></td>
           <td>
             <c:if test="${not empty review.comment}">
-              <form method="post" action="${ctx}/manage/reviews" onsubmit="if (!confirm('Bạn có chắc muốn xóa bình luận này? Thao tác không thể hoàn tác, điểm sao vẫn được giữ nguyên.')) return false; var r=prompt('Nhập lý do xóa (spam, ngôn từ thô tục, nội dung vi phạm...):'); if (!r || !r.trim()) return false; this.reason.value=r.trim(); return true;">
-                <input type="hidden" name="_csrf" value="${escapedCsrf}">
-                <input type="hidden" name="action" value="delete-comment">
-                <input type="hidden" name="id" value="${review.review_id}">
-                <input type="hidden" name="reason">
-                <button class="btn btn-danger btn-small" type="submit">Xóa bình luận</button>
-              </form>
+              <c:choose>
+                <c:when test="${empty review.moderated_at}">
+                  <form method="post" action="${ctx}/manage/reviews" onsubmit="var r=prompt('Nhập lý do ẩn bình luận (spam, ngôn từ thô tục, nội dung vi phạm...):'); if (!r || !r.trim()) return false; this.reason.value=r.trim(); return true;">
+                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                    <input type="hidden" name="action" value="hide-comment">
+                    <input type="hidden" name="id" value="${review.review_id}">
+                    <input type="hidden" name="reason">
+                    <button class="btn btn-danger btn-small review-action" type="submit">Ẩn bình luận</button>
+                  </form>
+                </c:when>
+                <c:otherwise>
+                  <form method="post" action="${ctx}/manage/reviews" onsubmit="return confirm('Hiện lại bình luận này cho mọi người xem?');">
+                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                    <input type="hidden" name="action" value="unhide-comment">
+                    <input type="hidden" name="id" value="${review.review_id}">
+                    <button class="btn btn-outline btn-small review-action" type="submit">Hiện lại</button>
+                  </form>
+                </c:otherwise>
+              </c:choose>
             </c:if>
           </td>
         </tr>

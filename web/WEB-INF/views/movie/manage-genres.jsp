@@ -6,7 +6,7 @@
 
 <main class="page"><div class="container">
   <section class="movie-page-heading">
-    <div><p class="eyebrow">KHU VỰC QUẢN LÝ</p><h1>Quản lý thể loại</h1>
+    <div><h1>Quản lý thể loại</h1>
       <p class="sub">Tạo thể loại trước khi gán thể loại cho phim.</p></div>
     <a class="btn btn-outline" href="${ctx}/manage/movies">Quản lý phim</a>
   </section>

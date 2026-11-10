@@ -149,7 +149,7 @@
                 <c:forEach var="v" items="${vouchers}">
                   <tr data-voucher-code="<c:out value='${v.code}'/>">
                     <td class="uip-voucher-code"><c:out value="${v.code}"/>
-                      <c:if test="${v.is_personal == 1}"><br><small style="color:#92400e;font-family:inherit">Dành riêng cho bạn</small></c:if></td>
+                      <c:if test="${v.is_personal == 1}"><br><small style="color:#92400e;font-family:inherit">Voucher đền bù · còn ${v.usage_limit} lượt</small></c:if></td>
                     <td><c:out value="${v.description}"/></td>
                     <td><c:out value="${v.valid_to_txt}"/></td>
                   </tr>
@@ -230,7 +230,7 @@
       <p>Giờ chiếu phim cho trẻ em dưới 13 tuổi tại tất cả các cụm rạp CineStar Cinemas kết thúc trước 22 giờ.</p>
       <p>Giờ chiếu phim cho trẻ em dưới 16 tuổi tại tất cả các cụm rạp CineStar Cinemas kết thúc trước 23 giờ.</p>
       <p>Lưu ý, Ban Quản Lý tại các cụm rạp chiếu phim CineStar Cinemas có quyền kiểm tra và từ chối yêu cầu xem phim của Quý khách hàng nếu Quý khách hàng không tuân thủ quy định về độ tuổi xem phim.</p>
-      <p>7. Vì một số sự cố kỹ thuật bất khả kháng, suất chiếu có thể bị huỷ để đảm bảo an toàn tối đa cho khách hàng. Khi đó toàn bộ giá trị đơn (tiền vé, bắp nước và MyPoint đã dùng; không tính phần giảm từ voucher) được hoàn thành <strong>điểm MyPoint</strong> vào tài khoản của Quý khách, kèm một <strong>voucher bù trừ</strong> dành riêng cho Quý khách. CineStar Cinemas sẽ thông báo qua Hộp thư và email trong mục Thông tin thành viên.</p>
+      <p>7. Vì một số sự cố kỹ thuật bất khả kháng, suất chiếu có thể bị huỷ để đảm bảo an toàn tối đa cho khách hàng. Khi đó toàn bộ giá trị đơn (tiền vé, bắp nước và MyPoint đã dùng; không tính phần giảm từ voucher) được hoàn thành <strong>điểm MyPoint</strong> vào tài khoản của Quý khách, kèm một lượt <strong>voucher đền bù</strong> dành riêng cho Quý khách. CineStar Cinemas sẽ thông báo qua Hộp thư và email trong mục Thông tin thành viên.</p>
     </div>
     <div class="pay-notice-actions">
       <button type="button" class="btn btn-outline" id="payNoticeClose">Đóng</button>

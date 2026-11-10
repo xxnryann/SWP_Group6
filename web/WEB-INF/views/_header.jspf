@@ -21,7 +21,7 @@
   <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
   <link rel="stylesheet" href="${ctx}/assets/css/cinema.css?v=20261109-1">
   <c:if test="${movieModule}">
-    <link rel="stylesheet" href="${ctx}/assets/css/movie.css?v=20261110-12">
+    <link rel="stylesheet" href="${ctx}/assets/css/movie.css?v=20261110-14">
   </c:if>
   <c:if test="${dashboardModule or railModule}">
     <link rel="stylesheet" href="${ctx}/assets/css/dashboard.css">
