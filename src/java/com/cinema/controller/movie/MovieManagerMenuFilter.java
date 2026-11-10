@@ -51,6 +51,13 @@ public class MovieManagerMenuFilter implements Filter {
                 || path.startsWith("/dashboard");
 
         httpRequest.setAttribute("roleModule", isRolePage);
+        // Khách hàng đã đăng nhập xem các trang khám phá / đặt vé / tin tức trong khung sidebar dọc
+        // của khu tài khoản, không quay về header công khai (navbar ngang).
+        boolean customerExplore = isHome
+                || path.startsWith("/showtimes") || path.startsWith("/movies")
+                || path.startsWith("/pricing") || path.startsWith("/promotions")
+                || path.startsWith("/news") || path.startsWith("/booking");
+        httpRequest.setAttribute("customerModule", customerExplore);
         // Đã đăng nhập thì menu dọc (rail) hiện ở mọi trang nội bộ, kể cả khi
         // điều hướng sang trang khác -> không mất menu khi đổi trang.
         // Trang chủ dùng chung giao diện tổng quan customer: khách chưa đăng nhập thấy header công khai.

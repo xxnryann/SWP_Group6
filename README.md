@@ -259,7 +259,7 @@ scripts/                   # Build, deploy, test (PowerShell)
 | `/` | Guest | Trang chủ |
 | `/register`, `/verify-otp` | Guest | Tạo tài khoản + OTP email |
 | `/login`, `/logout` | all | Đăng nhập / đăng xuất |
-| `/movies`, `/movies/detail?id=` | Guest | Danh sách phim, chi tiết phim |
+| `/movies`, `/movies/detail?id=` | Guest | Danh sách phim, chi tiết phim (poster, trailer, thông tin, đánh giá — không có button chọn suất chiếu) |
 | `/showtimes` | all | Lịch chiếu (link đặt vé cho Customer) |
 | `/pricing` | all | Bảng giá vé 2D (đọc động từ bảng `TicketPrice`) |
 | `/news` | Guest | Tin tức công khai |
@@ -294,35 +294,36 @@ Cơ chế hoạt động:
 | `LoginServlet` | Đọc `RoleDashboard.pathFor(role)` để chuyển hướng; deep-link hợp lệ (vd `/account/tickets`) vẫn được giữ |
 | `DashboardAuthFilter` | Bảo vệ 4 URL dashboard: chưa đăng nhập → 302 `/login`; tài khoản không `ACTIVE` → đăng xuất; sai vai trò → **403** |
 | `DashboardDAO` | Số liệu tổng hợp chỉ đọc (PreparedStatement): người dùng, hạ tầng, phim, lịch chiếu + thống kê ghế (qua `vw_SeatMap`), doanh thu (qua `vw_RevenueByMovie`) |
-| `web/WEB-INF/views/dashboard/_dash_rail.jspf` | Menu dọc cố định (rail) dùng chung cho mọi trang đã đăng nhập, đổi menu theo vai trò, highlight mục đang xem |
+| `web/WEB-INF/views/layout/top.jspf` | Menu dọc (sidebar) theo vai trò, hiển thị đầy đủ chức năng của vai trò; highlight mục đang xem |
 
 > **Quy ước phân quyền:** `/dashboard/admin` → ADMIN · `/dashboard/manager` → MANAGER, ADMIN · `/dashboard/staff` → STAFF, MANAGER, ADMIN · `/dashboard/customer` → CUSTOMER.
 >
 > **Fallback ngày:** nếu hôm nay rạp chưa có suất chiếu (dữ liệu seed được tạo từ một ngày khác), dashboard tự lùi về ngày gần nhất có lịch (`findNextShowtimeDate()`) và hiển thị đúng ngày đó trên tiêu đề.
 
-### 4.2. Menu dọc (rail) cố định
+### 4.2. Menu dọc (sidebar) theo vai trò
 
-Sau khi đăng nhập, **menu dọc bên trái luôn hiện ở mọi trang** — kể cả khi điều hướng sang trang khác (quản lý phim, lịch chiếu, hồ sơ, đặt vé…), nên không bao giờ bị mất menu.
+Mỗi vai trò đã đăng nhập đều có **menu dọc bên trái** dùng chung khung giao diện (sidebar + thanh trên + vùng nội dung), hiển thị **đầy đủ chức năng của vai trò đó**.
 
 Cơ chế:
 
 | Thành phần | Vai trò |
 |---|---|
-| `web/WEB-INF/views/dashboard/_dash_rail.jspf` | Rail cố định (`position: fixed`), sinh **một lần** trong `_header.jspf` — mọi trang đều include file này nên menu luôn tồn tại |
-| `MovieManagerMenuFilter` | Gắn cờ `railModule` = đã đăng nhập **và** không phải trang chủ; `roleModule` cho các khu vực nội bộ |
-| `_header.jspf` | Bỏ thanh nav ngang + breadcrumb khi rail hiện; nút "Đăng xuất" chỉ nằm ở chân rail |
-| `cinema.css` | `body.has-rail { padding-left: 260px }` — nội dung trang lệch sang phải, không chồng lên rail |
+| `web/WEB-INF/views/layout/top.jspf` | Render khung `.app` (sidebar + `.app-topbar` + `.app-content`); thanh `side-nav` đổi menu theo `myRole` |
+| `MovieManagerMenuFilter` | Gắn cờ `roleModule` cho các khu vực nội bộ (`/admin`, `/manager`, `/manage`, `/staff`, `/customer`, `/account`, `/dashboard`) và cờ `customerModule` cho các trang khám phá / đặt vé / tin tức (`/home`, `/showtimes`, `/movies`, `/pricing`, `/promotions`, `/news`, `/booking`) — CUSTOMER xem các trang này cũng trong khung sidebar |
+| `web/assets/js/app.js` | `markActive()` tự đánh dấu mục đang xem theo tiền tố URL dài nhất (`#sideNav a`) |
+| `web/assets/css/app.css` | `.app` / `.sidebar` / `.side-nav` / `.side-foot`; ở breakpoint mobile sidebar thu gọn, mở bằng nút toggle ở thanh trên |
 
 Menu theo vai trò (mỗi role **chỉ** thấy chức năng của role đó):
 
 | Vai trò | Menu dọc |
 |---|---|
-| `ADMIN` | Tổng quan · Người dùng · Phòng chiếu · Sơ đồ ghế · Báo cáo vận hành |
-| `MANAGER` | Tổng quan · Quản lý phim · Lịch chiếu · Quản lý tin tức |
-| `STAFF` | Tổng quan · Bán vé tại quầy · Quản lý combo |
-| `CUSTOMER` | Tổng quan · Lịch chiếu · Phim đang chiếu · Lịch sử vé · Điểm MyPoint · Thông tin cá nhân · Đổi mật khẩu · **Bảng giá vé** · **Tin tức** |
+| `ADMIN` | Tổng quan · Người dùng · Phòng chiếu · Lịch phòng chiếu · Quản lý hệ thống |
+| `MANAGER` | Tổng quan · Quản lý phim · Lịch chiếu · Kiểm duyệt đánh giá · Tin tức · Giá vé · Voucher · MyPoint |
+| `STAFF` | Tổng quan · Bán vé tại quầy · Soát vé · Đổi ghế · Quản lý combo |
+| `CUSTOMER` | Tổng quan · Vé của tôi · Hộp thư · Điểm MyPoint · Voucher · Lịch chiếu · Phim đang chiếu · Bảng giá vé · Khuyến mãi · Tin tức |
 
-> Trang chủ `/` và `/home` giữ nguyên layout công khai (thanh nav ngang, không có rail) theo yêu cầu.
+> Thông tin cá nhân / đổi mật khẩu của CUSTOMER nằm trong trang `/account/profile` — bấm vào avatar ở chân sidebar để tới. Khách đã đăng nhập xem `/home`, `/showtimes`, `/movies`, `/pricing`, `/promotions`, `/news` và luồng đặt vé `/booking/*` cũng dùng khung sidebar; khách vãng lai và các vai trò nhân viên vẫn thấy layout công khai (thanh nav ngang) trên các trang đó.
+
 
 ### Tài khoản seed
 

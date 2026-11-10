@@ -1,6 +1,6 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<c:set var="pageTitle" value="Giá vé"/>
+<c:set var="pageTitle" value="Bảng giá vé"/>
 <c:set var="mainClass" value="main-flush"/>
 <%@ include file="../layout/top.jspf" %>
 <fmt:setLocale value="vi_VN"/>

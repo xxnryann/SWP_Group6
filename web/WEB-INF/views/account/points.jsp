@@ -2,10 +2,8 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Điểm MyPoint"/>
 <%@ include file="../layout/top.jspf" %>
-<div class="${isStaffRole ? '' : 'container'}">
+<div class="${appShell ? '' : 'container'}">
   <div class="page-head"><div><h1>Điểm MyPoint</h1><p>Tích điểm sau mỗi đơn và dùng điểm để giảm tiền ở lần đặt vé sau. Vé đã thanh toán không thể hủy/hoàn tiền do lỗi từ phía khách hàng; chỉ khi rạp hủy suất chiếu do sự cố, giá trị đơn mới được hoàn thành MyPoint kèm một lượt voucher đền bù.</p></div></div>
-  <%@ include file="../layout/account-nav.jspf" %>
-
   <div class="split" style="grid-template-columns:minmax(0,1fr) 360px">
     <section class="card">
       <div class="card-head"><div><h2>Lịch sử điểm</h2><p>Các lần cộng và trừ điểm gần đây</p></div></div>

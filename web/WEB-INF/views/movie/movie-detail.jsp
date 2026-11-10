@@ -41,8 +41,6 @@
       </div>
       <c:if test="${not empty movie.synopsis}"><p class="synopsis"><c:out value="${movie.synopsis}"/></p></c:if>
       <div class="cluster mt-24">
-        <c:if test="${canBuy and movie.status != 'Stopped'}"><a class="btn btn-accent btn-lg" href="#movie-showtimes-inline">${ic.ticket}Chọn suất chiếu</a></c:if>
-        <c:if test="${not empty movie.trailerFileDisplayUrl or not empty movie.trailerEmbedUrl}"><a class="btn btn-light btn-lg" href="#trailer">${ic.play}Xem trailer</a></c:if>
         <c:if test="${canManageMovies}"><a class="btn btn-light btn-lg" href="${escapedEditUrl}">${ic.edit}Sửa phim</a></c:if>
       </div>
     </div>
@@ -52,13 +50,6 @@
 <div class="container mt-32">
   <div class="split">
     <div class="stack" style="--gap:24px">
-      <c:if test="${canBuy and movie.status != 'Stopped'}">
-        <section class="card card-pad" id="movie-showtimes-inline" data-movie-id="${movie.movieId}" hidden>
-          <h2 style="font-size:var(--fs-h3)">Lịch chiếu</h2>
-          <div class="movie-showtimes-body"></div>
-        </section>
-      </c:if>
-
       <section class="card card-pad" id="trailer">
         <h2 class="mb-16" style="font-size:var(--fs-h3)">Trailer</h2>
         <c:choose>
@@ -148,10 +139,8 @@
           <dt>Tệp trailer</dt><dd><c:out value="${empty movie.trailerFile ? '—' : movie.trailerFile}"/></dd>
         </c:if>
       </dl>
-      <a class="btn btn-block mt-24" href="${ctx}/movies">${ic.chevronLeft}Quay lại danh sách phim</a>
     </aside>
   </div>
 </div>
 
-<script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="../layout/bottom.jspf" %>

@@ -88,7 +88,6 @@
   }
   markActive($$('#sideNav a'));
   markActive($$('#mainNav a'));
-  markActive($$('[data-subnav] a'));
 
   /* Header đổ bóng khi cuộn */
   var header = $('#siteHeader');

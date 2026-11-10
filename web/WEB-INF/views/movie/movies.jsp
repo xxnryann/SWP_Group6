@@ -52,7 +52,8 @@
       <div class="movie-grid">
         <c:forEach var="movie" items="${movies}">
           <c:set var="mv" value="${movie}"/><c:set var="mvNext" value=""/>
-          <c:set var="mvCta" value="${canBuy and bookableIds.contains(movie.movieId) ? 'buy' : 'detail'}"/>
+          <%-- Không hiện nút "Mua vé" ở danh sách phim: khách đặt vé qua trang Lịch chiếu. --%>
+          <c:set var="mvCta" value="detail"/>
           <%@ include file="../layout/movie-card.jspf" %>
         </c:forEach>
       </div>
@@ -60,5 +61,4 @@
   </c:choose>
 </div>
 
-<script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="../layout/bottom.jspf" %>

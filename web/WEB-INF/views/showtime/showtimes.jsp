@@ -1,14 +1,15 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="pageTitle" value="Lịch chiếu"/>
-<c:set var="mainClass" value="main-flush st-page"/>
+<c:set var="mainClass" value="main-flush"/>
 <%@ include file="../layout/top.jspf" %>
 <c:set var="canBook" value="${empty sessionScope.authUser or sessionScope.authUser.role == 'CUSTOMER'}"/>
 <c:set var="showtimeCount" value="0"/>
 <c:forEach var="group" items="${showtimeGroups}"><c:set var="showtimeCount" value="${showtimeCount + fn:length(group.showtimes)}"/></c:forEach>
-<script>document.getElementById('main').dataset.date = '${selectedDate}';</script>
 
-<section class="hero-band" style="padding-bottom:64px">
+<%-- Marker cho showtimes.js: class + data-date nằm ngay trong markup để hoạt động
+     ở cả khung sidebar (app-content) lẫn trang công khai (main). --%>
+<section class="hero-band st-page" data-date="<c:out value='${selectedDate}'/>" style="padding-bottom:64px">
   <div class="container">
     <div class="cluster between" style="align-items:flex-end">
       <div>

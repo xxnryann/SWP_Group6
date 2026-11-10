@@ -9,9 +9,8 @@
   .inbox-item p { margin-top: 6px; font-size: 14.5px; }
   .inbox-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; color: var(--muted); font-size: 13px; }
 </style>
-<div class="container">
+<div class="${appShell ? '' : 'container'}">
   <div class="page-head"><div><h1>Hộp thư</h1><p>Thông báo vé, nhắc lịch chiếu, phim mới và ưu đãi dành cho bạn.</p></div></div>
-  <%@ include file="../layout/account-nav.jspf" %>
 
   <section class="card">
     <div class="card-head">
