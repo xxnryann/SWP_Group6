@@ -18,7 +18,7 @@
 [CmdletBinding()]
 param(
     [string]$BaseUrl = '',
-    [string]$Email = 'khach1@gmail.com',
+    [string]$Email = 'dungcaohung2410+khach1@gmail.com',
     [string]$Password = ''
 )
 
