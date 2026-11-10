@@ -51,6 +51,17 @@ public final class RoomRules {
     private RoomRules() {
     }
 
+    /**
+     * Kiểu sơ đồ của phòng dùng layout tự tạo trong thư viện: không phải layout cố định (không có hành lang/vùng màu
+     * theo số ghế) và vẽ theo kiểu 2D (planVariant rỗng, có lối đi hai bên).
+     */
+    public static final String CUSTOM_LAYOUT = "CUSTOM";
+
+    /** Giá trị truyền cho planVariant/isFixedLayout/... : CUSTOM_LAYOUT nếu phòng dùng layout tự tạo. */
+    public static String layoutKind(String roomType, boolean customLayout) {
+        return customLayout ? CUSTOM_LAYOUT : roomType;
+    }
+
     public static boolean isFixedLayout(String roomType) {
         return ROOM_TYPE_2D.equals(roomType) || ROOM_TYPE_IMAX.equals(roomType)
                 || ROOM_TYPE_3D.equals(roomType) || ROOM_TYPE_4DX.equals(roomType);

@@ -203,6 +203,16 @@ public class OnlineBookingService {
         }
     }
 
+    /** Phòng chiếu của suất dùng layout tự tạo trong thư viện (vẽ theo kiểu 2D, không có hành lang cố định). */
+    public boolean usesCustomLayout(int showtimeId) {
+        try {
+            return bookingDAO.usesCustomLayout(showtimeId);
+        } catch (SQLException e) {
+            LOG.log(Level.WARNING, "usesCustomLayout lỗi", e);
+            return false;
+        }
+    }
+
     /** Sơ đồ ghế của suất chiếu. */
     public List<SeatCell> getSeatMap(int showtimeId) {
         try {

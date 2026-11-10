@@ -21,7 +21,7 @@ import java.sql.SQLException;
  *   GET  (không action)        danh sách phòng, tìm theo tên (?q=)
  *   GET  ?action=new           form thêm phòng
  *   GET  ?action=edit&id=N     form sửa phòng
- *   POST action=save           thêm/sửa phòng
+ *   POST action=save           sửa phòng; thêm phòng: kiểm tra rồi chuyển sang bước chọn layout (/admin/room-layout)
  *   POST action=toggle         đóng/mở phòng
  *   POST action=delete         xóa phòng (chỉ khi chưa có suất chiếu/vé)
  */
@@ -43,9 +43,12 @@ public class ManageRoomsServlet extends AdminBaseServlet {
                     resp.sendRedirect(req.getContextPath() + "/admin/rooms?limit=full");
                     return;
                 }
-                Room r = new Room();
-                r.setRoomType(RoomRules.ROOM_TYPE_2D);
-                r.setCapacity(RoomRules.FIXED_2D_CAPACITY);
+                // Quay lại từ bước chọn layout: điền sẵn thông tin đã nhập.
+                Room draft = RoomLayoutServlet.draft(req);
+                Room r = draft != null && "1".equals(req.getParameter("draft")) ? draft : new Room();
+                if (r.getRoomType() == null) {
+                    r.setRoomType(RoomRules.ROOM_TYPE_2D);
+                }
                 r.setStatus(RoomRules.ROOM_ACTIVE);
                 showForm(req, resp, r);
             } else if ("edit".equals(action)) {
@@ -124,7 +127,10 @@ public class ManageRoomsServlet extends AdminBaseServlet {
 
         // Phòng đã có layout: sức chứa luôn bằng số ghế thực tế, không cho nhập tay.
         boolean capacityLocked = editing && existing.isHasLayout();
-        if (capacityLocked) {
+        if (!editing) {
+            // Thêm phòng: sức chứa lấy theo layout chọn ở bước sau; tạm dùng sức chứa chuẩn để kiểm tra.
+            capacityStr = String.valueOf(RoomRules.fixedCapacity(type));
+        } else if (capacityLocked) {
             capacityStr = String.valueOf(existing.getSeatCount());
         } else if (RoomRules.isFixedLayout(type)) {
             // Mỗi loại phòng có sức chứa cố định — lấy từ RoomRules, không tin giá trị form gửi lên.
@@ -151,34 +157,29 @@ public class ManageRoomsServlet extends AdminBaseServlet {
         Integer cap = RoomRules.parseInt(capacityStr);
         r.setCapacity(cap == null ? 0 : cap);
 
+        if (error == null && !editing && roomDAO.countAll() >= RoomRules.MAX_ROOMS) {
+            error = RoomRules.ROOM_LIMIT_MESSAGE;
+        }
         if (error != null) {
             req.setAttribute("error", error);
             showForm(req, resp, r);
             return;
         }
+        if (!editing) {
+            // Bước 1 xong: giữ thông tin phòng trong session, sang bước 2 chọn layout ghế (phòng chưa được tạo).
+            RoomLayoutServlet.saveDraft(req, r);
+            resp.sendRedirect(req.getContextPath() + "/admin/room-layout");
+            return;
+        }
 
         try {
-            if (editing) {
-                roomDAO.update(r);
-                if (RoomRules.isFixedLayout(type) && !capacityLocked) {
-                    applyFixedLayout(req, id, type, "Đã cập nhật phòng \"" + name + "\" với layout chuẩn " + type + ".");
-                } else {
-                    flash(req, "success", "Đã cập nhật phòng \"" + name + "\".");
-                }
-                resp.sendRedirect(req.getContextPath() + "/admin/rooms");
+            roomDAO.update(r);
+            if (RoomRules.isFixedLayout(type) && !capacityLocked && !existing.isCustomLayout()) {
+                applyFixedLayout(req, id, type, "Đã cập nhật phòng \"" + name + "\" với layout chuẩn " + type + ".");
             } else {
-                int newId = roomDAO.insert(r);
-                if (RoomRules.isFixedLayout(type)) {
-                    applyFixedLayout(req, newId, type, "Đã tạo phòng \"" + name + "\" với layout chuẩn " + type + " ("
-                            + RoomRules.fixedCapacity(type) + " ghế).");
-                } else {
-                    flash(req, "success", "Đã tạo phòng \"" + name + "\". Hãy thiết lập layout ghế cho phòng.");
-                }
-                resp.sendRedirect(req.getContextPath() + "/admin/seats?roomId=" + newId);
+                flash(req, "success", "Đã cập nhật phòng \"" + name + "\".");
             }
-        } catch (RoomRuleException e) {
-            req.setAttribute("error", e.getMessage());
-            showForm(req, resp, r);
+            resp.sendRedirect(req.getContextPath() + "/admin/rooms");
         } catch (SQLException e) {
             if (e.getErrorCode() == 2601 || e.getErrorCode() == 2627) { // trùng UNIQUE (cinema_id, room_name)
                 req.setAttribute("error", "Rạp này đã có phòng tên \"" + name + "\".");

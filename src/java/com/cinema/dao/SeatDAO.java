@@ -6,6 +6,7 @@ import com.cinema.util.DBContext;
 import com.cinema.util.room.RoomRuleException;
 import com.cinema.util.room.RoomRules;
 import com.cinema.util.room.RoomRules.SeatSpec;
+import com.cinema.util.room.SeatLayoutRules;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -141,6 +142,18 @@ public class SeatDAO {
 
     /** Danh sách ghế của layout cố định theo loại phòng, dùng seat_type_id thực tế trong database. */
     public List<SeatSpec> fixedSpecs(String roomType) throws SQLException, RoomRuleException {
+        int[] ids = coreTypeIds();
+        return RoomRules.fixedLayout(roomType, ids[0], ids[1], ids[2]);
+    }
+
+    /** Danh sách ghế của một layout trong thư viện (layout_data đã kiểm tra hợp lệ). */
+    public List<SeatSpec> layoutSpecs(String layoutData) throws SQLException, RoomRuleException {
+        int[] ids = coreTypeIds();
+        return SeatLayoutRules.toSpecs(layoutData, ids[0], ids[1], ids[2]);
+    }
+
+    /** seat_type_id của {Standard, VIP, Couple}. */
+    private int[] coreTypeIds() throws SQLException, RoomRuleException {
         Integer standard = null;
         Integer vip = null;
         Integer couple = null;
@@ -156,7 +169,7 @@ public class SeatDAO {
         if (standard == null || vip == null || couple == null) {
             throw new RoomRuleException("Thiếu loại ghế Standard, VIP hoặc Couple trong hệ thống.");
         }
-        return RoomRules.fixedLayout(roomType, standard, vip, couple);
+        return new int[] {standard, vip, couple};
     }
 
     public boolean matchesLayout(List<Seat> seats, List<SeatSpec> specs) {
@@ -446,21 +459,55 @@ public class SeatDAO {
 
     // ---------- helpers ----------
 
-    /** Gán pair_seat_id cho ghế đôi theo cặp 1-2, 3-4, ... (rowLabel = null → cả phòng). */
+    /**
+     * Gán pair_seat_id cho ghế đôi (rowLabel = null → cả phòng): trong mỗi hàng, các ghế đôi đứng liền nhau
+     * (số ghế liên tiếp) được ghép từ trái sang phải. Hàng toàn ghế đôi đánh số từ 1 cho kết quả 1-2, 3-4, ...;
+     * layout tùy chỉnh có ghế đôi ở giữa hàng (vd. ghế 2-3 sau một ghế thường) cũng ghép đúng.
+     */
     private void linkCouplePairs(Connection c, int roomId, String rowLabel) throws SQLException {
-        String sql = "UPDATE s SET s.pair_seat_id = p.seat_id "
-                + "FROM Seat s "
-                + "JOIN SeatType t ON t.seat_type_id = s.seat_type_id AND t.is_couple = 1 "
-                + "JOIN Seat p ON p.room_id = s.room_id AND p.row_label = s.row_label "
-                + "  AND p.seat_number = CASE WHEN s.seat_number % 2 = 1 THEN s.seat_number + 1 "
-                + "                           ELSE s.seat_number - 1 END "
-                + "WHERE s.room_id = ?" + (rowLabel != null ? " AND s.row_label = ?" : "");
+        String sql = "SELECT s.seat_id, s.row_label, s.seat_number, t.is_couple FROM Seat s "
+                + "JOIN SeatType t ON t.seat_type_id = s.seat_type_id "
+                + "WHERE s.room_id = ?" + (rowLabel != null ? " AND s.row_label = ?" : "")
+                + " ORDER BY s.row_label, s.seat_number";
+        List<int[]> pairs = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, roomId);
             if (rowLabel != null) {
                 ps.setString(2, rowLabel);
             }
-            ps.executeUpdate();
+            try (ResultSet rs = ps.executeQuery()) {
+                Integer pendingId = null;
+                String pendingRow = null;
+                int pendingNumber = 0;
+                while (rs.next()) {
+                    int id = rs.getInt("seat_id");
+                    String row = rs.getString("row_label");
+                    int number = rs.getInt("seat_number");
+                    if (!rs.getBoolean("is_couple")) {
+                        pendingId = null;
+                        continue;
+                    }
+                    if (pendingId != null && row.equals(pendingRow) && number == pendingNumber + 1) {
+                        pairs.add(new int[] {pendingId, id});
+                        pendingId = null;
+                    } else {
+                        pendingId = id;
+                        pendingRow = row;
+                        pendingNumber = number;
+                    }
+                }
+            }
+        }
+        try (PreparedStatement ps = c.prepareStatement("UPDATE Seat SET pair_seat_id = ? WHERE seat_id = ?")) {
+            for (int[] p : pairs) {
+                ps.setInt(1, p[1]);
+                ps.setInt(2, p[0]);
+                ps.addBatch();
+                ps.setInt(1, p[0]);
+                ps.setInt(2, p[1]);
+                ps.addBatch();
+            }
+            ps.executeBatch();
         }
     }
 

@@ -22,6 +22,7 @@ public class RoomDAO {
 
     private static final String SELECT_WITH_STATS =
             "SELECT r.room_id, r.cinema_id, c.cinema_name, r.room_name, r.room_type, r.capacity, r.status, "
+            + " r.layout_id, (SELECT l.layout_name FROM SeatLayout l WHERE l.layout_id = r.layout_id) AS layout_name, "
             + " (SELECT COUNT(*) FROM Seat s WHERE s.room_id = r.room_id) AS seat_count, "
             + " (SELECT COUNT(*) FROM Seat s WHERE s.room_id = r.room_id AND s.status = 'Maintenance') AS maint_count, "
             + " (SELECT COUNT(*) FROM Showtime st WHERE st.room_id = r.room_id AND st.status = 'Scheduled' "
@@ -37,6 +38,9 @@ public class RoomDAO {
         r.setRoomType(rs.getString("room_type"));
         r.setCapacity(rs.getInt("capacity"));
         r.setStatus(rs.getString("status"));
+        int layoutId = rs.getInt("layout_id");
+        r.setLayoutId(rs.wasNull() ? null : layoutId);
+        r.setLayoutName(rs.getString("layout_name"));
         r.setSeatCount(rs.getInt("seat_count"));
         r.setMaintenanceCount(rs.getInt("maint_count"));
         r.setUpcomingShowtimes(rs.getInt("upcoming_count"));
@@ -121,8 +125,8 @@ public class RoomDAO {
      * để hai admin thêm cùng lúc không vượt quá giới hạn số phòng.
      */
     public int insert(Room r) throws SQLException, RoomRuleException {
-        String sql = "INSERT INTO Room (cinema_id, room_name, room_type, capacity, status) "
-                + "SELECT ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM Room WITH (UPDLOCK, HOLDLOCK)) < ?";
+        String sql = "INSERT INTO Room (cinema_id, room_name, room_type, capacity, status, layout_id) "
+                + "SELECT ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM Room WITH (UPDLOCK, HOLDLOCK)) < ?";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, r.getCinemaId());
@@ -130,7 +134,12 @@ public class RoomDAO {
             ps.setString(3, r.getRoomType());
             ps.setInt(4, r.getCapacity());
             ps.setString(5, r.getStatus());
-            ps.setInt(6, RoomRules.MAX_ROOMS);
+            if (r.getLayoutId() == null) {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            } else {
+                ps.setInt(6, r.getLayoutId());
+            }
+            ps.setInt(7, RoomRules.MAX_ROOMS);
             if (ps.executeUpdate() == 0) {
                 throw new RoomRuleException(RoomRules.ROOM_LIMIT_MESSAGE);
             }
