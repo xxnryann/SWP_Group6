@@ -191,8 +191,43 @@
               </c:otherwise>
             </c:choose>
           </div>
+
+          <%-- Lịch tất cả các phòng trong ngày đang chọn (timeline dùng chung với form thêm suất chiếu) --%>
+          <div class="rs-card room-schedule" id="room-schedule" data-date="${scheduleDate}"
+               data-url="${ctx}/admin/room-showtimes" data-room="<c:out value='${room.roomName}'/>">
+            <div class="room-schedule-head">
+              <h2>Lịch các phòng <span id="room-schedule-date"></span></h2>
+              <ul class="room-schedule-legend">
+                <li><i class="tl-swatch tl-busy"></i>Đã có suất</li>
+                <li><i class="tl-swatch tl-free"></i>Trống</li>
+                <li><i class="tl-swatch tl-past-show"></i>Suất đã qua</li>
+                <li><i class="tl-swatch tl-past"></i>Giờ đã qua</li>
+              </ul>
+            </div>
+            <p class="rs-muted" id="room-schedule-status">Đang tải lịch phòng…</p>
+            <div class="room-schedule-scroll"><div class="room-schedule-board" id="room-schedule-board"></div></div>
+          </div>
         </div>
       </div>
         </c:otherwise>
       </c:choose>
+<c:if test="${not empty room}">
+<link rel="stylesheet" href="${ctx}/assets/css/room-schedule.css?v=20261110-3">
+<script src="${ctx}/assets/js/room-schedule.js?v=20261110-1"></script>
+<script>
+  (function () {
+    var box = document.getElementById('room-schedule');
+    if (!box || !window.RoomSchedule) return;
+    var current = box.dataset.room;
+    window.RoomSchedule.create({
+      board: document.getElementById('room-schedule-board'),
+      status: document.getElementById('room-schedule-status'),
+      dateLabel: document.getElementById('room-schedule-date'),
+      url: box.dataset.url,
+      action: 'schedule',
+      selectedRooms: function () { return [current]; }
+    }).load(box.dataset.date);
+  })();
+</script>
+</c:if>
 <%@ include file="../layout/bottom.jspf" %>

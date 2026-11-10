@@ -42,6 +42,10 @@ public class RoomShowtimesServlet extends AdminBaseServlet {
         if (!requireAdmin(req, resp)) {
             return;
         }
+        if ("schedule".equals(req.getParameter("action"))) {
+            writeSchedule(req, resp);
+            return;
+        }
         try {
             List<Room> rooms = roomDAO.findAll(null, null);
             Integer roomId = intParam(req, "roomId");
@@ -76,6 +80,26 @@ public class RoomShowtimesServlet extends AdminBaseServlet {
             forward(req, resp, "room/room-showtimes");
         } catch (SQLException e) {
             throw new ServletException(e);
+        }
+    }
+
+    /** JSON lịch tất cả các phòng trong một ngày cho timeline "Lịch các phòng". */
+    private void writeSchedule(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        LocalDate date;
+        try {
+            date = LocalDate.parse(req.getParameter("date"));
+        } catch (RuntimeException e) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Ngày không hợp lệ.");
+            return;
+        }
+        try {
+            String body = com.cinema.util.showtime.RoomScheduleJson.build(new com.cinema.dao.ShowtimeDAO(), date);
+            resp.setContentType("application/json;charset=UTF-8");
+            resp.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            resp.getWriter().write(body);
+        } catch (SQLException e) {
+            getServletContext().log("Unable to load room schedule.", e);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải lịch phòng.");
         }
     }
 
@@ -121,6 +145,8 @@ public class RoomShowtimesServlet extends AdminBaseServlet {
         }
 
         req.setAttribute("days", days);
+        // Ngày vẽ timeline "Lịch các phòng": ngày đang chọn, nếu xem "Mọi ngày" thì hôm nay.
+        req.setAttribute("scheduleDate", (selected != null ? selected : today).toString());
         req.setAttribute("visibleDays", visible);
         req.setAttribute("showAllDays", showAll);
         req.setAttribute("totalShowtimes", showtimes.size());

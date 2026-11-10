@@ -311,124 +311,28 @@
     }
   });
 
-  /* ================= Lịch các phòng trong ngày (timeline) ================= */
-  var board = document.getElementById('room-schedule-board');
-  var boardStatus = document.getElementById('room-schedule-status');
-  var boardDate = document.getElementById('room-schedule-date');
-  var schedule = null;
-  var scheduleRequest = 0;
-
-  function renderSchedule() {
-    if (!board || !schedule) return;
-    var open = toMin(schedule.open);
-    var close = Math.ceil(Math.max(toMin(schedule.close), open + 60) / 60) * 60;
-    var span = close - open;
-    function pct(m) { return ((Math.min(Math.max(m, open), close) - open) / span * 100) + '%'; }
-    function widthPct(a, b) { return (Math.max(0, Math.min(b, close) - Math.max(a, open)) / span * 100) + '%'; }
-
-    var now = new Date();
-    var todayIso = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-    var nowMin = now.getHours() * 60 + now.getMinutes();
-    var pastUntil = dateInput.value === todayIso ? nowMin : (dateInput.value < todayIso ? close : open);
-    var d = duration();
-    var selected = checkedRooms();
-
-    board.replaceChildren();
-    var axis = el('div', 'rs-axis');
-    axis.appendChild(el('div'));
-    var axisTrack = el('div', 'rs-axis-track');
-    for (var h = open; h <= close; h += 60) {
-      var tick = el('span', null, pad(Math.floor(h / 60)) + ':' + pad(h % 60));
-      tick.style.left = pct(h);
-      if (h === open) tick.style.transform = 'none';
-      if (h === close) tick.style.transform = 'translateX(-100%)';
-      axisTrack.appendChild(tick);
-    }
-    axis.appendChild(axisTrack);
-    board.appendChild(axis);
-
-    schedule.rooms.forEach(function (room) {
-      var row = el('div', 'rs-row' + (selected.indexOf(room.room) !== -1 ? ' is-selected' : ''));
-      row.appendChild(el('div', 'rs-room', room.room)).title = room.room;
-      var track = el('div', 'rs-track');
-      if (pastUntil > open) {
-        var past = el('div', 'rs-past-zone');
-        past.style.width = widthPct(open, pastUntil);
-        track.appendChild(past);
-      }
-      for (var hh = open + 60; hh < close; hh += 60) {
-        var line = el('div', 'rs-hour');
-        line.style.left = pct(hh);
-        track.appendChild(line);
-      }
-      room.shows.forEach(function (show) {
-        var s = toMin(show.start), slot = toMin(show.slotEnd);
-        if (slot < s) slot += 24 * 60;
-        var isPast = s < pastUntil;   // suất đã bắt đầu (hôm nay) hoặc cả ngày đã qua
-        var isCurrent = String(show.id) === String(editingId);
-        var block = el('div', 'rs-show' + (isPast ? ' is-past' : '') + (isCurrent ? ' is-current' : ''));
-        block.style.left = pct(s);
-        block.style.width = widthPct(s, slot);
-        block.appendChild(el('b', null, show.title));
-        block.appendChild(el('small', null, show.start + '–' + show.slotEnd));
-        block.title = show.title + '\nChiếu: ' + show.start + ' – ' + show.end
-          + '\nKết thúc thực tế (gồm dọn phòng): ' + show.slotEnd
-          + (show.tickets > 0 ? '\nĐã bán ' + show.tickets + ' vé' : '')
-          + (isPast ? '\n(Suất đã qua)' : '') + (isCurrent ? '\n(Suất đang sửa)' : '');
-        track.appendChild(block);
+  /* ================= Lịch các phòng trong ngày (timeline dùng chung: room-schedule.js) ================= */
+  var schedule = null;   // JSON lịch phòng, dùng để kiểm tra trùng khi thêm giờ thủ công
+  var timeline = window.RoomSchedule.create({
+    board: document.getElementById('room-schedule-board'),
+    status: document.getElementById('room-schedule-status'),
+    dateLabel: document.getElementById('room-schedule-date'),
+    url: form.dataset.availabilityUrl,
+    action: 'room-schedule',
+    currentId: editingId,
+    selectedRooms: checkedRooms,
+    // Xem trước: chỉ các giờ đã chọn CỦA CHÍNH phòng đó.
+    candidates: function (room) {
+      var d = duration();
+      if (!d) return [];
+      return selectedTimesOf(room).map(function (t) {
+        return { label: t, start: toMin(t), filmEnd: toMin(t) + d, end: toMin(t) + blockMinutes(d) };
       });
-      // Xem trước: chỉ các giờ đã chọn CỦA CHÍNH phòng này.
-      if (d) {
-        selectedTimesOf(room.room).forEach(function (t) {
-          var cs = toMin(t), actual = cs + blockMinutes(d);
-          var preview = el('div', 'rs-candidate', 'Mới ' + t + '–' + minLabel(actual));
-          preview.style.left = pct(cs);
-          preview.style.width = widthPct(cs, actual);
-          preview.title = 'Suất mới: ' + t + ' – ' + minLabel(cs + d) + '\nKết thúc thực tế: ' + minLabel(actual);
-          track.appendChild(preview);
-        });
-      }
-      row.appendChild(track);
-      board.appendChild(row);
-    });
-    var total = schedule.rooms.reduce(function (n, r) { return n + r.shows.length; }, 0);
-    boardStatus.textContent = total
-      ? 'Giờ trên mỗi suất là giờ bắt đầu – kết thúc thực tế (gồm dọn phòng). Vùng xanh lá là giờ trống; '
-        + 'rê chuột lên suất để xem chi tiết; phòng đang chọn được tô sáng.'
-      : 'Chưa có suất chiếu nào trong ngày này — mọi phòng đều trống.';
-  }
-
-  async function loadSchedule() {
-    if (!board) return;
-    var date = dateInput.value;
-    if (!date) {
-      board.replaceChildren();
-      boardStatus.textContent = 'Chọn ngày chiếu để xem lịch các phòng.';
-      boardDate.textContent = '';
-      return;
-    }
-    var p = date.split('-');
-    boardDate.textContent = 'ngày ' + p[2] + '/' + p[1] + '/' + p[0];
-    var id = ++scheduleRequest;
-    boardStatus.textContent = 'Đang tải lịch phòng…';
-    var url = new URL(form.dataset.availabilityUrl, window.location.href);
-    url.searchParams.set('action', 'room-schedule');
-    url.searchParams.set('date', date);
-    url.searchParams.set('_ts', String(Date.now()));
-    try {
-      var response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
-      if (response.status === 401) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-      if (!response.ok) throw new Error('Không tải được lịch phòng (HTTP ' + response.status + ').');
-      var data = await response.json();
-      if (id !== scheduleRequest) return;
-      schedule = data;
-      renderSchedule();
-    } catch (error) {
-      if (id !== scheduleRequest) return;
-      board.replaceChildren();
-      boardStatus.textContent = error.message;
-    }
-  }
+    },
+    onData: function (data) { schedule = data; }
+  });
+  function renderSchedule() { timeline.render(); }
+  function loadSchedule() { timeline.load(dateInput.value); }
 
   movieSelect.addEventListener('change', function () { syncGroups(true); });
   dateInput.addEventListener('change', function () { syncGroups(true); loadSchedule(); });
