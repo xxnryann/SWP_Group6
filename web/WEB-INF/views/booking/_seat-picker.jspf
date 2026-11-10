@@ -1,96 +1,78 @@
-<%-- So do ghe dung chung: dat ve online (booking-seats) va ban ve tai quay (counter-seats). --%>
+<%-- Sơ đồ ghế dùng chung: đặt vé online (booking-seats) và bán vé tại quầy (counter-seats).
+     Phần sơ đồ (seat:plan, nút .seat) giữ nguyên vì seat-plan.css và script chọn ghế phụ thuộc vào nó. --%>
 <%@ taglib prefix="seat" tagdir="/WEB-INF/tags" %>
-<style>
-  .sm-title { font-size:17px; margin:0 0 10px; }
-  /* ---------- chu thich loai ghe ---------- */
-  .sg-types { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin:0 0 22px; }
-  .sg-type { border:1px solid var(--slate-200); border-radius:12px; padding:12px 14px; background:#fff; }
-  .sg-type .sg-type-name { display:flex; align-items:center; gap:8px; font-weight:800; color:var(--navy); font-size:14.5px; }
-  .sg-type .sg-type-desc { color:var(--slate-500); font-size:12.5px; margin-top:4px; }
-  .sg-type .sg-type-price { margin-top:8px; font-size:13px; color:var(--slate-700); }
-  .sg-type .sg-type-price b { color:var(--brand); font-size:15px; }
-  .seat-type-dot { width:10px; height:10px; border-radius:50%; flex:none; display:inline-block;
-                    border:2px solid var(--slate-300); background:#fff; }
-  .seat-type-dot.t-Standard { background:#f1f5f9; border-color:#94a3b8; }
-  .seat-type-dot.t-VIP { background:#fffbeb; border-color:#fbbf24; }
-  .seat-type-dot.t-Couple { background:#fdf2f8; border-color:#f9a8d4; }
-  .sg-empty { color:var(--slate-500); font-size:13.5px; margin:0 0 22px; }
-  .uip-note { color: var(--slate-500); font-size: 13.5px; text-align: center; margin: 0 0 6px; }
-</style>
-      <%-- Chu thich loai ghe kem gia ve; script cung doc gia o day de tinh tam tinh. --%>
-      <h2 class="sm-title">Loại ghế &amp; giá vé</h2>
-      <c:choose>
-        <c:when test="${empty seatTypes}">
-          <p class="sg-empty">Chưa có cấu hình giá vé theo loại ghế cho suất chiếu này.</p>
-        </c:when>
-        <c:otherwise>
-          <div class="sg-types">
-            <c:forEach var="t" items="${seatTypes}">
-              <div class="sg-type" data-type="<c:out value="${t.typeName}"/>"
-                   data-has-price="${t.priceConfigured}" data-price="${t.priceInt}">
-                <div class="sg-type-name">
-                  <i class="seat-type-dot t-${t.typeName}"></i>
-                  <c:out value="${t.typeLabel}"/>
-                </div>
-                <div class="sg-type-desc"><c:out value="${t.descriptionLabel}"/></div>
-                <div class="sg-type-price">
-                  <c:choose>
-                    <c:when test="${t.priceConfigured}">Giá: <b><c:out value="${t.priceLabel}"/></b> / ghế</c:when>
-                    <c:otherwise>Giá: <b>—</b> (chưa cấu hình)</c:otherwise>
-                  </c:choose>
-                </div>
-              </div>
-            </c:forEach>
-          </div>
-        </c:otherwise>
-      </c:choose>
-
-      <h2 class="sm-title">Sơ đồ ghế</h2>
-      <div class="sp-legend">
-        <span><i></i>Ghế thường</span>
-        <span><i class="l-vip"></i>Ghế VIP</span>
-        <span><i class="l-cpl"></i>Ghế đôi</span>
-        <span><i class="l-sel"></i>Đang chọn</span>
-        <span><i class="l-held"></i>Đang giữ</span>
-        <span><i class="l-sold"></i>Đã đặt</span>
-        <span><i class="l-mnt"></i>Bảo trì</span>
-      </div>
-      <seat:plan variant="${planVariant}">
-        <c:remove var="prevType"/>
-        <c:forEach var="row" items="${seatRows}">
-          <c:if test="${row[0].seatType != prevType}"><seat:rowDivider type="${row[0].seatType}" variant="${planVariant}"/></c:if>
-          <c:set var="prevType" value="${row[0].seatType}"/>
-          <c:set var="lg" value="${rowLegendMap[row[0].rowLabel]}"/>
-          <c:set var="rowTitle" value="Hàng ${row[0].rowLabel} · ${row[0].seatType} · ${lg.seatRangeLabel} · ${lg.priceLabel} — ${lg.noteLabel}"/>
-          <%-- Hang B cua 4DX co ca ghe thuong va VIP nen gia lay tu ghe dau hang se sai; moi ghe da co tooltip rieng. --%>
-          <c:if test="${planVariant == '4dx'}"><c:set var="rowTitle" value="Hàng ${row[0].rowLabel}"/></c:if>
-          <div class="sp-line" data-row="${row[0].rowLabel}">
-            <div class="seat-row row-${row[0].seatType}">
-              <span class="row-label" title="${rowTitle}">${row[0].rowLabel}</span>
-              <c:forEach var="s" items="${row}">
-                <c:set var="isAisle" value="${s.couple ? coupleAisles.contains(s.seatNumber) : fixedLayout && (s.seatNumber == aisleFromStart || (aisleFromEnd > 0 && s.seatNumber == row.size() - aisleFromEnd))}"/>
-                <c:set var="useWings" value="${planVariant == '3d' && !s.couple}"/>
-                <c:set var="opensPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 1 : s.seatNumber % 4 == 1)}"/>
-                <c:set var="closesPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 0 : (s.seatNumber % 4 == 0 || s.seatNumber == row.size()))}"/>
-                <c:if test="${opensPod}"><seat:podOpen row="${s.rowLabel}" number="${s.seatNumber}" couple="${s.couple}" seatType="${s.seatType}" zone="${seatZones[s.label]}"/></c:if>
-                <c:if test="${useWings && s.seatNumber == 1}"><div class="sp-block sp-wing-l"></c:if>
-                <button type="button" class="seat ${s.color}"
-                        title="${s.label} · ${s.seatType} · ${s.statusLabel}" aria-label="${s.label} · ${s.seatType} · ${s.statusLabel}"
-                        data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
-                        data-zone="${seatZones[s.label]}"
-                        ${s.available ? '' : 'disabled="disabled"'}
-                        onclick="toggleSeat(this)">${s.couple || planVariant != '' ? s.label : (s.color == 'RED' ? '✕' : s.seatNumber)}</button>
-                <c:if test="${closesPod}"></div></c:if>
-                <c:if test="${useWings && isAisle}"></div></c:if>
-                <c:if test="${isAisle}"><span class="sp-gap"></span></c:if>
-                <c:if test="${useWings && isAisle}"><div class="sp-block ${s.seatNumber == 3 ? 'sp-center' : 'sp-wing-r'}"></c:if>
-                <c:if test="${useWings && s.seatNumber == row.size()}"></div></c:if>
-              </c:forEach>
-              <span class="row-label" title="${rowTitle}">${row[0].rowLabel}</span>
-            </div>
+<section class="mb-24">
+  <h2 class="mb-16" style="font-size:var(--fs-h4)">Loại ghế &amp; giá vé</h2>
+  <c:choose>
+    <c:when test="${empty seatTypes}">
+      <div class="alert alert-warning">${ic.alert}<span>Chưa có cấu hình giá vé theo loại ghế cho suất chiếu này.</span></div>
+    </c:when>
+    <c:otherwise>
+      <div class="seat-types">
+        <c:forEach var="t" items="${seatTypes}">
+          <div class="seat-type sg-type" data-type="<c:out value="${t.typeName}"/>" data-has-price="${t.priceConfigured}" data-price="${t.priceInt}">
+            <span class="name"><i class="seat-type-dot t-${t.typeName}"></i><c:out value="${t.typeLabel}"/></span>
+            <span class="desc"><c:out value="${t.descriptionLabel}"/></span>
+            <span class="price">
+              <c:choose>
+                <c:when test="${t.priceConfigured}"><b><c:out value="${t.priceLabel}"/></b> / ghế</c:when>
+                <c:otherwise><b>—</b> chưa cấu hình</c:otherwise>
+              </c:choose>
+            </span>
           </div>
         </c:forEach>
-      </seat:plan>
+      </div>
+    </c:otherwise>
+  </c:choose>
+</section>
 
-      <p class="uip-note">Ghế đôi luôn phải chọn cả cặp — bấm một ghế sẽ tự chọn luôn ghế còn lại.
-         Ghế đã giữ bởi người khác sẽ tự trở lại khi hết thời gian chờ thanh toán.</p>
+<section>
+  <h2 class="mb-16" style="font-size:var(--fs-h4)">Sơ đồ ghế</h2>
+  <div class="sp-legend">
+    <span><i></i>Ghế thường</span>
+    <span><i class="l-vip"></i>Ghế VIP</span>
+    <span><i class="l-cpl"></i>Ghế đôi</span>
+    <span><i class="l-sel"></i>Đang chọn</span>
+    <span><i class="l-held"></i>Đang giữ</span>
+    <span><i class="l-sold"></i>Đã đặt</span>
+    <span><i class="l-mnt"></i>Bảo trì</span>
+  </div>
+  <seat:plan variant="${planVariant}">
+    <c:remove var="prevType"/>
+    <c:forEach var="row" items="${seatRows}">
+      <c:if test="${row[0].seatType != prevType}"><seat:rowDivider type="${row[0].seatType}" variant="${planVariant}"/></c:if>
+      <c:set var="prevType" value="${row[0].seatType}"/>
+      <c:set var="lg" value="${rowLegendMap[row[0].rowLabel]}"/>
+      <c:set var="rowTitle" value="Hàng ${row[0].rowLabel} · ${row[0].seatType} · ${lg.seatRangeLabel} · ${lg.priceLabel} — ${lg.noteLabel}"/>
+      <%-- Hàng B của 4DX có cả ghế thường và VIP nên giá lấy từ ghế đầu hàng sẽ sai; mỗi ghế đã có tooltip riêng. --%>
+      <c:if test="${planVariant == '4dx'}"><c:set var="rowTitle" value="Hàng ${row[0].rowLabel}"/></c:if>
+      <div class="sp-line" data-row="${row[0].rowLabel}">
+        <div class="seat-row row-${row[0].seatType}">
+          <span class="row-label" title="${rowTitle}">${row[0].rowLabel}</span>
+          <c:forEach var="s" items="${row}">
+            <c:set var="isAisle" value="${s.couple ? coupleAisles.contains(s.seatNumber) : fixedLayout && (s.seatNumber == aisleFromStart || (aisleFromEnd > 0 && s.seatNumber == row.size() - aisleFromEnd))}"/>
+            <c:set var="useWings" value="${planVariant == '3d' && !s.couple}"/>
+            <c:set var="opensPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 1 : s.seatNumber % 4 == 1)}"/>
+            <c:set var="closesPod" value="${planVariant == '4dx' && (s.couple ? s.seatNumber % 2 == 0 : (s.seatNumber % 4 == 0 || s.seatNumber == row.size()))}"/>
+            <c:if test="${opensPod}"><seat:podOpen row="${s.rowLabel}" number="${s.seatNumber}" couple="${s.couple}" seatType="${s.seatType}" zone="${seatZones[s.label]}"/></c:if>
+            <c:if test="${useWings && s.seatNumber == 1}"><div class="sp-block sp-wing-l"></c:if>
+            <button type="button" class="seat ${s.color}"
+                    title="${s.label} · ${s.seatType} · ${s.statusLabel}" aria-label="${s.label} · ${s.seatType} · ${s.statusLabel}"
+                    data-id="${s.seatId}" data-pair="${s.pairSeatId}" data-type="${s.seatType}"
+                    data-zone="${seatZones[s.label]}"
+                    ${s.available ? '' : 'disabled="disabled"'}
+                    onclick="toggleSeat(this)">${s.couple || planVariant != '' ? s.label : (s.color == 'RED' ? '✕' : s.seatNumber)}</button>
+            <c:if test="${closesPod}"></div></c:if>
+            <c:if test="${useWings && isAisle}"></div></c:if>
+            <c:if test="${isAisle}"><span class="sp-gap"></span></c:if>
+            <c:if test="${useWings && isAisle}"><div class="sp-block ${s.seatNumber == 3 ? 'sp-center' : 'sp-wing-r'}"></c:if>
+            <c:if test="${useWings && s.seatNumber == row.size()}"></div></c:if>
+          </c:forEach>
+          <span class="row-label" title="${rowTitle}">${row[0].rowLabel}</span>
+        </div>
+      </div>
+    </c:forEach>
+  </seat:plan>
+  <p class="seat-note">Ghế đôi luôn chọn theo cặp: bấm một ghế sẽ tự chọn luôn ghế còn lại.
+     Ghế người khác đang giữ sẽ tự mở lại khi hết thời gian chờ thanh toán.</p>
+</section>

@@ -1,92 +1,62 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Quản lý combo"/>
-<%@ include file="../_header.jspf" %>
+<%@ include file="../layout/top.jspf" %>
 <style>
-  .uip-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-  .uip-head h1 { margin: 0; }
-  .uip-head p { color: var(--slate-500); margin: 4px 0 0; font-size: 14px; }
-  .uip-search { display: flex; gap: 8px; margin-bottom: 20px; }
-  .uip-search input[type=search] { padding: 9px 14px; border: 1px solid var(--slate-300); border-radius: var(--radius);
-                                   font: 14px var(--font); min-width: 260px; outline: none; background: #fff; }
-  .uip-search input[type=search]:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.18); }
-  .uip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-  .uip-ccard { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; overflow: hidden;
-               box-shadow: var(--shadow); display: flex; flex-direction: column; }
-  .uip-ccard .uip-top { background: linear-gradient(135deg, var(--brand-soft), var(--brand-tint)); padding: 22px; text-align: center;
-                        font-size: 46px; position: relative; }
-  .uip-ccard .uip-status { position: absolute; top: 12px; right: 12px; }
-  .uip-ccard .uip-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-  .uip-ccard h3 { margin: 0; font-size: 17px; }
-  .uip-desc { color: var(--slate-500); font-size: 13.5px; margin: 0; display: -webkit-box; -webkit-line-clamp: 2;
-              -webkit-box-orient: vertical; overflow: hidden; }
-  .uip-price { color: var(--cta); font-weight: 800; font-size: 22px; }
-  .uip-price-wrap small { color: var(--slate-500); font-weight: 600; font-size: 13px; }
-  .uip-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
-  .uip-badge-on { background: #dbeafe; color: var(--brand); }
-  .uip-badge-off { background: var(--slate-200); color: var(--slate-600); }
-  .uip-actions { margin-top: auto; display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid var(--slate-100); }
-  .uip-actions form { display: inline; }
-  .uip-empty { text-align: center; padding: 52px 20px; background: #fff; border: 1px dashed var(--slate-300);
-               border-radius: 14px; color: var(--slate-500); }
+  .combo-card { display: flex; flex-direction: column; overflow: hidden; }
+  .combo-thumb { position: relative; aspect-ratio: 16 / 10; display: grid; place-items: center; background: linear-gradient(135deg, var(--accent-50), var(--brand-50)); color: var(--accent-700); }
+  .combo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .combo-thumb > svg { width: 44px; height: 44px; }
+  .combo-thumb .badge { position: absolute; top: 10px; right: 10px; }
+  .combo-card .card-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .combo-card p { color: var(--muted); font-size: 13.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .combo-price { color: var(--ink); font-size: 22px; font-weight: 800; letter-spacing: -.02em; margin-top: auto; padding-top: 6px; }
 </style>
-<main>
-  <section class="page">
-    <div class="container">
-      <div class="dash-layout">
-        <div>
-      <div class="uip-head">
-        <div>
-          <h1>Quản lý combo bắp nước</h1>
-        </div>
-        <a class="btn btn-cta" href="${ctx}/staff/combo?action=add">+ Thêm combo mới</a>
-      </div>
+<div class="page-head">
+  <div><h1>Quản lý combo bắp nước</h1><p>Thêm, sửa giá, ẩn hoặc xóa combo bán kèm vé.</p></div>
+  <a class="btn btn-primary" href="${ctx}/staff/combo?action=add">${ic.plus}Thêm combo</a>
+</div>
 
-      <form method="get" action="${ctx}/staff/combo" class="uip-search">
-        <input type="search" name="q" placeholder="Tìm theo tên combo..." value="<c:out value='${keyword}'/>">
-        <button class="btn btn-outline" type="submit">Tìm</button>
-      </form>
+<section class="card mb-24">
+  <form method="get" action="${ctx}/staff/combo" class="toolbar" style="border-bottom:0" role="search">
+    <div class="field grow"><label for="q">Tìm kiếm</label><div class="input-group">${ic.search}<input id="q" type="search" name="q" placeholder="Tên combo" value="<c:out value='${keyword}'/>"></div></div>
+    <button class="btn btn-primary" type="submit">Tìm</button>
+    <c:if test="${not empty keyword}"><a class="btn btn-ghost" href="${ctx}/staff/combo">Xóa lọc</a></c:if>
+  </form>
+</section>
 
-      <div class="uip-grid">
-        <c:forEach var="c" items="${comboList}">
-          <article class="uip-ccard">
-            <div class="uip-top">
-              <c:choose>
-                <c:when test="${c.hasImage()}">
-                  <img src="<c:out value='${c.imageUrl}'/>" alt="<c:out value='${c.comboName}'/>"
-                       style="width:100%;height:110px;object-fit:cover;border-radius:10px">
-                </c:when>
-                <c:otherwise>🍿</c:otherwise>
-              </c:choose>
-              <span class="uip-status">
-                <c:choose>
-                  <c:when test="${c.active}"><span class="uip-badge uip-badge-on">Đang bán</span></c:when>
-                  <c:otherwise><span class="uip-badge uip-badge-off">Đã ẩn</span></c:otherwise>
-                </c:choose>
-              </span>
-            </div>
-            <div class="uip-body">
-              <h3><c:out value="${c.comboName}"/></h3>
-              <p class="uip-desc"><c:out value="${c.description}"/></p>
-              <div class="uip-price-wrap"><span class="uip-price">${c.priceLabel}</span> <small>VNĐ</small></div>
-              <div class="uip-actions">
-                <a class="btn btn-soft" href="${ctx}/staff/combo?action=edit&id=${c.comboId}">Sửa</a>
-                <form method="post" action="${ctx}/staff/combo"
-                      onsubmit="return confirm('Xóa combo này?')">
-                  <input type="hidden" name="_csrf" value="${csrf}">
-                  <input type="hidden" name="action" value="delete">
-                  <input type="hidden" name="id" value="${c.comboId}">
-                  <button class="btn btn-outline" type="submit" style="color:var(--danger);border-color:var(--danger)">Xóa</button>
-                </form>
-              </div>
-            </div>
-          </article>
-        </c:forEach>
-      </div>
-      <c:if test="${empty comboList}"><div class="uip-empty">🍿<br>Không có combo nào.</div></c:if>
-        </div>
-      </div>
+<c:choose>
+  <c:when test="${empty comboList}"><div class="card empty"><div class="empty-icon">${ic.popcorn}</div><h3>Không có combo nào</h3><p>Bấm "Thêm combo" để tạo combo đầu tiên.</p></div></c:when>
+  <c:otherwise>
+    <div class="grid grid-auto" style="--min:250px">
+      <c:forEach var="cb" items="${comboList}">
+        <article class="card combo-card">
+          <div class="combo-thumb">
+            <c:choose>
+              <c:when test="${cb.hasImage()}"><img src="<c:out value='${cb.imageUrl}'/>" alt=""></c:when>
+              <c:otherwise>${ic.popcorn}</c:otherwise>
+            </c:choose>
+            <c:choose>
+              <c:when test="${cb.active}"><span class="badge badge-success badge-dot">Đang bán</span></c:when>
+              <c:otherwise><span class="badge badge-dark">Đã ẩn</span></c:otherwise>
+            </c:choose>
+          </div>
+          <div class="card-body">
+            <h3 style="font-size:17px"><c:out value="${cb.comboName}"/></h3>
+            <p><c:out value="${cb.description}"/></p>
+            <div class="combo-price">${cb.priceLabel} <span class="muted text-sm fw-600">đ</span></div>
+          </div>
+          <div class="card-foot" style="justify-content:space-between">
+            <a class="btn btn-sm btn-soft" href="${ctx}/staff/combo?action=edit&id=${cb.comboId}">${ic.edit}Sửa</a>
+            <form method="post" action="${ctx}/staff/combo" data-confirm="Xóa combo này?">
+              <input type="hidden" name="_csrf" value="${csrf}">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="id" value="${cb.comboId}">
+              <button class="btn btn-sm btn-danger" type="submit">${ic.trash}Xóa</button>
+            </form>
+          </div>
+        </article>
+      </c:forEach>
     </div>
-  </section>
-</main>
-<%@ include file="../_footer.jspf" %>
-
+  </c:otherwise>
+</c:choose>
+<%@ include file="../layout/bottom.jspf" %>

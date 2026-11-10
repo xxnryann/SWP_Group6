@@ -57,7 +57,7 @@
   }
 
   function checkSeats() {
-    if (selected.size === 0) { alert('Vui lòng chọn ít nhất một ghế.'); return false; }
+    if (selected.size === 0) { (window.showToast ? showToast('Vui lòng chọn ít nhất một ghế.', 'error') : alert('Vui lòng chọn ít nhất một ghế.')); return false; }
     return true;
   }
 

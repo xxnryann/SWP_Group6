@@ -38,8 +38,9 @@ INSERT dbo.Users (UserId, FullName, Email, Phone, PasswordHash, Role, Status) VA
     (1, N'Quản trị hệ thống', N'admin@cinema.vn', N'0900000001', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'ADMIN', N'ACTIVE'),
     (2, N'Quản lí', N'manager@cinema.vn', N'0900000002', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'MANAGER', N'ACTIVE'),
     (3, N'Nhân viên', N'staff@cinema.vn', N'0900000003', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'STAFF', N'ACTIVE'),
-    (4, N'Lê Khách Một', N'khach1@gmail.com', N'0911111111', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'CUSTOMER', N'ACTIVE'),
-    (5, N'Phạm Khách Hai', N'khach2@gmail.com', N'0922222222', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'CUSTOMER', N'ACTIVE');
+    (4, N'Lê Khách Một', N'dungcaohung2410+khach1@gmail.com', N'0911111111', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'CUSTOMER', N'ACTIVE'),
+    (5, N'Phạm Khách Hai', N'dungcaohung2410+khach2@gmail.com', N'0922222222', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'CUSTOMER', N'ACTIVE'),
+    (6, N'Nguyễn Minh Chiến', N'dungcaohung2410+khach3@gmail.com', N'0932523443', N'$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', N'CUSTOMER', N'ACTIVE');
 SET IDENTITY_INSERT dbo.Users OFF;
 GO
 
@@ -48,12 +49,13 @@ INSERT dbo.Account (account_id, role_id, full_name, email, phone, password_hash,
     (1, 1, N'Quản trị hệ thống', N'admin@cinema.vn', '0900000001', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active'),
     (2, 2, N'Quản lí', N'manager@cinema.vn', '0900000002', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active'),
     (3, 3, N'Nhân viên', N'staff@cinema.vn', '0900000003', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active'),
-    (4, 4, N'Lê Khách Một', N'khach1@gmail.com', '0911111111', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active'),
-    (5, 4, N'Phạm Khách Hai', N'khach2@gmail.com', '0922222222', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active');
+    (4, 4, N'Lê Khách Một', N'dungcaohung2410+khach1@gmail.com', '0911111111', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active'),
+    (5, 4, N'Phạm Khách Hai', N'dungcaohung2410+khach2@gmail.com', '0922222222', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active'),
+    (6, 4, N'Nguyễn Minh Chiến', N'dungcaohung2410+khach3@gmail.com', '0932523443', '$2a$12$ln5sTwQVMwH5waVgtDmxJOiZ9KzquzuB2pmistvei4mGJZcQeHCmi', 'Active');
 SET IDENTITY_INSERT dbo.Account OFF;
 GO
 
-INSERT dbo.Customer(customer_id, my_point_balance, total_spent) VALUES (4, 20, 1714100), (5, 0, 0);
+INSERT dbo.Customer(customer_id, my_point_balance, total_spent) VALUES (4, 20, 1714100), (5, 0, 0), (6, 0, 0);
 GO
 
 INSERT dbo.Permission(permission_code, description) VALUES

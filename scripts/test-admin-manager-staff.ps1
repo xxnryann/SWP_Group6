@@ -143,12 +143,12 @@ Assert-Test ((Get-Status $guest '/staff/counter') -in 302, 401, 403) 'khach chua
 # =====================================================================
 Write-Step "ADMIN - nguoi dung"
 $users = Get-Page $admin '/admin/users'
-Assert-Test ($users.StatusCode -eq 200 -and $users.Content -match 'khach1@gmail.com') 'danh sach nguoi dung co khach1'
+Assert-Test ($users.StatusCode -eq 200 -and $users.Content.Contains('dungcaohung2410+khach1@gmail.com')) 'danh sach nguoi dung co khach1'
 Assert-Test ((Get-Page $admin '/admin/users?q=khach1').Content -notmatch 'staff@cinema.vn') 'loc theo tu khoa q=khach1 an staff'
 Assert-Test ((Get-Page $admin '/admin/users?role=STAFF').Content -match 'staff@cinema.vn') 'loc theo vai tro STAFF thay staff'
 Assert-Test ((Get-Page $admin '/admin/users?status=ACTIVE').StatusCode -eq 200) 'loc theo trang thai ACTIVE'
 
-$victim = Invoke-Sql "SELECT TOP 1 UserId FROM Users WHERE Role='CUSTOMER' AND Email<>'khach1@gmail.com' AND Status='ACTIVE' ORDER BY UserId"
+$victim = Invoke-Sql "SELECT TOP 1 UserId FROM Users WHERE Role='CUSTOMER' AND Email<>'dungcaohung2410+khach1@gmail.com' AND Status='ACTIVE' ORDER BY UserId"
 if ($victim -match '^\d+$') {
     $r = Send-Form $admin '/admin/users' @{ action = 'status'; value = 'BLOCKED'; userId = $victim } '/admin/users'
     Assert-Test ((Invoke-Sql "SELECT Status FROM Users WHERE UserId=$victim") -eq 'BLOCKED') "khoa tai khoan #$victim (CSDL = BLOCKED)"

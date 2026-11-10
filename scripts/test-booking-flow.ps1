@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Script nay dung Invoke-WebRequest de giong trinh duyet:
-      1. Vao /login, lay CSRF token, dang nhap khach hang seed (khach1@gmail.com)
+      1. Vao /login, lay CSRF token, dang nhap khach hang seed (dungcaohung2410+khach1@gmail.com)
       2. Vao /booking/seats?showtimeId=..., chon ghe GREEN, POST giu ghe
       3. Vao /booking/extras, ap voucher + diem
       4. Vao /booking/payment, bam "Thanh toan" -> cong gia lap -> chon "Thanh toan"
@@ -17,7 +17,7 @@
     Dia chi goc cua ung dung. Mac dinh: bien moi truong CINEMA_BASE_URL, neu khong co thi tu do cac dia chi mac dinh (9999/CinemaTest, 8080/CinemaWeb)
 
 .PARAMETER Email
-    Email khach hang dung de dang nhap. Mac dinh khach1@gmail.com
+    Email khach hang dung de dang nhap. Mac dinh dungcaohung2410+khach1@gmail.com
 
 .PARAMETER Password
     Mat khau cua khach hang. Mac dinh: bien moi truong CINEMA_TEST_PASSWORD hoac mat khau seed trong README
@@ -28,7 +28,7 @@
 [CmdletBinding()]
 param(
     [string]$BaseUrl = '',
-    [string]$Email = 'khach1@gmail.com',
+    [string]$Email = 'dungcaohung2410+khach1@gmail.com',
     [string]$Password = ''
 )
 
@@ -113,13 +113,13 @@ Assert-Test ($tickets.StatusCode -eq 200) 'mo duoc lich su ve'
 
 # Man hinh lich su ve hien thi theo the dang: 1 the/ve, co badge trang thai
 # + 1 ma QR. Kiem tra bang cau truc HTML, khong phu thuoc chuoi thong bao cu.
-$cards = ([regex]::Matches($tickets.Content, 'class="tk-card')).Count
+$cards = ([regex]::Matches($tickets.Content, 'class="eticket[ "]')).Count
 Assert-Test ($cards -ge 1) "co it nhat 1 the ve (thuoc: $cards)"
 
 $qrCount = ([regex]::Matches($tickets.Content, '/account/tickets/qr\?ticketId=\d+')).Count
 Assert-Test ($qrCount -ge 1) "moi the ve co 1 ma QR (thuoc: $qrCount)"
 
-$badges = [regex]::Matches($tickets.Content, '<span class="tk-badge([^"]*)">\s*([^<]*?)\s*</span>')
+$badges = [regex]::Matches($tickets.Content, '<span class="badge([^"]*)">\s*([^<]*?)\s*</span>')
 Assert-Test ($badges.Count -ge 1) 'co nhan trang thai tren the ve'
 $hasActiveBadge = $false
 foreach ($b in $badges) {
