@@ -14,7 +14,7 @@ public class EmailOutboxDAO {
 
     /** Thư đang chờ gửi (kèm email người nhận). */
     public List<Map<String, Object>> pending(int limit) throws SQLException {
-        return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.booking_id, e.showtime_id, "
+        return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.booking_id, e.showtime_id, e.movie_id, "
                 + "a.email, a.full_name, "
                 + "CASE WHEN e.created_at < DATEADD(MINUTE, -" + RETRY_MINUTES + ", SYSDATETIME()) THEN 1 ELSE 0 END AS retry_expired "
                 + "FROM EmailNotification e JOIN Account a ON a.account_id = e.customer_id "

@@ -2200,8 +2200,9 @@ CREATE OR ALTER PROCEDURE dbo.sp_QueueReviewReminders AS
 BEGIN
     SET NOCOUNT ON;
     INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, movie_id, booking_id)
-    SELECT b.customer_id, 'ReviewReminder', N'Hãy đánh giá phim để nhận 5 điểm MyPoint',
-           N'Hãy đánh giá phim để nhận 5 điểm MyPoint', MAX(s.showtime_id), s.movie_id, MAX(b.booking_id)
+    SELECT b.customer_id, 'ReviewReminder', LEFT(N'Cảm ơn bạn đã xem phim ' + MAX(m.title), 200),
+           N'Cảm ơn bạn đã xem phim cùng chúng tôi! Bạn thấy bộ phim vừa rồi thế nào? Hãy dành ít phút để chấm điểm và chia sẻ cảm nhận của bạn về bộ phim cũng như trải nghiệm khi xem. Chúng tôi rất mong được nghe điều bạn yêu thích và những góp ý để lần xem phim tiếp theo của bạn trọn vẹn hơn.',
+           MAX(s.showtime_id), s.movie_id, MAX(b.booking_id)
     FROM dbo.Ticket t JOIN dbo.Booking b ON b.booking_id = t.booking_id
     JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
     JOIN dbo.Movie m ON m.movie_id = s.movie_id
@@ -2306,6 +2307,7 @@ GO
    31/10/2026  EmailNotification: thêm loại TicketCancelled
    31/10/2026  Movie: xóa mềm bằng is_deleted; UX_Movie_Title chỉ tính phim chưa xóa
    01/11/2026  Review: chỉ đánh giá sau khi suất chiếu kết thúc; nhắc đánh giá (ReviewReminder), thưởng 5 điểm
+   12/11/2026  ReviewReminder: email cảm ơn + mời chấm điểm, chia sẻ cảm nhận sau khi phim kết thúc (sp_QueueReviewReminders)
    01/11/2026  Email phim mới / voucher; chặn soát vé trùng
    01/11/2026  EmailNotification: thêm trạng thái InApp cho Hộp thư
    02/11/2026  Đổi ghế: cùng loại ghế, đổi cả cặp ghế đôi, báo cho khách (SeatChanged)
