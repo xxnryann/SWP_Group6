@@ -14,8 +14,28 @@ public final class RoomRules {
 
     public static final String ROLE_ADMIN = "ADMIN";
 
-    /** CHECK Room.room_type. */
+    /** 4 loại phòng có sẵn (có layout chuẩn). Danh sách đầy đủ, gồm loại Admin tự thêm, nằm ở bảng RoomType. */
     public static final List<String> ROOM_TYPES = List.of("2D", "3D", "IMAX", "4DX");
+    /** Giá trị của ô chọn "+ Tạo loại phòng mới" ở form thêm phòng. */
+    public static final String NEW_TYPE_OPTION = "__new__";
+    public static final int MAX_TYPE_CODE = 20;
+
+    /** Kiểm tra tên loại phòng mới (vd "ScreenX", "Gold Class"); trả về lỗi hoặc null. */
+    public static String validateNewType(String code) {
+        if (code == null || code.isBlank()) {
+            return "Vui lòng nhập tên loại phòng mới.";
+        }
+        if (code.trim().length() > MAX_TYPE_CODE) {
+            return "Tên loại phòng tối đa " + MAX_TYPE_CODE + " ký tự.";
+        }
+        if (!code.trim().matches("[\\p{L}0-9][\\p{L}0-9 +._-]*")) {
+            return "Tên loại phòng chỉ gồm chữ, số, khoảng trắng và các ký tự + . _ -";
+        }
+        if (NEW_TYPE_OPTION.equalsIgnoreCase(code.trim())) {
+            return "Tên loại phòng không hợp lệ.";
+        }
+        return null;
+    }
     /** CHECK Room.status. */
     public static final String ROOM_ACTIVE = "Active";
     public static final String ROOM_CLOSED = "Closed";
@@ -185,14 +205,20 @@ public final class RoomRules {
 
     /** Kiểm tra thông tin phòng; trả về thông báo lỗi hoặc null nếu hợp lệ. */
     public static String validateRoom(String name, String type, String capacityStr, String status) {
+        return validateRoom(name, type, capacityStr, status, ROOM_TYPES);
+    }
+
+    /** Như trên, với danh sách loại phòng hợp lệ lấy từ bảng RoomType. */
+    public static String validateRoom(String name, String type, String capacityStr, String status,
+            List<String> roomTypes) {
         if (name == null || name.isBlank()) {
             return "Tên phòng chiếu là bắt buộc.";
         }
         if (name.trim().length() > MAX_ROOM_NAME) {
             return "Tên phòng tối đa " + MAX_ROOM_NAME + " ký tự.";
         }
-        if (!ROOM_TYPES.contains(type)) {
-            return "Loại phòng không hợp lệ (2D, 3D, IMAX hoặc 4DX).";
+        if (type == null || !roomTypes.contains(type)) {
+            return "Loại phòng không hợp lệ.";
         }
         Integer cap = parseInt(capacityStr);
         if (cap == null || cap < 1 || cap > MAX_CAPACITY) {

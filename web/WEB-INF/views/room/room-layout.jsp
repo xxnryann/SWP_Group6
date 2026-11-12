@@ -19,6 +19,11 @@
   <input type="hidden" name="_csrf" value="${csrf}">
   <input type="hidden" name="action" value="create">
 
+  <c:if test="${not hasStandard}">
+    <div class="alert alert-info mb-16">${ic.info}<span>Loại phòng <b><c:out value="${draft.roomType}"/></b> là loại mới nên chưa có layout chuẩn.
+      Hãy chọn một layout trong thư viện hoặc bấm “+ Tạo layout mới”.</span></div>
+  </c:if>
+  <c:if test="${hasStandard}">
   <section class="card lp-section">
     <div class="card-head"><div><h2>Layout đề xuất</h2><p>Layout chuẩn của phòng <c:out value="${draft.roomType}"/>, dùng ngay không cần chỉnh.</p></div></div>
     <div class="card-body lp-grid">
@@ -33,6 +38,7 @@
       </label>
     </div>
   </section>
+  </c:if>
 
   <section class="card lp-section">
     <div class="card-head"><div><h2>Thư viện layout đã lưu</h2><p>Layout đã tạo trước đó, chọn lại để dùng cho phòng này.</p></div></div>
