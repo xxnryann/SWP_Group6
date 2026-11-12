@@ -28,8 +28,12 @@ public class EmailDispatcher {
                     if (ok) {
                         dao.markSent(id);
                         sent++;
-                    } else {
+                    } else if (((Number) mail.get("retry_expired")).intValue() == 1) {
+                        // Lỗi liên tục quá RETRY_MINUTES phút: bỏ hẳn để thư hỏng (vd. địa chỉ sai) không thử mãi.
                         dao.markFailed(id);
+                    } else {
+                        // Lỗi tạm thời (mất mạng, đổi VPN, API tạm lỗi): giữ Pending, lần chạy sau (1 phút) gửi lại.
+                        LOG.log(Level.WARNING, "Email {0} chưa gửi được, sẽ thử lại sau 1 phút.", id);
                     }
                 }
             } catch (SQLException e) {

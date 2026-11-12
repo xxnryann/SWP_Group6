@@ -187,7 +187,8 @@ Lịch chiếu được xếp theo từng phòng, không còn 5 khung giờ cố
 
 Một phim có thể có nhiều suất ở **các phòng khác nhau với giờ khác nhau**; Manager tự thêm từng suất.
 
-`dbo.TimeSlot` giờ là **khung giá** (Sáng 00:00–12:00, Chiều 12:00–18:00, Tối 18:00–23:59) chứ không phải suất chiếu; `slot_id` của một suất được suy ra từ giờ bắt đầu nên `fn_GetTicketPrice` và `dbo.TicketPrice` giữ nguyên cách tính.
+`dbo.TimeSlot` giờ là **khung giá** (Trong ngày 06:00–22:00, Khuya 22:00–06:00 qua nửa đêm) chứ không phải suất chiếu; `slot_id` của một suất được suy ra từ giờ bắt đầu bằng `dbo.fn_GetSlotId`. Giá 1 ghế = ô `dbo.TicketPrice` (loại ghế × khung giờ × loại ngày, có lịch đổi giá theo `effective_from`) + phụ thu `RoomType.surcharge`, tính bởi `fn_GetTicketPrice` / `fn_GetPriceFor`.
+DB cũ: chạy `database/update_ticket_pricing.sql` rồi `database/update_price_data_slots.sql` (đều với `sqlcmd -I`).
 
 Manager quản lý lịch chiếu:
 

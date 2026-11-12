@@ -145,6 +145,12 @@ public class RoomLayoutServlet extends AdminBaseServlet {
             throws SQLException, ServletException, IOException {
         String choice = Validator.trim(req.getParameter("layout"));
         SeatLayout layout = null;
+        if (STANDARD.equals(choice) && !RoomRules.isFixedLayout(draft.getRoomType())) {
+            req.setAttribute("error", "Loại phòng " + draft.getRoomType()
+                    + " chưa có layout chuẩn. Hãy chọn một layout trong thư viện hoặc tạo layout mới.");
+            show(req, resp, draft, null);
+            return;
+        }
         if (!STANDARD.equals(choice)) {
             Integer id = RoomRules.parseInt(choice);
             layout = id == null ? null : layoutDAO.findById(id);
@@ -216,10 +222,19 @@ public class RoomLayoutServlet extends AdminBaseServlet {
             throws SQLException, ServletException, IOException {
         String type = draft.getRoomType();
         List<SeatLayout> layouts = layoutDAO.findAll(type);
-        boolean found = STANDARD.equals(selected);
+        // Loại phòng Admin tự thêm không có layout chuẩn: chỉ chọn trong thư viện hoặc tạo mới.
+        boolean hasStandard = RoomRules.isFixedLayout(type);
+        boolean found = hasStandard && STANDARD.equals(selected);
         for (SeatLayout l : layouts) {
             found |= String.valueOf(l.getLayoutId()).equals(selected);
         }
+        if (!found && !hasStandard) {
+            // Mặc định chọn layout cùng loại phòng (thư viện đã xếp loại này lên đầu); không có thì để trống.
+            selected = layouts.isEmpty() || !type.equals(layouts.get(0).getRoomType())
+                    ? "" : String.valueOf(layouts.get(0).getLayoutId());
+            found = true;
+        }
+        req.setAttribute("hasStandard", hasStandard);
         String cinemaName = "";
         for (var cn : roomDAO.findCinemas()) {
             if (cn.getCinemaId() == draft.getCinemaId()) {
@@ -233,9 +248,11 @@ public class RoomLayoutServlet extends AdminBaseServlet {
         Integer selId = RoomRules.parseInt(sel);
         req.setAttribute("selected", sel);
         req.setAttribute("selectedId", selId == null ? 0 : selId);
-        req.setAttribute("standardData", SeatLayoutRules.standardPreview(type));
-        req.setAttribute("standardCapacity", RoomRules.fixedCapacity(type));
-        req.setAttribute("standardSummary", RoomRules.fixedSummary(type));
+        if (hasStandard) {
+            req.setAttribute("standardData", SeatLayoutRules.standardPreview(type));
+            req.setAttribute("standardCapacity", RoomRules.fixedCapacity(type));
+            req.setAttribute("standardSummary", RoomRules.fixedSummary(type));
+        }
         req.setAttribute("maxRows", RoomRules.MAX_ROWS);
         req.setAttribute("maxCols", RoomRules.MAX_COLS);
         req.setAttribute("maxSeats", RoomRules.MAX_CAPACITY);

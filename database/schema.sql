@@ -489,6 +489,26 @@ CREATE TABLE dbo.Cinema (
 );
 GO
 
+-- Loai phong chieu. 4 loai co san (is_builtin = 1) co layout ghe chuan trong code (RoomRules);
+-- Admin co the them loai moi khi tao phong, loai moi dung layout trong thu vien hoac tu tao.
+CREATE TABLE dbo.RoomType (
+    type_code VARCHAR(20) NOT NULL CONSTRAINT PK_RoomType PRIMARY KEY,
+    description NVARCHAR(200) NULL,
+    is_builtin BIT NOT NULL CONSTRAINT DF_RoomType_Builtin DEFAULT 0,
+    created_at DATETIME2(7) NOT NULL CONSTRAINT DF_RoomType_Created DEFAULT SYSDATETIME(),
+    -- Phu thu moi ghe theo loai phong (vd. 3D/IMAX), cong vao gia ve trong fn_GetPriceFor
+    surcharge DECIMAL(10,0) NOT NULL CONSTRAINT DF_RoomType_Surcharge DEFAULT 0,
+    CONSTRAINT CK_RoomType_Surcharge CHECK (surcharge >= 0)
+);
+GO
+-- surcharge = phu thu moi ghe (VND) cong vao gia ve
+INSERT dbo.RoomType(type_code, description, is_builtin, surcharge) VALUES
+    ('2D', N'Phòng chiếu tiêu chuẩn', 1, 0),
+    ('3D', N'Phòng chiếu 3D', 1, 20000),
+    ('IMAX', N'Phòng IMAX màn hình lớn', 1, 40000),
+    ('4DX', N'Phòng 4DX ghế chuyển động, hiệu ứng', 1, 50000);
+GO
+
 -- Thu vien layout ghe do Admin tao (dung lai cho nhieu phong).
 -- layout_data: moi hang 1 chuoi, cach nhau boi '/'; moi ky tu la 1 ghe trong DB:
 --   S = thuong, V = VIP, C = ghe doi (luon di theo cap "CC", ghep trai -> phai).
@@ -516,7 +536,7 @@ CREATE TABLE dbo.Room (
     CONSTRAINT FK_Room_Cinema FOREIGN KEY (cinema_id) REFERENCES dbo.Cinema(cinema_id),
     CONSTRAINT FK_Room_Layout FOREIGN KEY (layout_id) REFERENCES dbo.SeatLayout(layout_id),
     CONSTRAINT UQ_Room_Cinema_Name UNIQUE (cinema_id, room_name),
-    CONSTRAINT CK_Room_Type CHECK (room_type IN ('2D','3D','IMAX','4DX')),
+    CONSTRAINT FK_Room_RoomType FOREIGN KEY (room_type) REFERENCES dbo.RoomType(type_code),
     CONSTRAINT CK_Room_Status CHECK (status IN ('Active','Closed')),
     CONSTRAINT CK_Room_Capacity CHECK (capacity > 0)
 );
@@ -565,22 +585,46 @@ GO
 
 CREATE TABLE dbo.Holiday (
     holiday_date DATE NOT NULL CONSTRAINT PK_Holiday PRIMARY KEY,
-    holiday_name NVARCHAR(100) NOT NULL
+    holiday_name NVARCHAR(100) NOT NULL,
+    -- 1 = lap lai hang nam (cung ngay/thang) tu nam cua holiday_date tro di
+    is_recurring BIT NOT NULL CONSTRAINT DF_Holiday_Recurring DEFAULT 0
 );
 GO
 
+/* Moi o gia co the co nhieu phien ban: phien ban ap dung cho suat chieu ngay D la dong
+   co effective_from lon nhat <= D. Dong '2000-01-01' la gia goc; dong tuong lai = lich doi gia. */
 CREATE TABLE dbo.TicketPrice (
     price_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_TicketPrice PRIMARY KEY,
     seat_type_id INT NOT NULL,
     slot_id INT NOT NULL,
     day_type VARCHAR(10) NOT NULL,
     price DECIMAL(10,0) NOT NULL,
+    effective_from DATE NOT NULL CONSTRAINT DF_TicketPrice_From DEFAULT '20000101',
+    updated_by INT NULL,
+    updated_at DATETIME2(7) NULL,
     CONSTRAINT FK_TicketPrice_SeatType FOREIGN KEY (seat_type_id) REFERENCES dbo.SeatType(seat_type_id),
     CONSTRAINT FK_TicketPrice_Slot FOREIGN KEY (slot_id) REFERENCES dbo.TimeSlot(slot_id),
-    CONSTRAINT UQ_TicketPrice UNIQUE (seat_type_id, slot_id, day_type),
+    CONSTRAINT FK_TicketPrice_Updater FOREIGN KEY (updated_by) REFERENCES dbo.Account(account_id),
+    CONSTRAINT UQ_TicketPrice_Version UNIQUE (seat_type_id, slot_id, day_type, effective_from),
     CONSTRAINT CK_TicketPrice_DayType CHECK (day_type IN ('Weekday','Weekend','Holiday')),
     CONSTRAINT CK_TicketPrice_Price CHECK (price >= 0)
 );
+GO
+
+-- Nhat ky moi thay doi ve gia: o gia, lich doi gia, phu thu phong, khung gio, ngay le.
+CREATE TABLE dbo.PriceChangeLog (
+    log_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_PriceChangeLog PRIMARY KEY,
+    category VARCHAR(20) NOT NULL,
+    item NVARCHAR(200) NOT NULL,
+    old_value NVARCHAR(100) NULL,
+    new_value NVARCHAR(100) NULL,
+    note NVARCHAR(200) NULL,
+    changed_by INT NULL,
+    changed_at DATETIME2(7) NOT NULL CONSTRAINT DF_PriceChangeLog_At DEFAULT SYSDATETIME(),
+    CONSTRAINT FK_PriceChangeLog_Account FOREIGN KEY (changed_by) REFERENCES dbo.Account(account_id),
+    CONSTRAINT CK_PriceChangeLog_Category CHECK (category IN ('Price','Schedule','Surcharge','TimeSlot','Holiday'))
+);
+CREATE INDEX IX_PriceChangeLog_At ON dbo.PriceChangeLog(changed_at DESC);
 GO
 
 CREATE TABLE dbo.Combo (
@@ -641,16 +685,47 @@ GO
 -- ---------- Function ----------
 GO
 
--- Gia ve theo loai ghe + khung gio + loai ngay (thuong / cuoi tuan / le)
+-- Khung gia cua mot gio bat dau. Khung keo dai toi gio bat dau cua khung ke tiep va vong qua
+-- nua dem: gio som hon moi khung thuoc khung bat dau muon nhat (vd. 01:00 thuoc Khuya 22:00 - 06:00).
+CREATE FUNCTION dbo.fn_GetSlotId(@t TIME(7)) RETURNS INT AS
+BEGIN
+    RETURN (SELECT TOP (1) slot_id FROM dbo.TimeSlot
+            ORDER BY CASE WHEN start_time <= @t THEN 0 ELSE 1 END, start_time DESC);
+END
+GO
+
+-- Loai ngay: le (co dinh hoac lap lai hang nam) > cuoi tuan (T7, CN) > ngay thuong
+CREATE FUNCTION dbo.fn_GetDayType(@d DATE) RETURNS VARCHAR(10) AS
+BEGIN
+    RETURN CASE WHEN EXISTS (SELECT 1 FROM dbo.Holiday h
+                             WHERE h.holiday_date = @d
+                                OR (h.is_recurring = 1 AND h.holiday_date <= @d
+                                    AND MONTH(h.holiday_date) = MONTH(@d) AND DAY(h.holiday_date) = DAY(@d)))
+                     THEN 'Holiday'
+                WHEN DATEDIFF(DAY, '19000107', @d) % 7 IN (0, 6) THEN 'Weekend'   -- CN, T7
+                ELSE 'Weekday' END;
+END
+GO
+
+-- Gia 1 ghe = gia o (phien ban hieu luc tai ngay chieu) + phu thu loai phong. NULL = chua cau hinh gia.
+CREATE FUNCTION dbo.fn_GetPriceFor(@seat_type_id INT, @d DATE, @slot_id INT, @room_type VARCHAR(20)) RETURNS DECIMAL(10,0) AS
+BEGIN
+    DECLARE @price DECIMAL(10,0), @day_type VARCHAR(10) = dbo.fn_GetDayType(@d);
+    SELECT TOP (1) @price = price FROM dbo.TicketPrice
+    WHERE seat_type_id = @seat_type_id AND slot_id = @slot_id AND day_type = @day_type AND effective_from <= @d
+    ORDER BY effective_from DESC;
+    IF @price IS NULL RETURN NULL;
+    RETURN @price + ISNULL((SELECT surcharge FROM dbo.RoomType WHERE type_code = @room_type), 0);
+END
+GO
+
+-- Gia ve theo suat chieu: loai ghe + khung gio + loai ngay + phu thu phong
 CREATE FUNCTION dbo.fn_GetTicketPrice(@showtime_id INT, @seat_type_id INT) RETURNS DECIMAL(10,0) AS
 BEGIN
-    DECLARE @slot INT, @d DATE, @day_type VARCHAR(10), @price DECIMAL(10,0);
-    SELECT @slot = slot_id, @d = show_date FROM dbo.Showtime WHERE showtime_id = @showtime_id;
-    SET @day_type = CASE WHEN EXISTS (SELECT 1 FROM dbo.Holiday WHERE holiday_date = @d) THEN 'Holiday'
-                         WHEN DATEDIFF(DAY, '19000107', @d) % 7 IN (0, 6) THEN 'Weekend'   -- CN, T7
-                         ELSE 'Weekday' END;
-    SELECT @price = price FROM dbo.TicketPrice WHERE seat_type_id = @seat_type_id AND slot_id = @slot AND day_type = @day_type;
-    RETURN @price;
+    DECLARE @slot INT, @d DATE, @room_type VARCHAR(20);
+    SELECT @slot = s.slot_id, @d = s.show_date, @room_type = r.room_type
+    FROM dbo.Showtime s JOIN dbo.Room r ON r.room_id = s.room_id WHERE s.showtime_id = @showtime_id;
+    RETURN dbo.fn_GetPriceFor(@seat_type_id, @d, @slot, @room_type);
 END
 GO
 
@@ -749,18 +824,8 @@ BEGIN
     )
         THROW 51030, N'Không tìm thấy phòng đang hoạt động với tên đã chọn.', 1;
 
-    IF EXISTS (
-        SELECT 1
-        FROM inserted i
-        WHERE i.room_name IS NOT NULL AND i.starts_at IS NOT NULL
-          AND NOT EXISTS (
-              SELECT 1 FROM dbo.TimeSlot ts
-              WHERE CONVERT(TIME(7), i.starts_at) >= ts.start_time
-                AND (CONVERT(TIME(7), i.starts_at) < ts.end_time
-                     OR (ts.end_time < ts.start_time AND CONVERT(TIME(7), i.starts_at) >= ts.start_time))
-          )
-    )
-        THROW 51031, N'Giờ bắt đầu không thuộc khung giá nào đã cấu hình.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.TimeSlot)
+        THROW 51031, N'Chưa cấu hình khung giờ giá nào.', 1;
 
     UPDATE s
     SET s.room_id = roomChoice.room_id,
@@ -776,14 +841,7 @@ BEGIN
         WHERE r.room_name = i.room_name AND r.status = 'Active'
         ORDER BY r.room_id
     ) roomChoice
-    CROSS APPLY (
-        SELECT TOP (1) ts.slot_id
-        FROM dbo.TimeSlot ts
-        WHERE CONVERT(TIME(7), i.starts_at) >= ts.start_time
-          AND (CONVERT(TIME(7), i.starts_at) < ts.end_time
-               OR (ts.end_time < ts.start_time AND CONVERT(TIME(7), i.starts_at) >= ts.start_time))
-        ORDER BY ts.start_time
-    ) slotChoice
+    CROSS APPLY (SELECT dbo.fn_GetSlotId(CONVERT(TIME(7), i.starts_at)) AS slot_id) slotChoice
     WHERE i.room_name IS NOT NULL AND i.starts_at IS NOT NULL;
 END
 GO
@@ -1054,6 +1112,18 @@ BEGIN
     IF EXISTS (SELECT 1 FROM dbo.Seat s JOIN @sel x ON x.seat_id = s.seat_id
                WHERE s.pair_seat_id IS NOT NULL AND s.pair_seat_id NOT IN (SELECT seat_id FROM @sel))
         THROW 50016, N'Ghế đôi phải được chọn cả cặp, không được tách.', 1;
+
+    DECLARE @no_price NVARCHAR(400) = (
+        SELECT STRING_AGG(t.type_name, N', ') FROM (
+            SELECT DISTINCT st.type_name FROM dbo.Seat s JOIN @sel x ON x.seat_id = s.seat_id
+            JOIN dbo.SeatType st ON st.seat_type_id = s.seat_type_id
+            WHERE dbo.fn_GetTicketPrice(@showtime_id, s.seat_type_id) IS NULL) t);
+    IF @no_price IS NOT NULL
+    BEGIN
+        DECLARE @no_price_msg NVARCHAR(600) = N'Suất chiếu này chưa có giá vé cho loại ghế: ' + @no_price
+            + N'. Vui lòng chọn ghế khác hoặc liên hệ rạp.';
+        THROW 50018, @no_price_msg, 1;
+    END
 
     BEGIN TRY
         BEGIN TRAN;
@@ -2254,11 +2324,17 @@ GO
    12/11/2026  MovieVoiceCast: diễn viên lồng tiếng theo ngôn ngữ (bắt buộc ở form phim cho ngôn ngữ khác ngôn ngữ gốc)
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
-   
+   11/11/2026  Giá vé: TicketPrice có phiên bản theo effective_from (lịch đổi giá), updated_by/updated_at;
+               PriceChangeLog (nhật ký đổi giá); Holiday.is_recurring; RoomType.surcharge (phụ thu theo loại phòng);
+               fn_GetDayType + fn_GetPriceFor; sp_HoldSeats báo lỗi 50018 khi ô giá chưa cấu hình.
+               2 khung giờ cố định Trong ngày 06-22 / Khuya 22-06 (vòng qua nửa đêm, fn_GetSlotId);
+               phụ thu phòng 3D 20.000 / IMAX 40.000 / 4DX 50.000. Dữ liệu DB cũ: database/update_price_data_slots.sql
+               Nâng cấp DB cũ: database/update_ticket_pricing.sql
+
    Script nâng cấp DB cũ giữ nguyên dữ liệu nằm trong lịch sử git: git show 6fe0e9e:sql/upgrade.sql
    Nâng cấp DB cũ cho thay đổi 04/11/2026: git show 8a4aeb0:database/update_combo_image_points.sql
    Thêm loại ghế Unassigned cho DB cũ: git show 48c6b35:database/add_unassigned_seat_type.sql
    ===================================================================== */
 
-PRINT N'[OK] Da tao cau truc CinemaWebDB (32 bang, 26 procedure, 3 view, 1 trigger, 1 function). Chay tiep database/seed.sql.';
+PRINT N'[OK] Da tao cau truc CinemaWebDB (33 bang, 26 procedure, 3 view, 1 trigger, 4 function). Chay tiep database/seed.sql.';
 GO

@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-/** Quản lý giá vé, ngày lễ, voucher và cấu hình MyPoint (Manager). */
+/** Quản lý voucher và cấu hình MyPoint (Manager). Giá vé / ngày lễ: xem PriceAdminDAO. */
 public class PromoDAO {
 
     /* ---------------- Voucher ---------------- */
@@ -117,63 +117,6 @@ public class PromoDAO {
                 c.rollback();
                 throw e;
             }
-        }
-    }
-
-    /* ---------------- Giá vé & ngày lễ ---------------- */
-
-    /** Ma trận giá: mỗi dòng (loại ghế × khung giờ) có 3 giá. */
-    public List<Map<String, Object>> priceMatrix() throws SQLException {
-        return Rows.query("SELECT st.seat_type_id, st.type_name, ts.slot_id, ts.slot_name, "
-                + "MAX(CASE WHEN tp.day_type='Weekday' THEN tp.price END) AS weekday, "
-                + "MAX(CASE WHEN tp.day_type='Weekend' THEN tp.price END) AS weekend, "
-                + "MAX(CASE WHEN tp.day_type='Holiday' THEN tp.price END) AS holiday "
-                + "FROM SeatType st CROSS JOIN TimeSlot ts "
-                + "LEFT JOIN TicketPrice tp ON tp.seat_type_id = st.seat_type_id AND tp.slot_id = ts.slot_id "
-                + "GROUP BY st.seat_type_id, st.type_name, ts.slot_id, ts.slot_name, ts.start_time "
-                + "ORDER BY st.seat_type_id, ts.start_time");
-    }
-
-    /** Lưu một giá (thêm mới nếu chưa có). */
-    public void savePrice(int seatTypeId, int slotId, String dayType, BigDecimal price) throws SQLException {
-        try (Connection c = DBContext.getConnection();
-             PreparedStatement ps = c.prepareStatement(
-                     "UPDATE TicketPrice SET price = ? WHERE seat_type_id = ? AND slot_id = ? AND day_type = ?")) {
-            ps.setBigDecimal(1, price);
-            ps.setInt(2, seatTypeId);
-            ps.setInt(3, slotId);
-            ps.setString(4, dayType);
-            if (ps.executeUpdate() == 0) {
-                try (PreparedStatement ins = c.prepareStatement(
-                        "INSERT INTO TicketPrice(seat_type_id, slot_id, day_type, price) VALUES (?,?,?,?)")) {
-                    ins.setInt(1, seatTypeId);
-                    ins.setInt(2, slotId);
-                    ins.setString(3, dayType);
-                    ins.setBigDecimal(4, price);
-                    ins.executeUpdate();
-                }
-            }
-        }
-    }
-
-    public List<Map<String, Object>> holidays() throws SQLException {
-        return Rows.query("SELECT holiday_date, holiday_name FROM Holiday ORDER BY holiday_date");
-    }
-
-    public void addHoliday(LocalDate date, String name) throws SQLException {
-        try (Connection c = DBContext.getConnection();
-             PreparedStatement ps = c.prepareStatement("INSERT INTO Holiday(holiday_date, holiday_name) VALUES (?, ?)")) {
-            ps.setObject(1, date);
-            ps.setString(2, name);
-            ps.executeUpdate();
-        }
-    }
-
-    public void deleteHoliday(LocalDate date) throws SQLException {
-        try (Connection c = DBContext.getConnection();
-             PreparedStatement ps = c.prepareStatement("DELETE FROM Holiday WHERE holiday_date = ?")) {
-            ps.setObject(1, date);
-            ps.executeUpdate();
         }
     }
 

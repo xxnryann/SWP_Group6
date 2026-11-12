@@ -50,7 +50,7 @@ public final class RoomSort {
         order = prepend(Comparator.comparingInt(Room::getUpcomingShowtimes), upcoming, order);
         order = prepend(Comparator.comparingInt(Room::getCapacity), capacity, order);
 
-        boolean byType = type != null && RoomRules.ROOM_TYPES.contains(type);
+        boolean byType = type != null && !type.isBlank();   // loại phòng có thể do Admin tự thêm
         boolean byStatus = RoomRules.ROOM_ACTIVE.equals(status) || RoomRules.ROOM_CLOSED.equals(status);
         return rooms.stream()
                 .filter(r -> !byType || type.equals(r.getRoomType()))

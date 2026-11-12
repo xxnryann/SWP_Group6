@@ -26,8 +26,21 @@
       <div class="field">
         <label for="f-type">Loại phòng<span class="req">*</span></label>
         <select id="f-type" name="roomType" required>
-          <c:forEach var="t" items="${roomTypes}"><option value="${t}" ${t == room.roomType ? 'selected' : ''}>${t}</option></c:forEach>
+          <c:forEach var="t" items="${roomTypes}"><option value="<c:out value='${t}'/>" ${t == room.roomType ? 'selected' : ''}><c:out value="${t}"/></option></c:forEach>
+          <option value="${newTypeOption}" ${room.roomType == newTypeOption ? 'selected' : ''}>+ Tạo loại phòng mới…</option>
         </select>
+        <span class="hint">2D, 3D, IMAX, 4DX có layout ghế chuẩn. Loại mới dùng layout trong thư viện hoặc tự tạo ở bước sau.</span>
+      </div>
+      <div class="full form-grid" id="newTypeBox" style="padding:16px;border:1px dashed var(--line-strong);border-radius:var(--r-md);background:var(--surface-2)" hidden>
+        <div class="field">
+          <label for="f-newtype">Tên loại phòng mới<span class="req">*</span></label>
+          <input id="f-newtype" type="text" name="newTypeName" maxlength="20" placeholder="ScreenX, Gold Class, 4D…" value="<c:out value='${newTypeName}'/>">
+          <span class="hint">Tối đa 20 ký tự: chữ, số, khoảng trắng, + . _ -</span>
+        </div>
+        <div class="field">
+          <label for="f-newtype-desc">Mô tả</label>
+          <input id="f-newtype-desc" type="text" name="newTypeDesc" maxlength="200" placeholder="Màn hình 270°, ghế nằm…" value="<c:out value='${newTypeDesc}'/>">
+        </div>
       </div>
       <c:choose>
       <c:when test="${room.roomId == 0}">
@@ -78,6 +91,21 @@
     </div>
   </form>
 </section>
+<script>
+  (function () {
+    /* Hiện ô nhập loại phòng mới khi chọn "+ Tạo loại phòng mới…". */
+    var type = document.getElementById('f-type'), box = document.getElementById('newTypeBox');
+    var name = document.getElementById('f-newtype');
+    function syncNewType() {
+      var on = type.value === '${newTypeOption}';
+      box.hidden = !on;
+      name.required = on;
+      if (on && !name.value) name.focus();
+    }
+    type.addEventListener('change', syncNewType);
+    syncNewType();
+  })();
+</script>
 <c:if test="${not capacityLocked && room.roomId > 0}">
   <script>
     (function () {

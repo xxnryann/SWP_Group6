@@ -185,11 +185,11 @@ GO
 
 /* TimeSlot = KHUNG GIA (khong con la suat chien co dinh).
    Lich chien bay gio tu do trong ngay; slot_id cua mot suat duoc suy ra tu
-   gio bat dau (Sáng / Chiều / Tối) de tra gia ve theo khung giờ. */
+   gio bat dau (dbo.fn_GetSlotId) de tra gia ve theo khung giờ.
+   2 khung phu kin 24 gio; Khuya vong qua nua dem (22:00 - 06:00). */
 INSERT dbo.TimeSlot(slot_name, start_time, end_time) VALUES
-    (N'Sáng', '00:00:00', '12:00:00'),
-    (N'Chiều', '12:00:00', '18:00:00'),
-    (N'Tối', '18:00:00', '23:59:59');
+    (N'Trong ngày', '06:00:00', '22:00:00'),
+    (N'Khuya', '22:00:00', '06:00:00');
 GO
 
 INSERT dbo.Holiday(holiday_date, holiday_name) VALUES
@@ -197,17 +197,14 @@ INSERT dbo.Holiday(holiday_date, holiday_name) VALUES
     ('2027-02-06', N'Tết Nguyên đán');
 GO
 
-/* Gia ve theo loai ghe + khung gia (Sang / Chieu / Toi) + loai ngay. */
-INSERT dbo.TicketPrice(seat_type_id, slot_id, day_type, price) VALUES
-    (3,1,'Weekday',100000),(3,2,'Weekday',110000),(3,3,'Weekday',105000),
-    (3,1,'Weekend',110000),(3,2,'Weekend',120000),(3,3,'Weekend',115000),
-    (3,1,'Holiday',120000),(3,2,'Holiday',130000),(3,3,'Holiday',125000),
-    (1,1,'Weekday',60000),(1,2,'Weekday',70000),(1,3,'Weekday',65000),
-    (1,1,'Weekend',70000),(1,2,'Weekend',80000),(1,3,'Weekend',75000),
-    (1,1,'Holiday',80000),(1,2,'Holiday',90000),(1,3,'Holiday',85000),
-    (2,1,'Weekday',80000),(2,2,'Weekday',90000),(2,3,'Weekday',85000),
-    (2,1,'Weekend',90000),(2,2,'Weekend',100000),(2,3,'Weekend',95000),
-    (2,1,'Holiday',100000),(2,2,'Holiday',110000),(2,3,'Holiday',105000);
+/* Gia ve (moi ghe) theo loai ghe + khung gia + loai ngay.
+   Khuya cao hon Trong ngay 20.000d. Phu thu phong (3D/IMAX/4DX) nam o RoomType.surcharge. */
+INSERT dbo.TicketPrice(seat_type_id, slot_id, day_type, price)
+SELECT t.seat_type_id, s.slot_id, d.day_type,
+       d.base + t.extra + CASE WHEN s.slot_name = N'Khuya' THEN 20000 ELSE 0 END
+FROM (VALUES (1, 0), (2, 20000), (3, 40000)) AS t(seat_type_id, extra)          -- Standard / VIP / Couple
+CROSS JOIN (VALUES ('Weekday', 70000), ('Weekend', 80000), ('Holiday', 90000)) AS d(day_type, base)
+CROSS JOIN dbo.TimeSlot s;
 GO
 
 INSERT dbo.Combo(combo_name, description, price, stock, status) VALUES
@@ -289,11 +286,7 @@ ORDER BY ((rn - 1 - @room_index - @step) % @movie_count + @movie_count) % @movie
 
 IF @movie_id IS NULL BREAK;
 
-            SET @slot_id = (
-                SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts
-                WHERE CAST(@cursor AS TIME(7)) >= ts.start_time
-                  AND CAST(@cursor AS TIME(7)) < ts.end_time
-                ORDER BY ts.start_time);
+            SET @slot_id = dbo.fn_GetSlotId(CAST(@cursor AS TIME(7)));
 
             INSERT dbo.Showtime
                 (movie_id, room_id, slot_id, start_time, end_time, status, created_by, room_name, starts_at, ticket_price)
@@ -489,9 +482,7 @@ SET @p += 1; SET @try += 1;
 END
                 IF @movie_id IS NULL BREAK;
 
-                SET @slot_id = (SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts
-                                WHERE CAST(@cursor AS TIME(7)) >= ts.start_time AND CAST(@cursor AS TIME(7)) < ts.end_time
-                                ORDER BY ts.start_time);
+                SET @slot_id = dbo.fn_GetSlotId(CAST(@cursor AS TIME(7)));
                 INSERT dbo.Showtime (movie_id, room_id, slot_id, start_time, end_time, status, created_by, room_name, starts_at, ticket_price)
                 VALUES (@movie_id, @room_id, @slot_id, @cursor, @end, 'Scheduled', NULL, @room_name, @cursor, 0);
                 SET @added += 1;

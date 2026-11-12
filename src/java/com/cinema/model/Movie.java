@@ -133,7 +133,9 @@ public class Movie {
                 }
             }
             if (id == null || !id.matches("[A-Za-z0-9_-]{6,20}")) return null;
-            return "https://www.youtube-nocookie.com/embed/" + id;
+            // youtube.com/embed thay vì youtube-nocookie.com: bản nocookie hay chỉ hiện ảnh bìa mà không phát
+            // được (lỗi cấu hình player) khi trang chạy trên localhost. rel=0: chỉ gợi ý video cùng kênh.
+            return "https://www.youtube.com/embed/" + id + "?rel=0";
         } catch (IllegalArgumentException e) {
             return null;
         }

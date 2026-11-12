@@ -482,7 +482,7 @@ public class ShowtimeDAO {
     }
 
     /**
-     * Tra room_id của phòng đang hoạt động và slot_id (khung giá Sáng/Chiều/Tối)
+     * Tra room_id của phòng đang hoạt động và slot_id (khung giá Trong ngày / Khuya)
      * suy ra từ giờ bắt đầu. Không còn khung giờ chiếu cố định.
      */
     private RoomSlot validateRoomAndSlot(Connection connection, Showtime showtime) throws SQLException {
@@ -498,15 +498,12 @@ public class ShowtimeDAO {
                 roomId = result.getInt("room_id");
             }
         }
-        String slotSql = "SELECT TOP (1) ts.slot_id FROM dbo.TimeSlot ts "
-                + "WHERE CONVERT(TIME(7), ?) >= CONVERT(TIME(7), ts.start_time) "
-                + "AND CONVERT(TIME(7), ?) < CONVERT(TIME(7), ts.end_time) "
-                + "ORDER BY ts.start_time";
+        // fn_GetSlotId: khung có giờ bắt đầu gần nhất <= giờ chiếu, vòng qua nửa đêm (Khuya 22:00 – 06:00).
+        String slotSql = "SELECT dbo.fn_GetSlotId(CONVERT(TIME(7), ?)) AS slot_id";
         try (PreparedStatement statement = connection.prepareStatement(slotSql)) {
             statement.setTimestamp(1, Timestamp.valueOf(showtime.getStartsAt()));
-            statement.setTimestamp(2, Timestamp.valueOf(showtime.getStartsAt()));
             try (ResultSet result = statement.executeQuery()) {
-                if (!result.next()) {
+                if (!result.next() || result.getObject("slot_id") == null) {
                     throw new SQLException("Giờ chiếu không thuộc khung giá nào đã cấu hình.");
                 }
                 return new RoomSlot(roomId, result.getInt("slot_id"));

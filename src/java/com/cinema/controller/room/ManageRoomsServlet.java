@@ -1,7 +1,10 @@
 package com.cinema.controller.room;
 
 import com.cinema.dao.RoomDAO;
+import com.cinema.dao.RoomTypeDAO;
 import com.cinema.dao.SeatDAO;
+import java.util.ArrayList;
+import java.util.List;
 import com.cinema.model.Room;
 import com.cinema.util.room.RoomRuleException;
 import com.cinema.util.room.RoomRules;
@@ -30,6 +33,7 @@ public class ManageRoomsServlet extends AdminBaseServlet {
 
     private final RoomDAO roomDAO = new RoomDAO();
     private final SeatDAO seatDAO = new SeatDAO();
+    private final RoomTypeDAO roomTypeDAO = new RoomTypeDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -65,7 +69,7 @@ public class ManageRoomsServlet extends AdminBaseServlet {
                         req.getParameter("room"), req.getParameter("type"), req.getParameter("capacity"),
                         req.getParameter("upcoming"), req.getParameter("status")));
                 req.setAttribute("keyword", keyword);
-                req.setAttribute("roomTypes", RoomRules.ROOM_TYPES);
+                req.setAttribute("roomTypes", roomTypeDAO.findCodes());
                 boolean limitReached = roomDAO.countAll() >= RoomRules.MAX_ROOMS;
                 req.setAttribute("roomLimitReached", limitReached);
                 req.setAttribute("showRoomLimit", limitReached && "full".equals(req.getParameter("limit")));
@@ -121,6 +125,28 @@ public class ManageRoomsServlet extends AdminBaseServlet {
 
         String name = Validator.trim(req.getParameter("roomName"));
         String type = Validator.trim(req.getParameter("roomType"));
+        List<String> roomTypes = roomTypeDAO.findCodes();
+
+        // "+ Tạo loại phòng mới": dùng tên vừa nhập làm mã loại; trùng loại đã có (không phân biệt hoa thường)
+        // thì dùng luôn loại đó. Loại mới chỉ được lưu khi cả form hợp lệ.
+        String newTypeName = Validator.trim(req.getParameter("newTypeName"));
+        String newTypeDesc = Validator.trim(req.getParameter("newTypeDesc"));
+        boolean creatingType = false;
+        String typeError = null;
+        if (RoomRules.NEW_TYPE_OPTION.equals(type)) {
+            typeError = RoomRules.validateNewType(newTypeName);
+            if (typeError == null) {
+                String existingType = roomTypeDAO.findExisting(newTypeName);
+                if (existingType != null) {
+                    type = existingType;
+                } else {
+                    type = newTypeName;
+                    creatingType = true;
+                    roomTypes = new ArrayList<>(roomTypes);
+                    roomTypes.add(type);
+                }
+            }
+        }
         String capacityStr = Validator.trim(req.getParameter("capacity"));
         String status = editing ? Validator.trim(req.getParameter("status")) : RoomRules.ROOM_ACTIVE;
         Integer cinemaId = RoomRules.parseInt(req.getParameter("cinemaId"));
@@ -137,7 +163,8 @@ public class ManageRoomsServlet extends AdminBaseServlet {
             capacityStr = String.valueOf(RoomRules.fixedCapacity(type));
         }
 
-        String error = RoomRules.validateRoom(name, type, capacityStr, status);
+        String error = typeError != null ? typeError
+                : RoomRules.validateRoom(name, type, capacityStr, status, roomTypes);
         if (error == null && (cinemaId == null || !roomDAO.cinemaExists(cinemaId))) {
             error = "Vui lòng chọn rạp hợp lệ.";
         }
@@ -161,9 +188,18 @@ public class ManageRoomsServlet extends AdminBaseServlet {
             error = RoomRules.ROOM_LIMIT_MESSAGE;
         }
         if (error != null) {
+            if (typeError != null || creatingType) {
+                // Giữ nguyên lựa chọn "tạo loại mới" và nội dung đã nhập để sửa tiếp.
+                r.setRoomType(RoomRules.NEW_TYPE_OPTION);
+                req.setAttribute("newTypeName", newTypeName);
+                req.setAttribute("newTypeDesc", newTypeDesc);
+            }
             req.setAttribute("error", error);
             showForm(req, resp, r);
             return;
+        }
+        if (creatingType) {
+            roomTypeDAO.insert(type, newTypeDesc);
         }
         if (!editing) {
             // Bước 1 xong: giữ thông tin phòng trong session, sang bước 2 chọn layout ghế (phòng chưa được tạo).
@@ -238,7 +274,8 @@ public class ManageRoomsServlet extends AdminBaseServlet {
             throws SQLException, ServletException, IOException {
         req.setAttribute("room", room);
         req.setAttribute("cinemas", roomDAO.findCinemas());
-        req.setAttribute("roomTypes", RoomRules.ROOM_TYPES);
+        req.setAttribute("roomTypes", roomTypeDAO.findCodes());
+        req.setAttribute("newTypeOption", RoomRules.NEW_TYPE_OPTION);
         req.setAttribute("capacityLocked", room.getRoomId() > 0 && room.isHasLayout());
         // Sức chứa cố định theo loại phòng — room-form.jsp dùng để tự điền và khóa ô "Sức chứa".
         req.setAttribute("fixedCapacity2d", RoomRules.FIXED_2D_CAPACITY);
