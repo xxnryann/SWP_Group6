@@ -1496,7 +1496,8 @@ BEGIN
             WHERE ps.seat_id = sc.pair_seat_id AND pt.booking_id = t.booking_id
               AND pt.showtime_id = t.showtime_id AND pt.status = 'Booked') AS pair_label,
            m.movie_id,
-           CASE WHEN t.status = 'Used' AND s.end_time < SYSDATETIME() AND m.is_deleted = 0
+           CASE WHEN t.status IN ('Booked','Used','Expired') AND b.status = 'Paid'
+                 AND s.end_time < SYSDATETIME() AND m.is_deleted = 0
                  AND NOT EXISTS (SELECT 1 FROM dbo.Review rv WHERE rv.movie_id = m.movie_id AND rv.customer_id = b.customer_id)
                 THEN 1 ELSE 0 END AS can_review
     FROM dbo.Ticket t
@@ -1982,18 +1983,22 @@ GO
 GO
 
 /* ----------------------------------------------------------------------------
-   UC: Movie Review & Comment (chi phim da xem = co ve da check-in)
+   UC: Movie Review & Comment (khach da dat ve - don da thanh toan - va suat chieu da ket thuc;
+       khong bat buoc ve da soat). Danh gia <= 2 sao bat buoc co binh luan ly do.
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_AddReview @customer_id INT, @movie_id INT, @rating TINYINT, @comment NVARCHAR(1000) = NULL AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @bonus INT = 5;   -- khop voi noi dung thong bao ReviewReminder
+    IF @rating <= 2 AND NULLIF(LTRIM(RTRIM(@comment)), N'') IS NULL
+        THROW 50094, N'Đánh giá từ 2 sao trở xuống cần nhập nhận xét nêu lý do.', 1;
     IF NOT EXISTS (SELECT 1 FROM dbo.Ticket t JOIN dbo.Booking b ON b.booking_id = t.booking_id
                    JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
                    JOIN dbo.Movie m ON m.movie_id = s.movie_id
-                   WHERE b.customer_id = @customer_id AND s.movie_id = @movie_id AND t.status = 'Used'
+                   WHERE b.customer_id = @customer_id AND s.movie_id = @movie_id
+                     AND t.status IN ('Booked','Used','Expired') AND b.status = 'Paid'
                      AND s.end_time < SYSDATETIME() AND m.is_deleted = 0)
-        THROW 50090, N'Bạn chưa có lịch sử xem phim này nên chưa thể đánh giá. Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới được đánh giá.', 1;
+        THROW 50090, N'Bạn chưa có lịch sử đặt vé phim này nên chưa thể đánh giá. Chỉ khách đã đặt vé và suất chiếu đã kết thúc mới được đánh giá.', 1;
 
     -- UQ_Review_Movie_Customer dam bao moi phim chi thuong diem mot lan.
     BEGIN TRAN;
@@ -2056,6 +2061,8 @@ GO
 CREATE OR ALTER PROCEDURE dbo.sp_UpdateReview @customer_id INT, @movie_id INT, @rating TINYINT, @comment NVARCHAR(1000) = NULL AS
 BEGIN
     SET NOCOUNT ON;
+    IF @rating <= 2 AND NULLIF(LTRIM(RTRIM(@comment)), N'') IS NULL
+        THROW 50094, N'Đánh giá từ 2 sao trở xuống cần nhập nhận xét nêu lý do.', 1;
     UPDATE dbo.Review SET rating = @rating, comment = @comment, updated_at = SYSDATETIME()
     WHERE customer_id = @customer_id AND movie_id = @movie_id;
     IF @@ROWCOUNT = 0
@@ -2193,7 +2200,7 @@ END
 GO
 
 /* ----------------------------------------------------------------------------
-   Job: moi khach xem xong phim (ve da soat, suat vua ket thuc) -> nhac danh gia.
+   Job: moi khach da dat ve va suat chieu vua ket thuc -> nhac danh gia (khong can ve da soat).
    Chi xet suat ket thuc trong 24 gio qua; moi khach mot thong bao cho moi phim.
    -------------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.sp_QueueReviewReminders AS
@@ -2206,7 +2213,7 @@ BEGIN
     FROM dbo.Ticket t JOIN dbo.Booking b ON b.booking_id = t.booking_id
     JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
     JOIN dbo.Movie m ON m.movie_id = s.movie_id
-    WHERE t.status = 'Used' AND b.customer_id IS NOT NULL AND m.is_deleted = 0
+    WHERE t.status IN ('Booked','Used','Expired') AND b.status = 'Paid' AND b.customer_id IS NOT NULL AND m.is_deleted = 0
       AND s.end_time < SYSDATETIME() AND s.end_time >= DATEADD(HOUR, -24, SYSDATETIME())
       AND NOT EXISTS (SELECT 1 FROM dbo.Review r WHERE r.movie_id = s.movie_id AND r.customer_id = b.customer_id)
       AND NOT EXISTS (SELECT 1 FROM dbo.EmailNotification e WHERE e.notif_type = 'ReviewReminder'
@@ -2323,6 +2330,7 @@ GO
    12/11/2026  Showtime.language_mode thêm 'Orig' (nguyên bản); phụ đề/lồng tiếng phải khác ngôn ngữ gốc
    12/11/2026  sp_CancelShowtime + sp_RefundCancelledShowtimes: hủy 1 suất có đơn (kèm lý do) hoàn MyPoint + voucher đền bù
    12/11/2026  Ẩn bình luận thu hồi điểm thưởng đánh giá (Review.bonus_revoked, sp_HideReviewComment/sp_UnhideReviewComment)
+   12/11/2026  Đánh giá phim: chỉ cần đã đặt vé và suất chiếu đã kết thúc (không bắt buộc soát vé); <= 2 sao bắt buộc nhận xét
    12/11/2026  MovieVoiceCast: diễn viên lồng tiếng theo ngôn ngữ (bắt buộc ở form phim cho ngôn ngữ khác ngôn ngữ gốc)
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
