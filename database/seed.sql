@@ -513,13 +513,13 @@ UPDATE s SET s.ticket_price = COALESCE(dbo.fn_GetTicketPrice(s.showtime_id, (SEL
 SELECT @kept AS kept_with_data, @added AS added;
 GO
 
--- Ngon ngu cua suat chieu: phim hoat hinh long tieng Viet; phim Viet phu de Anh; phim nuoc ngoai phu de Viet.
+-- Ngon ngu cua suat chieu: phim hoat hinh long tieng Viet; phim Viet nguyen ban (tieng Viet goc);
+-- phim nuoc ngoai phu de Viet. Phu de / long tieng luon khac ngon ngu goc cua phim.
 -- Ngon ngu luon nam trong Movie.spoken_language cua phim.
 UPDATE s SET
-    s.language_mode = CASE WHEN m.movie_id IN (5, 9, 12) THEN 'Dub' ELSE 'Sub' END,
-    s.language = CASE WHEN m.movie_id IN (5, 9, 12) THEN N'Tiếng Việt'
-                      WHEN m.country = N'Việt Nam' THEN N'Tiếng Anh'
-                      ELSE N'Tiếng Việt' END
+    s.language_mode = CASE WHEN m.movie_id IN (5, 9, 12) THEN 'Dub'
+                           WHEN m.country = N'Việt Nam' THEN 'Orig' ELSE 'Sub' END,
+    s.language = N'Tiếng Việt'
 FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id
 WHERE s.language IS NULL;
 GO

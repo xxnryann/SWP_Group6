@@ -8,7 +8,7 @@
   .movie-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 </style>
 <div class="page-head">
-  <div><h1>Quản lý phim</h1><p>Thêm phim mới, chỉnh thông tin, ngừng chiếu hoặc hủy phim kèm hoàn tiền.</p></div>
+  <div><h1>Quản lý phim</h1><p>Thêm phim mới, ngừng chiếu hoặc hủy phim kèm hoàn tiền. Chỉ phim đã ngừng chiếu mới được sửa thông tin. Khi ngừng chiếu, các suất chiếu sắp tới (chưa bán vé) của phim sẽ bị hủy và biến mất khỏi lịch chiếu; phim còn suất đã bán vé phải dùng Hủy &amp; hoàn tiền (khách được hoàn MyPoint kèm voucher đền bù).</p></div>
   <div class="cluster">
     <a class="btn" href="${ctx}/manage/genres">${ic.list}Thể loại</a>
     <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">${ic.plus}Thêm phim</a>

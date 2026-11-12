@@ -3,7 +3,7 @@
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="../layout/top.jspf" %>
 <div class="page-head">
-  <div><h1>Quản lý lịch chiếu</h1><p>Các suất chưa tới giờ chiếu; suất đã bắt đầu được ẩn và không thể sửa/xóa.</p></div>
+  <div><h1>Quản lý lịch chiếu</h1><p>Các suất chưa tới giờ chiếu; suất đã bắt đầu được ẩn và không thể sửa/xóa. Suất chưa bán vé được sửa và xóa bình thường. Suất đã bán vé không sửa được nhưng vẫn hủy được (bắt buộc nhập lý do): khách được hoàn MyPoint (tiền vé + combo + MyPoint đã dùng) kèm voucher đền bù và nhận thông báo.</p></div>
   <div class="cluster">
     <a class="btn btn-primary" href="${ctx}/manage/showtimes?action=new">${ic.plus}Thêm suất chiếu</a>
   </div>
@@ -45,12 +45,27 @@
                 <c:when test="${showtime.lockedByPurchasedTickets}"><button class="btn btn-xs" type="button" disabled title="Suất chiếu đã có ${showtime.purchasedTicketCount} vé được mua">${ic.lock}Sửa</button></c:when>
                 <c:otherwise><a class="btn btn-xs btn-soft" href="<c:out value='${editUrl}'/>">${ic.edit}Sửa</a></c:otherwise>
               </c:choose>
-              <form class="inline-form" method="post" action="${ctx}/manage/showtimes" data-confirm="Bạn có chắc muốn xóa suất chiếu này?">
-                <input type="hidden" name="_csrf" value="${escapedCsrf}">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="id" value="${escapedId}">
-                <button class="btn btn-xs btn-danger" type="submit">${ic.trash}Xóa</button>
-              </form>
+              <c:choose>
+                <c:when test="${showtime.purchasedTicketCount > 0}">
+                  <%-- Suất đã bán vé: hủy suất kèm lý do -> hoàn MyPoint + voucher đền bù cho khách --%>
+                  <form class="inline-form js-cancel-showtime" method="post" action="${ctx}/manage/showtimes" data-tickets="${showtime.purchasedTicketCount}">
+                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="${escapedId}">
+                    <input type="hidden" name="reason">
+                    <button class="btn btn-xs btn-danger nowrap" type="submit" title="Đã bán ${showtime.purchasedTicketCount} vé: hủy suất và hoàn MyPoint + voucher đền bù">${ic.x}Hủy suất</button>
+                  </form>
+                </c:when>
+                <c:otherwise>
+                  <form class="inline-form js-delete-showtime" method="post" action="${ctx}/manage/showtimes" data-confirm="Bạn có chắc muốn xóa suất chiếu này?">
+                    <input type="hidden" name="_csrf" value="${escapedCsrf}">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="${escapedId}">
+                    <input type="hidden" name="reason">
+                    <button class="btn btn-xs btn-danger" type="submit">${ic.trash}Xóa</button>
+                  </form>
+                </c:otherwise>
+              </c:choose>
             </td>
           </tr>
         </c:forEach>
@@ -59,4 +74,15 @@
     </table>
   </div>
 </section>
+<script>
+  // Hủy suất đã bán vé: bắt buộc nhập lý do (gửi kèm thông báo cho khách), giống ẩn bình luận.
+  document.querySelectorAll('form.js-cancel-showtime').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      var r = prompt('Suất chiếu đã bán ' + f.dataset.tickets + ' vé. Khách sẽ được hoàn MyPoint (tiền vé + combo + MyPoint đã dùng) '
+        + 'và nhận voucher đền bù.\n\nNhập lý do hủy suất chiếu (sự cố máy chiếu, mất điện, thay đổi lịch...):');
+      if (!r || !r.trim()) { e.preventDefault(); return; }
+      f.reason.value = r.trim();
+    });
+  });
+</script>
 <%@ include file="../layout/bottom.jspf" %>
