@@ -9,8 +9,9 @@
 <c:url var="editUrl" value="/manage/movies"><c:param name="id" value="${movie.movieId}"/></c:url>
 <c:set var="escapedEditUrl"><c:out value="${editUrl}"/></c:set>
 <c:set var="trailerMimeType"><c:out value="${movie.trailerMimeType}"/></c:set>
-<c:set var="posterFull" value="${movie.uploadedPoster ? ctx : ''}${posterSrc}"/>
 <%@ include file="../layout/top.jspf" %>
+<%-- Đặt sau top.jspf: biến ctx (context path) được tạo trong top.jspf; đặt trước thì ctx rỗng và poster upload bị 404. --%>
+<c:set var="posterFull" value="${movie.uploadedPoster ? ctx : ''}${posterSrc}"/>
 
 <section class="detail-hero" aria-labelledby="movie-title">
   <c:if test="${not empty movie.posterDisplayUrl}"><div class="home-hero-bg" style="background-image:url('${posterFull}')"></div></c:if>
@@ -58,6 +59,8 @@
           </c:when>
           <c:when test="${not empty movie.trailerEmbedUrl}">
             <div class="video-frame"><iframe src="${trailerEmbedSrc}" title="Trailer ${escapedMovieTitle}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+            <%-- Dự phòng khi trình duyệt/YouTube chặn phát trong khung nhúng. --%>
+            <c:if test="${not empty movie.trailerLinkUrl}"><a class="btn btn-sm mt-12" href="${trailerLinkSrc}" target="_blank" rel="noopener noreferrer">${ic.play}Xem trên YouTube</a></c:if>
           </c:when>
           <c:when test="${not empty movie.trailerLinkUrl}">
             <a class="btn" href="${trailerLinkSrc}" target="_blank" rel="noopener noreferrer">${ic.external}Mở trailer trong tab mới</a>

@@ -15,9 +15,14 @@ public class EmailOutboxDAO {
     /** Thư đang chờ gửi (kèm email người nhận). */
     public List<Map<String, Object>> pending(int limit) throws SQLException {
         return Rows.query("SELECT TOP (?) e.notif_id, e.notif_type, e.subject, e.body, e.booking_id, e.showtime_id, "
-                + "a.email, a.full_name FROM EmailNotification e JOIN Account a ON a.account_id = e.customer_id "
+                + "a.email, a.full_name, "
+                + "CASE WHEN e.created_at < DATEADD(MINUTE, -" + RETRY_MINUTES + ", SYSDATETIME()) THEN 1 ELSE 0 END AS retry_expired "
+                + "FROM EmailNotification e JOIN Account a ON a.account_id = e.customer_id "
                 + "WHERE e.status = 'Pending' ORDER BY e.notif_id", limit);
     }
+
+    /** Thư gửi lỗi (mất mạng, nhà cung cấp email tạm lỗi) vẫn chờ và được gửi lại mỗi phút trong khoảng thời gian này. */
+    public static final int RETRY_MINUTES = 60;
 
     public void markSent(int id) throws SQLException {
         update("UPDATE EmailNotification SET status = 'Sent', sent_at = SYSDATETIME() WHERE notif_id = ?", id);
