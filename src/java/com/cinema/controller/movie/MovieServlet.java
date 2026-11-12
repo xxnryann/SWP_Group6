@@ -99,9 +99,11 @@ public class MovieServlet extends BaseServlet {
             if (user != null && "CUSTOMER".equals(user.getRole())) {
                 int customerId = accountDAO.findAccountIdByEmail(user.getEmail());
                 if (customerId > 0) {
-                    boolean reviewed = reviewDAO.hasReviewed(customerId, movieId);
-                    request.setAttribute("hasReviewed", reviewed);
-                    request.setAttribute("canReview", !reviewed && reviewDAO.hasWatched(customerId, movieId));
+                    // Mọi khách đều thấy form; khi gửi, server từ chối nếu chưa có lịch sử xem phim.
+                    java.util.Map<String, Object> mine = reviewDAO.findMine(customerId, movieId);
+                    request.setAttribute("myReview", mine);
+                    request.setAttribute("hasReviewed", mine != null);
+                    request.setAttribute("hasWatched", reviewDAO.hasWatched(customerId, movieId));
                 }
             }
         } catch (SQLException e) {

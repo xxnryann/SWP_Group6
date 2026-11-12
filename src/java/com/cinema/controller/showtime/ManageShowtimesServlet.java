@@ -201,6 +201,12 @@ public class ManageShowtimesServlet extends BaseServlet {
                 if (slots.isEmpty()) {
                     throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng và một giờ chiếu cho phòng đó.");
                 }
+                if (!"Sub".equals(request.getParameter("languageMode")) && !"Dub".equals(request.getParameter("languageMode"))) {
+                    throw new IllegalArgumentException("Vui lòng chọn hình thức phụ đề hoặc lồng tiếng.");
+                }
+                if (request.getParameter("language") == null || request.getParameter("language").isBlank()) {
+                    throw new IllegalArgumentException("Vui lòng chọn ngôn ngữ cho suất chiếu.");
+                }
                 String id = request.getParameter("id");
                 if (id != null && !id.isBlank()) {
                     if (slots.size() != 1) {
@@ -277,6 +283,16 @@ public class ManageShowtimesServlet extends BaseServlet {
         }
         showtime.setStartsAt(start);
         showtime.setStatus("Scheduled");
+        String mode = request.getParameter("languageMode");
+        if (!"Sub".equals(mode) && !"Dub".equals(mode)) {
+            throw new IllegalArgumentException("Vui lòng chọn hình thức phụ đề hoặc lồng tiếng.");
+        }
+        String language = request.getParameter("language");
+        if (language == null || language.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn ngôn ngữ cho suất chiếu.");
+        }
+        showtime.setLanguageMode(mode);
+        showtime.setLanguage(language.trim());
         return showtime;
     }
 

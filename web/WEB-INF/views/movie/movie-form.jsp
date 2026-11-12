@@ -11,8 +11,6 @@
 <c:set var="escapedDirector"><c:out value="${movie.director}"/></c:set>
 <c:set var="escapedMainCast"><c:out value="${movie.mainCast}"/></c:set>
 <c:set var="escapedDuration"><c:out value="${movie.durationMinutes}"/></c:set>
-<c:set var="escapedLanguage"><c:out value="${movie.spokenLanguage}"/></c:set>
-<c:set var="escapedCountry"><c:out value="${movie.country}"/></c:set>
 <c:set var="escapedReleaseDate"><c:out value="${movie.releaseDate}"/></c:set>
 <c:set var="escapedEndDate"><c:out value="${movie.endDate}"/></c:set>
 <c:set var="escapedPosterUrl"><c:out value="${posterExternalUrl}"/></c:set>
@@ -89,13 +87,29 @@
           <option value="T18" ${movie.ageRating == 'T18' ? 'selected' : ''}>T18 - Từ 18 tuổi</option>
         </select>
       </div>
-      <div class="field">
-        <label for="spokenLanguage">Ngôn ngữ<span class="req">*</span></label>
-        <input id="spokenLanguage" name="spokenLanguage" type="text" maxlength="50" required pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedLanguage}" placeholder="Tiếng Việt">
-      </div>
-      <div class="field">
+      <div class="field" style="align-self:start">
         <label for="country">Quốc gia<span class="req">*</span></label>
-        <input id="country" name="country" type="text" maxlength="50" required pattern="[\p{L}\p{N}][\p{L}\p{N} ,.&'()/+\-]*" value="${escapedCountry}" placeholder="Việt Nam">
+        <select id="country" name="country" required>
+          <option value="">Chọn quốc gia</option>
+          <c:forEach var="countryName" items="${countries}">
+            <option value="<c:out value='${countryName}'/>" ${movie.country == countryName ? 'selected' : ''}><c:out value="${countryName}"/></option>
+          </c:forEach>
+        </select>
+        <c:if test="${not empty movie.country and not countries.contains(movie.country)}">
+          <span class="hint text-danger">Quốc gia cũ "<c:out value="${movie.country}"/>" không có trong danh sách, hãy chọn lại.</span>
+        </c:if>
+      </div>
+      <div class="field" style="align-self:start">
+        <label for="spokenLanguage">Ngôn ngữ<span class="req">*</span></label>
+        <select id="spokenLanguage" name="spokenLanguage" multiple size="8" required class="multi-select" data-placeholder="Chọn ngôn ngữ">
+          <c:forEach var="lang" items="${languages}">
+            <option value="<c:out value='${lang}'/>" ${selectedLanguages.contains(lang) ? 'selected' : ''}><c:out value="${lang.startsWith('Tiếng ') ? lang.substring(6) : lang}"/></option>
+          </c:forEach>
+        </select>
+        <span class="hint">Chọn được nhiều ngôn ngữ: bấm vào từng ngôn ngữ để chọn / bỏ chọn. Khi thêm suất chiếu chỉ chọn được các ngôn ngữ này.</span>
+        <c:if test="${not empty legacyLanguages}">
+          <span class="hint text-danger">Giá trị cũ không có trong danh sách: <c:forEach var="l" items="${legacyLanguages}" varStatus="st"><c:out value="${l}"/><c:if test="${not st.last}">, </c:if></c:forEach>. Hãy chọn lại.</span>
+        </c:if>
       </div>
       <div class="section-title">Lịch chiếu</div>
     </c:if>
@@ -142,5 +156,5 @@
     <button class="btn btn-primary" type="submit">${ic.check}Lưu phim</button>
   </div>
 </form>
-<script src="${ctx}/assets/js/movie-form.js" defer></script>
+<script src="${ctx}/assets/js/movie-form.js?v=20261112-2" defer></script>
 <%@ include file="../layout/bottom.jspf" %>

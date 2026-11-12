@@ -363,6 +363,14 @@ public class ManageMovieServlet extends BaseServlet {
         request.setAttribute("posterExternalUrl", movie != null && movie.getPosterDisplayUrl() != null
                 && movie.getPosterUrl() != null && !movie.getPosterUrl().startsWith("/media/") ? movie.getPosterUrl() : "");
         request.setAttribute("genres", genres);
+        request.setAttribute("countries", com.cinema.util.movie.MovieLocales.countries());
+        request.setAttribute("languages", com.cinema.util.movie.MovieLocales.languages());
+        java.util.List<String> chosen = com.cinema.util.movie.MovieLocales.splitLanguages(formMovie.getSpokenLanguage());
+        request.setAttribute("selectedLanguages", chosen);
+        // Giá trị cũ (nhập tự do trước đây) không nằm trong danh mục -> báo để quản lý chọn lại.
+        java.util.List<String> legacy = new java.util.ArrayList<>();
+        for (String l : chosen) if (!com.cinema.util.movie.MovieLocales.isLanguage(l)) legacy.add(l);
+        request.setAttribute("legacyLanguages", legacy);
         request.setAttribute("pageTitle", movie == null ? "Thêm phim" : "Sửa phim");
         forward(request, response, "movie/movie-form");
     }
@@ -376,7 +384,7 @@ public class ManageMovieServlet extends BaseServlet {
         movie.setDirector(trimToNull(request.getParameter("director")));
         movie.setMainCast(trimToNull(request.getParameter("mainCast")));
         movie.setDurationMinutes(positiveInt(request.getParameter("durationMinutes"), 0));
-        movie.setSpokenLanguage(trimToNull(request.getParameter("spokenLanguage")));
+        movie.setSpokenLanguage(com.cinema.util.movie.MovieLocales.joinLanguages(request.getParameterValues("spokenLanguage")));
         movie.setCountry(trimToNull(request.getParameter("country")));
         movie.setAgeRating(request.getParameter("ageRating"));
         movie.setReleaseDate(MovieValidator.parseDate(request.getParameter("releaseDate")));

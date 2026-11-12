@@ -30,7 +30,7 @@
             <td class="cell-main"><c:out value="${showtime.movieTitle}"/></td>
             <td class="nowrap"><c:out value="${showtime.scheduleDateDisplay}"/></td>
             <td class="nowrap"><strong class="text-ink"><c:out value="${showtime.startTimeOnly}"/> – <c:out value="${showtime.endTimeOnly}"/></strong><span class="cell-sub">Dọn phòng xong: <c:out value="${showtime.slotEndTimeOnly}"/></span></td>
-            <td><span class="badge">${ic.door}<c:out value="${showtime.roomName}"/></span></td>
+            <td><span class="badge">${ic.door}<c:out value="${showtime.roomName}"/></span><c:if test="${not empty showtime.languageShort}"><span class="cell-sub"><c:out value="${showtime.languageShort}"/></span></c:if></td>
             <td>
               <c:choose>
                 <c:when test="${showtime.managementStatus == 'Scheduled'}"><span class="badge badge-success badge-dot">Đang mở</span></c:when>

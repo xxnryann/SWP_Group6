@@ -235,7 +235,7 @@ CREATE TABLE dbo.Movie (
     director NVARCHAR(100) NULL,
     main_cast NVARCHAR(500) NULL,
     duration_minutes INT NOT NULL,
-    spoken_language NVARCHAR(50) NULL,
+    spoken_language NVARCHAR(300) NULL,   -- nhieu ngon ngu, chon tu danh muc: "Tiếng Anh, Tiếng Việt"
     country NVARCHAR(50) NULL,
     age_rating VARCHAR(5) NOT NULL,
     trailer_url VARCHAR(500) NULL,
@@ -317,7 +317,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_SaveMovie
     @director NVARCHAR(100) = NULL,
     @main_cast NVARCHAR(500) = NULL,
     @duration_minutes INT,
-    @spoken_language NVARCHAR(50) = NULL,
+    @spoken_language NVARCHAR(300) = NULL,
     @country NVARCHAR(50) = NULL,
     @age_rating VARCHAR(5),
     @trailer_url VARCHAR(500) = NULL,
@@ -678,6 +678,10 @@ CREATE TABLE dbo.Showtime (
     room_name NVARCHAR(50) NULL,
     starts_at DATETIME2(7) NULL,
     ticket_price DECIMAL(10,2) NULL,
+    -- Ngon ngu cua suat: Sub = phu de, Dub = long tieng; language phai la 1 ngon ngu cua phim (Movie.spoken_language)
+    language_mode VARCHAR(10) NULL,
+    language NVARCHAR(50) NULL,
+    CONSTRAINT CK_Showtime_LanguageMode CHECK (language_mode IS NULL OR language_mode IN ('Sub','Dub')),
     CONSTRAINT FK_Showtime_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_Showtime_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
     CONSTRAINT FK_Showtime_Slot FOREIGN KEY (slot_id) REFERENCES dbo.TimeSlot(slot_id),
@@ -1803,6 +1807,7 @@ CREATE TABLE dbo.Review (
     moderated_by INT NULL,
     moderation_reason NVARCHAR(500) NULL,
     created_at DATETIME2(7) NOT NULL CONSTRAINT DF_Review_Created DEFAULT SYSDATETIME(),
+    updated_at DATETIME2(7) NULL,   -- lan sua gan nhat (khach duoc sua danh gia; diem MyPoint chi cong lan dau)
     CONSTRAINT FK_Review_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_Review_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
     CONSTRAINT FK_Review_ModeratedBy FOREIGN KEY (moderated_by) REFERENCES dbo.Account(account_id),
@@ -1861,7 +1866,7 @@ BEGIN
                    JOIN dbo.Movie m ON m.movie_id = s.movie_id
                    WHERE b.customer_id = @customer_id AND s.movie_id = @movie_id AND t.status = 'Used'
                      AND s.end_time < SYSDATETIME() AND m.is_deleted = 0)
-        THROW 50090, N'Chỉ được đánh giá phim bạn đã xem xong.', 1;
+        THROW 50090, N'Bạn chưa có lịch sử xem phim này nên chưa thể đánh giá. Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới được đánh giá.', 1;
 
     -- UQ_Review_Movie_Customer dam bao moi phim chi thuong diem mot lan.
     BEGIN TRAN;
@@ -1869,6 +1874,18 @@ BEGIN
     INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points) VALUES (@customer_id, NULL, 'Earn', @bonus);
     UPDATE dbo.Customer SET my_point_balance = my_point_balance + @bonus WHERE customer_id = @customer_id;
     COMMIT;
+END
+GO
+
+-- Sua danh gia da co: KHONG cong them MyPoint (diem chi thuong o lan danh gia dau tien - sp_AddReview).
+-- Binh luan dang bi quan ly an van giu trang thai an sau khi sua.
+CREATE OR ALTER PROCEDURE dbo.sp_UpdateReview @customer_id INT, @movie_id INT, @rating TINYINT, @comment NVARCHAR(1000) = NULL AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE dbo.Review SET rating = @rating, comment = @comment, updated_at = SYSDATETIME()
+    WHERE customer_id = @customer_id AND movie_id = @movie_id;
+    IF @@ROWCOUNT = 0
+        THROW 50091, N'Không tìm thấy đánh giá của bạn cho phim này.', 1;
 END
 GO
 
@@ -1892,6 +1909,7 @@ CREATE TABLE dbo.EmailNotification (
     status VARCHAR(10) NOT NULL CONSTRAINT DF_EmailNotification_Status DEFAULT 'Pending',
     created_at DATETIME2(7) NOT NULL CONSTRAINT DF_EmailNotification_Created DEFAULT SYSDATETIME(),
     sent_at DATETIME2(7) NULL,
+    read_at DATETIME2(7) NULL,   -- khach da xem trong Hop thu (NULL = chua doc -> dem tren chuong thong bao)
     CONSTRAINT FK_EmailNotification_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
@@ -2122,6 +2140,10 @@ GO
    10/11/2026  Hủy suất chiếu (sp_CancelMovie): hoàn bằng MyPoint = (tiền vé + combo - voucher) / giá trị 1 điểm,
                kèm 1 lượt voucher đền bù (DENBU25: Voucher.is_compensation, VoucherGrant); khách không tự hủy vé/combo trên web
    10/11/2026  Thư viện layout ghế: bảng SeatLayout + Room.layout_id (NULL = layout chuẩn theo loại phòng)
+   12/11/2026  Phim: quốc gia/ngôn ngữ chọn từ danh mục, nhiều ngôn ngữ (spoken_language NVARCHAR(300));
+               Showtime.language_mode (Sub/Dub) + language (thuộc ngôn ngữ của phim)
+   12/11/2026  EmailNotification.read_at: chuông thông báo đếm thông báo chưa đọc của khách
+   12/11/2026  Review.updated_at + sp_UpdateReview: khách sửa đánh giá (MyPoint chỉ cộng lần đầu)
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
    

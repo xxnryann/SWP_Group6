@@ -15,6 +15,10 @@ public class Showtime {
     private LocalDateTime startsAt;
     private String status = "Scheduled";
     private int purchasedTicketCount;
+    /** Hình thức ngôn ngữ của suất: "Sub" (phụ đề) hoặc "Dub" (lồng tiếng); null = suất cũ chưa khai báo. */
+    private String languageMode;
+    /** Ngôn ngữ phụ đề / lồng tiếng — phải là một trong các ngôn ngữ của phim. */
+    private String language;
 
     public int getShowtimeId() {
         return showtimeId;
@@ -147,5 +151,38 @@ public class Showtime {
 
     public String getInputTime() {
         return startsAt == null ? "" : startsAt.format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    public String getLanguageMode() {
+        return languageMode;
+    }
+
+    public void setLanguageMode(String languageMode) {
+        this.languageMode = languageMode;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    /** Nhãn ngắn kiểu rạp: "Phụ đề Việt", "Lồng tiếng Việt"; rỗng nếu suất chưa khai báo ngôn ngữ. */
+    public static String shortLanguageLabel(String mode, String language) {
+        if (language == null || language.isBlank() || mode == null) return "";
+        String name = language.startsWith("Tiếng ") ? language.substring(6) : language;
+        return ("Dub".equals(mode) ? "Lồng tiếng " : "Phụ đề ") + name;
+    }
+
+    public String getLanguageShort() {
+        return shortLanguageLabel(languageMode, language);
+    }
+
+    /** Nhãn hiển thị, ví dụ "Phụ đề Tiếng Việt" hoặc "Lồng tiếng Tiếng Việt"; rỗng nếu chưa khai báo. */
+    public String getLanguageLabel() {
+        if (language == null || language.isBlank() || languageMode == null) return "";
+        return ("Dub".equals(languageMode) ? "Lồng tiếng " : "Phụ đề ") + language;
     }
 }

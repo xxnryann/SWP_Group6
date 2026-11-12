@@ -74,7 +74,7 @@ public class CounterSaleDAO {
         // OUTER APPLY ... ORDER BY theo từng ghế, gom cho hàng trăm suất khiến SQL Server xin bộ nhớ rất lớn
         // (chờ RESOURCE_SEMAPHORE nhiều phút) và trang bán vé tại quầy bị treo.
         String sql =
-                "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time, " +
+                "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time, s.language_mode, s.language, " +
                         "       (SELECT COUNT(*) FROM Seat se " +
                         "        WHERE se.room_id = s.room_id AND se.status <> 'Maintenance' " +
                         "          AND NOT EXISTS (SELECT 1 FROM Ticket t JOIN Booking b ON b.booking_id = t.booking_id " +
@@ -98,6 +98,8 @@ public class CounterSaleDAO {
                 s.setDurationMinutes(rs.getInt("duration_minutes"));
                 s.setRoomName(rs.getString("room_name"));
                 s.setSlotName(rs.getString("slot_name"));
+                s.setLanguageMode(rs.getString("language_mode"));
+                s.setLanguage(rs.getString("language"));
                 Timestamp t = rs.getTimestamp("start_time");
                 s.setStartTime(t == null ? null : t.toLocalDateTime());
                 s.setAvailableSeats(rs.getInt("available_seats"));

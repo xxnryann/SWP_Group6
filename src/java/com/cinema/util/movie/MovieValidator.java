@@ -27,10 +27,12 @@ public final class MovieValidator {
         if (!validOptionalText(movie.getDirector(), 100)) return "Tên đạo diễn chứa ký tự không hợp lệ.";
         if (lengthExceeded(movie.getMainCast(), 500)) return "Danh sách diễn viên tối đa 500 ký tự.";
         if (!validOptionalText(movie.getMainCast(), 500)) return "Danh sách diễn viên chứa ký tự không hợp lệ.";
-        if (lengthExceeded(movie.getSpokenLanguage(), 50)) return "Ngôn ngữ tối đa 50 ký tự.";
-        if (!validRequiredText(movie.getSpokenLanguage(), 50)) return "Ngôn ngữ phải được nhập và chỉ chứa chữ, số hoặc dấu câu cơ bản.";
-        if (lengthExceeded(movie.getCountry(), 50)) return "Quốc gia tối đa 50 ký tự.";
-        if (!validRequiredText(movie.getCountry(), 50)) return "Quốc gia phải được nhập và chỉ chứa chữ, số hoặc dấu câu cơ bản.";
+        if (movie.getSpokenLanguage() == null || movie.getSpokenLanguage().isBlank()) return "Vui lòng chọn ít nhất một ngôn ngữ.";
+        if (lengthExceeded(movie.getSpokenLanguage(), 300)) return "Chọn quá nhiều ngôn ngữ.";
+        String badLanguage = MovieLocales.invalidLanguage(movie.getSpokenLanguage());
+        if (badLanguage != null) return "Ngôn ngữ \"" + badLanguage + "\" không có trong danh sách.";
+        if (movie.getCountry() == null || movie.getCountry().isBlank()) return "Vui lòng chọn quốc gia.";
+        if (!MovieLocales.isCountry(movie.getCountry())) return "Quốc gia không hợp lệ, hãy chọn trong danh sách.";
         if (movie.getDurationMinutes() <= 0 || movie.getDurationMinutes() > 150) {
             return "Thời lượng phim phải từ 1 đến 150 phút (tối đa 2 giờ 30 phút).";
         }
