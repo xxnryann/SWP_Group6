@@ -79,7 +79,7 @@
                 <c:when test="${n.notif_type == 'ETicket'}"><p>Bạn đã đặt vé thành công phim <strong><c:out value="${n.title}"/></strong>.</p></c:when>
                 <c:when test="${n.notif_type == 'MovieCancelled'}"><p>Phim <strong><c:out value="${n.title}"/></strong> bạn đã đặt bị hủy. <c:out value="${n.body}"/> Xem tại <a href="${ctx}/account/points">Điểm MyPoint</a>.</p></c:when>
                 <c:when test="${n.notif_type == 'ReviewReminder'}">
-                  <p>Bạn vừa xem xong phim <strong><c:out value="${n.title}"/></strong>.</p>
+                  <p>Phim <strong><c:out value="${n.title}"/></strong>: <c:out value="${n.body}"/></p>
                   <c:choose>
                     <c:when test="${n.can_review == 1}"><a class="btn btn-sm btn-accent mt-8" href="${ctx}/movies/detail?id=${n.movie_id}#reviews">${ic.star}Đánh giá ngay</a></c:when>
                     <c:otherwise><div class="inbox-meta">Bạn đã đánh giá phim này hoặc phim không còn nhận đánh giá.</div></c:otherwise>

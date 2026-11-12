@@ -1,6 +1,7 @@
 package com.cinema.service;
 
 import com.cinema.dao.EmailOutboxDAO;
+import com.cinema.util.AppConfig;
 import com.cinema.util.EmailService;
 import java.sql.SQLException;
 import java.util.List;
@@ -66,10 +67,37 @@ public class EmailDispatcher {
                         .append(" tại ").append(st.get("room_name"));
             }
             sb.append(".\nVui lòng đến trước giờ chiếu để soát vé.");
+        } else if ("ReviewReminder".equals(type)) {
+            sb.append(mail.get("body"));
+            Map<String, Object> st = showtimeId == null ? null : dao.showtimeInfo(showtimeId.intValue());
+            if (st != null) {
+                sb.append("\n\nPhim bạn vừa xem: ").append(st.get("title"))
+                        .append(" (suất ").append(formatTime(st.get("start_time"))).append(", ").append(st.get("room_name")).append(")");
+            }
+            Number movieId = (Number) mail.get("movie_id");
+            String base = AppConfig.get("app.public.url");
+            if (movieId != null && !base.isEmpty()) {
+                if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+                sb.append("\nChấm điểm và viết cảm nhận tại: ").append(base).append("/movies/detail?id=")
+                        .append(movieId.intValue()).append("#reviews");
+            } else {
+                sb.append("\nĐăng nhập CineStar Cinemas, mở trang phim và chọn \"Đánh giá\" để chia sẻ cảm nhận của bạn.");
+            }
         } else {
             sb.append(mail.get("body") == null ? mail.get("subject") : mail.get("body"));
         }
         sb.append("\n\nTrân trọng,\nCineStar Cinemas");
         return sb.toString();
+    }
+
+    private static String formatTime(Object value) {
+        java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+        if (value instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) value).toLocalDateTime().format(f);
+        }
+        if (value instanceof java.time.LocalDateTime) {
+            return ((java.time.LocalDateTime) value).format(f);
+        }
+        return String.valueOf(value);
     }
 }
