@@ -49,11 +49,12 @@
             <c:when test="${n.notif_type == 'ShowtimeReminder' and n.has_started == 1}"><c:set var="tone" value=""/><c:set var="icon" value="${ic.clock}"/><c:set var="itemTitle" value="Nhắc lịch xem phim"/></c:when>
             <c:otherwise><c:set var="tone" value="accent"/><c:set var="icon" value="${ic.clock}"/><c:set var="itemTitle" value="Sắp đến giờ chiếu"/></c:otherwise>
           </c:choose>
-          <article class="inbox-item">
+          <article class="inbox-item${n.is_unread == 1 ? ' is-unread' : ''}">
             <span class="stat-icon ${tone}">${icon}</span>
             <div>
               <div class="cluster between" style="--gap:8px">
                 <h3>
+                  <c:if test="${n.is_unread == 1}"><span class="badge badge-danger">Mới</span> </c:if>
                   <c:if test="${n.notif_type == 'NewMovie'}"><span class="badge badge-brand">Phim mới</span> </c:if>
                   <c:if test="${n.notif_type == 'Voucher'}"><span class="badge badge-accent">Ưu đãi</span> </c:if>
                   <c:out value="${itemTitle}"/>

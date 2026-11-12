@@ -65,12 +65,12 @@
                       <c:when test="${canBook}">
                         <c:url var="bookingUrl" value="/booking/seats"><c:param name="showtimeId" value="${showtime.showtimeId}"/></c:url>
                         <a class="time-chip st-time" href="${bookingUrl}" data-start="<c:out value='${showtime.startTimeOnly}'/>">
-                          <strong><c:out value="${showtime.startTimeOnly}"/></strong><span><c:out value="${showtime.roomName}"/></span>
+                          <strong><c:out value="${showtime.startTimeOnly}"/></strong><span><c:out value="${showtime.roomName}"/></span><c:if test="${not empty showtime.languageShort}"><span class="st-lang"><c:out value="${showtime.languageShort}"/></span></c:if>
                         </a>
                       </c:when>
                       <c:otherwise>
                         <span class="time-chip st-time" data-start="<c:out value='${showtime.startTimeOnly}'/>">
-                          <strong><c:out value="${showtime.startTimeOnly}"/></strong><span><c:out value="${showtime.roomName}"/></span>
+                          <strong><c:out value="${showtime.startTimeOnly}"/></strong><span><c:out value="${showtime.roomName}"/></span><c:if test="${not empty showtime.languageShort}"><span class="st-lang"><c:out value="${showtime.languageShort}"/></span></c:if>
                         </span>
                       </c:otherwise>
                     </c:choose>

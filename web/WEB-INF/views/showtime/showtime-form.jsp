@@ -19,13 +19,29 @@
       <select id="movieId" name="movieId" required>
         <option value="">Chọn phim</option>
         <c:forEach var="movie" items="${movies}">
-          <option value="<c:out value='${movie.movieId}'/>" data-duration="<c:out value='${movie.durationMinutes}'/>" ${showtime.movieId == movie.movieId ? 'selected' : ''}><c:out value="${movie.title}"/> (<c:out value="${movie.durationMinutes}"/> phút)</option>
+          <option value="<c:out value='${movie.movieId}'/>" data-duration="<c:out value='${movie.durationMinutes}'/>" data-languages="<c:out value='${movie.showtimeLanguages}'/>" data-original="<c:out value='${movie.originalLanguage}'/>" ${showtime.movieId == movie.movieId ? 'selected' : ''}><c:out value="${movie.title}"/> (<c:out value="${movie.durationMinutes}"/> phút)</option>
         </c:forEach>
       </select>
     </div>
     <div class="field">
       <label for="showDate">Ngày chiếu<span class="req">*</span></label>
       <input id="showDate" name="showDate" type="date" min="${todayDate}" value="${escapedShowDate}" required>
+    </div>
+    <c:set var="escapedLanguage"><c:out value="${showtime.language}"/></c:set>
+    <div class="field">
+      <label for="languageMode">Hình thức<span class="req">*</span></label>
+      <select id="languageMode" name="languageMode" required data-current="<c:out value='${showtime.languageMode}'/>">
+        <option value="Orig" ${showtime.languageMode == 'Orig' ? 'selected' : ''}>Nguyên bản (âm thanh gốc)</option>
+        <option value="Dub" ${showtime.languageMode == 'Dub' or empty showtime.languageMode ? 'selected' : ''}>Lồng tiếng</option>
+        <option value="Sub" ${showtime.languageMode == 'Sub' ? 'selected' : ''}>Phụ đề</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="language">Ngôn ngữ<span class="req">*</span></label>
+      <select id="language" name="language" required data-current="${escapedLanguage}">
+        <option value="">Chọn phim trước</option>
+      </select>
+      <span class="hint" id="language-hint">Mặc định tiếng Việt; có thể chọn các ngôn ngữ đã khai báo ở phim.</span>
     </div>
     <div class="field full">
       <span class="label">Phòng chiếu<span class="req">*</span></span>
@@ -67,4 +83,5 @@
 <link rel="stylesheet" href="${ctx}/assets/css/showtime-form.css?v=20261110-5">
 <script src="${ctx}/assets/js/room-schedule.js?v=20261110-1" defer></script>
 <script src="${ctx}/assets/js/showtime-form.js?v=20261110-11" defer></script>
+<script src="${ctx}/assets/js/showtime-language.js?v=20261112-6" defer></script>
 <%@ include file="../layout/bottom.jspf" %>

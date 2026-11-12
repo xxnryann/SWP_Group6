@@ -80,24 +80,36 @@ GO
 SET IDENTITY_INSERT dbo.Movie ON;
 INSERT dbo.Movie (movie_id, title, original_title, synopsis, director, main_cast, duration_minutes,
                   spoken_language, country, age_rating, trailer_url, poster_url, release_date, end_date, status) VALUES
-(1, N'TRẠI BUÔN NGƯỜI', N'The Human Market', N'Một nhóm người xa lạ bị cuốn vào cuộc sinh tồn kinh hoàng trong khu chợ bí ẩn.', N'Đạo diễn A', N'Diễn viên 1, Diễn viên 2', 135, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=nlFar2vq4Yo', '/media/posters/ca6c44ce-a0c6-45f9-a855-8e8461b86415.jpg', '2026-09-25', '2026-10-12', N'Stopped'),
-(2, N'VERITY: BÍ MẬT BỊ CHÔN VÙI', N'Verity', N'Những trang bản thảo hé lộ bí mật đen tối phía sau một gia đình tưởng như hoàn hảo.', N'Đạo diễn B', N'Diễn viên 3, Diễn viên 4', 117, N'Tiếng Anh, phụ đề Tiếng Việt', N'Mỹ', N'T18', 'https://www.youtube.com/watch?v=V-JKf_FgRjU', '/media/posters/b230b406-8e4d-415a-9e73-a053c3e3c15a.webp', '2026-09-16', '2026-10-10', N'Stopped'),
-(3, N'MÙA XUÂN ĐẾN MUỘN', N'Late Spring', N'Câu chuyện gia đình về những cuộc gặp gỡ và lựa chọn làm thay đổi một mùa xuân.', N'Đạo diễn C', N'Diễn viên 5, Diễn viên 6', 120, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, '/media/posters/bbf5824d-978f-4f91-9d07-00ddeed0dbfe.jpg', '2026-09-05', '2026-10-01', N'Stopped'),
-(4, N'QUỶ ĂN TẠNG 4: HỒI TỈNH', N'The Possessed 4', N'Một nghi lễ cổ xưa đánh thức thế lực đang ngủ yên trong ngôi làng hẻo lánh.', N'Đạo diễn D', N'Diễn viên 7, Diễn viên 8', 111, N'Tiếng Thái, phụ đề Tiếng Việt', N'Thái Lan', N'T18', 'https://www.youtube.com/watch?v=BP2_TUBOS6U', '/media/posters/b21ca0cc-a98e-4041-87b4-530649d8b1d9.jpg', '2026-10-16', NULL, N'NowShowing'),
-(5, N'SHAUN THE SHEEP: “QUÁI LẠ” GHÉ NHÀ', N'Shaun the Sheep: The Strange Visitor', N'Shaun và cả đàn cừu gặp một vị khách bất ngờ trong chuyến phiêu lưu hài hướng.', N'Đạo diễn E', N'Lồng tiếng Việt', 81, N'Lồng tiếng Việt', N'Anh', N'P', 'https://www.youtube.com/watch?v=UZ46Smi6mOw', '/media/posters/3a72af13-0439-48a9-bd11-d57b8b82974e.jpg', '2026-10-16', NULL, N'NowShowing'),
-(6, N'CÕI NGUYÊN', N'The Origin', N'Những dấu vết kỳ lạ dẫn một nhóm bạn đến bí mật bị chôn vùi dưới khu rừng già.', N'Đạo diễn F', N'Diễn viên 9, Diễn viên 10', 89, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=zsMuQUkduug', '/media/posters/ebf03e6b-51d6-42fd-b6ff-aacd4f75e6d9.png', '2026-10-23', NULL, N'NowShowing'),
-(7, N'BAMBI: LÃNH ĐỊA SĂN MỒI', N'Bambi: The Reckoning', N'Cuộc đối đầu sinh tồn bắt đầu khi khu rừng yên bình trở thành lãnh địa săn mồi.', N'Đạo diễn G', N'Diễn viên 11, Diễn viên 12', 80, N'Tiếng Anh, phụ đề Tiếng Việt', N'Anh', N'T16', 'https://www.youtube.com/watch?v=U6vHNWqdO0s', '/media/posters/94455dd6-caee-41de-b18c-20c4d0fa8ed5.jpg', '2026-10-23', NULL, N'NowShowing'),
-(8, N'ÁN MẠNG KARAOKE', N'Karaoke Murders', N'Một buổi tối karaoke biến thành vụ án bí ẩn mà không ai trong nhóm có thể rời đi.', N'Đạo diễn H', N'Diễn viên 13, Diễn viên 14', 96, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=UOjRGIatX38', '/media/posters/68257345-cc14-4c19-a8c6-d053ed8a80d6.jpg', '2026-10-30', NULL, N'Upcoming'),
-(9, N'CẢM XÚC LẠ KỲ', N'Strange Feelings', N'Chuyến phiêu lưu hoạt hình khám phá thế giới cảm xúc và tình bạn.', N'Đạo diễn I', N'Lồng tiếng Việt', 96, N'Lồng tiếng Việt', N'Mỹ', N'P', 'https://www.youtube.com/watch?v=yRUAzGQ3nSY', '/media/posters/16116417-13e8-46d3-a29a-61e529048adc.jpg', '2026-11-07', NULL, N'Upcoming'),
-(10, N'OÁN LINH ĐÒI MẠNG', N'Laudanum', N'Một căn phòng khóa kín lưu giữ câu chuyện khiến những người bước vào phải trả giá.', N'Đạo diễn J', N'Diễn viên 15, Diễn viên 16', 98, N'Tiếng Việt', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=vM9t7-_Kenk', '/media/posters/3c6c718a-7c67-44b1-ba1e-af428ea43bb8.jpg', '2026-11-13', NULL, N'Upcoming'),
-(11, N'TRÁI TIM MÙA ĐÔNG', N'Winter Hearts', N'Hai con người xa lạ học cách bắt đầu lại sau những biến cố của cuộc sống.', N'Đạo diễn K', N'Diễn viên 17, Diễn viên 18', 108, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, '/media/posters/4c574fa7-af54-4fc1-881b-c013224acdc8.webp', '2026-11-21', NULL, N'Upcoming'),
-(12, N'CẢM XÚC LẠ KỲ: PHẦN 2', N'Strange Feelings 2', N'Phần tiếp theo mở ra chuyến phiêu lưu mới trong thế giới cảm xúc, với những thay đổi khi nhân vật bước sang giai đoạn trưởng thành.', N'Đạo diễn L', N'Lồng tiếng Việt', 102, N'Lồng tiếng Việt', N'Mỹ', N'P', 'https://www.youtube.com/watch?v=LEjhY15eCx0', '/media/posters/b698c1c6-ee1f-428f-9cdf-11687f437460.webp', '2026-11-14', NULL, N'Upcoming'),
-(13, N'THÀNH PHỐ SAU MƯA', N'City After Rain', N'Một nhiếp ảnh trẻ lần theo những bức ảnh cũ để tìm lại người bạn đã mất liên lạc.', N'Đạo diễn M', N'Diễn viên 19, Diễn viên 20', 100, N'Tiếng Việt', N'Việt Nam', N'T13', NULL, '/media/posters/6e22e5c3-a4ad-4d5b-bc88-7adee586ed0c.jpg', '2026-10-24', NULL, N'NowShowing'),
-(14, N'HÀNH TRÌNH SAO BĂNG', N'Meteor Journey', N'Một nhóm bạn cùng thực hiện chuyến đi xuyên Việt để quan sát trận mưa sao băng hiếm gặp.', N'Đạo diễn N', N'Diễn viên 21, Diễn viên 22', 110, N'Tiếng Việt', N'Việt Nam', N'P', NULL, '/media/posters/895021ad-16aa-46d6-90de-5595c5b3ab67.jpg', '2026-10-24', NULL, N'NowShowing');
+(1, N'TRẠI BUÔN NGƯỜI', N'The Human Market', N'Một nhóm người xa lạ bị cuốn vào cuộc sinh tồn kinh hoàng trong khu chợ bí ẩn.', N'Đạo diễn A', N'Diễn viên 1, Diễn viên 2', 135, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=nlFar2vq4Yo', '/media/posters/ca6c44ce-a0c6-45f9-a855-8e8461b86415.jpg', '2026-09-25', '2026-10-12', N'Stopped'),
+(2, N'VERITY: BÍ MẬT BỊ CHÔN VÙI', N'Verity', N'Những trang bản thảo hé lộ bí mật đen tối phía sau một gia đình tưởng như hoàn hảo.', N'Đạo diễn B', N'Diễn viên 3, Diễn viên 4', 117, N'Tiếng Anh, Tiếng Việt', N'Mỹ', N'T18', 'https://www.youtube.com/watch?v=V-JKf_FgRjU', '/media/posters/b230b406-8e4d-415a-9e73-a053c3e3c15a.webp', '2026-09-16', '2026-10-10', N'Stopped'),
+(3, N'MÙA XUÂN ĐẾN MUỘN', N'Late Spring', N'Câu chuyện gia đình về những cuộc gặp gỡ và lựa chọn làm thay đổi một mùa xuân.', N'Đạo diễn C', N'Diễn viên 5, Diễn viên 6', 120, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T13', NULL, '/media/posters/bbf5824d-978f-4f91-9d07-00ddeed0dbfe.jpg', '2026-09-05', '2026-10-01', N'Stopped'),
+(4, N'QUỶ ĂN TẠNG 4: HỒI TỈNH', N'The Possessed 4', N'Một nghi lễ cổ xưa đánh thức thế lực đang ngủ yên trong ngôi làng hẻo lánh.', N'Đạo diễn D', N'Diễn viên 7, Diễn viên 8', 111, N'Tiếng Việt, Tiếng Thái', N'Thái Lan', N'T18', 'https://www.youtube.com/watch?v=BP2_TUBOS6U', '/media/posters/b21ca0cc-a98e-4041-87b4-530649d8b1d9.jpg', '2026-10-16', NULL, N'NowShowing'),
+(5, N'SHAUN THE SHEEP: “QUÁI LẠ” GHÉ NHÀ', N'Shaun the Sheep: The Strange Visitor', N'Shaun và cả đàn cừu gặp một vị khách bất ngờ trong chuyến phiêu lưu hài hướng.', N'Đạo diễn E', N'Lồng tiếng Việt', 81, N'Tiếng Anh, Tiếng Việt', N'Anh', N'P', 'https://www.youtube.com/watch?v=UZ46Smi6mOw', '/media/posters/3a72af13-0439-48a9-bd11-d57b8b82974e.jpg', '2026-10-16', NULL, N'NowShowing'),
+(6, N'CÕI NGUYÊN', N'The Origin', N'Những dấu vết kỳ lạ dẫn một nhóm bạn đến bí mật bị chôn vùi dưới khu rừng già.', N'Đạo diễn F', N'Diễn viên 9, Diễn viên 10', 89, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=zsMuQUkduug', '/media/posters/ebf03e6b-51d6-42fd-b6ff-aacd4f75e6d9.png', '2026-10-23', NULL, N'NowShowing'),
+(7, N'BAMBI: LÃNH ĐỊA SĂN MỒI', N'Bambi: The Reckoning', N'Cuộc đối đầu sinh tồn bắt đầu khi khu rừng yên bình trở thành lãnh địa săn mồi.', N'Đạo diễn G', N'Diễn viên 11, Diễn viên 12', 80, N'Tiếng Anh, Tiếng Việt', N'Anh', N'T16', 'https://www.youtube.com/watch?v=U6vHNWqdO0s', '/media/posters/94455dd6-caee-41de-b18c-20c4d0fa8ed5.jpg', '2026-10-23', NULL, N'NowShowing'),
+(8, N'ÁN MẠNG KARAOKE', N'Karaoke Murders', N'Một buổi tối karaoke biến thành vụ án bí ẩn mà không ai trong nhóm có thể rời đi.', N'Đạo diễn H', N'Diễn viên 13, Diễn viên 14', 96, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=UOjRGIatX38', '/media/posters/68257345-cc14-4c19-a8c6-d053ed8a80d6.jpg', '2026-10-30', NULL, N'Upcoming'),
+(9, N'CẢM XÚC LẠ KỲ', N'Strange Feelings', N'Chuyến phiêu lưu hoạt hình khám phá thế giới cảm xúc và tình bạn.', N'Đạo diễn I', N'Lồng tiếng Việt', 96, N'Tiếng Anh, Tiếng Việt', N'Mỹ', N'P', 'https://www.youtube.com/watch?v=yRUAzGQ3nSY', '/media/posters/16116417-13e8-46d3-a29a-61e529048adc.jpg', '2026-11-07', NULL, N'Upcoming'),
+(10, N'OÁN LINH ĐÒI MẠNG', N'Laudanum', N'Một căn phòng khóa kín lưu giữ câu chuyện khiến những người bước vào phải trả giá.', N'Đạo diễn J', N'Diễn viên 15, Diễn viên 16', 98, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T18', 'https://www.youtube.com/watch?v=vM9t7-_Kenk', '/media/posters/3c6c718a-7c67-44b1-ba1e-af428ea43bb8.jpg', '2026-11-13', NULL, N'Upcoming'),
+(11, N'TRÁI TIM MÙA ĐÔNG', N'Winter Hearts', N'Hai con người xa lạ học cách bắt đầu lại sau những biến cố của cuộc sống.', N'Đạo diễn K', N'Diễn viên 17, Diễn viên 18', 108, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T13', NULL, '/media/posters/4c574fa7-af54-4fc1-881b-c013224acdc8.webp', '2026-11-21', NULL, N'Upcoming'),
+(12, N'CẢM XÚC LẠ KỲ: PHẦN 2', N'Strange Feelings 2', N'Phần tiếp theo mở ra chuyến phiêu lưu mới trong thế giới cảm xúc, với những thay đổi khi nhân vật bước sang giai đoạn trưởng thành.', N'Đạo diễn L', N'Lồng tiếng Việt', 102, N'Tiếng Anh, Tiếng Việt', N'Mỹ', N'P', 'https://www.youtube.com/watch?v=LEjhY15eCx0', '/media/posters/b698c1c6-ee1f-428f-9cdf-11687f437460.webp', '2026-11-14', NULL, N'Upcoming'),
+(13, N'THÀNH PHỐ SAU MƯA', N'City After Rain', N'Một nhiếp ảnh trẻ lần theo những bức ảnh cũ để tìm lại người bạn đã mất liên lạc.', N'Đạo diễn M', N'Diễn viên 19, Diễn viên 20', 100, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'T13', NULL, '/media/posters/6e22e5c3-a4ad-4d5b-bc88-7adee586ed0c.jpg', '2026-10-24', NULL, N'NowShowing'),
+(14, N'HÀNH TRÌNH SAO BĂNG', N'Meteor Journey', N'Một nhóm bạn cùng thực hiện chuyến đi xuyên Việt để quan sát trận mưa sao băng hiếm gặp.', N'Đạo diễn N', N'Diễn viên 21, Diễn viên 22', 110, N'Tiếng Việt, Tiếng Anh', N'Việt Nam', N'P', NULL, '/media/posters/895021ad-16aa-46d6-90de-5595c5b3ab67.jpg', '2026-10-24', NULL, N'NowShowing');
 SET IDENTITY_INSERT dbo.Movie OFF;
 GO
 
 UPDATE dbo.Movie SET end_date = DATEADD(MONTH, 1, release_date) WHERE end_date IS NULL;
+GO
+
+-- Dien vien long tieng cho moi ngon ngu khac ngon ngu goc (ngon ngu cua quoc gia san xuat) cua phim mau.
+INSERT dbo.MovieVoiceCast (movie_id, language, voice_cast)
+SELECT m.movie_id, l.lang,
+       N'Diễn viên lồng tiếng ' + CAST(m.movie_id * 2 - 1 AS NVARCHAR(10)) + N', Diễn viên lồng tiếng ' + CAST(m.movie_id * 2 AS NVARCHAR(10))
+FROM dbo.Movie m
+CROSS APPLY (SELECT LTRIM(RTRIM(value)) AS lang FROM STRING_SPLIT(m.spoken_language, ',')) l
+WHERE l.lang <> ''
+  AND l.lang <> CASE m.country WHEN N'Việt Nam' THEN N'Tiếng Việt' WHEN N'Mỹ' THEN N'Tiếng Anh'
+                               WHEN N'Anh' THEN N'Tiếng Anh' WHEN N'Thái Lan' THEN N'Tiếng Thái' ELSE N'' END
+  AND NOT EXISTS (SELECT 1 FROM dbo.MovieVoiceCast v WHERE v.movie_id = m.movie_id AND v.language = l.lang);
 GO
 
 INSERT dbo.MovieGenre(movie_id, genre_id)
@@ -490,6 +502,17 @@ UPDATE s SET s.ticket_price = COALESCE(dbo.fn_GetTicketPrice(s.showtime_id, (SEL
     FROM dbo.Showtime s WHERE s.ticket_price IS NULL OR s.ticket_price = 0;
 
 SELECT @kept AS kept_with_data, @added AS added;
+GO
+
+-- Ngon ngu cua suat chieu: phim hoat hinh long tieng Viet; phim Viet nguyen ban (tieng Viet goc);
+-- phim nuoc ngoai phu de Viet. Phu de / long tieng luon khac ngon ngu goc cua phim.
+-- Ngon ngu luon nam trong Movie.spoken_language cua phim.
+UPDATE s SET
+    s.language_mode = CASE WHEN m.movie_id IN (5, 9, 12) THEN 'Dub'
+                           WHEN m.country = N'Việt Nam' THEN 'Orig' ELSE 'Sub' END,
+    s.language = N'Tiếng Việt'
+FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id
+WHERE s.language IS NULL;
 GO
 
 PRINT N'[OK] Da nap du lieu mau vao CinemaWebDB.';

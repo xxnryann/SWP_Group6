@@ -8,22 +8,21 @@
     <h1 class="mt-8">Xin chào, <c:out value="${me.fullName}"/></h1>
     <p>Phim, lịch chiếu, giá vé, voucher và tin tức của rạp trong một màn hình.</p>
   </div>
-  <div class="cluster">
-    <a class="btn" href="${ctx}/manage/showtimes">${ic.calendar}Lịch chiếu</a>
-    <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">${ic.plus}Thêm phim</a>
-  </div>
 </div>
 
 <c:if test="${not empty statsError}"><div class="alert alert-error mb-24" role="alert">${ic.alert}<span><c:out value="${statsError}"/></span></div></c:if>
 
 <c:if test="${not empty stats}">
+  <c:set var="revenueFilterAction" value="${ctx}/dashboard/manager"/>
+  <%@ include file="_revenue_filter.jspf" %>
   <section class="stats">
-    <div class="stat featured">
+    <a class="stat featured" href="${ctx}/dashboard/revenue?${rf.query}" title="Xem chi tiết các đơn tạo nên doanh thu">
       <div class="stat-icon">${ic.wallet}</div>
-      <div class="stat-label">Doanh thu</div>
-      <div class="stat-value money"><fmt:formatNumber value="${stats.revenue}" groupingUsed="true"/> đ</div>
-      <div class="stat-meta"><c:out value="${stats.bookings_paid}"/> đơn đã thanh toán</div>
-    </div>
+      <div class="stat-label">Doanh thu · <c:out value="${rf.typeLabel}"/></div>
+      <div class="stat-value money"><fmt:formatNumber value="${revenue.revenue}" groupingUsed="true"/> đ</div>
+      <div class="stat-meta"><c:out value="${revenue.bookings}"/> đơn đã thanh toán · <c:out value="${rf.periodLabel}"/></div>
+      <span class="stat-link-hint">Xem chi tiết ${ic.arrowRight}</span>
+    </a>
     <div class="stat">
       <div class="stat-icon accent">${ic.film}</div>
       <div class="stat-label">Phim đang chiếu</div>

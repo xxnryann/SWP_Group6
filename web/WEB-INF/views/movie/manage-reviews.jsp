@@ -3,7 +3,7 @@
 <c:set var="escapedCsrf"><c:out value="${csrf}"/></c:set>
 <%@ include file="../layout/top.jspf" %>
 <div class="page-head">
-  <div><h1>Kiểm duyệt đánh giá</h1><p>Chỉ ẩn bình luận vi phạm (có thể hiện lại); điểm sao của khách hàng luôn được giữ nguyên.</p></div>
+  <div><h1>Kiểm duyệt đánh giá</h1><p>Chỉ ẩn bình luận vi phạm (có thể hiện lại); điểm sao của khách hàng luôn được giữ nguyên. Khi ẩn, khách bị thu hồi 5 MyPoint thưởng đánh giá và nhận thông báo kèm lý do; hiện lại thì trả lại số điểm đã thu hồi.</p></div>
 </div>
 
 <div class="split mb-24" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,2fr)">

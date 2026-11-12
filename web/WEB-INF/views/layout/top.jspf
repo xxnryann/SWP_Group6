@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
-  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=3">
+  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=7">
   <c:if test="${not empty pageCss}"><link rel="stylesheet" href="${ctx}/assets/css/${pageCss}?v=3"></c:if>
 </head>
 <body class="${appShell ? 'is-app' : 'is-site'} ${bodyClass}" data-user="<c:out value='${me.fullName}'/>">
@@ -80,7 +80,7 @@
         <c:when test="${isCustomerRole}">
           <div class="side-label">Tài khoản</div>
           <a href="${ctx}/account/tickets">${ic.ticket}<span>Vé của tôi</span></a>
-          <a href="${ctx}/account/inbox">${ic.inbox}<span>Hộp thư</span></a>
+          <a href="${ctx}/account/inbox" title="Hộp thư${unreadNotifications > 0 ? ' – có thông báo mới' : ''}"><span class="side-bell">${ic.bell}<c:if test="${unreadNotifications > 0}"><span class="notif-count">${unreadNotifications > 99 ? '99+' : unreadNotifications}</span></c:if></span><span>Hộp thư</span></a>
           <a href="${ctx}/account/points">${ic.coins}<span>Điểm MyPoint</span></a>
           <a href="${ctx}/account/vouchers">${ic.tag}<span>Voucher</span></a>
           <div class="side-label">Đặt vé &amp; khám phá</div>

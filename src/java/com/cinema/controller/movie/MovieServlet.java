@@ -85,6 +85,11 @@ public class MovieServlet extends BaseServlet {
             return;
         }
         loadReviews(request, movie.getMovieId());
+        try {
+            request.setAttribute("voiceCasts", new com.cinema.dao.MovieVoiceCastDAO().findByMovie(movie.getMovieId()));
+        } catch (SQLException e) {
+            getServletContext().log("Cannot load voice cast for movie " + movie.getMovieId(), e);
+        }
         request.setAttribute("movie", movie);
         request.setAttribute("pageTitle", movie.getTitle());
         forward(request, response, "movie/movie-detail");
@@ -99,9 +104,11 @@ public class MovieServlet extends BaseServlet {
             if (user != null && "CUSTOMER".equals(user.getRole())) {
                 int customerId = accountDAO.findAccountIdByEmail(user.getEmail());
                 if (customerId > 0) {
-                    boolean reviewed = reviewDAO.hasReviewed(customerId, movieId);
-                    request.setAttribute("hasReviewed", reviewed);
-                    request.setAttribute("canReview", !reviewed && reviewDAO.hasWatched(customerId, movieId));
+                    // Mọi khách đều thấy form; khi gửi, server từ chối nếu chưa có lịch sử xem phim.
+                    java.util.Map<String, Object> mine = reviewDAO.findMine(customerId, movieId);
+                    request.setAttribute("myReview", mine);
+                    request.setAttribute("hasReviewed", mine != null);
+                    request.setAttribute("hasWatched", reviewDAO.hasWatched(customerId, movieId));
                 }
             }
         } catch (SQLException e) {

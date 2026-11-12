@@ -63,8 +63,9 @@ public class ManageReviewServlet extends BaseServlet {
             String action = request.getParameter("action");
             int reviewId = safeId(request.getParameter("id"));
             if ("unhide-comment".equals(action)) {
-                reviewDAO.unhideComment(reviewId);
-                flash(request, "success", "Đã hiện lại bình luận.");
+                int restored = reviewDAO.unhideComment(reviewId);
+                flash(request, "success", "Đã hiện lại bình luận" + (restored > 0
+                        ? " và trả lại " + restored + " điểm MyPoint thưởng đánh giá cho khách." : "."));
             } else if ("hide-comment".equals(action)) {
                 String reason = trimToNull(request.getParameter("reason"));
                 if (reason == null || reason.length() > 500) {
@@ -72,9 +73,11 @@ public class ManageReviewServlet extends BaseServlet {
                 }
                 Map<String, Object> review = reviewDAO.findForModeration(reviewId);
                 if (review == null) throw new IllegalStateException("Bình luận không tồn tại.");
-                reviewDAO.hideComment(reviewId, currentUser(request).getUserId(), reason);
-                insertNotification((Integer) review.get("customer_id"), (Integer) review.get("movie_id"), reason);
-                flash(request, "success", "Đã ẩn bình luận và gửi thông báo cho khách hàng.");
+                int revoked = reviewDAO.hideComment(reviewId, currentUser(request).getUserId(), reason);
+                insertNotification((Integer) review.get("customer_id"), (Integer) review.get("movie_id"),
+                        (String) review.get("title"), reason, revoked);
+                flash(request, "success", "Đã ẩn bình luận" + (revoked > 0 ? ", thu hồi " + revoked + " điểm MyPoint thưởng" : "")
+                        + " và gửi thông báo lý do cho khách hàng.");
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
@@ -88,13 +91,15 @@ public class ManageReviewServlet extends BaseServlet {
         response.sendRedirect(request.getContextPath() + "/manage/reviews");
     }
 
-    private void insertNotification(int customerId, int movieId, String reason) throws SQLException {
+    private void insertNotification(int customerId, int movieId, String title, String reason, int revoked)
+            throws SQLException {
         try (var connection = com.cinema.util.DBContext.getConnection();
                 var statement = connection.prepareStatement(
                         "INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, movie_id, status) "
                                 + "VALUES (?, 'ReviewModerated', N'Bình luận đã được kiểm duyệt', ?, ?, 'InApp')")) {
             statement.setInt(1, customerId);
-            statement.setString(2, "Bình luận của bạn đã bị ẩn vì lý do: " + reason);
+            statement.setString(2, "Bình luận của bạn về phim \"" + title + "\" đã bị ẩn vì lý do: " + reason + "."
+                    + (revoked > 0 ? " " + revoked + " điểm MyPoint thưởng đánh giá đã bị thu hồi." : ""));
             statement.setInt(3, movieId);
             statement.executeUpdate();
         }

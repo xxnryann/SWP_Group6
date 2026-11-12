@@ -235,7 +235,7 @@ CREATE TABLE dbo.Movie (
     director NVARCHAR(100) NULL,
     main_cast NVARCHAR(500) NULL,
     duration_minutes INT NOT NULL,
-    spoken_language NVARCHAR(50) NULL,
+    spoken_language NVARCHAR(300) NULL,   -- nhieu ngon ngu, chon tu danh muc: "Tiếng Anh, Tiếng Việt"
     country NVARCHAR(50) NULL,
     age_rating VARCHAR(5) NOT NULL,
     trailer_url VARCHAR(500) NULL,
@@ -317,7 +317,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_SaveMovie
     @director NVARCHAR(100) = NULL,
     @main_cast NVARCHAR(500) = NULL,
     @duration_minutes INT,
-    @spoken_language NVARCHAR(50) = NULL,
+    @spoken_language NVARCHAR(300) = NULL,
     @country NVARCHAR(50) = NULL,
     @age_rating VARCHAR(5),
     @trailer_url VARCHAR(500) = NULL,
@@ -466,6 +466,7 @@ BEGIN
         UPDATE dbo.Movie SET is_deleted = 1, status = 'Stopped', updated_at = SYSDATETIME() WHERE movie_id = @movie_id;
     ELSE
     BEGIN
+        DELETE FROM dbo.MovieVoiceCast WHERE movie_id = @movie_id;
         DELETE FROM dbo.Movie WHERE movie_id = @movie_id;
         SET @hard_deleted = 1;
     END
@@ -753,6 +754,11 @@ CREATE TABLE dbo.Showtime (
     room_name NVARCHAR(50) NULL,
     starts_at DATETIME2(7) NULL,
     ticket_price DECIMAL(10,2) NULL,
+    -- Ngon ngu cua suat: Orig = nguyen ban (am thanh goc, language = ngon ngu goc cua phim),
+    -- Sub = phu de, Dub = long tieng (language khac ngon ngu goc: tieng Viet hoac 1 ngon ngu cua phim)
+    language_mode VARCHAR(10) NULL,
+    language NVARCHAR(50) NULL,
+    CONSTRAINT CK_Showtime_LanguageMode CHECK (language_mode IS NULL OR language_mode IN ('Orig','Sub','Dub')),
     CONSTRAINT FK_Showtime_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_Showtime_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
     CONSTRAINT FK_Showtime_Slot FOREIGN KEY (slot_id) REFERENCES dbo.TimeSlot(slot_id),
@@ -1748,22 +1754,12 @@ GO
    vd. DENBU25 - Manager chinh muc giam / so ngay hieu luc o trang Voucher; tat voucher thi khong cap).
    Khach vang lai tai quay (customer_id NULL): nhan lai tien mat tai quay.
    -------------------------------------------------------------------------- */
-CREATE OR ALTER PROCEDURE dbo.sp_CancelMovie @movie_id INT, @manager_id INT, @confirm BIT = 0 AS
+-- Hoan tien cho cac suat chieu trong bang tam #st(showtime_id) do thu tuc goi tao san (chay trong transaction cua noi goi):
+-- doi gia tri don (ve + combo + MyPoint da dung) thanh MyPoint, cap 1 luot voucher den bu, thu hoi diem da tich,
+-- tra luot voucher, huy ve/don/combo, chuyen suat sang 'Cancelled' va gui thong bao (kem ly do neu co).
+CREATE OR ALTER PROCEDURE dbo.sp_RefundCancelledShowtimes @manager_id INT, @reason NVARCHAR(500) = NULL AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
-    IF NOT EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id)
-        THROW 51022, N'Không tìm thấy phim cần hủy.', 1;
-
-    -- Ket qua 1: cac suat se bi huy + so ve da ban (dung de canh bao truoc khi xac nhan).
-    SELECT s.showtime_id, s.start_time, r.room_name, COUNT(t.ticket_id) AS booked_tickets
-    FROM dbo.Showtime s JOIN dbo.Room r ON r.room_id = s.room_id
-    LEFT JOIN dbo.Ticket t ON t.showtime_id = s.showtime_id AND t.status = 'Booked'
-    WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME()
-    GROUP BY s.showtime_id, s.start_time, r.room_name
-    ORDER BY s.start_time;
-    IF @confirm = 0 RETURN;
-
-    BEGIN TRAN;
 
     DECLARE @pt_value INT = (SELECT TOP 1 point_value_vnd FROM dbo.MyPointConfig
                              WHERE is_active = 1 ORDER BY effective_from DESC, config_id DESC);
@@ -1785,7 +1781,7 @@ BEGIN
     FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id
     CROSS APPLY (SELECT CAST(b.total_amount - ISNULL((SELECT SUM(p.refunded_amount) FROM dbo.Payment p
                                                       WHERE p.booking_id = b.booking_id), 0) AS DECIMAL(12,0)) AS remaining) r
-    WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME() AND b.status = 'Paid';
+    WHERE s.showtime_id IN (SELECT showtime_id FROM #st) AND b.status = 'Paid';
 
     -- Cap 1 luot voucher den bu cho moi don bi huy cua khach co tai khoan.
     IF @comp_id IS NOT NULL
@@ -1793,14 +1789,18 @@ BEGIN
         SELECT @comp_id, customer_id, booking_id, @comp_exp FROM #bk WHERE customer_id IS NOT NULL;
 
     INSERT INTO dbo.EmailNotification(customer_id, notif_type, subject, body, showtime_id, movie_id, booking_id)
-    SELECT customer_id, 'MovieCancelled', N'Thông báo hủy suất chiếu',
-           N'Suất chiếu của đơn ' + booking_code + N' đã bị hủy do sự cố. Giá trị đơn (tiền vé, combo và MyPoint đã dùng) '
-           + N'đã được quy đổi thành ' + CAST(refund_points AS NVARCHAR(12)) + N' điểm MyPoint. '
+    SELECT k.customer_id, 'MovieCancelled', N'Thông báo hủy suất chiếu',
+           N'Suất chiếu ' + m.title + N' lúc ' + FORMAT(s.start_time, 'HH:mm dd/MM/yyyy') + N' (đơn ' + k.booking_code + N') đã bị hủy'
+           + CASE WHEN NULLIF(LTRIM(RTRIM(@reason)), N'') IS NULL THEN N' do sự cố. '
+                  ELSE N'. Lý do: ' + LTRIM(RTRIM(@reason)) + N'. ' END
+           + N'Giá trị đơn (tiền vé, combo và MyPoint đã dùng) '
+           + N'đã được quy đổi thành ' + CAST(k.refund_points AS NVARCHAR(12)) + N' điểm MyPoint. '
            + CASE WHEN @comp_id IS NULL THEN N''
                   ELSE N'Bạn nhận 1 lượt voucher đền bù ' + @comp_code + N' (' + @comp_text + N'), dùng đến '
                        + CONVERT(NVARCHAR(10), @comp_exp, 103) + N'.' END,
-           showtime_id, @movie_id, booking_id
-    FROM #bk WHERE customer_id IS NOT NULL;
+           k.showtime_id, s.movie_id, k.booking_id
+    FROM #bk k JOIN dbo.Showtime s ON s.showtime_id = k.showtime_id JOIN dbo.Movie m ON m.movie_id = s.movie_id
+    WHERE k.customer_id IS NOT NULL;
 
     -- Hoan tien chi ghi o MOT cho: dong thanh toan goc ghi nhan da hoan het (khong them dong Payment moi).
     UPDATE p SET p.refunded_amount = p.amount, p.status = 'Refunded'
@@ -1835,22 +1835,70 @@ BEGIN
 
     UPDATE t SET t.status = 'Cancelled'
     FROM dbo.Ticket t JOIN dbo.Showtime s ON s.showtime_id = t.showtime_id
-    WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME() AND t.status IN ('Held','Booked');
+    WHERE s.showtime_id IN (SELECT showtime_id FROM #st) AND t.status IN ('Held','Booked');
 
     UPDATE b SET b.status = 'Cancelled'
     FROM dbo.Booking b JOIN dbo.Showtime s ON s.showtime_id = b.showtime_id
-    WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME()
+    WHERE s.showtime_id IN (SELECT showtime_id FROM #st)
       AND b.status IN ('Paid','PendingPayment','Selecting');
 
-    UPDATE dbo.Showtime SET status = 'Cancelled'
+    UPDATE dbo.Showtime SET status = 'Cancelled' WHERE showtime_id IN (SELECT showtime_id FROM #st);
+
+    DROP TABLE #bk;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_CancelMovie @movie_id INT, @manager_id INT, @confirm BIT = 0 AS
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Movie WHERE movie_id = @movie_id)
+        THROW 51022, N'Không tìm thấy phim cần hủy.', 1;
+
+    -- Ket qua 1: cac suat se bi huy + so ve da ban (dung de canh bao truoc khi xac nhan).
+    SELECT s.showtime_id, s.start_time, r.room_name, COUNT(t.ticket_id) AS booked_tickets
+    FROM dbo.Showtime s JOIN dbo.Room r ON r.room_id = s.room_id
+    LEFT JOIN dbo.Ticket t ON t.showtime_id = s.showtime_id AND t.status = 'Booked'
+    WHERE s.movie_id = @movie_id AND s.status = 'Scheduled' AND s.start_time > SYSDATETIME()
+    GROUP BY s.showtime_id, s.start_time, r.room_name
+    ORDER BY s.start_time;
+    IF @confirm = 0 RETURN;
+
+    BEGIN TRAN;
+    CREATE TABLE #st (showtime_id INT PRIMARY KEY);
+    INSERT INTO #st(showtime_id)
+    SELECT showtime_id FROM dbo.Showtime
     WHERE movie_id = @movie_id AND status = 'Scheduled' AND start_time > SYSDATETIME();
+    EXEC dbo.sp_RefundCancelledShowtimes @manager_id, NULL;
 
     UPDATE dbo.Movie SET status = 'Stopped', updated_at = SYSDATETIME(),
         end_date = CASE WHEN release_date > CAST(SYSDATETIME() AS DATE) THEN release_date ELSE CAST(SYSDATETIME() AS DATE) END
     WHERE movie_id = @movie_id;
 
     INSERT INTO dbo.SystemLog(account_id, action, detail) VALUES (@manager_id, N'CANCEL_MOVIE', CONCAT(N'movie_id=', @movie_id));
-    DROP TABLE #bk;
+    DROP TABLE #st;
+    COMMIT;
+END
+GO
+
+-- Huy MOT suat chieu da co don (manager "xoa" suat co ve): hoan MyPoint + voucher den bu nhu huy phim, kem ly do.
+CREATE OR ALTER PROCEDURE dbo.sp_CancelShowtime @showtime_id INT, @manager_id INT, @reason NVARCHAR(500) AS
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    IF NULLIF(LTRIM(RTRIM(@reason)), N'') IS NULL
+        THROW 51030, N'Vui lòng nhập lý do hủy suất chiếu.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Showtime WHERE showtime_id = @showtime_id)
+        THROW 51031, N'Không tìm thấy suất chiếu cần hủy.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Showtime WHERE showtime_id = @showtime_id
+                   AND status = 'Scheduled' AND start_time > SYSDATETIME())
+        THROW 51032, N'Chỉ hủy được suất chiếu chưa bắt đầu.', 1;
+
+    BEGIN TRAN;
+    CREATE TABLE #st (showtime_id INT PRIMARY KEY);
+    INSERT INTO #st(showtime_id) VALUES (@showtime_id);
+    EXEC dbo.sp_RefundCancelledShowtimes @manager_id, @reason;
+    INSERT INTO dbo.SystemLog(account_id, action, detail)
+    VALUES (@manager_id, N'CANCEL_SHOWTIME', CONCAT(N'showtime_id=', @showtime_id, N'; reason=', LEFT(@reason, 400)));
+    DROP TABLE #st;
     COMMIT;
 END
 GO
@@ -1863,6 +1911,18 @@ GO
 -- ---------- Bảng ----------
 GO
 
+-- Dien vien long tieng theo tung ngon ngu cua phim: bat buoc khi tao/sua phim cho moi ngon ngu
+-- khac ngon ngu goc (ngon ngu cua quoc gia san xuat); hien o Thong tin phim.
+CREATE TABLE dbo.MovieVoiceCast (
+    movie_id INT NOT NULL,
+    language NVARCHAR(50) NOT NULL,
+    voice_cast NVARCHAR(500) NOT NULL,
+    updated_at DATETIME2(7) NOT NULL CONSTRAINT DF_MovieVoiceCast_Updated DEFAULT SYSDATETIME(),
+    CONSTRAINT PK_MovieVoiceCast PRIMARY KEY (movie_id, language),
+    CONSTRAINT FK_MovieVoiceCast_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id)
+);
+GO
+
 CREATE TABLE dbo.Review (
     review_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Review PRIMARY KEY,
     movie_id INT NOT NULL,
@@ -1872,7 +1932,9 @@ CREATE TABLE dbo.Review (
     moderated_at DATETIME2(7) NULL,
     moderated_by INT NULL,
     moderation_reason NVARCHAR(500) NULL,
+    bonus_revoked INT NOT NULL CONSTRAINT DF_Review_BonusRevoked DEFAULT 0,   -- diem thuong da thu hoi khi an binh luan
     created_at DATETIME2(7) NOT NULL CONSTRAINT DF_Review_Created DEFAULT SYSDATETIME(),
+    updated_at DATETIME2(7) NULL,   -- lan sua gan nhat (khach duoc sua danh gia; diem MyPoint chi cong lan dau)
     CONSTRAINT FK_Review_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
     CONSTRAINT FK_Review_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
     CONSTRAINT FK_Review_ModeratedBy FOREIGN KEY (moderated_by) REFERENCES dbo.Account(account_id),
@@ -1931,7 +1993,7 @@ BEGIN
                    JOIN dbo.Movie m ON m.movie_id = s.movie_id
                    WHERE b.customer_id = @customer_id AND s.movie_id = @movie_id AND t.status = 'Used'
                      AND s.end_time < SYSDATETIME() AND m.is_deleted = 0)
-        THROW 50090, N'Chỉ được đánh giá phim bạn đã xem xong.', 1;
+        THROW 50090, N'Bạn chưa có lịch sử xem phim này nên chưa thể đánh giá. Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới được đánh giá.', 1;
 
     -- UQ_Review_Movie_Customer dam bao moi phim chi thuong diem mot lan.
     BEGIN TRAN;
@@ -1939,6 +2001,65 @@ BEGIN
     INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points) VALUES (@customer_id, NULL, 'Earn', @bonus);
     UPDATE dbo.Customer SET my_point_balance = my_point_balance + @bonus WHERE customer_id = @customer_id;
     COMMIT;
+END
+GO
+
+-- An binh luan vi pham: thu hoi diem thuong danh gia (toi da 5, khong de am so du) va ghi lai so diem da thu hoi.
+CREATE OR ALTER PROCEDURE dbo.sp_HideReviewComment @review_id INT, @manager_id INT, @reason NVARCHAR(500) AS
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    DECLARE @bonus INT = 5;   -- khop sp_AddReview
+    DECLARE @cid INT = (SELECT customer_id FROM dbo.Review
+                        WHERE review_id = @review_id AND comment IS NOT NULL AND moderated_at IS NULL);
+    IF @cid IS NULL
+        THROW 50092, N'Bình luận không tồn tại hoặc đã được ẩn.', 1;
+    BEGIN TRAN;
+    DECLARE @balance INT = (SELECT my_point_balance FROM dbo.Customer WITH (UPDLOCK) WHERE customer_id = @cid);
+    DECLARE @revoke INT = CASE WHEN ISNULL(@balance, 0) < @bonus THEN ISNULL(@balance, 0) ELSE @bonus END;
+    UPDATE dbo.Review SET moderated_at = SYSDATETIME(), moderated_by = @manager_id, moderation_reason = @reason,
+           bonus_revoked = @revoke
+    WHERE review_id = @review_id;
+    IF @revoke > 0
+    BEGIN
+        UPDATE dbo.Customer SET my_point_balance = my_point_balance - @revoke WHERE customer_id = @cid;
+        INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points) VALUES (@cid, NULL, 'Adjust', -@revoke);
+    END
+    COMMIT;
+    SELECT @revoke AS revoked;
+END
+GO
+
+-- Hien lai binh luan: tra lai so diem thuong da thu hoi khi an.
+CREATE OR ALTER PROCEDURE dbo.sp_UnhideReviewComment @review_id INT AS
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+    DECLARE @cid INT, @restore INT;
+    SELECT @cid = customer_id, @restore = bonus_revoked FROM dbo.Review
+    WHERE review_id = @review_id AND comment IS NOT NULL AND moderated_at IS NOT NULL;
+    IF @cid IS NULL
+        THROW 50093, N'Bình luận không tồn tại hoặc đang hiển thị.', 1;
+    BEGIN TRAN;
+    UPDATE dbo.Review SET moderated_at = NULL, moderated_by = NULL, moderation_reason = NULL, bonus_revoked = 0
+    WHERE review_id = @review_id;
+    IF @restore > 0
+    BEGIN
+        UPDATE dbo.Customer SET my_point_balance = my_point_balance + @restore WHERE customer_id = @cid;
+        INSERT INTO dbo.MyPointTransaction(customer_id, booking_id, txn_type, points) VALUES (@cid, NULL, 'Adjust', @restore);
+    END
+    COMMIT;
+    SELECT @restore AS restored;
+END
+GO
+
+-- Sua danh gia da co: KHONG cong them MyPoint (diem chi thuong o lan danh gia dau tien - sp_AddReview).
+-- Binh luan dang bi quan ly an van giu trang thai an sau khi sua.
+CREATE OR ALTER PROCEDURE dbo.sp_UpdateReview @customer_id INT, @movie_id INT, @rating TINYINT, @comment NVARCHAR(1000) = NULL AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE dbo.Review SET rating = @rating, comment = @comment, updated_at = SYSDATETIME()
+    WHERE customer_id = @customer_id AND movie_id = @movie_id;
+    IF @@ROWCOUNT = 0
+        THROW 50091, N'Không tìm thấy đánh giá của bạn cho phim này.', 1;
 END
 GO
 
@@ -1962,6 +2083,7 @@ CREATE TABLE dbo.EmailNotification (
     status VARCHAR(10) NOT NULL CONSTRAINT DF_EmailNotification_Status DEFAULT 'Pending',
     created_at DATETIME2(7) NOT NULL CONSTRAINT DF_EmailNotification_Created DEFAULT SYSDATETIME(),
     sent_at DATETIME2(7) NULL,
+    read_at DATETIME2(7) NULL,   -- khach da xem trong Hop thu (NULL = chua doc -> dem tren chuong thong bao)
     CONSTRAINT FK_EmailNotification_Customer FOREIGN KEY (customer_id) REFERENCES dbo.Customer(customer_id),
     CONSTRAINT FK_EmailNotification_Showtime FOREIGN KEY (showtime_id) REFERENCES dbo.Showtime(showtime_id),
     CONSTRAINT FK_EmailNotification_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id),
@@ -2192,6 +2314,14 @@ GO
    10/11/2026  Hủy suất chiếu (sp_CancelMovie): hoàn bằng MyPoint = (tiền vé + combo - voucher) / giá trị 1 điểm,
                kèm 1 lượt voucher đền bù (DENBU25: Voucher.is_compensation, VoucherGrant); khách không tự hủy vé/combo trên web
    10/11/2026  Thư viện layout ghế: bảng SeatLayout + Room.layout_id (NULL = layout chuẩn theo loại phòng)
+   12/11/2026  Phim: quốc gia/ngôn ngữ chọn từ danh mục, nhiều ngôn ngữ (spoken_language NVARCHAR(300));
+               Showtime.language_mode (Sub/Dub) + language (thuộc ngôn ngữ của phim)
+   12/11/2026  EmailNotification.read_at: chuông thông báo đếm thông báo chưa đọc của khách
+   12/11/2026  Review.updated_at + sp_UpdateReview: khách sửa đánh giá (MyPoint chỉ cộng lần đầu)
+   12/11/2026  Showtime.language_mode thêm 'Orig' (nguyên bản); phụ đề/lồng tiếng phải khác ngôn ngữ gốc
+   12/11/2026  sp_CancelShowtime + sp_RefundCancelledShowtimes: hủy 1 suất có đơn (kèm lý do) hoàn MyPoint + voucher đền bù
+   12/11/2026  Ẩn bình luận thu hồi điểm thưởng đánh giá (Review.bonus_revoked, sp_HideReviewComment/sp_UnhideReviewComment)
+   12/11/2026  MovieVoiceCast: diễn viên lồng tiếng theo ngôn ngữ (bắt buộc ở form phim cho ngôn ngữ khác ngôn ngữ gốc)
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
    11/11/2026  Giá vé: TicketPrice có phiên bản theo effective_from (lịch đổi giá), updated_by/updated_at;

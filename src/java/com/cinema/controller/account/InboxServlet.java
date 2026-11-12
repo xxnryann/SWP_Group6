@@ -41,6 +41,9 @@ public class InboxServlet extends BaseServlet {
             req.setAttribute("inboxType", type);
             req.setAttribute("inboxLimit", INBOX_LIMIT);
             req.setAttribute("notifications", customerId > 0 ? dao.customerInbox(customerId, INBOX_LIMIT, type) : java.util.List.of());
+            // Đã mở hộp thư -> các thông báo đang xem không còn tính là "mới" trên chuông.
+            if (customerId > 0) dao.markRead(customerId, type);
+            req.setAttribute("unreadNotifications", customerId > 0 ? dao.countUnreadByEmail(currentUser(req).getEmail()) : 0);
         } catch (SQLException e) {
             throw new ServletException(e);
         }

@@ -15,7 +15,7 @@ public class ReviewDAO {
     public List<Map<String, Object>> findByMovie(int movieId) throws SQLException {
         // Bình luận bị quản lý ẩn không hiển thị công khai (điểm sao vẫn giữ).
         return Rows.query("SELECT r.review_id, r.rating, CASE WHEN r.moderated_at IS NULL THEN r.comment END AS comment, "
-                + "r.created_at, a.full_name AS reviewer_name "
+                + "r.created_at, r.updated_at, a.full_name AS reviewer_name "
                 + "FROM Review r JOIN Account a ON a.account_id = r.customer_id "
                 + "WHERE r.movie_id = ? ORDER BY r.created_at DESC", movieId);
     }
@@ -37,6 +37,33 @@ public class ReviewDAO {
     public boolean hasReviewed(int customerId, int movieId) throws SQLException {
         return !Rows.query("SELECT TOP 1 1 AS x FROM Review WHERE customer_id = ? AND movie_id = ?",
                 customerId, movieId).isEmpty();
+    }
+
+    /** Đánh giá của chính khách cho phim (để điền sẵn form sửa); null nếu chưa đánh giá. */
+    public Map<String, Object> findMine(int customerId, int movieId) throws SQLException {
+        List<Map<String, Object>> rows = Rows.query("SELECT rating, comment, created_at, updated_at, "
+                + "CASE WHEN moderated_at IS NULL THEN 0 ELSE 1 END AS is_hidden "
+                + "FROM Review WHERE customer_id = ? AND movie_id = ?", customerId, movieId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    /** Sửa đánh giá đã có — không cộng thêm MyPoint ({@code sp_UpdateReview}). */
+    public void update(int customerId, int movieId, int rating, String comment) throws SQLException {
+        call("{call dbo.sp_UpdateReview(?, ?, ?, ?)}", customerId, movieId, rating, comment);
+    }
+
+    private void call(String sql, int customerId, int movieId, int rating, String comment) throws SQLException {
+        try (Connection c = DBContext.getConnection(); CallableStatement cs = c.prepareCall(sql)) {
+            cs.setInt(1, customerId);
+            cs.setInt(2, movieId);
+            cs.setInt(3, rating);
+            if (comment == null || comment.isEmpty()) {
+                cs.setNull(4, Types.NVARCHAR);
+            } else {
+                cs.setString(4, comment);
+            }
+            cs.execute();
+        }
     }
 
     public void add(int customerId, int movieId, int rating, String comment) throws SQLException {

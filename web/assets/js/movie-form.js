@@ -109,4 +109,177 @@ document.addEventListener("DOMContentLoaded", () => {
       genres[0].setCustomValidity("");
     }
   });
+
+  // Ô ngôn ngữ: dropdown giống ô Quốc gia nhưng chọn được nhiều (giữ <select multiple> ẩn để gửi form).
+  const languageSelect = form.querySelector('select[name="spokenLanguage"]');
+  if (languageSelect) enhanceMultiSelect(languageSelect);
+  if (languageSelect) setupVoiceCasts(form, languageSelect);
 });
+
+/**
+ * Biến <select multiple> thành dropdown giống ô select thường: ô đóng hiện các mục đã chọn,
+ * bấm mở danh sách và bấm từng dòng để chọn / bỏ chọn (không cần giữ Ctrl).
+ * Select gốc vẫn nằm trong form (ẩn) nên server nhận dữ liệu như cũ.
+ */
+function enhanceMultiSelect(select) {
+  const placeholder = select.dataset.placeholder || "Chọn";
+  const wrap = document.createElement("div");
+  wrap.className = "ms";
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "ms-toggle";
+  toggle.setAttribute("aria-haspopup", "listbox");
+  toggle.setAttribute("aria-expanded", "false");
+  const panel = document.createElement("ul");
+  panel.className = "ms-panel";
+  panel.setAttribute("role", "listbox");
+  panel.setAttribute("aria-multiselectable", "true");
+  panel.hidden = true;
+
+  Array.from(select.options).forEach((opt, i) => {
+    const li = document.createElement("li");
+    li.className = "ms-option";
+    li.setAttribute("role", "option");
+    li.dataset.index = String(i);
+    li.tabIndex = -1;
+    const box = document.createElement("span");
+    box.className = "ms-box";
+    box.setAttribute("aria-hidden", "true");
+    li.append(box, document.createTextNode(opt.textContent.trim()));
+    panel.appendChild(li);
+  });
+
+  const items = () => Array.from(panel.querySelectorAll(".ms-option"));
+  const sync = () => {
+    const picked = Array.from(select.options).filter((o) => o.selected).map((o) => o.textContent.trim());
+    toggle.textContent = picked.length ? picked.join(", ") : placeholder;
+    toggle.title = picked.join(", ");
+    items().forEach((li) => {
+      const on = select.options[Number(li.dataset.index)].selected;
+      li.classList.toggle("is-selected", on);
+      li.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  };
+  const open = (show) => {
+    panel.hidden = !show;
+    toggle.setAttribute("aria-expanded", show ? "true" : "false");
+    wrap.classList.toggle("is-open", show);
+  };
+  const pick = (li) => {
+    const opt = select.options[Number(li.dataset.index)];
+    opt.selected = !opt.selected;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    sync();
+  };
+  const focusFirst = () => {
+    const first = panel.querySelector(".is-selected") || panel.querySelector(".ms-option");
+    if (first) first.focus();
+  };
+
+  toggle.addEventListener("click", () => open(panel.hidden));
+  toggle.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open(true);
+      focusFirst();
+    }
+  });
+  panel.addEventListener("click", (e) => {
+    const li = e.target.closest(".ms-option");
+    if (li) pick(li);
+  });
+  panel.addEventListener("keydown", (e) => {
+    const list = items();
+    const i = list.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const next = list[Math.max(0, Math.min(list.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))];
+      if (next) next.focus();
+    } else if ((e.key === " " || e.key === "Enter") && i >= 0) {
+      e.preventDefault();
+      pick(list[i]);
+    } else if (e.key === "Escape" || e.key === "Tab") {
+      open(false);
+      if (e.key === "Escape") toggle.focus();
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (!wrap.contains(e.target)) open(false);
+  });
+
+  // Select gốc bị ẩn nên không dùng được required của trình duyệt -> tự kiểm tra khi gửi form.
+  const required = select.required;
+  select.required = false;
+  if (required && select.form) {
+    select.form.addEventListener("submit", (e) => {
+      if (select.selectedOptions.length === 0) {
+        e.preventDefault();
+        wrap.classList.add("is-invalid");
+        toggle.focus();
+        open(true);
+      }
+    });
+    select.addEventListener("change", () => wrap.classList.remove("is-invalid"));
+  }
+
+  select.parentNode.insertBefore(wrap, select);
+  select.hidden = true;
+  wrap.append(toggle, panel, select);
+  if (select.id) {
+    toggle.id = select.id + "-toggle";
+    const label = document.querySelector('label[for="' + select.id + '"]');
+    if (label) label.htmlFor = toggle.id;
+  }
+  sync();
+}
+
+/**
+ * Form phim: mỗi ngôn ngữ đã chọn khác ngôn ngữ gốc (ngôn ngữ của quốc gia sản xuất) phải có
+ * "Diễn viên lồng tiếng" (bắt buộc). Gửi lên server theo cặp voiceLang / voiceCast.
+ */
+function setupVoiceCasts(form, languageSelect) {
+  const group = document.getElementById("voice-cast-group");
+  const rows = document.getElementById("voice-cast-rows");
+  const country = form.querySelector('select[name="country"]');
+  if (!group || !rows) return;
+  const parse = (text) => { try { return JSON.parse(text || "{}"); } catch (e) { return {}; } };
+  const values = parse(group.dataset.casts);          // ngôn ngữ -> diễn viên (đã lưu / vừa nhập)
+  const countryLangs = parse(group.dataset.countryLangs);
+  const short = (name) => (name.startsWith("Tiếng ") ? name.slice(6) : name);
+
+  const render = () => {
+    // Giữ lại những gì đang gõ trước khi vẽ lại.
+    rows.querySelectorAll(".voice-cast-row").forEach((row) => {
+      values[row.dataset.lang] = row.querySelector("input[type=text]").value;
+    });
+    const picked = Array.from(languageSelect.options).filter((o) => o.selected).map((o) => o.value);
+    const original = country ? countryLangs[country.value] : undefined;
+    const langs = picked.filter((l) => l !== original);
+    rows.innerHTML = "";
+    langs.forEach((lang) => {
+      const row = document.createElement("label");
+      row.className = "voice-cast-row";
+      row.dataset.lang = lang;
+      const name = document.createElement("span");
+      name.textContent = "Lồng tiếng " + short(lang);
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "voiceLang";
+      hidden.value = lang;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = "voiceCast";
+      input.maxLength = 500;
+      input.required = true;
+      input.placeholder = "Ví dụ: Nguyễn Văn A, Trần Thị B";
+      input.value = values[lang] || "";
+      row.append(name, hidden, input);
+      rows.appendChild(row);
+    });
+    group.hidden = langs.length === 0;
+  };
+
+  languageSelect.addEventListener("change", render);
+  if (country) country.addEventListener("change", render);
+  render();
+}

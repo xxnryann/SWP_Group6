@@ -306,6 +306,8 @@ public class TicketDAO {
                 + "WHEN p.txn_type = 'Earn' THEN N'Tích điểm đơn ' WHEN p.txn_type = 'Redeem' THEN N'Dùng điểm cho đơn ' "
                 + "WHEN p.txn_type = 'Adjust' AND p.points > 0 AND p.booking_id IS NOT NULL THEN N'Hoàn điểm đơn bị hủy ' "
                 + "WHEN p.txn_type = 'Adjust' AND p.points < 0 AND p.booking_id IS NOT NULL THEN N'Thu hồi điểm đã tích của đơn ' "
+                + "WHEN p.txn_type = 'Adjust' AND p.points < 0 AND p.booking_id IS NULL THEN N'Thu hồi điểm thưởng đánh giá (bình luận bị ẩn)' "
+                + "WHEN p.txn_type = 'Adjust' AND p.points > 0 AND p.booking_id IS NULL THEN N'Trả lại điểm thưởng đánh giá (bình luận được hiện lại)' "
                 + "ELSE N'Điều chỉnh điểm' END + COALESCE(b.booking_code, '') AS reason "
                 + "FROM MyPointTransaction p "
                 + "JOIN Account a ON a.account_id = p.customer_id "

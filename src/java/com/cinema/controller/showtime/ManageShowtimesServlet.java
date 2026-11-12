@@ -157,7 +157,8 @@ public class ManageShowtimesServlet extends BaseServlet {
             // Chỉ hiện suất chưa tới giờ chiếu: suất đã bắt đầu không còn sửa/xóa được nên ẩn khỏi danh sách.
             List<Showtime> upcoming = new ArrayList<>();
             for (Showtime s : showtimeDAO.findAllForManagement()) {
-                if (!s.isStarted()) {
+                // Suất đã hủy (ngừng chiếu / hủy phim / hủy suất) không còn hiện trong danh sách.
+                if (!s.isStarted() && !"Cancelled".equals(s.getStatus())) {
                     upcoming.add(s);
                 }
             }
@@ -201,6 +202,12 @@ public class ManageShowtimesServlet extends BaseServlet {
                 if (slots.isEmpty()) {
                     throw new IllegalArgumentException("Vui lòng chọn ít nhất một phòng và một giờ chiếu cho phòng đó.");
                 }
+                if (!"Orig".equals(request.getParameter("languageMode")) && !"Sub".equals(request.getParameter("languageMode")) && !"Dub".equals(request.getParameter("languageMode"))) {
+                    throw new IllegalArgumentException("Vui lòng chọn hình thức: nguyên bản, phụ đề hoặc lồng tiếng.");
+                }
+                if (request.getParameter("language") == null || request.getParameter("language").isBlank()) {
+                    throw new IllegalArgumentException("Vui lòng chọn ngôn ngữ cho suất chiếu.");
+                }
                 String id = request.getParameter("id");
                 if (id != null && !id.isBlank()) {
                     if (slots.size() != 1) {
@@ -235,8 +242,30 @@ public class ManageShowtimesServlet extends BaseServlet {
             } else if ("delete".equals(action)) {
                 int deleteId = ShowtimeUtil.parseId(request.getParameter("id"));
                 requireNotStarted(deleteId, "xóa");
-                showtimeDAO.delete(deleteId);
-                flash(request, "success", "Đã xóa suất chiếu.");
+                if (showtimeDAO.hasBookings(deleteId)) {
+                    // Suất đã có đơn: không xóa dữ liệu mà hủy suất + hoàn MyPoint và voucher đền bù như hủy phim.
+                    String reason = request.getParameter("reason") == null ? "" : request.getParameter("reason").trim();
+                    int paid = showtimeDAO.countPaidBookings(deleteId);
+                    // Chỉ có đơn chưa thanh toán (đang giữ ghế): không ai cần hoàn tiền -> lý do mặc định.
+                    if (reason.isEmpty() && paid == 0) reason = "Quản lý hủy suất chiếu";
+                    if (reason.isEmpty()) {
+                        throw new IllegalArgumentException("Suất chiếu đã có đơn đặt vé: vui lòng nhập lý do hủy để hoàn MyPoint và voucher đền bù cho khách.");
+                    }
+                    if (reason.length() > 500) {
+                        throw new IllegalArgumentException("Lý do hủy tối đa 500 ký tự.");
+                    }
+                    int managerId = new com.cinema.dao.AccountDAO().findAccountIdByEmail(currentUser(request).getEmail());
+                    if (managerId == 0) {
+                        throw new IllegalArgumentException("Không tìm thấy tài khoản quản lý.");
+                    }
+                    showtimeDAO.cancel(deleteId, managerId, reason);
+                    flash(request, "success", "Đã hủy suất chiếu" + (paid > 0
+                            ? ". " + paid + " đơn đã được hoàn MyPoint, tặng voucher đền bù và nhận thông báo kèm lý do."
+                            : "."));
+                } else {
+                    showtimeDAO.delete(deleteId);
+                    flash(request, "success", "Đã xóa suất chiếu.");
+                }
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
@@ -277,6 +306,16 @@ public class ManageShowtimesServlet extends BaseServlet {
         }
         showtime.setStartsAt(start);
         showtime.setStatus("Scheduled");
+        String mode = request.getParameter("languageMode");
+        if (!"Orig".equals(mode) && !"Sub".equals(mode) && !"Dub".equals(mode)) {
+            throw new IllegalArgumentException("Vui lòng chọn hình thức: nguyên bản, phụ đề hoặc lồng tiếng.");
+        }
+        String language = request.getParameter("language");
+        if (language == null || language.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn ngôn ngữ cho suất chiếu.");
+        }
+        showtime.setLanguageMode(mode);
+        showtime.setLanguage(language.trim());
         return showtime;
     }
 
