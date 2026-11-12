@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
-/** Đánh giá phim: chỉ khách đã xem xong (vé đã soát, suất đã kết thúc) mới được đánh giá, mỗi phim một lần — {@code sp_AddReview}. */
+/** Đánh giá phim: khách đã đặt vé (đơn đã thanh toán) và suất chiếu đã kết thúc mới được đánh giá, mỗi phim một lần — {@code sp_AddReview}. */
 public class ReviewDAO {
 
     public List<Map<String, Object>> findByMovie(int movieId) throws SQLException {
@@ -26,11 +26,12 @@ public class ReviewDAO {
                 + "COUNT(*) AS review_count FROM Review WHERE movie_id = ?", movieId).get(0);
     }
 
-    /** Khách đã xem xong phim (có vé đã soát và suất chiếu đã kết thúc) chưa? */
+    /** Khách đã đặt vé phim này (đơn đã thanh toán, vé không bị hủy) và suất chiếu đã kết thúc chưa? Không cần vé đã soát. */
     public boolean hasWatched(int customerId, int movieId) throws SQLException {
         return !Rows.query("SELECT TOP 1 1 AS x FROM Ticket t JOIN Booking b ON b.booking_id = t.booking_id "
                 + "JOIN Showtime s ON s.showtime_id = t.showtime_id "
-                + "WHERE b.customer_id = ? AND s.movie_id = ? AND t.status = 'Used' "
+                + "WHERE b.customer_id = ? AND s.movie_id = ? AND t.status IN ('Booked','Used','Expired') "
+                + "AND b.status = 'Paid' "
                 + "AND s.end_time < SYSDATETIME()", customerId, movieId).isEmpty();
     }
 
