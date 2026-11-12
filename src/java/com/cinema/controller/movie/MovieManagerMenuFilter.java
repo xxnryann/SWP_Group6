@@ -35,6 +35,7 @@ public class MovieManagerMenuFilter implements Filter {
         // Dashboard theo vai trò: nạp CSS dashboard + gắn cờ cho các trang quản trị.
         boolean isDashboard = path.startsWith("/dashboard/admin")
                 || path.startsWith("/dashboard/manager")
+                || path.startsWith("/dashboard/revenue")
                 || path.startsWith("/dashboard/staff")
                 || path.startsWith("/dashboard/customer");
         httpRequest.setAttribute("dashboardModule", isDashboard || isHome);
