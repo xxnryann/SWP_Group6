@@ -78,7 +78,10 @@
                   <c:when test="${t.active}">
                     <span class="note">Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền. Nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher đền bù.</span>
                   </c:when>
-                  <c:when test="${t.expired}"><span class="note">Vé đã quá thời gian chiếu nên không còn hiệu lực.</span></c:when>
+                  <c:when test="${t.expired}">
+                    <span class="note">Vé đã quá thời gian chiếu nên không còn hiệu lực.</span>
+                    <c:if test="${t.canReview}"><a class="btn btn-sm btn-accent" href="${ctx}/movies/detail?id=${t.movieId}#reviews">${ic.star}Viết đánh giá</a></c:if>
+                  </c:when>
                   <c:when test="${t.used}">
                     <span class="note">Vé đã được soát tại rạp.</span>
                     <c:if test="${t.canReview}"><a class="btn btn-sm btn-accent" href="${ctx}/movies/detail?id=${t.movieId}#reviews">${ic.star}Viết đánh giá</a></c:if>

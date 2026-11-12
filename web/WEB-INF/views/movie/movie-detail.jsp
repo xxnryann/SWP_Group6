@@ -75,7 +75,7 @@
           <c:if test="${reviewStats.review_count > 0}"><span class="badge badge-accent">★ <c:out value="${reviewStats.avg_rating}"/>/5 · <c:out value="${reviewStats.review_count}"/> lượt</span></c:if>
         </div>
 
-        <p class="muted text-sm">Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới gửi được đánh giá. Mỗi phim bạn có một đánh giá và có thể sửa lại bất cứ lúc nào; +5 MyPoint chỉ được cộng cho lần đánh giá đầu tiên, sửa đánh giá không cộng thêm điểm.</p>
+        <p class="muted text-sm">Chỉ khách đã đặt vé phim này và suất chiếu đã kết thúc mới gửi được đánh giá (không cần soát vé tại rạp). Đánh giá từ 2 sao trở xuống bắt buộc nhập nhận xét nêu lý do. Mỗi phim bạn có một đánh giá và có thể sửa lại bất cứ lúc nào; +5 MyPoint chỉ được cộng cho lần đánh giá đầu tiên, sửa đánh giá không cộng thêm điểm.</p>
 
         <c:set var="isStaffViewer" value="${not empty sessionScope.authUser and sessionScope.authUser.role != 'CUSTOMER'}"/>
         <c:if test="${not isStaffViewer}">
@@ -88,7 +88,7 @@
             </div>
             <c:if test="${empty sessionScope.authUser}"><p class="muted text-sm">Bạn cần <a href="${ctx}/login">đăng nhập</a> để gửi đánh giá.</p></c:if>
             <c:if test="${not empty sessionScope.authUser and not hasReviewed and not hasWatched}">
-              <p class="muted text-sm">Bạn chưa có lịch sử xem phim này — đánh giá sẽ bị từ chối cho đến khi bạn xem phim tại rạp.</p>
+              <p class="muted text-sm">Bạn chưa có lịch sử đặt vé phim này (hoặc suất chiếu chưa kết thúc) — đánh giá sẽ bị từ chối cho đến khi suất chiếu bạn đã đặt kết thúc.</p>
             </c:if>
             <c:if test="${myReview.is_hidden == 1}"><p class="muted text-sm">Nhận xét của bạn đang bị quản lý ẩn; số sao vẫn được tính.</p></c:if>
             <div class="field">
@@ -103,11 +103,27 @@
               </select>
             </div>
             <div class="field">
-              <label for="comment">Nhận xét (tùy chọn)</label>
+              <label for="comment">Nhận xét <span id="comment-req-note" class="muted" style="font-weight:400">(tùy chọn)</span></label>
               <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Chia sẻ cảm nhận của bạn về bộ phim..."><c:out value="${myReview.comment}"/></textarea>
             </div>
             <div class="form-actions start"><button class="btn btn-primary" type="submit"><c:out value="${hasReviewed ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}"/></button></div>
           </form>
+          <script>
+            // Đánh giá <= 2 sao: bắt buộc nhập nhận xét nêu lý do.
+            (function () {
+              var rating = document.getElementById('rating'), comment = document.getElementById('comment');
+              var note = document.getElementById('comment-req-note');
+              if (!rating || !comment) return;
+              var sync = function () {
+                var low = rating.value !== '' && Number(rating.value) <= 2;
+                comment.required = low;
+                comment.placeholder = low ? 'Vui lòng cho biết lý do bạn chưa hài lòng với bộ phim...' : 'Chia sẻ cảm nhận của bạn về bộ phim...';
+                if (note) { note.textContent = low ? '(bắt buộc với đánh giá từ 2 sao trở xuống)' : '(tùy chọn)'; note.style.color = low ? 'var(--danger)' : ''; }
+              };
+              rating.addEventListener('change', sync);
+              sync();
+            })();
+          </script>
         </c:if>
 
         <c:choose>

@@ -44,6 +44,8 @@ public class ReviewServlet extends BaseServlet {
         }
         if (rating < 1 || rating > 5) {
             flash(req, "error", "Vui lòng chọn số sao từ 1 đến 5.");
+        } else if (rating <= 2 && comment.isEmpty()) {
+            flash(req, "error", "Đánh giá từ 2 sao trở xuống cần nhập nhận xét nêu lý do.");
         } else if (comment.length() > 1000) {
             flash(req, "error", "Nhận xét tối đa 1000 ký tự.");
         } else {
@@ -56,8 +58,8 @@ public class ReviewServlet extends BaseServlet {
                     dao.update(customerId, movieId, rating, comment);
                     flash(req, "success", "Đã cập nhật đánh giá của bạn.");
                 } else if (!dao.hasWatched(customerId, movieId)) {
-                    flash(req, "error", "Bạn chưa có lịch sử xem phim này nên chưa thể đánh giá. "
-                            + "Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới được đánh giá.");
+                    flash(req, "error", "Bạn chưa có lịch sử đặt vé phim này nên chưa thể đánh giá. "
+                            + "Chỉ khách đã đặt vé và suất chiếu đã kết thúc mới được đánh giá.");
                 } else {
                     dao.add(customerId, movieId, rating, comment);
                     flash(req, "success", "Cảm ơn bạn đã đánh giá phim! Bạn nhận được 5 điểm MyPoint.");
