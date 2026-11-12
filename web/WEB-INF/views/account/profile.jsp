@@ -1,15 +1,13 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Thông tin cá nhân"/>
 <%@ include file="../layout/top.jspf" %>
-<div class="${isStaffRole ? '' : 'container'}">
+<div class="${appShell ? '' : 'container'}">
   <div class="page-head">
     <div>
       <h1>Thông tin cá nhân</h1>
       <p>Cập nhật hồ sơ, ảnh đại diện<c:if test="${sessionScope.authUser.role != 'ADMIN'}"> và mật khẩu</c:if> của bạn.</p>
     </div>
   </div>
-  <%@ include file="../layout/account-nav.jspf" %>
-
   <div class="split" style="grid-template-columns:300px minmax(0,1fr)">
     <aside class="stack sticky" style="--gap:16px">
       <section class="card card-pad profile-card">

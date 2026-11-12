@@ -49,6 +49,48 @@ public class EmailOutboxDAO {
         runProc("{call dbo.sp_SyncInboxPromotions(?)}", customerId);
     }
 
+    /** Bảng + JOIN dùng chung cho hộp thư và bộ đếm chuông thông báo. */
+    private static final String VISIBLE_FROM = "FROM EmailNotification e "
+            + "LEFT JOIN Booking b ON b.booking_id = e.booking_id "
+            + "LEFT JOIN Showtime s ON s.showtime_id = COALESCE(e.showtime_id, b.showtime_id) "
+            + "LEFT JOIN Movie m ON m.movie_id = COALESCE(e.movie_id, s.movie_id) "
+            + "LEFT JOIN Room r ON r.room_id = s.room_id "
+            + "LEFT JOIN Voucher v ON e.notif_type = 'Voucher' AND e.subject = N'Ưu đãi voucher ' + v.code ";
+
+    /** Điều kiện thông báo còn hiện trong hộp thư (tham số: customer_id). */
+    private static final String VISIBLE_WHERE = "WHERE e.customer_id = ? "
+            + "AND (e.notif_type <> 'Voucher' OR v.voucher_id IS NOT NULL) "
+            + "AND (e.notif_type <> 'NewMovie' OR (m.is_deleted = 0 AND m.status <> 'Stopped')) "
+            // Vé đã hủy hết thì nhắc lịch không còn ý nghĩa.
+            + "AND (e.notif_type <> 'ShowtimeReminder' OR EXISTS (SELECT 1 FROM Ticket t WHERE t.booking_id = e.booking_id "
+            + "AND t.status IN ('Booked','Used','Expired'))) ";
+
+    /** Số thông báo chưa đọc (đang hiện trong hộp thư) của tài khoản có email này — hiện trên chuông. */
+    public int countUnreadByEmail(String email) throws SQLException {
+        String sql = "SELECT COUNT(*) AS n " + VISIBLE_FROM
+                + VISIBLE_WHERE.replace("e.customer_id = ?",
+                        "e.customer_id = (SELECT a.account_id FROM Account a WHERE a.email = ?)")
+                + "AND e.read_at IS NULL";
+        List<Map<String, Object>> rows = Rows.query(sql, email);
+        Object n = rows.isEmpty() ? null : rows.get(0).get("n");
+        return n instanceof Number ? ((Number) n).intValue() : 0;
+    }
+
+    /** Đánh dấu đã đọc khi khách mở hộp thư (theo tab đang xem; null = tất cả). */
+    public void markRead(int customerId, String type) throws SQLException {
+        if (type == null) {
+            update("UPDATE EmailNotification SET read_at = SYSDATETIME() WHERE customer_id = ? AND read_at IS NULL", customerId);
+        } else {
+            try (Connection c = DBContext.getConnection(); PreparedStatement ps = c.prepareStatement(
+                    "UPDATE EmailNotification SET read_at = SYSDATETIME() WHERE customer_id = ? AND read_at IS NULL "
+                    + "AND notif_type = ?")) {
+                ps.setInt(1, customerId);
+                ps.setString(2, type);
+                ps.executeUpdate();
+            }
+        }
+    }
+
     /**
      * Hộp thư của khách: mọi loại thông báo (không phụ thuộc email đã gửi được hay chưa).
      * Phim mới đã ngừng chiếu và voucher đã bị xóa không còn hiện.
@@ -69,18 +111,10 @@ public class EmailOutboxDAO {
                 + "s.start_time, CASE WHEN s.start_time <= SYSDATETIME() THEN 1 ELSE 0 END AS has_started, "
                 + "b.booking_code, CASE WHEN m.is_deleted = 0 THEN 1 ELSE 0 END AS movie_active, "
                 + "CASE WHEN m.is_deleted = 0 AND NOT EXISTS (SELECT 1 FROM Review rv WHERE rv.movie_id = m.movie_id "
-                + "AND rv.customer_id = e.customer_id) THEN 1 ELSE 0 END AS can_review FROM EmailNotification e "
-                + "LEFT JOIN Booking b ON b.booking_id = e.booking_id "
-                + "LEFT JOIN Showtime s ON s.showtime_id = COALESCE(e.showtime_id, b.showtime_id) "
-                + "LEFT JOIN Movie m ON m.movie_id = COALESCE(e.movie_id, s.movie_id) "
-                + "LEFT JOIN Room r ON r.room_id = s.room_id "
-                + "LEFT JOIN Voucher v ON e.notif_type = 'Voucher' AND e.subject = N'Ưu đãi voucher ' + v.code "
-                + "WHERE e.customer_id = ? "
-                + "AND (e.notif_type <> 'Voucher' OR v.voucher_id IS NOT NULL) "
-                + "AND (e.notif_type <> 'NewMovie' OR (m.is_deleted = 0 AND m.status <> 'Stopped')) "
-                // Vé đã hủy hết thì nhắc lịch không còn ý nghĩa.
-                + "AND (e.notif_type <> 'ShowtimeReminder' OR EXISTS (SELECT 1 FROM Ticket t WHERE t.booking_id = e.booking_id "
-                + "AND t.status IN ('Booked','Used','Expired'))) "
+                + "AND rv.customer_id = e.customer_id) THEN 1 ELSE 0 END AS can_review, "
+                + "CASE WHEN e.read_at IS NULL THEN 1 ELSE 0 END AS is_unread "
+                + VISIBLE_FROM
+                + VISIBLE_WHERE
                 + (type == null ? "" : "AND e.notif_type = ? ")
                 + "ORDER BY e.notif_id DESC";
         return type == null ? Rows.query(sql, limit, customerId) : Rows.query(sql, limit, customerId, type);

@@ -5,7 +5,8 @@
     <c:set var="pageCss" value="seat-plan.css"/>   (tùy chọn) thêm 1 file CSS riêng trong assets/css
     <c:set var="layout" value="bare"/>              (tùy chọn) "bare" = không header/footer (trang in vé...)
     <%@ include file="../layout/top.jspf" %> ... <%@ include file="../layout/bottom.jspf" %>
-  Nhân viên (ADMIN/MANAGER/STAFF) ở khu nội bộ dùng khung sidebar; khách và khách vãng lai dùng header công khai.
+  Nhân viên (ADMIN/MANAGER/STAFF) và khách hàng (CUSTOMER) ở khu nội bộ dùng khung sidebar;
+  khách vãng lai và các trang công khai dùng header công khai.
 --%>
 <%@ include file="icons.jspf" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
@@ -19,7 +20,8 @@
   <c:otherwise><c:set var="roleDashboardPath" value="/home"/></c:otherwise>
 </c:choose>
 <c:set var="isStaffRole" value="${myRole == 'ADMIN' or myRole == 'MANAGER' or myRole == 'STAFF'}"/>
-<c:set var="appShell" value="${isStaffRole and roleModule and layout != 'public'}"/>
+<c:set var="isCustomerRole" value="${myRole == 'CUSTOMER'}"/>
+<c:set var="appShell" value="${layout != 'public' and ((isStaffRole and roleModule) or (isCustomerRole and (roleModule or customerModule)))}"/>
 <c:set var="initial" value="${empty me.fullName ? '?' : fn:toUpperCase(fn:substring(fn:trim(me.fullName), 0, 1))}"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -32,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
-  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=3">
+  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=7">
   <c:if test="${not empty pageCss}"><link rel="stylesheet" href="${ctx}/assets/css/${pageCss}?v=3"></c:if>
 </head>
 <body class="${appShell ? 'is-app' : 'is-site'} ${bodyClass}" data-user="<c:out value='${me.fullName}'/>">
@@ -45,7 +47,7 @@
 <%-- ======================= KHUNG QUẢN TRỊ (sidebar) ======================= --%>
 <c:when test="${appShell}">
 <div class="app">
-  <aside class="sidebar" id="sidebar" aria-label="Menu quản trị">
+  <aside class="sidebar" id="sidebar" aria-label="Menu chức năng">
     <a class="brand" href="${ctx}${roleDashboardPath}" aria-label="CineStar - Tổng quan"><%@ include file="../_logo-mark.jspf" %><span>Cine<b>Star</b></span></a>
     <nav class="side-nav" id="sideNav">
       <a href="${ctx}${roleDashboardPath}">${ic.dashboard}<span>Tổng quan</span></a>
@@ -75,9 +77,21 @@
           <a href="${ctx}/staff/seat-change">${ic.swap}<span>Đổi ghế</span></a>
           <a href="${ctx}/staff/combo">${ic.popcorn}<span>Quản lý combo</span></a>
         </c:when>
+        <c:when test="${isCustomerRole}">
+          <div class="side-label">Tài khoản</div>
+          <a href="${ctx}/account/tickets">${ic.ticket}<span>Vé của tôi</span></a>
+          <a href="${ctx}/account/inbox" title="Hộp thư${unreadNotifications > 0 ? ' – có thông báo mới' : ''}"><span class="side-bell">${ic.bell}<c:if test="${unreadNotifications > 0}"><span class="notif-count">${unreadNotifications > 99 ? '99+' : unreadNotifications}</span></c:if></span><span>Hộp thư</span></a>
+          <a href="${ctx}/account/points">${ic.coins}<span>Điểm MyPoint</span></a>
+          <a href="${ctx}/account/vouchers">${ic.tag}<span>Voucher</span></a>
+          <div class="side-label">Đặt vé &amp; khám phá</div>
+          <a href="${ctx}/showtimes">${ic.calendar}<span>Lịch chiếu</span></a>
+          <a href="${ctx}/movies">${ic.film}<span>Phim đang chiếu</span></a>
+          <a href="${ctx}/pricing">${ic.wallet}<span>Bảng giá vé</span></a>
+          <a href="${ctx}/promotions">${ic.gift}<span>Khuyến mãi</span></a>
+          <div class="side-label">Tin tức</div>
+          <a href="${ctx}/news">${ic.news}<span>Tin tức</span></a>
+        </c:when>
       </c:choose>
-      <div class="side-label">Trang khách</div>
-      <a href="${ctx}/showtimes" data-nomatch>${ic.globe}<span>Xem trang đặt vé</span></a>
     </nav>
     <div class="side-foot">
       <a class="side-user" href="${ctx}/account/profile">
@@ -94,7 +108,6 @@
     <header class="app-topbar">
       <button class="btn btn-icon btn-sm btn-ghost side-toggle" type="button" id="sideToggle" aria-label="Mở menu" aria-controls="sidebar" aria-expanded="false">${ic.menu}</button>
       <div class="crumbs"><span>${roleLabel}</span>${ic.chevronRight}<strong><c:out value="${pageTitle}"/></strong></div>
-      <a class="btn btn-ghost btn-sm" href="${ctx}/home">${ic.home}<span class="hide-sm">Trang chủ</span></a>
     </header>
     <main class="app-content" id="main">
 </c:when>

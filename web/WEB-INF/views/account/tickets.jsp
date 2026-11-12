@@ -2,13 +2,11 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Vé của tôi"/>
 <%@ include file="../layout/top.jspf" %>
-<div class="${isStaffRole ? '' : 'container'}">
+<div class="${appShell ? '' : 'container'}">
   <div class="page-head">
     <div><h1>Vé của tôi</h1><p>Vé điện tử có mã QR, dùng để vào phòng chiếu. Vé đã thanh toán không thể hủy/đổi trả/hoàn tiền; nếu suất chiếu bị hủy do sự cố, giá trị vé được hoàn thành MyPoint kèm voucher đền bù.</p></div>
     <a class="btn btn-primary" href="${ctx}/showtimes">${ic.ticket}Đặt vé mới</a>
   </div>
-  <%@ include file="../layout/account-nav.jspf" %>
-
   <nav class="tabs" aria-label="Lịch sử">
     <a class="${tab == 'combos' ? '' : 'active'}" href="${ctx}/account/tickets">Vé xem phim</a>
     <a class="${tab == 'combos' ? 'active' : ''}" href="${ctx}/account/tickets?tab=combos">Combo bắp nước</a>

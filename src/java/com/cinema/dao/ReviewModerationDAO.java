@@ -108,36 +108,40 @@ public class ReviewModerationDAO {
     }
 
     /** Ẩn bình luận vi phạm: GIỮ nội dung (có thể hiện lại), chỉ đánh dấu đã kiểm duyệt; điểm sao giữ nguyên. */
-    public void hideComment(int reviewId, int managerId, String reason) throws SQLException {
-        String sql = "UPDATE dbo.Review SET moderated_at = SYSDATETIME(), moderated_by = ?, moderation_reason = ? "
-                + "WHERE review_id = ? AND comment IS NOT NULL AND moderated_at IS NULL";
-        try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, managerId);
-            statement.setString(2, reason);
-            statement.setInt(3, reviewId);
-            if (statement.executeUpdate() == 0) {
-                throw new IllegalStateException("Bình luận không tồn tại hoặc đã được ẩn.");
-            }
-        }
+    /**
+     * Ẩn bình luận vi phạm và thu hồi điểm thưởng đánh giá (tối đa 5, không để âm số dư) — {@code sp_HideReviewComment}.
+     * @return số điểm MyPoint đã thu hồi
+     */
+    public int hideComment(int reviewId, int managerId, String reason) throws SQLException {
+        return callForInt("{CALL dbo.sp_HideReviewComment(?, ?, ?)}", reviewId, managerId, reason);
     }
 
-    /** Hiện lại bình luận đã ẩn. */
-    public void unhideComment(int reviewId) throws SQLException {
-        String sql = "UPDATE dbo.Review SET moderated_at = NULL, moderated_by = NULL, moderation_reason = NULL "
-                + "WHERE review_id = ? AND comment IS NOT NULL AND moderated_at IS NOT NULL";
+    /** Hiện lại bình luận đã ẩn và trả lại điểm thưởng đã thu hồi — {@code sp_UnhideReviewComment}. */
+    public int unhideComment(int reviewId) throws SQLException {
+        return callForInt("{CALL dbo.sp_UnhideReviewComment(?)}", reviewId, null, null);
+    }
+
+    private int callForInt(String sql, int reviewId, Integer managerId, String reason) throws SQLException {
         try (Connection connection = DBContext.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
+                java.sql.CallableStatement statement = connection.prepareCall(sql)) {
             statement.setInt(1, reviewId);
-            if (statement.executeUpdate() == 0) {
-                throw new IllegalStateException("Bình luận không tồn tại hoặc đang hiển thị.");
+            if (managerId != null) {
+                statement.setInt(2, managerId);
+                statement.setString(3, reason);
             }
+            try (java.sql.ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            if (e.getErrorCode() == 50092 || e.getErrorCode() == 50093) throw new IllegalStateException(e.getMessage());
+            throw e;
         }
     }
 
     public Map<String, Object> findForModeration(int reviewId) throws SQLException {
-        List<Map<String, Object>> rows = Rows.query("SELECT review_id, customer_id, movie_id, comment "
-                + "FROM dbo.Review WHERE review_id = ? AND comment IS NOT NULL", reviewId);
+        List<Map<String, Object>> rows = Rows.query("SELECT r.review_id, r.customer_id, r.movie_id, r.comment, m.title "
+                + "FROM dbo.Review r JOIN dbo.Movie m ON m.movie_id = r.movie_id "
+                + "WHERE r.review_id = ? AND r.comment IS NOT NULL", reviewId);
         return rows.isEmpty() ? null : rows.get(0);
     }
 }

@@ -23,7 +23,7 @@ public class ShowtimeDAO {
     }
 
     private static final String SELECT_COLUMNS = "s.showtime_id, s.movie_id, m.title AS movie_title, "
-            + "m.duration_minutes, s.room_name, s.starts_at, s.status, "
+            + "m.duration_minutes, s.room_name, s.starts_at, s.status, s.language_mode, s.language, "
             + "(SELECT COUNT(*) FROM dbo.Ticket t WHERE t.showtime_id = s.showtime_id "
             + "AND t.status IN ('Booked', 'Used')) AS purchased_ticket_count ";
     private static final String SELECT_FROM = "FROM dbo.Showtime s JOIN dbo.Movie m ON m.movie_id = s.movie_id ";
@@ -263,13 +263,15 @@ public class ShowtimeDAO {
                 if (showtime.getShowtimeId() > 0 && hasPurchasedTickets(connection, showtime.getShowtimeId())) {
                     throw new SQLException("Suất chiếu đã có vé được mua, không thể sửa để bảo toàn thông tin vé.");
                 }
+                validateLanguage(connection, showtime);
                 String sql = showtime.getShowtimeId() == 0
                         ? "INSERT INTO dbo.Showtime "
                                 + "(movie_id, room_id, slot_id, start_time, end_time, status, created_by, "
-                                + "created_at, room_name, starts_at) "
-                                + "VALUES (?, ?, ?, ?, ?, ?, NULL, SYSDATETIME(), ?, ?)"
+                                + "created_at, room_name, starts_at, language_mode, language) "
+                                + "VALUES (?, ?, ?, ?, ?, ?, NULL, SYSDATETIME(), ?, ?, ?, ?)"
                         : "UPDATE dbo.Showtime SET movie_id = ?, room_id = ?, slot_id = ?, "
-                                + "start_time = ?, end_time = ?, status = ?, room_name = ?, starts_at = ? "
+                                + "start_time = ?, end_time = ?, status = ?, room_name = ?, starts_at = ?, "
+                                + "language_mode = ?, language = ? "
                                 + "WHERE showtime_id = ?";
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
                     statement.setInt(1, showtime.getMovieId());
@@ -280,8 +282,10 @@ public class ShowtimeDAO {
                     statement.setString(6, showtime.getStatus());
                     statement.setString(7, showtime.getRoomName());
                     statement.setTimestamp(8, Timestamp.valueOf(start));
+                    statement.setString(9, showtime.getLanguageMode());
+                    statement.setString(10, showtime.getLanguage());
                     if (showtime.getShowtimeId() > 0) {
-                        statement.setInt(9, showtime.getShowtimeId());
+                        statement.setInt(11, showtime.getShowtimeId());
                         if (statement.executeUpdate() == 0) {
                             throw new SQLException("Không tìm thấy suất chiếu cần sửa.");
                         }
@@ -312,6 +316,44 @@ public class ShowtimeDAO {
                 result.next();
                 return result.getInt(1) > 0;
             }
+        }
+    }
+
+    /** Suất đã có đơn đặt vé (mọi trạng thái) -> không xóa được, phải hủy kèm hoàn tiền. */
+    public boolean hasBookings(int showtimeId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM dbo.Booking WHERE showtime_id = ?";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, showtimeId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() && result.getInt(1) > 0;
+            }
+        }
+    }
+
+    /** Số đơn đã thanh toán của suất (số khách sẽ được hoàn MyPoint + voucher đền bù khi hủy). */
+    public int countPaidBookings(int showtimeId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM dbo.Booking WHERE showtime_id = ? AND status = 'Paid'";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, showtimeId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? result.getInt(1) : 0;
+            }
+        }
+    }
+
+    /**
+     * Hủy suất chiếu đã có đơn: hoàn MyPoint (vé + combo + MyPoint đã dùng), cấp voucher đền bù,
+     * gửi thông báo kèm lý do cho khách ({@code sp_CancelShowtime}).
+     */
+    public void cancel(int showtimeId, int managerId, String reason) throws SQLException {
+        try (Connection connection = DBContext.getConnection();
+                java.sql.CallableStatement statement = connection.prepareCall("{CALL dbo.sp_CancelShowtime(?, ?, ?)}")) {
+            statement.setInt(1, showtimeId);
+            statement.setInt(2, managerId);
+            statement.setString(3, reason);
+            statement.execute();
         }
     }
 
@@ -385,6 +427,47 @@ public class ShowtimeDAO {
         return duration;
     }
 
+    /**
+     * Nguyên bản: ngôn ngữ = ngôn ngữ gốc của phim. Phụ đề / lồng tiếng: ngôn ngữ khác ngôn ngữ gốc
+     * (tiếng Việt hoặc một ngôn ngữ của phim) — phim tiếng Việt không chiếu "phụ đề Việt".
+     */
+    private void validateLanguage(Connection connection, Showtime showtime) throws SQLException {
+        String mode = showtime.getLanguageMode();
+        if (!"Orig".equals(mode) && !"Sub".equals(mode) && !"Dub".equals(mode)) {
+            throw new SQLException("Vui lòng chọn hình thức: nguyên bản, phụ đề hoặc lồng tiếng.");
+        }
+        String sql = "SELECT country, spoken_language FROM dbo.Movie WHERE movie_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, showtime.getMovieId());
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    throw new SQLException("Phim được chọn không tồn tại.");
+                }
+                String original = com.cinema.util.movie.MovieLocales
+                        .originalLanguage(result.getString("country"), result.getString("spoken_language"));
+                String language = showtime.getLanguage();
+                if ("Orig".equals(mode)) {
+                    if (original == null) {
+                        throw new SQLException("Không xác định được ngôn ngữ gốc của phim, hãy chọn phụ đề hoặc lồng tiếng.");
+                    }
+                    if (!original.equals(language)) {
+                        throw new SQLException("Suất nguyên bản phải dùng ngôn ngữ gốc của phim (" + original + ").");
+                    }
+                    return;
+                }
+                java.util.List<String> allowed = new java.util.ArrayList<>(com.cinema.util.movie.MovieLocales
+                        .showtimeLanguages(result.getString("spoken_language")));
+                allowed.remove(original);
+                if (language == null || !allowed.contains(language)) {
+                    throw new SQLException(("Dub".equals(mode) ? "Lồng tiếng" : "Phụ đề")
+                            + " phải là ngôn ngữ khác ngôn ngữ gốc của phim"
+                            + (original == null ? "" : " (" + original + ")")
+                            + (allowed.isEmpty() ? "." : ": " + String.join(", ", allowed) + "."));
+                }
+            }
+        }
+    }
+
     private int findMovieDuration(Connection connection, int movieId) throws SQLException {
         String sql = "SELECT duration_minutes FROM dbo.Movie WHERE movie_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -442,6 +525,8 @@ public class ShowtimeDAO {
         showtime.setStartsAt(startsAt == null ? null : startsAt.toLocalDateTime());
         showtime.setStatus(result.getString("status"));
         showtime.setPurchasedTicketCount(result.getInt("purchased_ticket_count"));
+        showtime.setLanguageMode(result.getString("language_mode"));
+        showtime.setLanguage(result.getString("language"));
         return showtime;
     }
 

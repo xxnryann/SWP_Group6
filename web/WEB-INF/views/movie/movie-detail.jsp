@@ -41,8 +41,6 @@
       </div>
       <c:if test="${not empty movie.synopsis}"><p class="synopsis"><c:out value="${movie.synopsis}"/></p></c:if>
       <div class="cluster mt-24">
-        <c:if test="${canBuy and movie.status != 'Stopped'}"><a class="btn btn-accent btn-lg" href="#movie-showtimes-inline">${ic.ticket}Chọn suất chiếu</a></c:if>
-        <c:if test="${not empty movie.trailerFileDisplayUrl or not empty movie.trailerEmbedUrl}"><a class="btn btn-light btn-lg" href="#trailer">${ic.play}Xem trailer</a></c:if>
         <c:if test="${canManageMovies}"><a class="btn btn-light btn-lg" href="${escapedEditUrl}">${ic.edit}Sửa phim</a></c:if>
       </div>
     </div>
@@ -52,13 +50,6 @@
 <div class="container mt-32">
   <div class="split">
     <div class="stack" style="--gap:24px">
-      <c:if test="${canBuy and movie.status != 'Stopped'}">
-        <section class="card card-pad" id="movie-showtimes-inline" data-movie-id="${movie.movieId}" hidden>
-          <h2 style="font-size:var(--fs-h3)">Lịch chiếu</h2>
-          <div class="movie-showtimes-body"></div>
-        </section>
-      </c:if>
-
       <section class="card card-pad" id="trailer">
         <h2 class="mb-16" style="font-size:var(--fs-h3)">Trailer</h2>
         <c:choose>
@@ -81,29 +72,39 @@
           <c:if test="${reviewStats.review_count > 0}"><span class="badge badge-accent">★ <c:out value="${reviewStats.avg_rating}"/>/5 · <c:out value="${reviewStats.review_count}"/> lượt</span></c:if>
         </div>
 
-        <c:if test="${canReview}">
+        <p class="muted text-sm">Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới gửi được đánh giá. Mỗi phim bạn có một đánh giá và có thể sửa lại bất cứ lúc nào; +5 MyPoint chỉ được cộng cho lần đánh giá đầu tiên, sửa đánh giá không cộng thêm điểm.</p>
+
+        <c:set var="isStaffViewer" value="${not empty sessionScope.authUser and sessionScope.authUser.role != 'CUSTOMER'}"/>
+        <c:if test="${not isStaffViewer}">
           <form method="post" action="${ctx}/movies/review" class="form card card-pad mt-16" style="background:var(--surface-2);box-shadow:none" data-loading>
             <input type="hidden" name="_csrf" value="${csrf}">
             <input type="hidden" name="movieId" value="${movie.movieId}">
-            <strong class="text-ink">Bạn thấy phim thế nào?</strong>
+            <div class="cluster between" style="--gap:8px">
+              <strong class="text-ink"><c:out value="${hasReviewed ? 'Đánh giá của bạn' : 'Bạn thấy phim thế nào?'}"/></strong>
+              <c:if test="${hasReviewed}"><span class="badge badge-success">${ic.checkCircle}Đã đánh giá<c:if test="${not empty myReview.updated_at}"> · đã sửa</c:if></span></c:if>
+            </div>
+            <c:if test="${empty sessionScope.authUser}"><p class="muted text-sm">Bạn cần <a href="${ctx}/login">đăng nhập</a> để gửi đánh giá.</p></c:if>
+            <c:if test="${not empty sessionScope.authUser and not hasReviewed and not hasWatched}">
+              <p class="muted text-sm">Bạn chưa có lịch sử xem phim này — đánh giá sẽ bị từ chối cho đến khi bạn xem phim tại rạp.</p>
+            </c:if>
+            <c:if test="${myReview.is_hidden == 1}"><p class="muted text-sm">Nhận xét của bạn đang bị quản lý ẩn; số sao vẫn được tính.</p></c:if>
             <div class="field">
               <label for="rating">Số sao<span class="req">*</span></label>
               <select id="rating" name="rating" required>
                 <option value="">Chọn số sao</option>
-                <option value="5">★★★★★ Rất hay</option><option value="4">★★★★ Hay</option>
-                <option value="3">★★★ Bình thường</option><option value="2">★★ Tệ</option><option value="1">★ Rất tệ</option>
+                <option value="5" ${myReview.rating == 5 ? 'selected' : ''}>★★★★★ Rất hay</option>
+                <option value="4" ${myReview.rating == 4 ? 'selected' : ''}>★★★★ Hay</option>
+                <option value="3" ${myReview.rating == 3 ? 'selected' : ''}>★★★ Bình thường</option>
+                <option value="2" ${myReview.rating == 2 ? 'selected' : ''}>★★ Tệ</option>
+                <option value="1" ${myReview.rating == 1 ? 'selected' : ''}>★ Rất tệ</option>
               </select>
             </div>
             <div class="field">
               <label for="comment">Nhận xét (tùy chọn)</label>
-              <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Chia sẻ cảm nhận của bạn về bộ phim..."></textarea>
+              <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Chia sẻ cảm nhận của bạn về bộ phim..."><c:out value="${myReview.comment}"/></textarea>
             </div>
-            <div class="form-actions start"><button class="btn btn-primary" type="submit">Gửi đánh giá</button></div>
+            <div class="form-actions start"><button class="btn btn-primary" type="submit"><c:out value="${hasReviewed ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}"/></button></div>
           </form>
-        </c:if>
-        <c:if test="${hasReviewed}"><div class="alert alert-info mt-16">${ic.checkCircle}<span>Bạn đã đánh giá phim này. Cảm ơn bạn!</span></div></c:if>
-        <c:if test="${not canReview and not hasReviewed and sessionScope.authUser.role == 'CUSTOMER'}">
-          <p class="muted text-sm mt-8">Bạn có thể đánh giá sau khi xem xong phim (vé đã được soát tại rạp và suất chiếu đã kết thúc).</p>
         </c:if>
 
         <c:choose>
@@ -117,7 +118,7 @@
                     <div class="cluster" style="--gap:10px">
                       <strong class="text-ink"><c:out value="${r.reviewer_name}"/></strong>
                       <span class="stars" aria-label="${r.rating} trên 5 sao"><c:forEach begin="1" end="${r.rating}">★</c:forEach><span class="off"><c:forEach begin="${r.rating + 1}" end="5">★</c:forEach></span></span>
-                      <span class="muted text-xs"><c:out value="${r.created_at}"/></span>
+                      <span class="muted text-xs"><c:out value="${r.created_at}"/><c:if test="${not empty r.updated_at}"> · đã sửa</c:if></span>
                     </div>
                     <c:if test="${not empty r.comment}"><p class="mt-4"><c:out value="${r.comment}"/></p></c:if>
                   </div>
@@ -137,6 +138,9 @@
         <dt>Đạo diễn</dt><dd><c:out value="${empty movie.director ? '—' : movie.director}"/></dd>
         <dt>Diễn viên</dt><dd><c:out value="${empty movie.mainCast ? '—' : movie.mainCast}"/></dd>
         <dt>Ngôn ngữ</dt><dd><c:out value="${empty movie.spokenLanguage ? '—' : movie.spokenLanguage}"/></dd>
+        <c:forEach var="vc" items="${voiceCasts}">
+          <dt>Lồng tiếng <c:out value="${vc.key.startsWith('Tiếng ') ? vc.key.substring(6) : vc.key}"/></dt><dd><c:out value="${vc.value}"/></dd>
+        </c:forEach>
         <dt>Quốc gia</dt><dd><c:out value="${empty movie.country ? '—' : movie.country}"/></dd>
         <dt>Khởi chiếu</dt><dd><c:out value="${movie.releaseDateLabel}"/></dd>
         <dt>Kết thúc</dt><dd><c:out value="${movie.endDateLabel}"/></dd>
@@ -148,10 +152,8 @@
           <dt>Tệp trailer</dt><dd><c:out value="${empty movie.trailerFile ? '—' : movie.trailerFile}"/></dd>
         </c:if>
       </dl>
-      <a class="btn btn-block mt-24" href="${ctx}/movies">${ic.chevronLeft}Quay lại danh sách phim</a>
     </aside>
   </div>
 </div>
 
-<script src="${ctx}/assets/js/movie-showtimes.js" data-ctx="${ctx}"></script>
 <%@ include file="../layout/bottom.jspf" %>

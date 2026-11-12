@@ -14,6 +14,8 @@ public class ShowtimeInfo {
     private String slotName;
     private LocalDateTime startTime;
     private int durationMinutes;
+    private String languageMode;
+    private String language;
     private int availableSeats; // số ghế còn trống (màu GREEN trong vw_SeatMap)
 
     public int getShowtimeId() { return showtimeId; }
@@ -65,4 +67,11 @@ public class ShowtimeInfo {
         if (startTime == null) return "";
         return startTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
+
+    public String getLanguageMode() { return languageMode; }
+    public void setLanguageMode(String languageMode) { this.languageMode = languageMode; }
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) { this.language = language; }
+    /** "Phụ đề Việt" / "Lồng tiếng Việt"; rỗng nếu suất chưa khai báo. */
+    public String getLanguageShort() { return Showtime.shortLanguageLabel(languageMode, language); }
 }

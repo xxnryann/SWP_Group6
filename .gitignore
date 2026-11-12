@@ -2,6 +2,7 @@
 /web/WEB-INF/classes/
 /build/
 /dist/
+/build_tmp/
 
 # ---- Media upload runtime (app tạo file lúc chạy) ----
 /media/

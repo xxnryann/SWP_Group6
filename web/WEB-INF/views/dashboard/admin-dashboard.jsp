@@ -19,13 +19,16 @@
 </c:if>
 
 <c:if test="${not empty stats}">
+  <c:set var="revenueFilterAction" value="${ctx}/dashboard/admin"/>
+  <%@ include file="_revenue_filter.jspf" %>
   <section class="stats" aria-label="Số liệu chính">
-    <div class="stat featured">
+    <a class="stat featured" href="${ctx}/dashboard/revenue?${rf.query}" title="Xem chi tiết các đơn tạo nên doanh thu">
       <div class="stat-icon">${ic.wallet}</div>
-      <div class="stat-label">Doanh thu</div>
-      <div class="stat-value money"><fmt:formatNumber value="${stats.revenue}" groupingUsed="true"/> đ</div>
-      <div class="stat-meta"><c:out value="${stats.bookings_paid}"/> đơn đã thanh toán</div>
-    </div>
+      <div class="stat-label">Doanh thu · <c:out value="${rf.typeLabel}"/></div>
+      <div class="stat-value money"><fmt:formatNumber value="${revenue.revenue}" groupingUsed="true"/> đ</div>
+      <div class="stat-meta"><c:out value="${revenue.bookings}"/> đơn đã thanh toán · <c:out value="${rf.periodLabel}"/></div>
+      <span class="stat-link-hint">Xem chi tiết ${ic.arrowRight}</span>
+    </a>
     <div class="stat">
       <div class="stat-icon">${ic.users}</div>
       <div class="stat-label">Tổng tài khoản</div>

@@ -29,6 +29,7 @@
             <div class="cluster mt-8" style="--gap:8px">
               <span class="badge">${ic.door}<c:out value="${s.roomName}"/></span>
               <span class="badge">${ic.clock}<c:out value="${s.timeRangeLabel}"/></span>
+              <c:if test="${not empty s.languageShort}"><span class="badge badge-accent">${ic.message}<c:out value="${s.languageShort}"/></span></c:if>
               <c:choose>
                 <c:when test="${s.availableSeats == 0}"><span class="badge badge-danger">Hết ghế</span></c:when>
                 <c:when test="${s.availableSeats <= 10}"><span class="badge badge-warning">Sắp hết · còn ${s.availableSeats} ghế</span></c:when>

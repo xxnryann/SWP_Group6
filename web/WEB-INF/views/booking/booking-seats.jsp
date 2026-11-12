@@ -12,6 +12,7 @@
     <h1><c:out value="${showtime.title}"/></h1>
     <span class="badge badge-brand">${ic.door}<c:out value="${showtime.roomName}"/></span>
     <span class="badge">${ic.clock}${showtime.startTimeLabel}</span>
+    <c:if test="${not empty showtime.languageShort}"><span class="badge badge-accent">${ic.message}<c:out value="${showtime.languageShort}"/></span></c:if>
     <a class="btn btn-ghost btn-sm" href="${ctx}/showtimes" style="margin-left:auto">${ic.chevronLeft}Đổi suất chiếu</a>
   </div>
 

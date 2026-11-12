@@ -68,10 +68,7 @@ public class MovieServlet extends BaseServlet {
         request.setAttribute("selectedStatus", status);
         request.setAttribute("pageTitle", "Phim");
         request.setAttribute("showStatusFilter", canFilterByStatus);
-        // Nút "Mua vé" chỉ hiện cho khách / khách vãng lai và chỉ với phim còn suất chiếu sắp tới.
-        boolean canBuy = viewer == null || "CUSTOMER".equals(viewer.getRole());
-        request.setAttribute("canBuy", canBuy);
-        if (canBuy) request.setAttribute("bookableIds", MovieShowtimesServlet.bookableMovieIds());
+        // Danh sách phim không còn nút "Mua vé" (khách đặt vé qua trang Lịch chiếu / chi tiết phim).
         forward(request, response, "movie/movies");
     }
 
@@ -88,8 +85,11 @@ public class MovieServlet extends BaseServlet {
             return;
         }
         loadReviews(request, movie.getMovieId());
-        User viewer = currentUser(request);
-        request.setAttribute("canBuy", viewer == null || "CUSTOMER".equals(viewer.getRole()));
+        try {
+            request.setAttribute("voiceCasts", new com.cinema.dao.MovieVoiceCastDAO().findByMovie(movie.getMovieId()));
+        } catch (SQLException e) {
+            getServletContext().log("Cannot load voice cast for movie " + movie.getMovieId(), e);
+        }
         request.setAttribute("movie", movie);
         request.setAttribute("pageTitle", movie.getTitle());
         forward(request, response, "movie/movie-detail");
@@ -104,9 +104,11 @@ public class MovieServlet extends BaseServlet {
             if (user != null && "CUSTOMER".equals(user.getRole())) {
                 int customerId = accountDAO.findAccountIdByEmail(user.getEmail());
                 if (customerId > 0) {
-                    boolean reviewed = reviewDAO.hasReviewed(customerId, movieId);
-                    request.setAttribute("hasReviewed", reviewed);
-                    request.setAttribute("canReview", !reviewed && reviewDAO.hasWatched(customerId, movieId));
+                    // Mọi khách đều thấy form; khi gửi, server từ chối nếu chưa có lịch sử xem phim.
+                    java.util.Map<String, Object> mine = reviewDAO.findMine(customerId, movieId);
+                    request.setAttribute("myReview", mine);
+                    request.setAttribute("hasReviewed", mine != null);
+                    request.setAttribute("hasWatched", reviewDAO.hasWatched(customerId, movieId));
                 }
             }
         } catch (SQLException e) {

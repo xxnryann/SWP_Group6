@@ -1,0 +1,25 @@
+<%-- Bộ lọc doanh thu dùng chung (dashboard Admin/Manager + trang chi tiết doanh thu).
+     Cần: ${rf} (RevenueFilter), ${revenueFilterAction} (URL đích của form, đã gồm ${ctx}). --%>
+<section class="card mb-24">
+  <form class="toolbar" style="border-bottom:0" method="get" action="${revenueFilterAction}" role="search" aria-label="Lọc doanh thu">
+    <div class="field"><label for="rf-from">Từ ngày</label><input id="rf-from" type="date" name="from" value="${rf.from}"></div>
+    <div class="field"><label for="rf-to">Đến ngày</label><input id="rf-to" type="date" name="to" value="${rf.to}"></div>
+    <div class="field grow"><label for="rf-type">Loại doanh thu</label>
+      <select id="rf-type" name="type">
+        <option value="actual"  ${rf.type == 'actual'  ? 'selected' : ''}>Thực thu (sau giảm giá)</option>
+        <option value="gross"   ${rf.type == 'gross'   ? 'selected' : ''}>Tổng giá trị (trước giảm giá)</option>
+        <option value="tickets" ${rf.type == 'tickets' ? 'selected' : ''}>Chỉ vé phim</option>
+        <option value="combo"   ${rf.type == 'combo'   ? 'selected' : ''}>Chỉ bỏng nước</option>
+      </select>
+    </div>
+    <div class="field"><label for="rf-channel">Kênh bán</label>
+      <select id="rf-channel" name="channel">
+        <option value="">Tất cả</option>
+        <option value="Online"  ${rf.channel == 'Online'  ? 'selected' : ''}>Online</option>
+        <option value="Counter" ${rf.channel == 'Counter' ? 'selected' : ''}>Tại quầy</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit">${ic.filter}Lọc</button>
+    <c:if test="${rf.filtered}"><a class="btn btn-ghost" href="${revenueFilterAction}">Xóa lọc</a></c:if>
+  </form>
+</section>

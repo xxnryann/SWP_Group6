@@ -1,6 +1,6 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<c:set var="pageTitle" value="Trang chủ"/>
+<c:set var="pageTitle" value="${roleModule ? 'Tổng quan' : 'Trang chủ'}"/>
 <c:set var="mainClass" value="p-0"/>
 <%@ include file="../layout/top.jspf" %>
 <c:set var="heroMovies" value="${not empty nowShowingMovies ? nowShowingMovies : upcomingMovies}"/>

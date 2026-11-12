@@ -2,8 +2,7 @@
 <%-- Thẻ phim dùng chung. Trước khi include đặt:
        mv      : Movie
        mvNext  : (tùy chọn) nhãn suất gần nhất
-       mvCta   : 'buy' = nút Mua vé mở popup lịch chiếu (cần movie-showtimes.js),
-                 'showtimes' = link tới trang lịch chiếu, còn lại = Xem chi tiết --%>
+       mvCta   : 'showtimes' = link tới trang lịch chiếu, còn lại = Xem chi tiết --%>
 <c:url var="mvUrl" value="/movies/detail"><c:param name="id" value="${mv.movieId}"/></c:url>
 <article class="movie-card">
   <a class="poster" href="<c:out value='${mvUrl}'/>" aria-label="Xem chi tiết <c:out value='${mv.title}'/>">
@@ -18,7 +17,6 @@
         <c:when test="${mv.status == 'NowShowing'}"><span class="badge badge-success badge-dot">Đang chiếu</span></c:when>
         <c:otherwise><span class="badge">Đã kết thúc</span></c:otherwise>
       </c:choose>
-      <span class="btn btn-light btn-sm">${ic.eye}Xem chi tiết</span>
     </span>
   </a>
   <div>
@@ -30,7 +28,6 @@
     <c:if test="${not empty mvNext}"><div class="movie-meta mt-4"><span class="text-brand fw-600">${ic.clock}</span><span>Suất gần nhất: <strong class="text-ink"><c:out value="${mvNext}"/></strong></span></div></c:if>
   </div>
   <c:choose>
-    <c:when test="${mvCta == 'buy'}"><button type="button" class="btn btn-primary btn-block js-buy-ticket" data-movie-id="${mv.movieId}">${ic.ticket}Mua vé</button></c:when>
     <c:when test="${mvCta == 'showtimes'}"><a class="btn btn-primary btn-block" href="${ctx}/showtimes">${ic.ticket}Mua vé</a></c:when>
     <c:otherwise><a class="btn btn-block" href="<c:out value='${mvUrl}'/>">Xem chi tiết</a></c:otherwise>
   </c:choose>

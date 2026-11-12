@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/** Gửi đánh giá phim (khách hàng đã xem). POST /movies/review */
+/** Gửi hoặc sửa đánh giá phim. POST /movies/review — chỉ khách đã xem phim; MyPoint chỉ cộng lần đầu. */
 @WebServlet("/movies/review")
 public class ReviewServlet extends BaseServlet {
 
@@ -52,7 +52,12 @@ public class ReviewServlet extends BaseServlet {
                 if (customerId == 0) {
                     flash(req, "error", "Không tìm thấy tài khoản khách hàng của bạn.");
                 } else if (dao.hasReviewed(customerId, movieId)) {
-                    flash(req, "error", "Bạn đã đánh giá phim này rồi.");
+                    // Sửa đánh giá: không cộng thêm MyPoint.
+                    dao.update(customerId, movieId, rating, comment);
+                    flash(req, "success", "Đã cập nhật đánh giá của bạn.");
+                } else if (!dao.hasWatched(customerId, movieId)) {
+                    flash(req, "error", "Bạn chưa có lịch sử xem phim này nên chưa thể đánh giá. "
+                            + "Chỉ khách đã xem phim (vé đã soát tại rạp, suất chiếu đã kết thúc) mới được đánh giá.");
                 } else {
                     dao.add(customerId, movieId, rating, comment);
                     flash(req, "success", "Cảm ơn bạn đã đánh giá phim! Bạn nhận được 5 điểm MyPoint.");

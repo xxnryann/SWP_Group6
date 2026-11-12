@@ -40,6 +40,7 @@ public class DashboardAuthFilter extends HttpFilter {
             case "/dashboard/admin":
                 return Set.of("ADMIN");
             case "/dashboard/manager":
+            case "/dashboard/revenue":
                 return Set.of("MANAGER", "ADMIN");
             case "/dashboard/staff":
                 return Set.of("STAFF", "MANAGER", "ADMIN");

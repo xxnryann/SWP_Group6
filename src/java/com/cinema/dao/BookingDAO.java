@@ -43,7 +43,7 @@ public class BookingDAO {
     /** Thông tin suất chiếu để hiển thị trên màn hình đặt vé. */
     public ShowtimeInfo findShowtimeById(int showtimeId) throws SQLException {
         String sql =
-                "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time " +
+                "SELECT s.showtime_id, m.title, m.duration_minutes, r.room_name, ts.slot_name, s.start_time, s.language_mode, s.language " +
                         "FROM Showtime s " +
                         "JOIN Movie m ON m.movie_id = s.movie_id " +
                         "JOIN Room r ON r.room_id = s.room_id " +
@@ -60,6 +60,8 @@ public class BookingDAO {
                 s.setDurationMinutes(rs.getInt("duration_minutes"));
                 s.setRoomName(rs.getString("room_name"));
                 s.setSlotName(rs.getString("slot_name"));
+                s.setLanguageMode(rs.getString("language_mode"));
+                s.setLanguage(rs.getString("language"));
                 Timestamp t = rs.getTimestamp("start_time");
                 s.setStartTime(t == null ? null : t.toLocalDateTime());
                 return s;
