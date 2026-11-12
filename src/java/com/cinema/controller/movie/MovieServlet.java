@@ -85,6 +85,11 @@ public class MovieServlet extends BaseServlet {
             return;
         }
         loadReviews(request, movie.getMovieId());
+        try {
+            request.setAttribute("voiceCasts", new com.cinema.dao.MovieVoiceCastDAO().findByMovie(movie.getMovieId()));
+        } catch (SQLException e) {
+            getServletContext().log("Cannot load voice cast for movie " + movie.getMovieId(), e);
+        }
         request.setAttribute("movie", movie);
         request.setAttribute("pageTitle", movie.getTitle());
         forward(request, response, "movie/movie-detail");

@@ -312,13 +312,70 @@ public class ManageMovieServlet extends BaseServlet {
                 throw new IllegalArgumentException("Một hoặc nhiều thể loại không còn tồn tại. Vui lòng tải lại trang.");
             }
         }
+        java.util.Map<String, String> voiceCasts = reschedule ? null : readVoiceCasts(request, movie);
         String savedPoster = movie.getPosterUrl();
         String savedTrailer = movie.getTrailerFile();
         int savedId = movieDAO.save(movie, genreIds, currentUser(request).getUserId());
+        if (voiceCasts != null) saveVoiceCasts(id > 0 ? id : savedId, voiceCasts);
         if (id == 0) queueNewMovieEmail(savedId);
         request.setAttribute("savedPoster", savedPoster);
         request.setAttribute("savedTrailer", savedTrailer);
         return oldMovie;
+    }
+
+    /**
+     * Diễn viên lồng tiếng theo từng ngôn ngữ của phim (cặp tham số voiceLang[] / voiceCast[]).
+     * BẮT BUỘC cho mọi ngôn ngữ đã chọn khác ngôn ngữ của quốc gia sản xuất (ngôn ngữ gốc).
+     * Trả về: ngôn ngữ -> diễn viên; ngôn ngữ không còn thuộc phim sẽ bị xóa (giá trị rỗng).
+     */
+    private java.util.Map<String, String> readVoiceCasts(HttpServletRequest request, Movie movie) {
+        String[] langs = request.getParameterValues("voiceLang");
+        String[] casts = request.getParameterValues("voiceCast");
+        java.util.Map<String, String> given = new java.util.HashMap<>();
+        if (langs != null && casts != null) {
+            for (int i = 0; i < Math.min(langs.length, casts.length); i++) {
+                if (langs[i] != null) given.put(langs[i].trim(), casts[i] == null ? "" : casts[i].trim());
+            }
+        }
+        java.util.List<String> selected = com.cinema.util.movie.MovieLocales.splitLanguages(movie.getSpokenLanguage());
+        String original = com.cinema.util.movie.MovieLocales.originalLanguage(movie.getCountry(), movie.getSpokenLanguage());
+        java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+        for (String lang : com.cinema.util.movie.MovieLocales.languages()) {
+            if (!selected.contains(lang) || lang.equals(original)) {
+                out.put(lang, "");   // không cần / không còn dùng -> xóa nếu có
+                continue;
+            }
+            String cast = given.getOrDefault(lang, "");
+            if (cast.isEmpty()) {
+                throw new IllegalArgumentException("Vui lòng nhập diễn viên lồng tiếng cho " + lang
+                        + " (ngôn ngữ khác ngôn ngữ gốc của phim).");
+            }
+            if (cast.length() > 500) {
+                throw new IllegalArgumentException("Diễn viên lồng tiếng " + lang + " tối đa 500 ký tự.");
+            }
+            if (!cast.isEmpty() && !cast.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} ,.&'()/+\\-]*")) {
+                throw new IllegalArgumentException("Diễn viên lồng tiếng " + lang + " chỉ gồm chữ, số và dấu câu cơ bản.");
+            }
+            out.put(lang, cast);
+        }
+        return out;
+    }
+
+    /** Lưu diễn viên lồng tiếng sau khi phim đã lưu; lỗi ở bước này không làm hỏng việc lưu phim. */
+    private void saveVoiceCasts(int movieId, java.util.Map<String, String> casts) {
+        com.cinema.dao.MovieVoiceCastDAO dao = new com.cinema.dao.MovieVoiceCastDAO();
+        try {
+            java.util.Map<String, String> existing = dao.findByMovie(movieId);
+            for (java.util.Map.Entry<String, String> e : casts.entrySet()) {
+                if (e.getValue().isEmpty()) {
+                    if (existing.containsKey(e.getKey())) dao.delete(movieId, e.getKey());
+                    continue;
+                }
+                dao.save(movieId, e.getKey(), e.getValue());
+            }
+        } catch (SQLException e) {
+            getServletContext().log("Cannot save voice cast for movie " + movieId, e);
+        }
     }
 
     /** Phim đã lưu xong thì lỗi xếp email không được làm hỏng thao tác lưu. */
@@ -371,8 +428,29 @@ public class ManageMovieServlet extends BaseServlet {
         java.util.List<String> legacy = new java.util.ArrayList<>();
         for (String l : chosen) if (!com.cinema.util.movie.MovieLocales.isLanguage(l)) legacy.add(l);
         request.setAttribute("legacyLanguages", legacy);
+        // Diễn viên lồng tiếng: giá trị vừa nhập (khi form báo lỗi) hoặc dữ liệu đã lưu của phim.
+        java.util.Map<String, String> casts = new java.util.LinkedHashMap<>();
+        String[] vl = request.getParameterValues("voiceLang");
+        String[] vc = request.getParameterValues("voiceCast");
+        if (vl != null && vc != null) {
+            for (int i = 0; i < Math.min(vl.length, vc.length); i++) casts.put(vl[i], vc[i]);
+        } else if (formMovie.getMovieId() > 0) {
+            casts = new com.cinema.dao.MovieVoiceCastDAO().findByMovie(formMovie.getMovieId());
+        }
+        request.setAttribute("voiceCastJson", toJson(casts));
+        request.setAttribute("countryLanguageJson", toJson(com.cinema.util.movie.MovieLocales.countryLanguages()));
         request.setAttribute("pageTitle", movie == null ? "Thêm phim" : "Sửa phim");
         forward(request, response, "movie/movie-form");
+    }
+
+    private static String toJson(java.util.Map<String, String> map) {
+        StringBuilder sb = new StringBuilder("{");
+        for (java.util.Map.Entry<String, String> e : map.entrySet()) {
+            if (sb.length() > 1) sb.append(',');
+            sb.append(com.cinema.util.showtime.RoomScheduleJson.quote(e.getKey())).append(':')
+                    .append(com.cinema.util.showtime.RoomScheduleJson.quote(e.getValue()));
+        }
+        return sb.append('}').toString();
     }
 
     private Movie readMovie(HttpServletRequest request, int id) {

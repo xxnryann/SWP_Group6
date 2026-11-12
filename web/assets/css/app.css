@@ -905,3 +905,9 @@ kbd { display: inline-block; padding: 0 5px; border: 1px solid var(--line-strong
 .side-bell { position: relative; display: inline-grid; place-items: center; flex: none; }
 .side-bell .notif-count { top: -8px; right: -9px; min-width: 17px; height: 17px; font-size: 10.5px; }
 .inbox-item.is-unread { background: var(--brand-50); }
+
+/* Form phim: diễn viên lồng tiếng theo từng ngôn ngữ (không bắt buộc) */
+.voice-cast-rows { display: grid; gap: 10px; margin-top: 6px; }
+.voice-cast-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 12px; }
+.voice-cast-row > span { font-weight: 600; color: var(--ink); font-size: 14px; }
+@media (max-width: 640px) { .voice-cast-row { grid-template-columns: 1fr; gap: 4px; } }

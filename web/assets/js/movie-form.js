@@ -113,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Ô ngôn ngữ: dropdown giống ô Quốc gia nhưng chọn được nhiều (giữ <select multiple> ẩn để gửi form).
   const languageSelect = form.querySelector('select[name="spokenLanguage"]');
   if (languageSelect) enhanceMultiSelect(languageSelect);
+  if (languageSelect) setupVoiceCasts(form, languageSelect);
 });
 
 /**
@@ -230,4 +231,55 @@ function enhanceMultiSelect(select) {
     if (label) label.htmlFor = toggle.id;
   }
   sync();
+}
+
+/**
+ * Form phim: mỗi ngôn ngữ đã chọn khác ngôn ngữ gốc (ngôn ngữ của quốc gia sản xuất) phải có
+ * "Diễn viên lồng tiếng" (bắt buộc). Gửi lên server theo cặp voiceLang / voiceCast.
+ */
+function setupVoiceCasts(form, languageSelect) {
+  const group = document.getElementById("voice-cast-group");
+  const rows = document.getElementById("voice-cast-rows");
+  const country = form.querySelector('select[name="country"]');
+  if (!group || !rows) return;
+  const parse = (text) => { try { return JSON.parse(text || "{}"); } catch (e) { return {}; } };
+  const values = parse(group.dataset.casts);          // ngôn ngữ -> diễn viên (đã lưu / vừa nhập)
+  const countryLangs = parse(group.dataset.countryLangs);
+  const short = (name) => (name.startsWith("Tiếng ") ? name.slice(6) : name);
+
+  const render = () => {
+    // Giữ lại những gì đang gõ trước khi vẽ lại.
+    rows.querySelectorAll(".voice-cast-row").forEach((row) => {
+      values[row.dataset.lang] = row.querySelector("input[type=text]").value;
+    });
+    const picked = Array.from(languageSelect.options).filter((o) => o.selected).map((o) => o.value);
+    const original = country ? countryLangs[country.value] : undefined;
+    const langs = picked.filter((l) => l !== original);
+    rows.innerHTML = "";
+    langs.forEach((lang) => {
+      const row = document.createElement("label");
+      row.className = "voice-cast-row";
+      row.dataset.lang = lang;
+      const name = document.createElement("span");
+      name.textContent = "Lồng tiếng " + short(lang);
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "voiceLang";
+      hidden.value = lang;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = "voiceCast";
+      input.maxLength = 500;
+      input.required = true;
+      input.placeholder = "Ví dụ: Nguyễn Văn A, Trần Thị B";
+      input.value = values[lang] || "";
+      row.append(name, hidden, input);
+      rows.appendChild(row);
+    });
+    group.hidden = langs.length === 0;
+  };
+
+  languageSelect.addEventListener("change", render);
+  if (country) country.addEventListener("change", render);
+  render();
 }

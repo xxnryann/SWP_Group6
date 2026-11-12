@@ -8,10 +8,6 @@
     <h1 class="mt-8">Xin chào, <c:out value="${me.fullName}"/></h1>
     <p>Phim, lịch chiếu, giá vé, voucher và tin tức của rạp trong một màn hình.</p>
   </div>
-  <div class="cluster">
-    <a class="btn" href="${ctx}/manage/showtimes">${ic.calendar}Lịch chiếu</a>
-    <a class="btn btn-primary" href="${ctx}/manage/movies?action=new">${ic.plus}Thêm phim</a>
-  </div>
 </div>
 
 <c:if test="${not empty statsError}"><div class="alert alert-error mb-24" role="alert">${ic.alert}<span><c:out value="${statsError}"/></span></div></c:if>

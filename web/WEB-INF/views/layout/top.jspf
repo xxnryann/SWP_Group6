@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&subset=vietnamese&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="${ctx}/assets/img/favicon.svg">
-  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=6">
+  <link rel="stylesheet" href="${ctx}/assets/css/app.css?v=7">
   <c:if test="${not empty pageCss}"><link rel="stylesheet" href="${ctx}/assets/css/${pageCss}?v=3"></c:if>
 </head>
 <body class="${appShell ? 'is-app' : 'is-site'} ${bodyClass}" data-user="<c:out value='${me.fullName}'/>">

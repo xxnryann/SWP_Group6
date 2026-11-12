@@ -111,6 +111,13 @@
           <span class="hint text-danger">Giá trị cũ không có trong danh sách: <c:forEach var="l" items="${legacyLanguages}" varStatus="st"><c:out value="${l}"/><c:if test="${not st.last}">, </c:if></c:forEach>. Hãy chọn lại.</span>
         </c:if>
       </div>
+      <c:set var="escapedVoiceJson"><c:out value="${voiceCastJson}"/></c:set>
+      <c:set var="escapedCountryLangJson"><c:out value="${countryLanguageJson}"/></c:set>
+      <div class="field full" id="voice-cast-group" data-casts="${escapedVoiceJson}" data-country-langs="${escapedCountryLangJson}" hidden>
+        <span class="label">Diễn viên lồng tiếng<span class="req">*</span></span>
+        <span class="hint">Bắt buộc cho mỗi ngôn ngữ khác ngôn ngữ gốc của phim (ngôn ngữ của quốc gia sản xuất). Hiện ở mục Thông tin phim.</span>
+        <div class="voice-cast-rows" id="voice-cast-rows"></div>
+      </div>
       <div class="section-title">Lịch chiếu</div>
     </c:if>
 
@@ -156,5 +163,5 @@
     <button class="btn btn-primary" type="submit">${ic.check}Lưu phim</button>
   </div>
 </form>
-<script src="${ctx}/assets/js/movie-form.js?v=20261112-2" defer></script>
+<script src="${ctx}/assets/js/movie-form.js?v=20261112-3" defer></script>
 <%@ include file="../layout/bottom.jspf" %>

@@ -138,6 +138,9 @@
         <dt>Đạo diễn</dt><dd><c:out value="${empty movie.director ? '—' : movie.director}"/></dd>
         <dt>Diễn viên</dt><dd><c:out value="${empty movie.mainCast ? '—' : movie.mainCast}"/></dd>
         <dt>Ngôn ngữ</dt><dd><c:out value="${empty movie.spokenLanguage ? '—' : movie.spokenLanguage}"/></dd>
+        <c:forEach var="vc" items="${voiceCasts}">
+          <dt>Lồng tiếng <c:out value="${vc.key.startsWith('Tiếng ') ? vc.key.substring(6) : vc.key}"/></dt><dd><c:out value="${vc.value}"/></dd>
+        </c:forEach>
         <dt>Quốc gia</dt><dd><c:out value="${empty movie.country ? '—' : movie.country}"/></dd>
         <dt>Khởi chiếu</dt><dd><c:out value="${movie.releaseDateLabel}"/></dd>
         <dt>Kết thúc</dt><dd><c:out value="${movie.endDateLabel}"/></dd>

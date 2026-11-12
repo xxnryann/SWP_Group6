@@ -402,10 +402,10 @@ public class ShowtimeDAO {
                     throw new SQLException("Phim được chọn không tồn tại.");
                 }
                 java.util.List<String> allowed = com.cinema.util.movie.MovieLocales
-                        .splitLanguages(result.getString("spoken_language"));
+                        .showtimeLanguages(result.getString("spoken_language"));
                 if (showtime.getLanguage() == null || !allowed.contains(showtime.getLanguage())) {
-                    throw new SQLException("Ngôn ngữ của suất chiếu phải là một trong các ngôn ngữ của phim"
-                            + (allowed.isEmpty() ? "." : " (" + String.join(", ", allowed) + ")."));
+                    throw new SQLException("Ngôn ngữ của suất chiếu phải là tiếng Việt hoặc một trong các ngôn ngữ của phim ("
+                            + String.join(", ", allowed) + ").");
                 }
             }
         }

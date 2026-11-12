@@ -100,6 +100,18 @@ GO
 UPDATE dbo.Movie SET end_date = DATEADD(MONTH, 1, release_date) WHERE end_date IS NULL;
 GO
 
+-- Dien vien long tieng cho moi ngon ngu khac ngon ngu goc (ngon ngu cua quoc gia san xuat) cua phim mau.
+INSERT dbo.MovieVoiceCast (movie_id, language, voice_cast)
+SELECT m.movie_id, l.lang,
+       N'Diễn viên lồng tiếng ' + CAST(m.movie_id * 2 - 1 AS NVARCHAR(10)) + N', Diễn viên lồng tiếng ' + CAST(m.movie_id * 2 AS NVARCHAR(10))
+FROM dbo.Movie m
+CROSS APPLY (SELECT LTRIM(RTRIM(value)) AS lang FROM STRING_SPLIT(m.spoken_language, ',')) l
+WHERE l.lang <> ''
+  AND l.lang <> CASE m.country WHEN N'Việt Nam' THEN N'Tiếng Việt' WHEN N'Mỹ' THEN N'Tiếng Anh'
+                               WHEN N'Anh' THEN N'Tiếng Anh' WHEN N'Thái Lan' THEN N'Tiếng Thái' ELSE N'' END
+  AND NOT EXISTS (SELECT 1 FROM dbo.MovieVoiceCast v WHERE v.movie_id = m.movie_id AND v.language = l.lang);
+GO
+
 INSERT dbo.MovieGenre(movie_id, genre_id)
 SELECT v.movie_id, g.genre_id
 FROM (VALUES

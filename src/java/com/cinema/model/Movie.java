@@ -50,6 +50,10 @@ public class Movie {
     public String getSpokenLanguage() { return spokenLanguage; }
     public void setSpokenLanguage(String spokenLanguage) { this.spokenLanguage = spokenLanguage; }
     public String getCountry() { return country; }
+    /** Ngôn ngữ gốc (theo quốc gia sản xuất) — mặc định cho suất chiếu mới. */
+    public String getOriginalLanguage() { return com.cinema.util.movie.MovieLocales.originalLanguage(country, spokenLanguage); }
+    /** Ngôn ngữ chọn được cho suất chiếu: "Tiếng Việt, ..." (tiếng Việt luôn có, đứng đầu). */
+    public String getShowtimeLanguages() { return String.join(", ", com.cinema.util.movie.MovieLocales.showtimeLanguages(spokenLanguage)); }
     public void setCountry(String country) { this.country = country; }
     public String getAgeRating() { return ageRating; }
     public void setAgeRating(String ageRating) { this.ageRating = ageRating; }

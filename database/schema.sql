@@ -466,6 +466,7 @@ BEGIN
         UPDATE dbo.Movie SET is_deleted = 1, status = 'Stopped', updated_at = SYSDATETIME() WHERE movie_id = @movie_id;
     ELSE
     BEGIN
+        DELETE FROM dbo.MovieVoiceCast WHERE movie_id = @movie_id;
         DELETE FROM dbo.Movie WHERE movie_id = @movie_id;
         SET @hard_deleted = 1;
     END
@@ -1797,6 +1798,18 @@ GO
 -- ---------- Bảng ----------
 GO
 
+-- Dien vien long tieng theo tung ngon ngu cua phim: bat buoc khi tao/sua phim cho moi ngon ngu
+-- khac ngon ngu goc (ngon ngu cua quoc gia san xuat); hien o Thong tin phim.
+CREATE TABLE dbo.MovieVoiceCast (
+    movie_id INT NOT NULL,
+    language NVARCHAR(50) NOT NULL,
+    voice_cast NVARCHAR(500) NOT NULL,
+    updated_at DATETIME2(7) NOT NULL CONSTRAINT DF_MovieVoiceCast_Updated DEFAULT SYSDATETIME(),
+    CONSTRAINT PK_MovieVoiceCast PRIMARY KEY (movie_id, language),
+    CONSTRAINT FK_MovieVoiceCast_Movie FOREIGN KEY (movie_id) REFERENCES dbo.Movie(movie_id)
+);
+GO
+
 CREATE TABLE dbo.Review (
     review_id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Review PRIMARY KEY,
     movie_id INT NOT NULL,
@@ -2144,6 +2157,7 @@ GO
                Showtime.language_mode (Sub/Dub) + language (thuộc ngôn ngữ của phim)
    12/11/2026  EmailNotification.read_at: chuông thông báo đếm thông báo chưa đọc của khách
    12/11/2026  Review.updated_at + sp_UpdateReview: khách sửa đánh giá (MyPoint chỉ cộng lần đầu)
+   12/11/2026  MovieVoiceCast: diễn viên lồng tiếng theo ngôn ngữ (bắt buộc ở form phim cho ngôn ngữ khác ngôn ngữ gốc)
    04/11/2026  Combo: thêm image_url, đặt combo không trừ tồn kho; MyPoint dùng tới 100% giá trị đơn; chỉ xóa phim đã ngừng chiếu
    04/11/2026  SeatType: thêm loại Unassigned (seed) — ghế của phòng mới tạo mặc định chưa có loại, màu xám
    
