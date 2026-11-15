@@ -70,6 +70,7 @@ public abstract class BaseServlet extends HttpServlet {
         c.setRole(u.getRole());
         c.setStatus(u.getStatus());
         c.setMyPoint(u.getMyPoint());
+        c.setAvatarUrl(u.getAvatarUrl()); // menu bên trái / header hiển thị ảnh đại diện từ phiên
         return c;
     }
 

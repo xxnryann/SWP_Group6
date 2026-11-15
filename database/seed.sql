@@ -383,6 +383,8 @@ GO
    Demo 1. Poster / trailer phim va thumbnail tin tuc
    File anh poster KHONG nam trong repo: copy vao thu muc media (media.upload.root trong
    app.properties, thu muc con posters/) hoac upload lai o trang quan ly phim.
+   App tu tim them o web/WEB-INF/seed-media/posters/ (commit anh mau vao do); khong co
+   thi hien anh "Chua co poster" thay vi anh vo (DEF-005).
    ============================================================================ */
 SET NOCOUNT ON;
 

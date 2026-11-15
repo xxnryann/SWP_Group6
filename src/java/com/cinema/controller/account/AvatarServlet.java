@@ -42,6 +42,7 @@ public class AvatarServlet extends BaseServlet {
             String oldUrl = dao.findById(id).getAvatarUrl();
             String url = MediaUploadUtil.store(part, MediaUploadUtil.MediaType.AVATAR);
             dao.updateAvatar(id, url);
+            currentUser(req).setAvatarUrl(url); // cập nhật phiên để menu bên trái đổi ảnh ngay
             if (oldUrl != null && !oldUrl.equals(url)) {
                 MediaUploadUtil.delete(oldUrl);
             }
