@@ -5,12 +5,11 @@
 <div class="page-head">
   <div>
     <h1>Quản lý hệ thống</h1>
-    <p>Cấu hình tham số, sao lưu cơ sở dữ liệu và tra cứu nhật ký thao tác của quản trị viên, quản lý và nhân viên.</p>
+    <p>Sao lưu cơ sở dữ liệu và tra cứu nhật ký thao tác của quản trị viên, quản lý và nhân viên.</p>
   </div>
 </div>
 
 <nav class="tabs" aria-label="Quản lý hệ thống">
-  <a class="${tab == 'config' ? 'active' : ''}" href="${ctx}/admin/system?tab=config">Cấu hình</a>
   <a class="${tab == 'backup' ? 'active' : ''}" href="${ctx}/admin/system?tab=backup">Sao lưu dữ liệu</a>
   <a class="${tab == 'logs' ? 'active' : ''}" href="${ctx}/admin/system?tab=logs">Nhật ký hệ thống</a>
 </nav>
@@ -18,38 +17,6 @@
 <c:if test="${not empty error}"><div class="alert alert-error mb-24" role="alert">${ic.alert}<span><c:out value="${error}"/></span></div></c:if>
 
 <c:choose>
-  <c:when test="${tab == 'config'}">
-    <section class="card">
-      <div class="card-head"><div><h2>Tham số hệ thống</h2><p>Áp dụng ngay cho các thao tác mới (hủy vé, soát vé, giữ ghế, email nhắc lịch). Mọi lần lưu đều được ghi nhật ký.</p></div></div>
-      <c:choose>
-        <c:when test="${empty configs}">
-          <div class="empty"><div class="empty-icon">${ic.list}</div><h3>Chưa có tham số nào</h3><p>Bảng SystemConfig đang trống.</p></div>
-        </c:when>
-        <c:otherwise>
-          <form method="post" action="${ctx}/admin/system" data-confirm="Lưu cấu hình hệ thống?" data-loading>
-            <input type="hidden" name="_csrf" value="${csrf}">
-            <input type="hidden" name="action" value="saveConfig">
-            <div class="table-wrap">
-              <table class="table">
-                <thead><tr><th>Tham số</th><th>Mô tả</th><th style="width:180px">Giá trị</th><th class="nowrap">Khoảng hợp lệ</th></tr></thead>
-                <tbody>
-                <c:forEach var="cf" items="${configs}">
-                  <tr>
-                    <td><label for="cfg-${cf.config_key}"><code class="text-sm"><c:out value="${cf.config_key}"/></code></label></td>
-                    <td class="text-sm"><c:out value="${cf.description}"/></td>
-                    <td><input id="cfg-${cf.config_key}" name="<c:out value='${cf.config_key}'/>" type="number" required step="1" min="${cf.min}" max="${cf.max}" value="<c:out value='${cf.config_value}'/>" style="width:120px"></td>
-                    <td class="muted text-sm nowrap">${cf.min} – ${cf.max}</td>
-                  </tr>
-                </c:forEach>
-                </tbody>
-              </table>
-            </div>
-            <div class="card-foot"><button class="btn btn-primary" type="submit">${ic.check}Lưu cấu hình</button></div>
-          </form>
-        </c:otherwise>
-      </c:choose>
-    </section>
-  </c:when>
   <c:when test="${tab == 'backup'}">
     <section class="card card-pad mb-24">
       <div class="cluster between">
