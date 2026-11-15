@@ -225,28 +225,15 @@ const r = jsQR(rgba, w, h); process.stdout.write(r ? r.data : '');
     Write-Step '38. System Management'
     Assert-Test ((Html $admin '/dashboard/admin').Text.Contains('/admin/system')) 'menu admin co Quan ly he thong'
     foreach ($s in @($manager, $staff, $customer)) { Assert-Test ((Html $s '/admin/system').Code -eq 403) 'vai tro khac admin bi chan (403)' }
+    # Tab Cau hinh da bi go: khong con link, action saveConfig bi tu choi (400) va khong doi CSDL.
+    $page = Html $admin '/admin/system?tab=config'
+    Assert-Test ($page.Code -eq 200 -and -not $page.Text.Contains('tab=config') -and -not $page.Text.Contains('saveConfig')) 'tab cau hinh da duoc go'
     $cfgField = @{}
     foreach ($line in $configBackup) { $k, $v = $line.Split('|'); $cfgField[$k] = $v }
-    $page = Html $admin '/admin/system?tab=config'
-    Assert-Test ($page.Code -eq 200 -and $page.Text.Contains('name="CANCEL_BEFORE_HOURS"')) 'tab cau hinh hien thi'
-    # --- Cau hinh
-    $bad = $cfgField.Clone(); $bad.action = 'saveConfig'; $bad.CANCEL_BEFORE_HOURS = '999'; $bad.CHECKIN_EARLY_MINUTES = '45'
-    $r = Post $admin '/admin/system' $bad '/admin/system?tab=config'
-    Assert-Test ($r.FlashType -eq 'error') 'gia tri ngoai khoang bi tu choi'
-    Assert-Test ((Scalar "SELECT config_value FROM dbo.SystemConfig WHERE config_key='CHECKIN_EARLY_MINUTES';") -eq $cfgField.CHECKIN_EARLY_MINUTES) 'loi thi khong luu khoa nao'
-    $bad.CANCEL_BEFORE_HOURS = 'abc'
-    Assert-Test ((Post $admin '/admin/system' $bad '/admin/system?tab=config').FlashType -eq 'error') 'gia tri khong phai so bi tu choi'
-    $good = $cfgField.Clone(); $good.action = 'saveConfig'; $good.CHECKIN_EARLY_MINUTES = '45'; $good.CANCEL_BEFORE_HOURS = '3'
-    $r = Post $admin '/admin/system' $good '/admin/system?tab=config'
-    Assert-Test ($r.FlashType -eq 'success') 'luu cau hinh hop le'
-    Assert-Test ((Scalar "SELECT config_value FROM dbo.SystemConfig WHERE config_key='CHECKIN_EARLY_MINUTES';") -eq '45') 'gia tri moi nam trong CSDL'
-    # Cau hinh co tac dung that: mo cua som 45 phut -> ve chieu sau 40 phut soat duoc.
-    Sql "UPDATE dbo.Showtime SET start_time=DATEADD(MINUTE,40,SYSDATETIME()), end_time=DATEADD(MINUTE,150,SYSDATETIME()) WHERE showtime_id=$s2;" | Out-Null
-    Assert-Test ((Post $staff '/staff/checkin' @{ ticketCode = $decoded }).Text -match 'alert-success') 'CHECKIN_EARLY_MINUTES co tac dung that'
-    # Khoa la bi bo qua; CSRF sai bi chan.
-    $evil = $cfgField.Clone(); $evil.action = 'saveConfig'; $evil.HACK_KEY = '1'
-    Post $admin '/admin/system' $evil '/admin/system?tab=config' | Out-Null
-    Assert-Test ((Scalar "SELECT COUNT(*) FROM dbo.SystemConfig WHERE config_key='HACK_KEY';") -eq '0') 'khoa la khong duoc tao'
+    $evil = $cfgField.Clone(); $evil.action = 'saveConfig'; $evil.CANCEL_BEFORE_HOURS = '3'
+    try { Post $admin '/admin/system' $evil '/admin/system' | Out-Null } catch { }
+    Assert-Test ((Scalar "SELECT config_value FROM dbo.SystemConfig WHERE config_key='CANCEL_BEFORE_HOURS';") -eq $cfgField.CANCEL_BEFORE_HOURS) 'saveConfig khong con doi duoc cau hinh'
+    # CSRF sai bi chan.
     try {
         Invoke-WebRequest "$BaseUrl/admin/system" -Method Post -WebSession $admin -UseBasicParsing -Body @{ action = 'backup'; _csrf = 'sai' } | Out-Null
         Assert-Test $false 'CSRF sai phai bi chan'

@@ -3,7 +3,6 @@ package com.cinema.dao;
 import com.cinema.util.DBContext;
 import com.cinema.util.Rows;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
@@ -13,14 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Quản lý hệ thống (Admin): cấu hình chung, sao lưu CSDL, nhật ký thao tác. */
+/** Quản lý hệ thống (Admin): đọc tham số, sao lưu CSDL, nhật ký thao tác. */
 public class SystemDAO {
 
     private static final DateTimeFormatter BACKUP_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-
-    public List<Map<String, Object>> configs() throws SQLException {
-        return Rows.query("SELECT config_key, config_value, description FROM SystemConfig ORDER BY config_key");
-    }
 
     /** Đọc một tham số số nguyên; thiếu hoặc lỗi thì dùng giá trị mặc định. */
     public int configInt(String key, int def) {
@@ -29,25 +24,6 @@ public class SystemDAO {
             return rows.isEmpty() ? def : Integer.parseInt(String.valueOf(rows.get(0).get("config_value")).trim());
         } catch (SQLException | NumberFormatException e) {
             return def;
-        }
-    }
-
-    /** Lưu nhiều khóa cấu hình trong một transaction. */
-    public void updateConfigs(Map<String, String> values) throws SQLException {
-        try (Connection c = DBContext.getConnection();
-             PreparedStatement ps = c.prepareStatement("UPDATE SystemConfig SET config_value = ? WHERE config_key = ?")) {
-            c.setAutoCommit(false);
-            try {
-                for (Map.Entry<String, String> e : values.entrySet()) {
-                    ps.setString(1, e.getValue());
-                    ps.setString(2, e.getKey());
-                    ps.executeUpdate();
-                }
-                c.commit();
-            } catch (SQLException e) {
-                c.rollback();
-                throw e;
-            }
         }
     }
 
