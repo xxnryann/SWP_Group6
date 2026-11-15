@@ -101,4 +101,13 @@ public class BookingSummary {
     public String getVoucherDiscountLabel() { return Moneys.vnd(voucherDiscount); }
     public String getPointsDiscountLabel() { return Moneys.vnd(pointsDiscount); }
     public String getTotalAmountLabel() { return Moneys.vnd(totalAmount); }
+
+    /**
+     * Tổng phải thu dạng số nguyên (đồng) — dùng để nhúng vào JavaScript
+     * (tính tiền thối lại) mà không gặp rủi ro toString() của BigDecimal
+     * sinh ký hiệu khoa học hay dấu phẩy thập phân.
+     */
+    public long getTotalAmountVnd() {
+        return totalAmount == null ? 0L : totalAmount.setScale(0, java.math.RoundingMode.HALF_UP).longValue();
+    }
 }

@@ -9,6 +9,11 @@
   .qr-item { padding: 12px; text-align: center; border: 1.5px dashed var(--line-strong); border-radius: var(--r-lg); background: #fff; }
   .qr-item img { width: 130px; height: 130px; }
   .qr-item .voucher-code { display: block; margin-top: 8px; font-size: 12px; }
+  .change-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 18px auto 0; max-width: 460px; padding: 16px 18px; border: 2px solid var(--brand-500); border-radius: var(--r-lg); background: var(--brand-50); text-align: left; }
+  .change-box .change-label { font-weight: 600; color: var(--brand-700); }
+  .change-box .change-amount { font-size: 26px; font-weight: 800; color: var(--brand-700); white-space: nowrap; }
+  .change-box.exact { border-color: var(--success); background: var(--success-50); }
+  .change-box.exact .change-label, .change-box.exact .change-amount { color: var(--success); }
   @media print { .site-header, .sidebar, .app-topbar, .no-print { display: none !important; } .app { display: block; } }
 </style>
 <div class="receipt">
@@ -17,6 +22,20 @@
       <div class="receipt-ok">${ic.check}</div>
       <h1 style="font-size:26px">Thanh toán thành công</h1>
       <p class="muted mt-8">Mã đơn <span class="voucher-code"><c:out value="${summary.bookingCode}"/></span> · Khách hàng: <strong class="text-ink"><c:out value="${summary.hasCustomer ? summary.customerName : 'Khách vãng lai'}"/></strong></p>
+      <c:if test="${not empty cashReceived}">
+        <div class="change-box ${hasChange ? '' : 'exact'}">
+          <div>
+            <div class="change-label">
+              <c:choose>
+                <c:when test="${hasChange}">Trả lại khách (tiền thối)</c:when>
+                <c:otherwise>Khách đưa đủ số tiền</c:otherwise>
+              </c:choose>
+            </div>
+            <div class="muted text-sm">Tiền khách đưa <strong class="text-ink">${cashReceived} đ</strong> · Tổng thu <strong class="text-ink">${summary.totalAmountLabel} đ</strong></div>
+          </div>
+          <div class="change-amount"><c:out value="${change}"/> đ</div>
+        </div>
+      </c:if>
       <p class="label mt-24">Mã vé (dùng để soát vé)</p>
       <div class="cluster mt-8" style="justify-content:center;--gap:8px">
         <c:forEach var="code" items="${summary.ticketCodes}"><span class="voucher-code">${ic.ticket} <c:out value="${code}"/></span></c:forEach>
@@ -44,7 +63,7 @@
       <div class="kv total"><span>Tổng thu</span><strong>${summary.totalAmountLabel} đ</strong></div>
       <c:if test="${not empty cashReceived}">
         <div class="kv"><span>Tiền khách đưa</span><strong>${cashReceived} đ</strong></div>
-        <div class="kv"><span>Tiền thối lại</span><strong class="text-brand" style="font-size:18px">${change} đ</strong></div>
+        <div class="kv"><span>Tiền thối lại khách</span><strong class="text-brand" style="font-size:18px">${change} đ</strong></div>
       </c:if>
     </div>
     <div class="card-foot no-print" style="justify-content:center">

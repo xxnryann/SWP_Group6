@@ -376,7 +376,7 @@ public class BookingDAO {
                 "SELECT b.booking_id, b.booking_code, b.status, b.customer_id, b.showtime_id, " +
                         "       b.ticket_total, b.combo_total, b.voucher_discount, b.points_discount, " +
                         "       b.points_used, b.total_amount, b.voucher_id, b.created_at, " +
-                        "       b.session_expires_at, b.payment_expires_at, " +
+                        "       b.session_expires_at, b.payment_expires_at, b.channel, b.staff_id, " +
                         "       m.title AS movie_title, r.room_name, s.start_time, " +
                         "       a.email AS customer_email, a.full_name AS customer_name, " +
                         "       v.code AS voucher_code " +
@@ -406,8 +406,11 @@ public class BookingDAO {
                 b.setRoomName(rs.getString("room_name"));
                 b.setCustomerEmail(rs.getString("customer_email"));
                 b.setCustomerName(rs.getString("customer_name"));
-                b.setVoucherCode(rs.getString("voucher_code"));
-                Timestamp t = rs.getTimestamp("start_time");
+            b.setVoucherCode(rs.getString("voucher_code"));
+            b.setChannel(rs.getString("channel"));
+            int staffId = rs.getInt("staff_id");
+            b.setStaffAccountId(rs.wasNull() ? null : staffId);
+            Timestamp t = rs.getTimestamp("start_time");
                 b.setStartTime(t == null ? null : t.toLocalDateTime());
                 t = rs.getTimestamp("created_at");
                 b.setCreatedAt(t == null ? null : t.toLocalDateTime());

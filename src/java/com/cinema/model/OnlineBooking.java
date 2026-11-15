@@ -23,6 +23,10 @@ public class OnlineBooking extends BookingSummary {
     private int customerId;
     private String customerEmail;
     private String voucherCode;
+    /** Kênh bán vé: {@code Online} hoặc {@code Counter} (bán tại quầy). */
+    private String channel;
+    /** {@code Account.account_id} của nhân viên bán vé tại quầy (null ở kênh online). */
+    private Integer staffAccountId;
     private final List<String> seatLabels = new ArrayList<>();
 
     public int getShowtimeId() { return showtimeId; }
@@ -58,6 +62,17 @@ public class OnlineBooking extends BookingSummary {
 
     public String getVoucherCode() { return voucherCode; }
     public void setVoucherCode(String voucherCode) { this.voucherCode = voucherCode; }
+
+    /** Kênh bán vé: {@code Online} hoặc {@code Counter}. */
+    public String getChannel() { return channel; }
+    public void setChannel(String channel) { this.channel = channel; }
+
+    /** Đơn có được bán tại quầy không. */
+    public boolean isCounterChannel() { return "Counter".equalsIgnoreCase(channel); }
+
+    /** {@code Account.account_id} của nhân viên bán vé tại quầy (null ở kênh online). */
+    public Integer getStaffAccountId() { return staffAccountId; }
+    public void setStaffAccountId(Integer staffAccountId) { this.staffAccountId = staffAccountId; }
 
     public List<String> getSeatLabels() { return seatLabels; }
 
