@@ -29,16 +29,6 @@
 .sp-exits .sp-door { padding: 10px 16px; border-radius: 12px; }
 .sp-exits .sp-door-exit { text-align: right; }
 
-.sp-divider { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0; }
-.sp-divider::before, .sp-divider::after { content: ""; height: 1px; width: 112px; }
-.sp-divider span { padding: 2px 12px; border-radius: 99px; border: 1px solid; font-size: 11px; font-weight: 700; letter-spacing: .05em; white-space: nowrap; }
-.sp-divider-vip::before { background: linear-gradient(to right, transparent, #fbbf24); }
-.sp-divider-vip::after { background: linear-gradient(to left, transparent, #fbbf24); }
-.sp-divider-vip span { background: #fffbeb; border-color: #fde68a; color: #92400e; }
-.sp-divider-couple::before { background: linear-gradient(to right, transparent, #f472b6); }
-.sp-divider-couple::after { background: linear-gradient(to left, transparent, #f472b6); }
-.sp-divider-couple span { background: #fdf2f8; border-color: #fbcfe8; color: #be185d; }
-
 .sp-line { display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; }
 .seat-row { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
 .row-label { flex: none; width: 24px; text-align: center; font-size: 12px; font-weight: 700; color: #64748b; }
@@ -47,6 +37,14 @@
 .sp-gap { flex: none; width: 20px; display: flex; justify-content: center; }
 .sp-gap::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: #cbd5e1; }
 .seat-row.row-VIP .sp-gap::before { background: #fcd34d; }
+/* Phong 2D va 3D: loi di la dai xam lien mach (lan qua khoang cach giua cac hang), ghi chu "LOI DI" phia tren hang dau. */
+.sp-plan:not(.sp-imax):not(.sp-4dx) .sp-scroll { padding-top: 30px; }
+.sp-plan:not(.sp-imax):not(.sp-4dx) .sp-gap { position: relative; align-self: stretch; align-items: stretch; }
+.sp-plan:not(.sp-imax):not(.sp-4dx) .seat-row .sp-gap::before { width: 10px; height: auto; margin: calc(var(--sp-row-gap, 10px) / -2) 0;
+        border: 0; border-radius: 0; background: #e2e8f0; }
+.sp-plan:not(.sp-imax):not(.sp-4dx) .sp-rows > .sp-line:first-child .sp-gap::after { content: "LỐI ĐI"; position: absolute; left: 50%;
+        bottom: calc(100% + var(--sp-row-gap, 10px) / 2 + 4px); transform: translateX(-50%); white-space: nowrap;
+        color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
 
 /* Mau ghe: button.seat (dat ve) va label.seat > span (admin) dung chung bien. */
 .seat { --seat-bg: #f1f5f9; --seat-bd: #cbd5e1; --seat-fg: #334155; --seat-bw: 1px;
@@ -94,8 +92,6 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 
 /* Bien the IMAX Recliner Lounge: ghe rong co tay vin, cum 2|6 voi mot hanh lang, hang VIP va suite co nen rieng. */
 .sp-imax-top { max-width: none; margin: 0 0 16px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; align-items: center; }
-.sp-imax-view { display: inline-flex; align-items: center; gap: 6px; color: #0284c7; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
-.sp-imax-view i { width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; }
 .sp-imax-ruler { width: 100%; max-width: 896px; display: flex; justify-content: space-between; margin: 8px 0 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 12px; font-weight: 600; }
 .sp-imax .sp-floor { justify-content: center; }
 .sp-imax .sp-rows { flex: 0 0 auto; gap: 14px; }
@@ -139,20 +135,10 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-imax .sp-gap { width: 64px; flex-direction: column; align-items: center; gap: 3px; }
 .sp-imax .seat-row .sp-gap::before { width: auto; height: auto; border-radius: 0; background: none; color: #38bdf8; font-size: 14px; line-height: 1; }
 .sp-imax .sp-gap::after { color: #94a3b8; font-size: 9px; font-weight: 700; letter-spacing: .12em; white-space: nowrap; }
-.sp-imax .sp-line[data-row="A"] .sp-gap::before, .sp-imax .sp-line[data-row="B"] .sp-gap::before { content: "↑"; }
-.sp-imax .sp-line[data-row="A"] .sp-gap::after, .sp-imax .sp-line[data-row="B"] .sp-gap::after { content: "LỐI ĐI"; }
-.sp-imax .sp-line[data-row="C"] .sp-gap::before { content: "★"; color: #f59e0b; }
-.sp-imax .sp-line[data-row="C"] .sp-gap::after { content: "VIP"; color: #d97706; }
-.sp-imax .sp-line[data-row="D"] .sp-gap::before { content: "≡"; color: #f59e0b; }
-.sp-imax .sp-line[data-row="D"] .sp-gap::after { content: "BẬC ĐÈN"; color: #d97706; }
-.sp-imax .sp-line[data-row="E"] .sp-gap::before { content: "♥"; color: #f472b6; }
-.sp-imax .sp-line[data-row="E"] .sp-gap::after { content: "SUITE"; color: #ec4899; }
+/* Moi hang deu ghi "LOI DI" o hanh lang, khong ghi ten khu vuc ghe. */
+.sp-imax .seat-row .sp-gap::before { content: "↑"; }
+.sp-imax .sp-gap::after { content: "LỐI ĐI"; }
 
-.sp-imax-divider { position: relative; width: 100%; padding: 8px 0; margin: 4px 0; text-align: center; }
-.sp-imax-divider::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed rgba(252, 211, 77, .8); }
-.sp-imax-divider span { position: relative; display: inline-block; padding: 4px 20px; border-radius: 99px; background: #fffbeb; border: 1px solid #fcd34d;
-                        color: #78350f; font-size: 12px; font-weight: 700; letter-spacing: .05em; white-space: nowrap; }
-.sp-imax-spacer { height: 0; }
 .sp-imax-in { background: #ecfdf5; border-color: #a7f3d0; }
 .sp-imax-in b { color: #065f46; }
 .sp-imax-in small { color: #059669; }
@@ -208,11 +194,10 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-4dx .sp-line[data-row="A"] .seat-row .sp-gap::before { content: "↑ LỐI ĐI TRUNG TÂM"; padding: 6px 16px; border-radius: 8px; background: rgba(239, 246, 255, .8); border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 12px; letter-spacing: .05em; white-space: nowrap; }
 
 /* Bien the 3D: khan dai hinh quat, hai canh nghieng theo tung hang, den LED o hanh lang. */
-.sp-3d-top { max-width: none; margin: 0 0 16px; align-items: center; }
-.sp-3d-focus { background: #0f172a; border-color: #0f172a; color: #fff; font-weight: 600; }
-.sp-3d .sp-scroll { margin-top: 32px; padding-top: 14px; }
+.sp-3d-top { max-width: none; margin: 0 0 16px; align-items: center; justify-content: flex-end; }
+.sp-3d .sp-scroll { margin-top: 32px; }
 .sp-3d .sp-floor { justify-content: center; }
-.sp-3d .sp-rows { gap: 14px; }
+.sp-3d .sp-rows { --sp-row-gap: 14px; gap: var(--sp-row-gap); }
 .sp-3d .seat-row { gap: 12px; }
 .sp-3d .row-label { width: 28px; padding: 4px 0; border-radius: 6px; background: #f1f5f9; color: #94a3b8; }
 .sp-3d .seat-row.row-VIP .row-label { background: #fef3c7; border: 1px solid #fcd34d; color: #b45309; }
@@ -232,11 +217,9 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-3d .seat { --seat-bg: #fff; --seat-bd: #cbd5e1; --seat-bw: 2px; --seat-bar: #cbd5e1; width: 36px; height: 36px; }
 .sp-3d .seat[data-type="VIP"], .sp-3d .seat.t-VIP { --seat-bg: #fffbeb; --seat-bd: #fcd34d; --seat-fg: #78350f; --seat-bar: #fbbf24; }
 .sp-3d .seat[data-type="Couple"], .sp-3d .seat.t-Couple { --seat-bg: #fff1f2; --seat-bd: #fda4af; --seat-fg: #9f1239; }
-.sp-3d .seat[data-zone="king"] { --seat-bg: linear-gradient(to bottom, #fbbf24, #f59e0b); --seat-bd: #d97706; --seat-fg: #fff; --seat-bar: #fff; border-radius: 8px; box-shadow: 0 0 0 2px #fcd34d; }
 /* Ghe chi la mot o vuong co so ghe: khong ve thanh tua lung. */
 .sp-3d button.seat, .sp-3d label.seat > span { font-size: 12px; font-weight: 700; }
 .sp-3d .sp-gap { width: 40px; }
-.sp-3d .seat-row .sp-gap::before { width: 8px; height: 28px; border-radius: 99px; background: radial-gradient(circle, #3b82f6 0 3px, #eff6ff 3.5px); border: 1px solid #bfdbfe; box-sizing: border-box; }
 .sp-3d button.seat.YELLOW { --seat-bg: #fef3c7; --seat-bd: #f59e0b; --seat-fg: #92400e; --seat-bar: #fbbf24; --seat-bw: 1px; }
 .sp-3d button.seat.RED, .sp-3d button.seat.GREY, .sp-3d label.seat.maint > span { --seat-bw: 1px; box-shadow: none; }
 .sp-3d button.seat.RED, .sp-3d button.seat.RED[data-zone] { --seat-bg: #f1f5f9; --seat-bd: #e2e8f0; --seat-fg: #94a3b8; --seat-bar: transparent; }
@@ -253,9 +236,6 @@ button.seat.pair-r, label.seat.pair-r > span { justify-content: flex-end; paddin
 .sp-3d button.seat.pair-l, .sp-3d button.seat.pair-r, .sp-3d label.seat.pair-l > span, .sp-3d label.seat.pair-r > span { padding-top: 0; }
 .sp-3d .seat.pair-l::before, .sp-3d .seat.pair-r::before { display: none; }
 .sp-3d .seat.pair-l::after { color: #f43f5e; font-size: 14px; }
-.sp-3d-banner { width: 100%; max-width: 768px; align-self: center; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px auto; padding: 10px 14px;
-                border: 2px solid #fcd34d; border-radius: 16px; background: linear-gradient(to right, #fffbeb, #fef3c7, #fffbeb); color: #451a03; font-size: 12px; font-weight: 700; }
-.sp-3d-banner b { padding: 2px 10px; border-radius: 99px; background: #f59e0b; color: #fff; font-size: 10px; letter-spacing: .05em; }
 .sp-3d-rule { width: 100%; height: 1px; margin: 4px 0; background: #f1f5f9; }
 .sp-3d-slopes { width: 100%; max-width: 672px; display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
 .sp-3d-slopes span { padding: 6px 12px; border-radius: 8px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 11px; font-weight: 500; }
