@@ -25,7 +25,6 @@
   <c:when test="${variant == '3d'}">
     <div class="sp-plan sp-3d">
       <div class="sp-doors sp-3d-top">
-        <span class="sp-door sp-3d-focus">TÂM ĐIỂM HỘI TỤ • VÒM CONG BÁN NGUYỆT</span>
         <span class="sp-door sp-door-exit">CỬA THOÁT HIỂM</span>
       </div>
       <seat:screen/>
@@ -44,7 +43,6 @@
     <div class="sp-plan sp-imax">
       <div class="sp-doors sp-imax-top">
         <span class="sp-door sp-door-exit">LỐI THOÁT HIỂM KHẨN CẤP • CÁNH TRÁI</span>
-        <span class="sp-imax-view"><i></i>TRỤC TÂM ĐIỂM IMAX</span>
         <span class="sp-door sp-door-exit">LỐI THOÁT HIỂM KHẨN CẤP • CÁNH PHẢI</span>
       </div>
       <seat:screen/>

@@ -187,10 +187,6 @@ public final class RoomRules {
             }
             zones.put("F5", "core");
             zones.put("F6", "core");
-        } else if (ROOM_TYPE_3D.equals(roomType)) {
-            for (String label : new String[] {"E7", "E8", "F7", "F8"}) {
-                zones.put(label, "king");
-            }
         }
         return zones;
     }
