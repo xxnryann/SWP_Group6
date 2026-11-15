@@ -65,6 +65,35 @@ public class ShowtimeDAO {
         return new ArrayList<>(schedules.values());
     }
 
+    /**
+     * Suất còn đặt được (Scheduled, chưa bắt đầu) trong {@code days} ngày tới của các phim cho trước,
+     * gom theo movie_id — dùng cho popup "Mua vé" ở danh sách phim.
+     */
+    public Map<Integer, List<Showtime>> findUpcomingByMovies(java.util.Collection<Integer> movieIds, int days)
+            throws SQLException {
+        Map<Integer, List<Showtime>> result = new LinkedHashMap<>();
+        if (movieIds == null || movieIds.isEmpty()) return result;
+        String marks = String.join(",", java.util.Collections.nCopies(movieIds.size(), "?"));
+        String sql = "SELECT " + SELECT_COLUMNS + SELECT_FROM
+                + "WHERE s.status = 'Scheduled' AND s.starts_at > SYSDATETIME() "
+                + "AND s.starts_at < DATEADD(DAY, ?, CAST(SYSDATETIME() AS DATE)) "
+                + "AND s.movie_id IN (" + marks + ") "
+                + "ORDER BY s.starts_at, s.room_name";
+        try (Connection connection = DBContext.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            int i = 1;
+            statement.setInt(i++, days);
+            for (Integer id : movieIds) statement.setInt(i++, id);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    Showtime st = map(rs);
+                    result.computeIfAbsent(st.getMovieId(), k -> new ArrayList<>()).add(st);
+                }
+            }
+        }
+        return result;
+    }
+
     public List<Showtime> findAllForManagement() throws SQLException {
         List<Showtime> showtimes = new ArrayList<>();
         String sql = "SELECT " + SELECT_COLUMNS + SELECT_FROM

@@ -16,6 +16,8 @@ import java.sql.SQLException;
 @WebServlet(urlPatterns = {"/movies", "/movies/detail"})
 public class MovieServlet extends BaseServlet {
     private static final int PAGE_SIZE = 50;
+    private static final int BUY_POPUP_DAYS = 7;
+    private final com.cinema.dao.ShowtimeDAO showtimeDAO = new com.cinema.dao.ShowtimeDAO();
     private final MovieDAO movieDAO;
     private final GenreDAO genreDAO;
     private final com.cinema.dao.ReviewDAO reviewDAO = new com.cinema.dao.ReviewDAO();
@@ -68,7 +70,15 @@ public class MovieServlet extends BaseServlet {
         request.setAttribute("selectedStatus", status);
         request.setAttribute("pageTitle", "Phim");
         request.setAttribute("showStatusFilter", canFilterByStatus);
-        // Danh sách phim không còn nút "Mua vé" (khách đặt vé qua trang Lịch chiếu / chi tiết phim).
+        // Nút "Mua vé" (khách / CUSTOMER) mở popup lịch chiếu 7 ngày tới của đúng phim đó (ST-UI-008, DEF-002).
+        request.setAttribute("canBook", publicView);
+        if (publicView) {
+            java.util.List<Integer> ids = new java.util.ArrayList<>();
+            for (Movie m : result.movies()) {
+                if ("NowShowing".equals(m.getStatus()) || "Upcoming".equals(m.getStatus())) ids.add(m.getMovieId());
+            }
+            request.setAttribute("movieShowtimes", showtimeDAO.findUpcomingByMovies(ids, BUY_POPUP_DAYS));
+        }
         forward(request, response, "movie/movies");
     }
 

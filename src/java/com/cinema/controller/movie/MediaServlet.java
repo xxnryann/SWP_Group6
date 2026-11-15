@@ -33,8 +33,19 @@ public class MediaServlet extends HttpServlet {
         try {
             file = MediaUploadUtil.resolve("/media" + pathInfo);
         } catch (MediaUploadUtil.MediaNotFoundException e) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
+            // DEF-005: máy vừa clone repo chưa có thư mục media.upload.root → tìm poster/avatar mẫu
+            // đóng gói trong WEB-INF/seed-media; vẫn không có thì trả ảnh placeholder thay vì ảnh vỡ.
+            Path seed = seedFile(pathInfo);
+            if (seed != null) {
+                file = seed;
+            } else if (pathInfo.startsWith("/posters/")) {
+                response.setHeader("Cache-Control", "no-cache");
+                request.getRequestDispatcher(PLACEHOLDER_POSTER).forward(request, response);
+                return;
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
         }
         long size = Files.size(file);
         response.setHeader("Accept-Ranges", "bytes");
@@ -70,6 +81,24 @@ public class MediaServlet extends HttpServlet {
                 remaining -= read;
             }
         }
+    }
+
+    private static final String PLACEHOLDER_POSTER = "/assets/img/poster-placeholder.svg";
+    private static final String SEED_DIR = "/WEB-INF/seed-media";
+
+    /** Tệp mẫu đi kèm repo (web/WEB-INF/seed-media/&lt;posters|avatars&gt;/&lt;uuid&gt;.&lt;ext&gt;), null nếu không có. */
+    private Path seedFile(String pathInfo) {
+        if (!pathInfo.matches("^/(posters|avatars)/[0-9a-fA-F-]{36}\\.(jpg|jpeg|png|webp)$")) return null;
+        String real = getServletContext().getRealPath(SEED_DIR);
+        if (real == null) return null;
+        try {
+            Path root = Path.of(real).toRealPath();
+            Path candidate = root.resolve(pathInfo.substring(1)).normalize();
+            if (candidate.startsWith(root) && Files.isRegularFile(candidate)) return candidate;
+        } catch (IOException e) {
+            // thư mục seed-media không tồn tại
+        }
+        return null;
     }
 
     private ByteRange parseRange(String header, long size) {

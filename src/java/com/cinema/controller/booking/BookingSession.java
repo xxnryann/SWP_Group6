@@ -135,8 +135,25 @@ public final class BookingSession {
         req.setAttribute("aisleFromEnd", RoomRules.aisleFromEnd(roomType));
         req.setAttribute("seatZones", RoomRules.seatZones(roomType));
         req.setAttribute("seatRows", rows);
-        req.setAttribute("seatTypes", seatTypes);
+        req.setAttribute("seatTypes", typesInRoom(seatTypes, seats));
         req.setAttribute("rowLegendMap", legendByRow);
+    }
+
+    /**
+     * DEF-007: chú thích "Loại ghế &amp; giá vé" chỉ liệt kê loại ghế thực sự có trong phòng của suất chiếu
+     * (ẩn các loại nội bộ như "Unassigned" hay loại phòng khác không dùng).
+     */
+    private static List<SeatTypeInfo> typesInRoom(List<SeatTypeInfo> all, List<SeatCell> seats) {
+        if (all == null || seats == null || seats.isEmpty()) return all;
+        java.util.Set<String> used = new java.util.HashSet<>();
+        for (SeatCell c : seats) {
+            if (c.getSeatType() != null) used.add(c.getSeatType());
+        }
+        List<SeatTypeInfo> result = new java.util.ArrayList<>();
+        for (SeatTypeInfo t : all) {
+            if (t.getTypeName() != null && used.contains(t.getTypeName())) result.add(t);
+        }
+        return result;
     }
 
     /**

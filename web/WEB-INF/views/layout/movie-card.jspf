@@ -2,7 +2,8 @@
 <%-- Thẻ phim dùng chung. Trước khi include đặt:
        mv      : Movie
        mvNext  : (tùy chọn) nhãn suất gần nhất
-       mvCta   : 'showtimes' = link tới trang lịch chiếu, còn lại = Xem chi tiết --%>
+       mvCta   : 'showtimes' = link tới trang lịch chiếu, 'popup' = nút Mua vé mở popup lịch chiếu
+                 (trang phải có #buy-pop-<movieId>, xem movies.jsp), còn lại = Xem chi tiết --%>
 <c:url var="mvUrl" value="/movies/detail"><c:param name="id" value="${mv.movieId}"/></c:url>
 <article class="movie-card">
   <a class="poster" href="<c:out value='${mvUrl}'/>" aria-label="Xem chi tiết <c:out value='${mv.title}'/>">
@@ -29,6 +30,7 @@
   </div>
   <c:choose>
     <c:when test="${mvCta == 'showtimes'}"><a class="btn btn-primary btn-block" href="${ctx}/showtimes">${ic.ticket}Mua vé</a></c:when>
+    <c:when test="${mvCta == 'popup'}"><button class="btn btn-primary btn-block" type="button" data-buy-movie="${mv.movieId}" aria-haspopup="dialog">${ic.ticket}Mua vé</button></c:when>
     <c:otherwise><a class="btn btn-block" href="<c:out value='${mvUrl}'/>">Xem chi tiết</a></c:otherwise>
   </c:choose>
 </article>

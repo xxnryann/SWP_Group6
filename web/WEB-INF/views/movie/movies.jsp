@@ -52,11 +52,63 @@
       <div class="movie-grid">
         <c:forEach var="movie" items="${movies}">
           <c:set var="mv" value="${movie}"/><c:set var="mvNext" value=""/>
-          <%-- Không hiện nút "Mua vé" ở danh sách phim: khách đặt vé qua trang Lịch chiếu. --%>
-          <c:set var="mvCta" value="detail"/>
+          <%-- Khách / CUSTOMER: phim có suất trong 7 ngày tới hiện nút "Mua vé" mở popup lịch chiếu. --%>
+          <c:set var="mvCta" value="${canBook and not empty movieShowtimes[movie.movieId] ? 'popup' : 'detail'}"/>
           <%@ include file="../layout/movie-card.jspf" %>
         </c:forEach>
       </div>
+
+      <%-- Popup lịch chiếu cho từng phim (tiêu đề luôn có tên phim — DEF-002). --%>
+      <c:forEach var="movie" items="${movies}">
+        <c:set var="sts" value="${movieShowtimes[movie.movieId]}"/>
+        <c:if test="${canBook and not empty sts}">
+          <div class="modal buy-pop" id="buy-pop-${movie.movieId}" role="dialog" aria-modal="true" aria-labelledby="buy-pop-title-${movie.movieId}">
+            <div class="modal-dialog" style="width:min(560px,100%)">
+              <span class="eyebrow">Lịch chiếu 7 ngày tới</span>
+              <h3 id="buy-pop-title-${movie.movieId}" class="buy-pop-title"><c:out value="${movie.title}"/></h3>
+              <p class="text-sm"><c:out value="${movie.durationMinutes}"/> phút · <c:out value="${movie.ageRating}"/><c:if test="${not empty movie.genres}"> · <c:out value="${movie.genres}"/></c:if></p>
+              <div style="max-height:55vh;overflow:auto">
+                <c:set var="lastDate" value=""/>
+                <c:forEach var="st" items="${sts}" varStatus="loop">
+                  <c:if test="${st.scheduleDateDisplay != lastDate}">
+                    <c:if test="${not loop.first}"></div></c:if>
+                    <h4 class="text-sm fw-600 mt-16"><c:out value="${st.scheduleDateDisplay}"/></h4>
+                    <div class="st-times" style="margin-top:8px">
+                    <c:set var="lastDate" value="${st.scheduleDateDisplay}"/>
+                  </c:if>
+                  <c:url var="bookingUrl" value="/booking/seats"><c:param name="showtimeId" value="${st.showtimeId}"/></c:url>
+                  <a class="time-chip st-time" href="${bookingUrl}">
+                    <strong><c:out value="${st.startTimeOnly}"/></strong><span><c:out value="${st.roomName}"/></span><c:if test="${not empty st.languageShort}"><span class="st-lang"><c:out value="${st.languageShort}"/></span></c:if>
+                  </a>
+                  <c:if test="${loop.last}"></div></c:if>
+                </c:forEach>
+              </div>
+              <div class="modal-actions">
+                <a class="btn" href="${ctx}/showtimes">Xem toàn bộ lịch chiếu</a>
+                <button class="btn btn-primary" type="button" data-buy-close>Đóng</button>
+              </div>
+            </div>
+          </div>
+        </c:if>
+      </c:forEach>
+      <script>
+        (function () {
+          var opened = null, opener = null;
+          function close() { if (opened) { opened.classList.remove('open'); if (opener) opener.focus(); opened = opener = null; } }
+          document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-buy-movie]');
+            if (btn) {
+              var pop = document.getElementById('buy-pop-' + btn.getAttribute('data-buy-movie'));
+              if (!pop) return;
+              close(); opened = pop; opener = btn; pop.classList.add('open');
+              var first = pop.querySelector('.time-chip'); if (first) first.focus();
+              return;
+            }
+            if (opened && (e.target === opened || e.target.closest('[data-buy-close]'))) close();
+          });
+          document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+        })();
+      </script>
     </c:otherwise>
   </c:choose>
 </div>

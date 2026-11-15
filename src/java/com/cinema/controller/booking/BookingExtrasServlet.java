@@ -146,8 +146,10 @@ public class BookingExtrasServlet extends BaseServlet {
                   + "JOIN SeatType st ON st.seat_type_id = sc.seat_type_id "
                   + "WHERE t.booking_id = ? AND t.status IN ('Held','Booked','Used') "
                   + "GROUP BY st.type_name", booking.getBookingId()));
-            // Thông tin người thanh toán lấy từ tài khoản đặt vé
-            req.setAttribute("payer", new com.cinema.dao.UserDAO().findById(accountId));
+            // Thông tin người thanh toán = khách đang đăng nhập. accountId là Account.account_id,
+            // KHÔNG phải Users.UserId (DEF-003) — tra theo UserId trong phiên.
+            com.cinema.model.User me = currentUser(req);
+            req.setAttribute("payer", me == null ? null : new com.cinema.dao.UserDAO().findById(me.getUserId()));
         } catch (Exception e) {
             req.setAttribute("seatGroups", java.util.Collections.emptyList());
         }
