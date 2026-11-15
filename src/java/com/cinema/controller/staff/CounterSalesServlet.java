@@ -4,13 +4,17 @@ import com.cinema.controller.BaseServlet;
 import com.cinema.controller.booking.BookingSession;
 import com.cinema.dao.CounterSaleDAO;
 import com.cinema.model.BookingSummary;
+import com.cinema.model.OnlineBooking;
 import com.cinema.model.ShowtimeInfo;
 import com.cinema.model.User;
 import com.cinema.service.DiscountResult;
 import com.cinema.service.DiscountService;
+import com.cinema.service.GatewayPaymentService;
 import com.cinema.service.OnlineBookingService;
 import com.cinema.controller.site.PromotionsServlet;
+import com.cinema.util.Moneys;
 import com.cinema.util.Validator;
+import com.cinema.util.WebUrls;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +23,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +56,7 @@ public class CounterSalesServlet extends BaseServlet {
     private final CounterSaleDAO dao = new CounterSaleDAO();
     private final DiscountService discountService = new DiscountService();
     private final OnlineBookingService bookingService = new OnlineBookingService();
+    private final GatewayPaymentService paymentService = new GatewayPaymentService();
 
     private boolean requireStaff(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User u = currentUser(req);
@@ -74,9 +80,22 @@ public class CounterSalesServlet extends BaseServlet {
         }
     }
 
+    /**
+     * Đọc số tiền người dùng nhập theo định dạng hiển thị của hệ thống
+     * (140.000 → 140000; 140,5 → 140.5). Chỉ giữ chữ số và dấu phẩy thập phân.
+     */
     private BigDecimal parseMoney(String s) {
+        String t = Validator.trim(s).replace(".", "").replace(" ", "");
+        if (t.isEmpty()) return null;
+        // Dấu phẩy chỉ hợp lệ làm dấu thập phân; nhiều dấu phẩy -> giữ dấu cuối.
+        int lastComma = t.lastIndexOf(',');
+        if (lastComma >= 0) {
+            String head = t.substring(0, lastComma).replace(",", "");
+            String tail = t.substring(lastComma + 1);
+            t = head + "." + tail;
+        }
         try {
-            return new BigDecimal(Validator.trim(s).replace(".", "").replace(",", "."));
+            return new BigDecimal(t);
         } catch (Exception e) {
             return null;
         }
@@ -129,12 +148,39 @@ public class CounterSalesServlet extends BaseServlet {
         forward(req, resp, "counter/counter-showtimes");
     }
 
+    /**
+     * Suất chiếu còn bán được tại quầy không.
+     *
+     * <p>Quầy chỉ bán vé cho suất chiếu của ngày hiện tại và chưa bắt đầu:
+     * suất đã qua giờ trong ngày và suất của ngày sau đều bị từ chối. Việc
+     * kiểm tra này chặn ở tầng servlet để thông báo cho nhân viên rõ ràng;
+     * {@code sp_CreateBooking} vẫn là lớp bảo vệ cuối cùng ở DB.</p>
+     *
+     * @param show suất chiếu cần kiểm tra
+     * @return true nếu bán được
+     */
+    private boolean isSellableToday(ShowtimeInfo show) {
+        if (show == null || show.getStartTime() == null) {
+            return false;
+        }
+        LocalDateTime start = show.getStartTime();
+        LocalDateTime now = LocalDateTime.now();
+        return !start.toLocalDate().isAfter(now.toLocalDate()) && start.isAfter(now);
+    }
+
     /** Bước 2: sơ đồ ghế của một suất chiếu. */
     private void showSeats(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException, SQLException {
         int showtimeId = parseIntSafe(req.getParameter("showtimeId"), 0);
         ShowtimeInfo show = showtimeId > 0 ? dao.findShowtimeById(showtimeId) : null;
         if (show == null) {
+            resp.sendRedirect(req.getContextPath() + "/staff/counter");
+            return;
+        }
+        // Suất chiếu đã qua giờ (hoặc thuộc ngày khác) không bán được tại quầy.
+        if (!isSellableToday(show)) {
+            flash(req, "error", "Suất chiếu này đã qua giờ hoặc không thuộc ngày hôm nay. "
+                    + "Vui lòng chọn suất chiếu khác.");
             resp.sendRedirect(req.getContextPath() + "/staff/counter");
             return;
         }
@@ -211,8 +257,9 @@ public class CounterSalesServlet extends BaseServlet {
         session.removeAttribute("counterChange");
 
         req.setAttribute("summary", s);
-        req.setAttribute("cashReceived", cash);
-        req.setAttribute("change", change);
+        req.setAttribute("cashReceived", Moneys.vnd(cash));
+        req.setAttribute("change", Moneys.vnd(change));
+        req.setAttribute("hasChange", change != null && change.compareTo(BigDecimal.ZERO) > 0);
         req.setAttribute("pageTitle", "Bán vé tại quầy — Hóa đơn");
         forward(req, resp, "counter/counter-success");
     }
@@ -235,6 +282,7 @@ public class CounterSalesServlet extends BaseServlet {
                 case "applyVoucher": doApplyVoucher(req, resp); break;
                 case "applyPoints": doApplyPoints(req, resp); break;
                 case "pay": doPay(req, resp); break;
+                case "payGateway": doPayGateway(req, resp); break;
                 case "cancelBooking": doCancelBooking(req, resp); break;
                 default: resp.sendRedirect(req.getContextPath() + "/staff/counter");
             }
@@ -264,6 +312,14 @@ public class CounterSalesServlet extends BaseServlet {
         if (showtimeId <= 0 || seatIds.isEmpty()) {
             flash(req, "error", "Vui lòng chọn ít nhất một ghế.");
             resp.sendRedirect(req.getContextPath() + "/staff/counter?action=seats&showtimeId=" + showtimeId);
+            return;
+        }
+        // Chặn giữ ghế cho suất chiếu đã qua giờ hoặc không thuộc ngày hôm nay.
+        ShowtimeInfo holdShow = dao.findShowtimeById(showtimeId);
+        if (!isSellableToday(holdShow)) {
+            flash(req, "error", "Suất chiếu này đã qua giờ hoặc không thuộc ngày hôm nay. "
+                    + "Vui lòng chọn suất chiếu khác.");
+            resp.sendRedirect(req.getContextPath() + "/staff/counter");
             return;
         }
 
@@ -414,15 +470,73 @@ public class CounterSalesServlet extends BaseServlet {
         BigDecimal total = s.getTotalAmount();
         BigDecimal cash = parseMoney(req.getParameter("cashReceived"));
         if (cash == null || cash.compareTo(total) < 0) {
-            flash(req, "error", "Tiền khách đưa chưa đủ. Tổng phải thu: " + total + " VNĐ.");
+            flash(req, "error", "Tiền khách đưa chưa đủ. Tổng phải thu: " + Moneys.vnd(total) + " đ.");
             resp.sendRedirect(checkoutUrl(req));
             return;
         }
+
+        BigDecimal change = cash.subtract(total);
+
         dao.confirmCashPayment(bookingId);
         HttpSession session = req.getSession();
         session.setAttribute("counterCash", cash);
-        session.setAttribute("counterChange", cash.subtract(total));
+        session.setAttribute("counterChange", change);
+
+        // Thông báo ngay số tiền thối lại cho khách: khi khách đưa thừa thì
+        // nhân viên cần nói rõ số tiền phải trả lại, không chỉ hiện trên hóa đơn.
+        if (change.compareTo(BigDecimal.ZERO) > 0) {
+            flash(req, "success", "Đã thu " + Moneys.vnd(cash) + " đ. Trả lại khách "
+                    + Moneys.vnd(change) + " đ.");
+        } else {
+            flash(req, "success", "Đã thu đúng " + Moneys.vnd(cash) + " đ. Không có tiền thối lại.");
+        }
         resp.sendRedirect(req.getContextPath() + "/staff/counter?action=success");
+    }
+
+    /**
+     * Thu tiền qua cổng thanh toán VNPAY — cùng kênh thanh toán với khách
+     * hàng đặt vé online.
+     *
+     * <p>Luồng: dựng URL cổng (đã ký) → nhân viên/khách thanh toán trên cổng →
+     * cổng chuyển về {@code /staff/counter/payment/return} → xác nhận thanh
+     * toán và hiện hóa đơn tại quầy.</p>
+     *
+     * <p>Số tiền gửi lên cổng là tổng của đơn sau khi đã áp combo, voucher và
+     * MyPoint — cùng con số mà cổng trả về sẽ được đối soát.</p>
+     */
+    private void doPayGateway(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, SQLException {
+        Integer bookingId = sessionBookingId(req);
+        OnlineBooking booking = bookingId == null ? null : paymentService.findBooking(bookingId);
+        if (booking == null || !booking.isPendingPayment()) {
+            flash(req, "error", "Đơn đã hết hạn hoặc không còn hiệu lực. Vui lòng bán lại từ đầu.");
+            resp.sendRedirect(req.getContextPath() + "/staff/counter");
+            return;
+        }
+        if (booking.getTotalAmount() == null
+                || booking.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            flash(req, "error", "Tổng tiền của đơn không hợp lệ. Vui lòng kiểm tra lại đơn.");
+            resp.sendRedirect(checkoutUrl(req));
+            return;
+        }
+        if (booking.isPaymentExpired()) {
+            paymentService.releaseExpiredHolds();
+            HttpSession session = req.getSession(false);
+            if (session != null) {
+                session.removeAttribute(SESSION_BOOKING);
+                session.removeAttribute(SESSION_SHOWTIME);
+            }
+            flash(req, "error",
+                    "Đơn đã hết thời gian chờ thanh toán. Vui lòng chọn ghế lại.");
+            resp.sendRedirect(req.getContextPath() + "/staff/counter");
+            return;
+        }
+        // URL cổng chuyển về: tuyệt đối (VNPAY yêu cầu) và trỏ về kênh quầy.
+        String returnUrl = WebUrls.absoluteBase(req) + "/staff/counter/payment/return";
+        String orderInfo = "Thanh toan ve tai quay " + booking.getBookingCode();
+        String url = paymentService.buildPaymentUrl(booking, orderInfo,
+                WebUrls.clientIp(req), req.getContextPath(), returnUrl);
+        resp.sendRedirect(url);
     }
 
     /** Hủy đơn đang dở, nhả ghế đã giữ. */

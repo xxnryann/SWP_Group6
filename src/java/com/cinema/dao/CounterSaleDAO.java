@@ -2,6 +2,7 @@ package com.cinema.dao;
 
 import com.cinema.model.BookingSummary;
 import com.cinema.model.Combo;
+import com.cinema.model.OnlineBooking;
 import com.cinema.model.PointConfig;
 import com.cinema.model.SeatCell;
 import com.cinema.model.ShowtimeInfo;
@@ -67,6 +68,25 @@ public class CounterSaleDAO {
 
     /* ---------- bước 1: chọn suất chiếu ---------- */
 
+    /**
+     * Danh sách suất chiếu nhân viên quầy được phép bán vé.
+     *
+     * <p>Chỉ gồm suất chiếu <b>trong ngày hiện tại</b> và chưa bắt đầu: suất đã
+     * qua giờ trong ngày bị ẩn, và các suất của ngày sau không xuất hiện.
+     * Vì vậy điều kiện lọc gồm ba lớp:</p>
+     * <ul>
+     *   <li>{@code start_time >= CAST(SYSDATETIME() AS DATE)} — bỏ các ngày đã qua;</li>
+     *   <li>{@code start_time < DATEADD(DAY, 1, CAST(SYSDATETIME() AS DATE))} —
+     *       chỉ giữ lại ngày hôm nay (loại các ngày sau);</li>
+     *   <li>{@code start_time > SYSDATETIME()} — ẩn suất đã qua giờ trong ngày.</li>
+     * </ul>
+     *
+     * <p>Cách diễn đạt này khớp với {@code DashboardDAO} (dùng
+     * {@code CAST(GETDATE() AS DATE)}) và {@code ShowtimeDAO.findUpcomingByMovies}
+     * (dùng {@code CAST(SYSDATETIME() AS DATE)}).</p>
+     *
+     * @return các suất chiếu còn có thể bán vé hôm nay
+     */
     public List<ShowtimeInfo> findUpcomingShowtimes() throws SQLException {
         List<ShowtimeInfo> list = new ArrayList<>();
         // Đếm ghế trống trực tiếp từ Seat/Ticket (cùng điều kiện màu GREEN của vw_SeatMap: ghế không bảo trì và
@@ -86,7 +106,10 @@ public class CounterSaleDAO {
                         "JOIN Movie m ON m.movie_id = s.movie_id " +
                         "JOIN Room r ON r.room_id = s.room_id " +
                         "JOIN TimeSlot ts ON ts.slot_id = s.slot_id " +
-                        "WHERE s.status = 'Scheduled' AND s.start_time > SYSDATETIME() " +
+                        "WHERE s.status = 'Scheduled' " +
+                        "  AND s.start_time >= CAST(SYSDATETIME() AS DATE) " +
+                        "  AND s.start_time < DATEADD(DAY, 1, CAST(SYSDATETIME() AS DATE)) " +
+                        "  AND s.start_time > SYSDATETIME() " +
                         "ORDER BY s.start_time";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -260,6 +283,23 @@ public class CounterSaleDAO {
      */
     public void confirmCashPayment(int bookingId) throws SQLException {
         bookingDAO.confirmPayment(bookingId, null, true, "Cash");
+    }
+
+    /**
+     * Đọc chi tiết đơn tại quầy theo mã đơn (booking_code).
+     *
+     * <p>Dùng cho callback của cổng thanh toán: cổng chỉ gửi mã đơn
+     * ({@code vnp_TxnRef}) nên cần tra ngược đơn để biết đây là đơn của
+     * kênh quầy hay của kênh online, và ai là nhân viên đã bán.</p>
+     *
+     * @param bookingCode mã đơn
+     * @return chi tiết đơn, null nếu không tồn tại
+     */
+    public OnlineBooking findCounterBookingByCode(String bookingCode) throws SQLException {
+        if (bookingCode == null || bookingCode.trim().isEmpty()) {
+            return null;
+        }
+        return bookingDAO.findOnlineBookingByCode(bookingCode.trim());
     }
 
     /** Hủy đơn đang dở (nhả ghế đã giữ) khi nhân viên bấm "Hủy đơn". */

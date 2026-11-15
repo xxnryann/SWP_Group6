@@ -14,6 +14,20 @@
   .inline-form .field { flex: 1 1 220px; }
   .voucher-pick tbody tr { cursor: pointer; }
   .voucher-pick tbody tr:hover { background: var(--brand-50); }
+  .pay-methods { display: grid; gap: 10px; }
+  .pay-method { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; transition: all var(--t-fast) var(--ease); }
+  .pay-method:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  .pay-method input { margin-top: 3px; }
+  .pay-method:has(input:checked) { border-color: var(--brand-500); background: var(--brand-50); }
+  .pay-method-body { display: grid; gap: 2px; }
+  .change-preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 12px 14px; border: 2px solid var(--brand-500); border-radius: var(--r-md); background: var(--brand-50); }
+  .change-preview-label { font-weight: 600; color: var(--brand-700); }
+  .change-preview-amount { font-size: 20px; font-weight: 800; color: var(--brand-700); white-space: nowrap; }
+  .change-preview.is-short { border-color: var(--danger); background: var(--danger-50); }
+  .change-preview.is-short .change-preview-label, .change-preview.is-short .change-preview-amount { color: var(--danger); }
+  .change-preview.is-exact { border-color: var(--success); background: var(--success-50); }
+  .change-preview.is-exact .change-preview-label, .change-preview.is-exact .change-preview-amount { color: var(--success); }
+  .cash-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; letter-spacing: .3px; }
 </style>
 <nav class="stepper" aria-label="Các bước bán vé">
   <span class="step done"><b>${ic.check}</b>Chọn suất chiếu</span><span class="bar done"></span>
@@ -141,15 +155,49 @@
       <c:if test="${summary.voucherDiscount > 0}"><div class="kv"><span>Giảm voucher</span><strong class="text-success">− ${summary.voucherDiscountLabel} đ</strong></div></c:if>
       <c:if test="${summary.pointsDiscount > 0}"><div class="kv"><span>Giảm MyPoint</span><strong class="text-success">− ${summary.pointsDiscountLabel} đ</strong></div></c:if>
       <div class="kv total"><span>Tổng phải thu</span><strong>${summary.totalAmountLabel} đ</strong></div>
-      <form class="form mt-16" method="post" action="${ctx}/staff/counter" data-confirm="Xác nhận đã thu đủ tiền mặt?">
+
+      <div class="pay-methods mt-16" role="radiogroup" aria-label="Phương thức thanh toán">
+        <label class="pay-method">
+          <input type="radio" name="payMethod" value="vnpay" checked data-pay-method="vnpay">
+          <span class="pay-method-body">
+            <strong>VNPAY</strong>
+            <span class="cell-sub">Quét mã QR / thẻ ngân hàng trên cổng VNPAY</span>
+          </span>
+        </label>
+        <label class="pay-method">
+          <input type="radio" name="payMethod" value="cash" data-pay-method="cash">
+          <span class="pay-method-body">
+            <strong>Tiền mặt</strong>
+            <span class="cell-sub">Nhận tiền mặt tại quầy và tính tiền thối lại</span>
+          </span>
+        </label>
+      </div>
+
+      <form class="form mt-16" method="post" action="${ctx}/staff/counter" data-pay-form="vnpay"
+            data-confirm="Chuyển sang cổng thanh toán VNPAY để thu tiền?">
+        <input type="hidden" name="_csrf" value="${csrf}">
+        <input type="hidden" name="action" value="payGateway">
+        <p class="muted text-sm">Khách thanh toán qua cổng VNPAY, hệ thống tự ghi nhận đơn và phát vé.</p>
+        <button class="btn btn-accent btn-lg btn-block mt-8" type="submit">${ic.wallet}Thanh toán qua VNPAY</button>
+      </form>
+
+      <form class="form mt-16" method="post" action="${ctx}/staff/counter" data-pay-form="cash"
+            data-confirm="Xác nhận đã thu đủ tiền mặt?">
         <input type="hidden" name="_csrf" value="${csrf}">
         <input type="hidden" name="action" value="pay">
         <div class="field">
           <label for="f-cash">Tiền khách đưa (đ)</label>
-          <input id="f-cash" type="number" name="cashReceived" min="0" required placeholder="500000">
+          <input id="f-cash" class="cash-amount" type="text" inputmode="numeric" autocomplete="off"
+                 name="cashReceived" required placeholder="500.000" aria-describedby="cashHint">
         </div>
-        <button class="btn btn-accent btn-lg btn-block" type="submit">${ic.wallet}Xác nhận thu tiền</button>
+        <div class="change-preview" id="cashChangePreview" hidden>
+          <span class="change-preview-label" id="cashChangeLabel">Tiền thối lại khách</span>
+          <strong class="change-preview-amount" id="cashChangeAmount">0 đ</strong>
+        </div>
+        <p class="muted text-sm mt-8" id="cashHint">Nhập số tiền khách đưa, hệ thống sẽ báo số tiền phải trả lại khách.</p>
+        <button class="btn btn-accent btn-lg btn-block" type="submit">${ic.wallet}Xác nhận thu tiền mặt</button>
       </form>
+
       <form class="text-center mt-12" method="post" action="${ctx}/staff/counter" data-confirm="Hủy đơn này? Ghế đã giữ sẽ được nhả lại.">
         <input type="hidden" name="_csrf" value="${csrf}">
         <input type="hidden" name="action" value="cancelBooking">
@@ -178,6 +226,87 @@
   var pointValue = ${not empty pointConfig ? pointConfig.pointValueVnd : 0};
   function updatePointPreview() { if (pointsInput && pointPreview) pointPreview.textContent = (Math.max(0, parseInt(pointsInput.value || '0', 10)) * pointValue).toLocaleString('vi-VN'); }
   if (pointsInput) { pointsInput.addEventListener('input', updatePointPreview); updatePointPreview(); }
+
+  // Chọn phương thức thanh toán: chỉ hiện form tương ứng (VNPAY hoặc tiền mặt).
+  function applyPayMethod(method) {
+    document.querySelectorAll('[data-pay-form]').forEach(function (form) {
+      form.hidden = form.dataset.payForm !== method;
+    });
+  }
+  document.querySelectorAll('[data-pay-method]').forEach(function (radio) {
+    radio.addEventListener('change', function () { applyPayMethod(radio.dataset.payMethod); });
+  });
+  var checkedPay = document.querySelector('[data-pay-method]:checked');
+  applyPayMethod(checkedPay ? checkedPay.dataset.payMethod : 'vnpay');
+
+  // Tính tiền thối lại ngay khi nhân viên nhập số tiền khách đưa,
+  // để thông báo cho khách trước khi xác nhận thu tiền.
+  // Mọi số tiền trên màn hình này dùng CHUNG một định dạng:
+  // dấu chấm phân cách nghìn kiểu Việt Nam (140.000), khớp với
+  // Moneys.vnd() ở tầng server và với các màn hình khác của hệ thống.
+  var nf = new Intl.NumberFormat('vi-VN');
+  var cashInput = document.getElementById('f-cash');
+  var changeBox = document.getElementById('cashChangePreview');
+  var changeLabel = document.getElementById('cashChangeLabel');
+  var changeAmount = document.getElementById('cashChangeAmount');
+  var cashHint = document.getElementById('cashHint');
+  var totalDue = ${summary.totalAmountVnd};
+
+  function formatVnd(value) { return nf.format(value); }
+  function digitsOf(s) { return String(s == null ? '' : s).replace(/[^\d]/g, ''); }
+
+  // Ô nhập: chỉ giữ chữ số, hiển thị có dấu chấm phân cách nghìn.
+  // Giá trị gửi lên server vẫn là con số thuần (dấu chấm bị parseMoney() bỏ).
+  function formatCashInput() {
+    if (!cashInput) return;
+    var d = digitsOf(cashInput.value);
+    cashInput.value = d === '' ? '' : formatVnd(Number(d));
+  }
+  function givenAmount() {
+    if (!cashInput) return 0;
+    var d = digitsOf(cashInput.value);
+    return d === '' ? 0 : Number(d);
+  }
+
+  function updateChangePreview() {
+    if (!cashInput || !changeBox) return;
+    var given = givenAmount();
+    if (isNaN(given) || given <= 0) {
+      changeBox.hidden = true;
+      changeBox.classList.remove('is-short', 'is-exact');
+      if (cashHint) cashHint.textContent = 'Nhập số tiền khách đưa, hệ thống sẽ báo số tiền phải trả lại khách.';
+      return;
+    }
+    var diff = given - totalDue;
+    changeBox.hidden = false;
+    changeBox.classList.remove('is-short', 'is-exact');
+    if (diff > 0) {
+      changeLabel.textContent = 'Trả lại khách (tiền thối)';
+      changeAmount.textContent = formatVnd(diff) + ' đ';
+      if (cashHint) cashHint.textContent = 'Khách đưa thừa — cần trả lại ' + formatVnd(diff) + ' đ.';
+    } else if (diff === 0) {
+      changeLabel.textContent = 'Khách đưa đúng số tiền';
+      changeAmount.textContent = '0 đ';
+      changeBox.classList.add('is-exact');
+      if (cashHint) cashHint.textContent = 'Khách đưa đúng số tiền cần thu, không có tiền thối lại.';
+    } else {
+      changeLabel.textContent = 'Tiền khách đưa chưa đủ';
+      changeAmount.textContent = formatVnd(-diff) + ' đ';
+      changeBox.classList.add('is-short');
+      if (cashHint) cashHint.textContent = 'Còn thiếu ' + formatVnd(-diff) + ' đ so với tổng phải thu.';
+    }
+  }
+  if (cashInput) {
+    cashInput.addEventListener('input', function () { formatCashInput(); updateChangePreview(); });
+    cashInput.addEventListener('change', function () { formatCashInput(); updateChangePreview(); });
+    cashInput.addEventListener('blur', function () { formatCashInput(); updateChangePreview(); });
+    // Chặn phím không phải số (máy bàn phím có thêm bàn phím).
+    cashInput.addEventListener('keydown', function (e) {
+      if (e.key.length === 1 && !/[0-9]/.test(e.key) && e.key !== '.' && e.key !== ',') e.preventDefault();
+    });
+    formatCashInput();
+    updateChangePreview();
+  }
 })();
 </script>
 <%@ include file="../layout/bottom.jspf" %>

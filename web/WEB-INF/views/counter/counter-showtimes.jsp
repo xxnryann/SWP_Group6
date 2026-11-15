@@ -8,7 +8,7 @@
   .show-time span { font-size: 12px; color: var(--muted); }
   @media (max-width: 760px) { .show-row { grid-template-columns: 90px minmax(0, 1fr); } .show-row > :last-child { grid-column: 1 / -1; } }
 </style>
-<div class="page-head"><div><h1>Bán vé tại quầy</h1><p>Chọn suất chiếu sắp diễn ra để bán vé cho khách tại quầy.</p></div></div>
+<div class="page-head"><div><h1>Bán vé tại quầy</h1><p>Chọn suất chiếu trong ngày hôm nay còn có thể bán vé để phục vụ khách tại quầy.</p></div></div>
 <nav class="stepper" aria-label="Các bước bán vé">
   <span class="step active" aria-current="step"><b>1</b>Chọn suất chiếu</span><span class="bar"></span>
   <span class="step"><b>2</b>Chọn ghế</span><span class="bar"></span>
@@ -17,7 +17,7 @@
 
 <c:choose>
   <c:when test="${empty showtimeList}">
-    <div class="card empty"><div class="empty-icon">${ic.calendar}</div><h3>Không có suất chiếu sắp diễn ra</h3></div>
+    <div class="card empty"><div class="empty-icon">${ic.calendar}</div><h3>Không có suất chiếu nào còn bán được hôm nay</h3><p class="muted mt-8">Các suất chiếu đã qua giờ và các suất của ngày sau không hiển thị tại đây.</p></div>
   </c:when>
   <c:otherwise>
     <div class="stack" style="--gap:12px">

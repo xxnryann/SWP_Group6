@@ -1,4 +1,4 @@
-<#
+﻿<#
     .SYNOPSIS
         Kiem thu chuc nang cua ADMIN, MANAGER, STAFF (thao tac that: tao / sua / xoa, kiem tra CSDL).
 
@@ -400,9 +400,30 @@ Assert-Test ((Get-Page $staff '/staff/combo?q=ZZTEST').Content -match [regex]::E
 
 Write-Step "STAFF - ban ve tai quay"
 Assert-Test ((Get-Page $staff '/staff/counter').StatusCode -eq 200) 'trang ban ve tai quay mo duoc'
-$cSt = Invoke-Sql "SELECT TOP 1 s.showtime_id FROM Showtime s WHERE s.status='Scheduled' AND s.start_time > DATEADD(DAY,3,SYSDATETIME()) AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.showtime_id=s.showtime_id) ORDER BY s.start_time"
+
+# Danh sach suat chien tai quay chi gom suat CUA HOM NAY va chua bat dau:
+#   - khong hien thi suat cua ngay sau
+#   - khong hien thi suat da qua gio trong ngay
+$todayStart = (Get-Date).Date
+$todayEnd = $todayStart.AddDays(1)
+$listPage = Get-Page $staff '/staff/counter'
+$listedIds = [regex]::Matches($listPage.Content, 'action=seats&showtimeId=(\d+)') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+if ($listedIds.Count -gt 0) {
+    $inList = ($listedIds | ForEach-Object { "'$_'" }) -join ','
+    $badFuture = Invoke-Sql "SELECT COUNT(*) FROM Showtime WHERE showtime_id IN ($inList) AND start_time >= '$($todayEnd.ToString('yyyy-MM-dd'))'"
+    Assert-Test ($badFuture -eq '0') "danh sach khong co suat chien cua ngay sau (so suat sai: $badFuture)"
+    $badPast = Invoke-Sql "SELECT COUNT(*) FROM Showtime WHERE showtime_id IN ($inList) AND start_time <= SYSDATETIME()"
+    Assert-Test ($badPast -eq '0') "danh sach khong co suat chien da qua gio (so suat sai: $badPast)"
+    $allToday = Invoke-Sql "SELECT COUNT(*) FROM Showtime WHERE showtime_id IN ($inList) AND start_time < '$($todayEnd.ToString('yyyy-MM-dd'))'"
+    Assert-Test ($allToday -eq $listedIds.Count) 'moi suat chien trong danh sach deu thuoc hom nay'
+} else {
+    Write-Host '  [INFO] hom nay khong co suat chien nao con ban duoc - bo qua kiem tra danh sach'
+}
+
+# Suat chien hop le cho thu: hom nay, chua bat dau, con ghe trong.
+$cSt = Invoke-Sql "SELECT TOP 1 s.showtime_id FROM Showtime s WHERE s.status='Scheduled' AND s.start_time > SYSDATETIME() AND s.start_time < '$($todayEnd.ToString('yyyy-MM-dd'))' AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.showtime_id=s.showtime_id) ORDER BY s.start_time"
 if (-not ($cSt -match '^\d+$')) {
-    Write-Host '  [INFO] khong co suat chieu xa va chua ban de thu ban ve tai quay'
+    Write-Host '  [INFO] khong co suat chieu hom nay va chua ban de thu ban ve tai quay'
 } else {
     $sp = Get-Page $staff "/staff/counter?action=seats&showtimeId=$cSt"
     Assert-Test ($sp.StatusCode -eq 200) "so do ghe tai quay cho suat $cSt mo duoc"
@@ -416,21 +437,72 @@ if (-not ($cSt -match '^\d+$')) {
     Assert-Test ($bk -match '^\d+$') "giu ghe $seat1 (booking_id=$bk)"
     $ck = Get-Page $staff '/staff/counter?action=checkout'
     Assert-Test ($ck.StatusCode -eq 200 -and $ck.Content -match 'cashReceived') 'man hinh thanh toan tai quay mo duoc'
+    Assert-Test ($ck.Content -match 'payGateway' -and $ck.Content -match 'VNPAY') 'man hinh thanh toan tai quay co lua chon thanh toan VNPAY'
     $r = Send-Form $staff '/staff/counter' @{ action = 'updateCombos'; comboId = $comboId; qty = '1' } '/staff/counter?action=checkout'
     Assert-Test ((Invoke-Sql "SELECT ISNULL(SUM(quantity),0) FROM BookingCombo WHERE booking_id=$bk") -eq '1') 'them combo vao don'
+
+    # --- Thanh toan qua VNPAY (cung kenh thanh toan voi khach dat ve online) ---
+    $payRes = Invoke-NoRedirect -Uri "$BaseUrl/staff/counter" -Body @{ _csrf = (Get-Token $staff '/staff/counter?action=checkout'); action = 'payGateway' } -Session $staff
+    $gatewayLocation = Get-RedirectLocation -Response $payRes
+    $payRes.Close()
+    Assert-Test ($gatewayLocation -match '/mock/payment|/paymentv2|vnpayment') "thanh toan VNPAY tai quay chuyen huong sang cong (dia chi: $gatewayLocation)"
+    $isMockGateway = $gatewayLocation -match '/mock/payment'
+    if ($isMockGateway) {
+        $ret = Invoke-MockPayment -Session $staff -MockUrl $gatewayLocation -Decision 'success'
+        Assert-Test ($ret -like '*/staff/counter/payment/return*') 'cong gia lap tra ve kem chu ky hop ve kenh quay'
+        # Lan truy cap DONG dau tien: session con giu booking_id -> man hinh hoa don.
+        $final = Invoke-WebRequest -Uri $ret -WebSession $staff -UseBasicParsing -MaximumRedirection 5
+        Assert-Test ($final.Content -match 'Thanh toán thành công') 'hien thi man hinh hoa don tai quay sau khi thanh toan VNPAY'
+    } else {
+        # Cong VNPAY that: can thao tac tay tren trinh duyet cua VNPAY.
+        Write-Host '  [INFO] dang dung cong VNPAY that - BO QUA buoc xac nhan thanh toan tu dong.' -ForegroundColor Yellow
+    }
+    if ($isMockGateway) {
+        $vnpPaid = Invoke-Sql "SELECT status FROM Booking WHERE booking_id=$bk"
+        Assert-Test ($vnpPaid -eq 'Paid') "thanh toan VNPAY tai quay ghi nhan don da thanh toan (trang thai: $vnpPaid)"
+        $vnpMethod = Invoke-Sql "SELECT TOP 1 method FROM Payment WHERE booking_id=$bk ORDER BY payment_id DESC"
+        Assert-Test ($vnpMethod -eq 'BankTransfer') "thanh toan VNPAY ghi method BankTransfer (method: $vnpMethod)"
+        $vnpTxn = Invoke-Sql "SELECT TOP 1 ISNULL(gateway_txn_id,'') FROM Payment WHERE booking_id=$bk ORDER BY payment_id DESC"
+        Assert-Test ($vnpTxn -ne '') "giao dich VNPAY co ma giao dich (txn: $vnpTxn)"
+        $vnpTk = Invoke-Sql "SELECT TOP 1 ticket_id FROM Ticket WHERE booking_id=$bk"
+        Assert-Test ((Invoke-Sql "SELECT status FROM Ticket WHERE ticket_id=$vnpTk") -eq 'Booked') 've phat hanh sau khi thanh toan VNPAY'
+    }
+
+    # --- Thanh toan tien mat (luu duong cu) ---
+    # Ghe moi: $seat1 da duoc ban o buoc VNPAY.
+    $freeCash = [regex]::Matches((Get-Page $staff "/staff/counter?action=seats&showtimeId=$cSt").Content, 'class="seat GREEN"[^>]*data-id="(\d+)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+    $seatCash = @($freeCash)[0]
+    $r = Send-Form $staff '/staff/counter' @{ action = 'hold'; showtimeId = $cSt; seatIds = "$seatCash" } "/staff/counter?action=seats&showtimeId=$cSt"
+    $bkCash = Invoke-Sql "SELECT TOP 1 booking_id FROM Booking WHERE channel='Counter' AND showtime_id=$cSt AND status IN ('Selecting','PendingPayment') ORDER BY booking_id DESC"
     $r = Send-Form $staff '/staff/counter' @{ action = 'pay'; cashReceived = '1000000' } '/staff/counter?action=checkout'
-    $paid = Invoke-Sql "SELECT status FROM Booking WHERE booking_id=$bk"
+    $paid = Invoke-Sql "SELECT status FROM Booking WHERE booking_id=$bkCash"
     Assert-Test ($paid -eq 'Paid') "thanh toan tien mat (trang thai don: $paid)"
-    $tk = Invoke-Sql "SELECT TOP 1 ticket_code FROM Ticket WHERE booking_id=$bk"
-    $tkId = Invoke-Sql "SELECT TOP 1 ticket_id FROM Ticket WHERE booking_id=$bk"
+    $cashMethod = Invoke-Sql "SELECT TOP 1 method FROM Payment WHERE booking_id=$bkCash ORDER BY payment_id DESC"
+    Assert-Test ($cashMethod -eq 'Cash') "thanh toan tien mat ghi method Cash (method: $cashMethod)"
+    $tk = Invoke-Sql "SELECT TOP 1 ticket_code FROM Ticket WHERE booking_id=$bkCash"
+    $tkId = Invoke-Sql "SELECT TOP 1 ticket_id FROM Ticket WHERE booking_id=$bkCash"
     Assert-Test ($tk -match '^TK') "co ve duoc cap (ma $tk)"
     Assert-Test ((Invoke-Sql "SELECT status FROM Ticket WHERE ticket_id=$tkId") -eq 'Booked') 've o trang thai Booked'
     Assert-Test ((Get-Status $staff "/staff/tickets/qr?ticketId=$tkId") -eq 200) 'QR ve ban tai quay tra ve duoc'
-    # huy don giu cho
-    $r = Send-Form $staff '/staff/counter' @{ action = 'hold'; showtimeId = $cSt; seatIds = "$seat2" } "/staff/counter?action=seats&showtimeId=$cSt"
+    # huy don giu cho (dung ghe trong, ghe $seatCash da duoc ban)
+    $freeCancel = [regex]::Matches((Get-Page $staff "/staff/counter?action=seats&showtimeId=$cSt").Content, 'class="seat GREEN"[^>]*data-id="(\d+)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+    $seatCancel = @($freeCancel)[0]
+    $r = Send-Form $staff '/staff/counter' @{ action = 'hold'; showtimeId = $cSt; seatIds = "$seatCancel" } "/staff/counter?action=seats&showtimeId=$cSt"
     $bk2 = Invoke-Sql "SELECT TOP 1 booking_id FROM Booking WHERE channel='Counter' AND showtime_id=$cSt AND status IN ('Selecting','PendingPayment') ORDER BY booking_id DESC"
     $r = Send-Form $staff '/staff/counter' @{ action = 'cancelBooking' } '/staff/counter?action=checkout'
     Assert-Test ((Invoke-Sql "SELECT status FROM Booking WHERE booking_id=$bk2") -in 'Cancelled', 'Expired') 'huy don dang giu cho tra ghe'
+
+    # --- Tu choi suat chien da qua gio (request thu cong) ---
+    $pastSt = Invoke-Sql "SELECT TOP 1 showtime_id FROM Showtime WHERE status='Scheduled' AND start_time <= SYSDATETIME() ORDER BY start_time DESC"
+    if ($pastSt -match '^\d+$') {
+        $pastBkBefore = Invoke-Sql "SELECT COUNT(*) FROM Booking WHERE channel='Counter' AND showtime_id=$pastSt"
+        $r = Send-Form $staff '/staff/counter' @{ action = 'hold'; showtimeId = $pastSt; seatIds = "$seat1" } "/staff/counter?action=seats&showtimeId=$pastSt"
+        $pastBkAfter = Invoke-Sql "SELECT COUNT(*) FROM Booking WHERE channel='Counter' AND showtime_id=$pastSt"
+        Assert-Test ($pastBkAfter -eq $pastBkBefore) 'khong tao duoc don cho suat chien da qua gio'
+        Assert-Test ($r.flashType -eq 'error' -or $r.status -ge 400) "thong bao loi khi chon suat chien da qua gio (flash: $($r.flashType) $($r.flash))"
+    } else {
+        Write-Host '  [INFO] khong co suat chien da qua gio de thu tu choi'
+    }
 
     Write-Step "STAFF - soat ve va doi ghe"
     Assert-Test ((Get-Page $staff '/staff/checkin').StatusCode -eq 200) 'trang soat ve mo duoc'
@@ -439,7 +511,7 @@ if (-not ($cSt -match '^\d+$')) {
     Assert-Test ((Invoke-Sql "SELECT status FROM Ticket WHERE ticket_id=$tkId") -eq 'Booked') 'ma sai khong lam doi trang thai ve that'
     $r = Send-Form $staff '/staff/checkin' @{ ticketCode = $tk } '/staff/checkin'
     $afterCheck = Invoke-Sql "SELECT status FROM Ticket WHERE ticket_id=$tkId"
-    Write-Host "  [INFO] soat ve suat xa 3 ngay -> trang thai ve: $afterCheck (flash: $($r.flashType) $($r.flash))"
+    Write-Host "  [INFO] soat ve suat hom nay -> trang thai ve: $afterCheck (flash: $($r.flashType) $($r.flash))"
     Assert-Test ($afterCheck -in 'Booked', 'Used') 'soat ve cho ket qua hop le (Used neu trong khung gio, Booked neu con som)'
 
     $sc = Get-Page $staff "/staff/seat-change?code=$tk"
@@ -452,7 +524,7 @@ if (-not ($cSt -match '^\d+$')) {
     } else { Write-Host '  [INFO] bo qua buoc doi ghe (ve da Used hoac khong co ghe trong cung loai)' }
 
     # don dep du lieu ban tai quay: tra ve ghe de khong de ve thu chiem cho
-    $null = Invoke-Sql "UPDATE Ticket SET status='Cancelled' WHERE booking_id=$bk; UPDATE Booking SET status='Cancelled' WHERE booking_id=$bk"
+    $null = Invoke-Sql "UPDATE Ticket SET status='Cancelled' WHERE booking_id IN ($bk, $bkCash); UPDATE Booking SET status='Cancelled' WHERE booking_id IN ($bk, $bkCash)"
 }
 
 Write-Step "DASHBOARD"

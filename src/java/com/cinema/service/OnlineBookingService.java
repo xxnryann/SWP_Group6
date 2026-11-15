@@ -2,7 +2,6 @@ package com.cinema.service;
 
 import com.cinema.dao.AccountDAO;
 import com.cinema.dao.BookingDAO;
-import com.cinema.integration.vnpay.VNPayCallback;
 import com.cinema.integration.vnpay.VNPayGateway;
 import com.cinema.integration.vnpay.VNPayProperties;
 import com.cinema.model.Combo;
@@ -41,8 +40,11 @@ public class OnlineBookingService {
 
     private static final Logger LOG = Logger.getLogger(OnlineBookingService.class.getName());
 
-    /** Phương thức thanh toán online (Payment.method chỉ cho phép Cash/BankTransfer). */
-    private static final String METHOD_ONLINE = "BankTransfer";
+    /**
+     * Phần xác nhận thanh toán qua cổng được gom về {@link GatewayPaymentService}
+     * để dùng chung với kênh bán vé tại quầy.
+     */
+    private final GatewayPaymentService gatewayPayment;
 
     /**
      * Cấu hình quy đổi MyPoint được cache trong bộ nhớ.
@@ -82,6 +84,7 @@ public class OnlineBookingService {
         this.accountDAO = accountDAO;
         this.discountService = discountService;
         this.gateway = gateway;
+        this.gatewayPayment = new GatewayPaymentService(bookingDAO, gateway);
     }
 
     /* ================= kết quả bước ================= */
@@ -373,16 +376,14 @@ public class OnlineBookingService {
     public String buildPaymentUrl(OnlineBooking booking, String clientIp,
             String contextPath, String returnUrl) {
         String orderInfo = "Thanh toan ve " + booking.getBookingCode();
-        // Làm tròn lên để cổng không đóng trước khi hết thời gian giữ ghế; hết giữ ghế thì đơn đã bị chặn ở servlet.
-        int expireMinutes = (int) Math.max(1, (booking.getRemainingSeconds() + 59) / 60);
-        return gateway.buildPaymentUrl(booking.getBookingCode(),
-                booking.getTotalAmount(), orderInfo, clientIp, returnUrl, contextPath, expireMinutes);
+        return gatewayPayment.buildPaymentUrl(booking, orderInfo, clientIp, contextPath, returnUrl);
     }
 
     /**
      * Xác nhận kết quả thanh toán từ cổng (Return URL hoặc IPN).
      *
-     * <p>Luồng: kiểm tra chữ ký → đối soát số tiền → {@code sp_ConfirmPayment}.
+     * <p>Phần kiểm tra chữ ký và đối soát số tiền do
+     * {@link GatewayPaymentService} lo — dùng chung với kênh bán vé tại quầy.
      * Hàm này idempotent: gọi lại với cùng giao dịch không phát vé 2 lần
      * (procedure chỉ chạy khi booking còn {@code PendingPayment}).</p>
      *
@@ -390,21 +391,15 @@ public class OnlineBookingService {
      * @return kết quả xác nhận
      */
     public StepResult confirmGatewayPayment(Map<String, String> params) {
-        VNPayCallback callback = gateway.parseCallback(params);
-        if (callback == null) {
-            return new StepResult(false,
-                    "Chữ ký giao dịch không hợp lệ. Thanh toán không được ghi nhận.", null,
-                    Outcome.INVALID_SIGNATURE);
+        GatewayPaymentService.Result result = gatewayPayment.confirmPayment(params);
+        if (result.isSuccess()) {
+            return new StepResult(true, result.getMessage(), result.getBooking());
         }
-        if (!callback.isSuccess()) {
-            cancelGatewayPayment(callback.getTxnRef(),
-                    "Khách hàng huỷ giao dịch trên cổng thanh toán.");
-            return new StepResult(false,
-                    "Thanh toán không thành công. Đơn hàng đã được huỷ và ghế đã được giải phóng.", null,
-                    Outcome.FAILED);
-        }
-        return confirmGatewayPayment(callback.getTxnRef(), callback.getTransactionNo(),
-                callback.getAmount());
+        // Chữ ký sai → cổng không được ghi nhận, không retry (Outcome.INVALID_SIGNATURE).
+        // Còn lại là giao dịch đã xử lý xong (Outcome.FAILED).
+        return new StepResult(false, result.getMessage(), result.getBooking(),
+                result.getOutcome() == GatewayPaymentService.Outcome.INVALID_SIGNATURE
+                        ? Outcome.INVALID_SIGNATURE : Outcome.FAILED);
     }
 
     /**
@@ -415,49 +410,11 @@ public class OnlineBookingService {
      * @param amount số tiền cổng báo (đơn vị tiền)
      */
     public StepResult confirmGatewayPayment(String txnRef, String gatewayTxnId, BigDecimal amount) {
-        if (txnRef == null || txnRef.trim().isEmpty()) {
-            return new StepResult(false, "Thiếu mã đơn hàng trong kết quả thanh toán.", null);
+        GatewayPaymentService.Result result = gatewayPayment.confirmPayment(txnRef, gatewayTxnId, amount);
+        if (result.isSuccess()) {
+            return new StepResult(true, result.getMessage(), result.getBooking());
         }
-        releaseExpiredHolds();
-        // Một lần đọc duy nhất: tra theo mã đơn + lấy chi tiết trong cùng
-        // connection (tránh 2 vòng truy vấn cho cùng một đơn).
-        OnlineBooking booking = findBookingByCode(txnRef);
-        if (booking == null) {
-            return new StepResult(false, "Không tìm thấy đơn hàng " + txnRef + ".", null);
-        }
-        int bookingId = booking.getBookingId();
-        if (!"PendingPayment".equals(booking.getStatus())) {
-            // Đơn đã hết hạn hoặc đã thanh toán trước đó → không phát vé lần 2.
-            // Đơn đã trả tiền vẫn trả về thành công: cổng thanh toán có thể gọi
-            // lại (retry IPN hoặc người dùng bấm F5) và lần gọi đó không phải lỗi.
-            if ("Paid".equals(booking.getStatus())) {
-                return new StepResult(true,
-                        "Đơn hàng đã được thanh toán trước đó. Vé của bạn đã được phát hành.",
-                        booking);
-            }
-            return new StepResult(false,
-                    "Đơn hàng đã hết thời gian chờ thanh toán và được huỷ. Vui lòng đặt vé lại.",
-                    booking, Outcome.FAILED);
-        }
-        if (amount != null && booking.getTotalAmount() != null
-                && amount.compareTo(booking.getTotalAmount()) != 0) {
-            // Lệch số tiền → không cấp vé, ghi cảnh báo.
-            LOG.log(Level.WARNING, "Cảnh báo đối soát tiền lệch cho đơn {0}: cổng={1}, đơn={2}",
-                    new Object[] {txnRef, amount, booking.getTotalAmount()});
-            cancelGatewayPayment(txnRef, "Số tiền thanh toán không khớp với đơn hàng.");
-            return new StepResult(false,
-                    "Số tiền thanh toán không khớp với đơn hàng. Vui lòng liên hệ rạp.", booking);
-        }
-        String txnId = gatewayTxnId == null || gatewayTxnId.trim().isEmpty()
-                ? "VNPAY-" + txnRef : gatewayTxnId.trim();
-        try {
-            bookingDAO.confirmPayment(bookingId, txnId, true, METHOD_ONLINE);
-            return new StepResult(true, "Thanh toán thành công. Vé của bạn đã được phát hành.",
-                    findBooking(bookingId));
-        } catch (SQLException e) {
-            return new StepResult(false,
-                    "Không thể ghi nhận thanh toán: " + e.getMessage(), null);
-        }
+        return new StepResult(false, result.getMessage(), result.getBooking(), Outcome.FAILED);
     }
 
     /**
@@ -467,16 +424,6 @@ public class OnlineBookingService {
      * @param reason lý do
      */
     public void cancelGatewayPayment(String txnRef, String reason) {
-        OnlineBooking booking = findBookingByCode(txnRef);
-        if (booking == null) {
-            return;
-        }
-        try {
-            bookingDAO.confirmPayment(booking.getBookingId(), null, false, METHOD_ONLINE);
-        } catch (SQLException e) {
-            // sp_ConfirmPayment chỉ chạy khi booking ở trạng thái PendingPayment;
-            // nếu đơn đã hết hạn thì ghế đã được sp_ReleaseExpiredHolds nhả.
-            LOG.log(Level.WARNING, "cancelGatewayPayment(" + reason + ") lỗi", e);
-        }
+        gatewayPayment.cancelPayment(txnRef, reason);
     }
 }
