@@ -267,8 +267,8 @@ BEGIN TRY EXEC(@sql); SELECT 'RESTORE_OK'; END TRY BEGIN CATCH SELECT ERROR_MESS
 
     # --- Nhat ky
     $page = Html $admin '/admin/system?tab=logs'
-    Assert-Test ($page.Code -eq 200 -and $page.Text.Contains('CHECKIN_EARLY_MINUTES')) 'nhat ky ghi gia tri cau hinh cu va moi'
     $logQuery = "SELECT COUNT(*) FROM dbo.SystemLog WHERE log_id>$log0 AND"
+    Assert-Test ($page.Code -eq 200 -and [int](Scalar "$logQuery action='/admin/system : saveConfig' AND detail LIKE N'Th_t b_i%';") -ge 1) 'nhat ky ghi lan goi saveConfig bi tu choi'
     Assert-Test ([int](Scalar "$logQuery action='/admin/system : backup' AND detail LIKE N'%file=%';") -ge 1) 'nhat ky ghi thao tac sao luu kem file'
     Assert-Test ([int](Scalar "$logQuery action='/staff/checkin' AND detail LIKE '%ticketCode=KHONGTONTAI%';") -ge 1) 'nhat ky ghi soat ve that bai'
     Assert-Test ([int](Scalar "$logQuery action='/manager/vouchers : toggle';") -ge 1) 'nhat ky ghi thao tac voucher'
